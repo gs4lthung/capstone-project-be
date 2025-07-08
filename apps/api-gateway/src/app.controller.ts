@@ -1,18 +1,27 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Inject } from '@nestjs/common';
 import { AppService } from './app.service';
-import { MessagePattern } from '@nestjs/microservices';
+import { ClientProxy } from '@nestjs/microservices';
+import { firstValueFrom } from 'rxjs';
 
 @Controller()
 export class AppController {
-  constructor(private readonly appService: AppService) {}
+  constructor(
+    private readonly appService: AppService,
+    @Inject('AUTH_SERVICE') private readonly authService: ClientProxy,
+  ) {}
 
   @Get()
-  getHello(): string {
-    return this.appService.getHello();
-  }
-
-  @MessagePattern({ cmd: 'getHello' })
-  getHelloMessage(): string {
-    return this.appService.getHello();
+  async getHello(): Promise<string> {
+    await this.authService.connect();
+    try {
+      const response = await firstValueFrom(
+        this.authService.send({ cmd: 'login' }, {}),
+      );
+      return response;
+    } catch (error) {
+      throw new Error(`Failed to call auth service: ${error}`);
+    } finally {
+      this.authService.close();
+    }
   }
 }
