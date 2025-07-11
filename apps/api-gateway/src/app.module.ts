@@ -1,24 +1,37 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { ConfigModule } from '@app/config';
+import { ConfigModule, ConfigService } from '@app/config';
 import { DatabaseModule } from '@app/database';
 import { ClientsModule, Transport } from '@nestjs/microservices';
+import { ThrottlerModule } from '@nestjs/throttler';
 
 @Module({
   imports: [
     ConfigModule,
     DatabaseModule,
-    ClientsModule.register([
+    ClientsModule.registerAsync([
       {
+        imports: [ConfigModule],
+        inject: [ConfigService],
         name: 'AUTH_SERVICE',
-        transport: Transport.TCP,
-        options: {
-          host: 'localhost',
-          port: 8387,
-        },
+        useFactory: async (configService: ConfigService) => ({
+          transport: Transport.TCP,
+          options: {
+            host: configService.get('auth_service').host,
+            port: configService.get('auth_service').port,
+          },
+        }),
       },
     ]),
+    ThrottlerModule.forRoot({
+      throttlers: [
+        {
+          ttl: 600000,
+          limit: 1000,
+        },
+      ],
+    }),
   ],
   controllers: [AppController],
   providers: [AppService],

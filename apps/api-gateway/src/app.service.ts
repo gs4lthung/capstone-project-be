@@ -5,6 +5,6 @@ import { Injectable } from '@nestjs/common';
 export class AppService {
   constructor(private readonly configService: ConfigService) {}
   getHello(): string {
-    return `Hello World! API Gateway is running on port ${this.configService.get('port').api_gateway}`;
+    return `Hello World! API Gateway is running on port ${this.configService.get('api_gateway').port}`;
   }
 }
