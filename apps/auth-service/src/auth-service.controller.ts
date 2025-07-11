@@ -1,16 +1,12 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller } from '@nestjs/common';
 import { AuthServiceService } from './auth-service.service';
 import { MessagePattern } from '@nestjs/microservices';
 import { RegisterDto } from '@app/shared/dtos/auth/register.dto';
+import { CustomApiResponse } from '@app/shared/responses/custom-api.response';
 
 @Controller()
 export class AuthServiceController {
   constructor(private readonly authServiceService: AuthServiceService) {}
-
-  @Get()
-  getHello(): string {
-    return this.authServiceService.getHello();
-  }
 
   @MessagePattern({ cmd: 'login' })
   async login(): Promise<string> {
@@ -18,7 +14,7 @@ export class AuthServiceController {
   }
 
   @MessagePattern({ cmd: 'register' })
-  async register(data: RegisterDto): Promise<string> {
+  async register(data: RegisterDto): Promise<CustomApiResponse<void>> {
     return this.authServiceService.register(data);
   }
 }

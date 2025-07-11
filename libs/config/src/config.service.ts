@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService as NestConfigService } from '@nestjs/config';
 
 interface Config {
+  node_env: string;
   api_gateway: {
     host: string;
     port: number;
@@ -33,6 +34,7 @@ export class ConfigService {
   private readonly config: Config;
   constructor(private nestConfigService: NestConfigService) {
     this.config = {
+      node_env: this.nestConfigService.get('NODE_ENV', 'dev'),
       api_gateway: {
         host: this.nestConfigService.get('API_GATEWAY_HOST', 'localhost'),
         port: this.nestConfigService.get('API_GATEWAY_PORT', 8386),
@@ -56,9 +58,8 @@ export class ConfigService {
         secret: this.nestConfigService.get('JWT_SECRET', 'defaultsecret'),
         expiration: this.nestConfigService.get('JWT_EXPIRATION', 3600),
       },
-      password_salt_rounds: this.nestConfigService.get(
-        'PASSWORD_SALT_ROUNDS',
-        10,
+      password_salt_rounds: Number(
+        this.nestConfigService.get('PASSWORD_SALT_ROUNDS', 10),
       ),
     };
   }
