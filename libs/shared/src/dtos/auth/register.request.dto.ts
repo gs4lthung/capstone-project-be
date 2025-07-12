@@ -7,7 +7,7 @@ import {
   IsStrongPassword,
 } from 'class-validator';
 
-export class RegisterDto extends PickType(User, [
+export class RegisterRequestDto extends PickType(User, [
   'fullName',
   'email',
   'password',

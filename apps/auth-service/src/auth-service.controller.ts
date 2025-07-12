@@ -1,20 +1,24 @@
 import { Controller } from '@nestjs/common';
 import { AuthServiceService } from './auth-service.service';
 import { MessagePattern } from '@nestjs/microservices';
-import { RegisterDto } from '@app/shared/dtos/auth/register.dto';
 import { CustomApiResponse } from '@app/shared/responses/custom-api.response';
+import { RegisterRequestDto } from '@app/shared/dtos/auth/register.request.dto';
+import { LoginRequestDto } from '@app/shared/dtos/auth/login.request.dto';
+import { LoginResponseDto } from '@app/shared/dtos/auth/login.response.dto';
 
 @Controller()
 export class AuthServiceController {
   constructor(private readonly authServiceService: AuthServiceService) {}
 
   @MessagePattern({ cmd: 'login' })
-  async login(): Promise<string> {
-    return 'Login successful for user: ';
+  async login(
+    data: LoginRequestDto,
+  ): Promise<CustomApiResponse<LoginResponseDto>> {
+    return this.authServiceService.login(data);
   }
 
   @MessagePattern({ cmd: 'register' })
-  async register(data: RegisterDto): Promise<CustomApiResponse<void>> {
+  async register(data: RegisterRequestDto): Promise<CustomApiResponse<void>> {
     return this.authServiceService.register(data);
   }
 }
