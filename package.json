@@ -43,6 +43,7 @@
     "pg": "^8.16.3",
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.1",
+    "socket.io": "^4.8.1",
     "typeorm": "^0.3.25"
   },
   "devDependencies": {
@@ -92,7 +93,8 @@
     "moduleNameMapper": {
       "^@app/config(|/.*)$": "<rootDir>/libs/config/src/$1",
       "^@app/database(|/.*)$": "<rootDir>/libs/database/src/$1",
-      "^@app/shared(|/.*)$": "<rootDir>/libs/shared/src/$1"
+      "^@app/shared(|/.*)$": "<rootDir>/libs/shared/src/$1",
+      "^@app/websocket(|/.*)$": "<rootDir>/libs/websocket/src/$1"
     }
   }
 }

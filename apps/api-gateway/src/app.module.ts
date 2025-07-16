@@ -5,6 +5,7 @@ import { ConfigModule, ConfigService } from '@app/config';
 import { DatabaseModule } from '@app/database';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { SocketGateway } from './socket/socket.gateway';
 
 @Module({
   imports: [
@@ -34,6 +35,6 @@ import { ThrottlerModule } from '@nestjs/throttler';
     }),
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, SocketGateway],
 })
 export class AppModule {}
