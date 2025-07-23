@@ -1,6 +1,6 @@
 import { ConfigService } from '@app/config';
 import { User } from '@app/database/entities/user.entity';
-import { Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
@@ -23,15 +23,21 @@ export class AuthServiceService {
   async login(
     data: LoginRequestDto,
   ): Promise<CustomApiResponse<LoginResponseDto>> {
-    if (!data) throw new CustomRcpException('Invalid login data', 400);
+    if (!data)
+      throw new CustomRcpException(
+        'Invalid login data',
+        HttpStatus.BAD_REQUEST,
+      );
 
     const user = await this.userRepository.findOne({
       where: { email: data.email },
     });
-    if (!user) throw new CustomRcpException('User not found', 404);
+    if (!user)
+      throw new CustomRcpException('User not found', HttpStatus.NOT_FOUND);
 
     const isPasswordValid = await bcrypt.compare(data.password, user.password);
-    if (!isPasswordValid) throw new CustomRcpException('Invalid password', 401);
+    if (!isPasswordValid)
+      throw new CustomRcpException('Invalid password', HttpStatus.UNAUTHORIZED);
 
     const payload: JwtPayloadDto = {
       id: user.id,
@@ -48,13 +54,17 @@ export class AuthServiceService {
   }
 
   async register(data: RegisterRequestDto): Promise<CustomApiResponse<void>> {
-    if (!data) throw new CustomRcpException('Invalid registration data', 400);
+    if (!data)
+      throw new CustomRcpException(
+        'Invalid registration data',
+        HttpStatus.BAD_REQUEST,
+      );
 
     const isEmailExists = await this.userRepository.findOne({
       where: { email: data.email },
     });
     if (isEmailExists)
-      throw new CustomRcpException('Email already exists', 400);
+      throw new CustomRcpException('Email already exists', HttpStatus.CONFLICT);
 
     const passwordHashed = await bcrypt.hash(
       data.password,
@@ -69,6 +79,9 @@ export class AuthServiceService {
 
     await this.userRepository.save(user);
 
-    return new CustomApiResponse<void>(201, 'Registration successful');
+    return new CustomApiResponse<void>(
+      HttpStatus.CREATED,
+      'Registration successful',
+    );
   }
 }

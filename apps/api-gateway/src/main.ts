@@ -33,7 +33,12 @@ async function bootstrap() {
   );
   app.setGlobalPrefix('api');
 
-  app.useGlobalPipes(new ValidationPipe({ transform: true }));
+  app.useGlobalPipes(
+    new ValidationPipe({
+      transform: true,
+      transformOptions: { enableImplicitConversion: true },
+    }),
+  );
 
   const config = new DocumentBuilder()
     .setTitle('LMS System API')

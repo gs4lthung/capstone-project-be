@@ -1,7 +1,12 @@
 import { ConfigService } from '@app/config';
 import { JwtPayloadDto } from '@app/shared/dtos/auth/jwt.payload.dto';
 import { CustomRcpException } from '@app/shared/exceptions/custom-rcp.exception';
-import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
+import {
+  CanActivate,
+  ExecutionContext,
+  HttpStatus,
+  Injectable,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
 
@@ -16,7 +21,10 @@ export class AuthGuard implements CanActivate {
     const request = context.switchToHttp().getRequest();
     const token = this.extractTokenFromHeader(request);
     if (!token) {
-      throw new CustomRcpException('Authorization token is missing', 401);
+      throw new CustomRcpException(
+        'Authorization token is missing',
+        HttpStatus.UNAUTHORIZED,
+      );
     }
 
     try {
@@ -26,7 +34,7 @@ export class AuthGuard implements CanActivate {
 
       request.user = { id: payload.id };
     } catch {
-      throw new CustomRcpException('Invalid token', 401);
+      throw new CustomRcpException('Invalid token', HttpStatus.UNAUTHORIZED);
     }
     return true;
   }

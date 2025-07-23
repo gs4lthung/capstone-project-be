@@ -1,7 +1,13 @@
 export class CustomApiResponse<T = any> {
-  constructor(
-    public readonly statusCode: number,
-    public readonly message: string,
-    public readonly metadata?: T,
-  ) {}
+  public readonly statusCode: number;
+
+  public readonly message: string;
+
+  public readonly metadata?: T;
+
+  constructor(statusCode: number, message: string, metadata?: T) {
+    this.statusCode = statusCode;
+    this.message = message;
+    this.metadata = metadata;
+  }
 }
