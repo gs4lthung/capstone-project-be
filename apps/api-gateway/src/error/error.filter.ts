@@ -35,9 +35,6 @@ export class ErrorLoggingFilter implements ExceptionFilter {
       userId = request.user.id;
     }
 
-    // Prepare error details
-
-    // Create error entity
     if (this.configService.get('node_env') === 'dev') {
       const errorEntity = this.errorRepository.create({
         code: exception.statusCode

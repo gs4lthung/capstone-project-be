@@ -7,6 +7,7 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { SocketGateway } from './socket/socket.gateway';
 import { ErrorModule } from './error/error.module';
+import { JwtService } from '@nestjs/jwt';
 
 @Module({
   imports: [
@@ -53,6 +54,6 @@ import { ErrorModule } from './error/error.module';
     }),
   ],
   controllers: [AppController],
-  providers: [AppService, SocketGateway],
+  providers: [AppService, SocketGateway, ConfigService, JwtService],
 })
 export class AppModule {}

@@ -10,6 +10,7 @@ import { RegisterRequestDto } from '@app/shared/dtos/auth/register.request.dto';
 import { LoginRequestDto } from '@app/shared/dtos/auth/login.request.dto';
 import { LoginResponseDto } from '@app/shared/dtos/auth/login.response.dto';
 import { JwtService } from '@nestjs/jwt';
+import { JwtPayloadDto } from '@app/shared/dtos/auth/jwt.payload.dto';
 
 @Injectable()
 export class AuthServiceService {
@@ -32,9 +33,8 @@ export class AuthServiceService {
     const isPasswordValid = await bcrypt.compare(data.password, user.password);
     if (!isPasswordValid) throw new CustomRcpException('Invalid password', 401);
 
-    const payload = {
+    const payload: JwtPayloadDto = {
       id: user.id,
-      email: user.email,
     };
 
     return new CustomApiResponse<LoginResponseDto>(200, 'Login successful', {
