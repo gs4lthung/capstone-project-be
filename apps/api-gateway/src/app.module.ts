@@ -6,11 +6,13 @@ import { DatabaseModule } from '@app/database';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { SocketGateway } from './socket/socket.gateway';
+import { ErrorModule } from './error/error.module';
 
 @Module({
   imports: [
     ConfigModule,
     DatabaseModule,
+    ErrorModule,
     ClientsModule.registerAsync([
       {
         imports: [ConfigModule],
@@ -24,14 +26,30 @@ import { SocketGateway } from './socket/socket.gateway';
           },
         }),
       },
+      {
+        imports: [ConfigModule],
+        inject: [ConfigService],
+        name: 'USER_SERVICE',
+        useFactory: async (configService: ConfigService) => ({
+          transport: Transport.TCP,
+          options: {
+            host: configService.get('user_service').host,
+            port: configService.get('user_service').port,
+          },
+        }),
+      },
     ]),
-    ThrottlerModule.forRoot({
-      throttlers: [
-        {
-          ttl: 600000,
-          limit: 1000,
-        },
-      ],
+    ThrottlerModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: async (configService: ConfigService) => ({
+        throttlers: [
+          {
+            ttl: configService.get('rate_limiter')?.time,
+            limit: configService.get('rate_limiter')?.max_requests,
+          },
+        ],
+      }),
     }),
   ],
   controllers: [AppController],

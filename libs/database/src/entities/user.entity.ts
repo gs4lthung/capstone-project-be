@@ -1,4 +1,5 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { Error } from './error.entity';
 
 @Entity('users')
 export class User {
@@ -26,4 +27,7 @@ export class User {
 
   @Column({ type: 'boolean', default: true })
   isActive: boolean;
+
+  @OneToMany(() => Error, (error) => error.user)
+  errors: Error[];
 }

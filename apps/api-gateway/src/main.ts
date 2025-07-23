@@ -13,8 +13,24 @@ async function bootstrap() {
     // credentials: true,
   });
 
-  app.use(helmet());
-
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          scriptSrc: [
+            "'self'",
+            'https://cdn.jsdelivr.net',
+            // Allow inline script for GraphQL Playground
+            "'sha256-jy0ROHCLlkmrjNmmholpRXAJgTmhuirtXREXGa8VmVU='",
+          ],
+          imgSrc: ["'self'", 'data:', 'https://cdn.jsdelivr.net'],
+          connectSrc: ["'self'", 'http://localhost:3000'], // Allow GraphQL endpoint
+          styleSrc: ["'self'", 'https://cdn.jsdelivr.net', "'unsafe-inline'"], // Allow styles
+        },
+      },
+    }),
+  );
   app.setGlobalPrefix('api');
 
   app.useGlobalPipes(new ValidationPipe({ transform: true }));

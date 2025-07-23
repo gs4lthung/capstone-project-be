@@ -26,6 +26,10 @@ interface Config {
     secret: string;
     expiration: number;
   };
+  rate_limiter?: {
+    max_requests?: number;
+    time?: number;
+  };
   password_salt_rounds?: number;
 }
 
@@ -57,6 +61,12 @@ export class ConfigService {
       jwt: {
         secret: this.nestConfigService.get('JWT_SECRET', 'defaultsecret'),
         expiration: this.nestConfigService.get('JWT_EXPIRATION', 3600),
+      },
+      rate_limiter: {
+        max_requests: Number(
+          this.nestConfigService.get('RATE_LIMITER_MAX_REQUESTS', 1000),
+        ),
+        time: Number(this.nestConfigService.get('RATE_LIMITER_TIME', 60)),
       },
       password_salt_rounds: Number(
         this.nestConfigService.get('PASSWORD_SALT_ROUNDS', 10),
