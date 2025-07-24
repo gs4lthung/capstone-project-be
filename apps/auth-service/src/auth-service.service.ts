@@ -11,11 +11,14 @@ import { LoginRequestDto } from '@app/shared/dtos/auth/login.request.dto';
 import { LoginResponseDto } from '@app/shared/dtos/auth/login.response.dto';
 import { JwtService } from '@nestjs/jwt';
 import { JwtPayloadDto } from '@app/shared/dtos/auth/jwt.payload.dto';
+import { RoleEnum } from '@app/shared/enums/role.enum';
+import { Role } from '@app/database/entities/role.entity';
 
 @Injectable()
 export class AuthServiceService {
   constructor(
     @InjectRepository(User) private readonly userRepository: Repository<User>,
+    @InjectRepository(Role) private readonly roleRepository: Repository<Role>,
     private readonly configService: ConfigService,
     private readonly jwtService: JwtService,
   ) {}
@@ -96,10 +99,22 @@ export class AuthServiceService {
         this.configService.get('password_salt_rounds'),
       );
 
+      const role = await this.roleRepository.findOne({
+        where: {
+          name: RoleEnum.CUSTOMER,
+        },
+      });
+
+      if (!role)
+        throw new CustomRcpException('Role not found', HttpStatus.NOT_FOUND);
+
       const user = this.userRepository.create({
         fullName: data.fullName,
         email: data.email,
         password: passwordHashed,
+        role: {
+          id: role.id,
+        },
       });
 
       await this.userRepository.save(user);

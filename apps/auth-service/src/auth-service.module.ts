@@ -6,6 +6,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from '@app/database/entities/user.entity';
 import { DatabaseModule } from '@app/database';
+import { Role } from '@app/database/entities/role.entity';
 
 @Module({
   imports: [
@@ -19,7 +20,7 @@ import { DatabaseModule } from '@app/database';
       }),
     }),
     DatabaseModule,
-    TypeOrmModule.forFeature([User]),
+    TypeOrmModule.forFeature([User, Role]),
   ],
   controllers: [AuthServiceController],
   providers: [AuthServiceService],

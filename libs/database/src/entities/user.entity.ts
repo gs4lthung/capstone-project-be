@@ -1,5 +1,13 @@
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  OneToMany,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { Error } from './error.entity';
+import { Role } from './role.entity';
 
 @Entity('users')
 export class User {
@@ -30,4 +38,8 @@ export class User {
 
   @OneToMany(() => Error, (error) => error.user)
   errors: Error[];
+
+  @ManyToOne(() => Role, (role) => role.users, { nullable: true })
+  @JoinColumn({ name: 'roleId' })
+  role: Role;
 }
