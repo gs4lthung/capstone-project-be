@@ -11,11 +11,14 @@ import { JwtService } from '@nestjs/jwt';
 import { GraphQLModule } from '@nestjs/graphql';
 import { AppResolver } from './app.resolver';
 import { ApolloDriver } from '@nestjs/apollo';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { Error } from '@app/database/entities/error.entity';
 
 @Module({
   imports: [
     ConfigModule,
     DatabaseModule,
+    TypeOrmModule.forFeature([Error]),
     ErrorModule,
     GraphQLModule.forRootAsync({
       imports: [ConfigModule],

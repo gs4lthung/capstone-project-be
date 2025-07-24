@@ -3,6 +3,10 @@ import { ConfigService as NestConfigService } from '@nestjs/config';
 
 interface Config {
   node_env: string;
+  app: {
+    name: string;
+    version: string;
+  };
   api_gateway: {
     host: string;
     port: number;
@@ -24,7 +28,7 @@ interface Config {
   };
   jwt: {
     secret: string;
-    expiration: number;
+    expiration: string | number;
   };
   rate_limiter?: {
     max_requests?: number;
@@ -42,6 +46,10 @@ export class ConfigService {
   private readonly config: Config;
   constructor(private nestConfigService: NestConfigService) {
     this.config = {
+      app: {
+        name: this.nestConfigService.get('APP_NAME', 'Capstone Project'),
+        version: this.nestConfigService.get('APP_VERSION', 'v1'),
+      },
       node_env: this.nestConfigService.get('NODE_ENV', 'dev'),
       api_gateway: {
         host: this.nestConfigService.get('API_GATEWAY_HOST', 'localhost'),
@@ -64,7 +72,7 @@ export class ConfigService {
       },
       jwt: {
         secret: this.nestConfigService.get('JWT_SECRET', 'defaultsecret'),
-        expiration: this.nestConfigService.get('JWT_EXPIRATION', 3600),
+        expiration: this.nestConfigService.get('JWT_EXPIRATION', '7d'),
       },
       rate_limiter: {
         max_requests: Number(

@@ -30,6 +30,7 @@ export class ErrorLoggingFilter implements ExceptionFilter {
     const logger = new Logger(ErrorLoggingFilter.name);
 
     const contextType = ContextUtils.getRequestContextType(host.getType());
+    const isDevelopment = this.configService.get('node_env') === 'dev';
 
     let response: Response;
     let request: CustomApiRequest;
@@ -44,6 +45,23 @@ export class ErrorLoggingFilter implements ExceptionFilter {
         const gqlCtx = GqlArgumentsHost.create(host);
         response = gqlCtx.getContext().res;
         request = gqlCtx.getContext().req;
+        break;
+      case ProtocolEnum.WS:
+        const wsCtx = host.switchToWs();
+        response = wsCtx.getClient<Response>();
+        request = wsCtx.getData<CustomApiRequest>();
+        break;
+      default:
+        logger.error('Unsupported context type:', contextType);
+        if (isDevelopment) {
+          const error = this.errorRepository.create({
+            code: 'UNSUPPORTED_CONTEXT_TYPE',
+            message: `Unsupported context type: ${contextType}`,
+            stack: exception.stack,
+          });
+          await this.errorRepository.save(error);
+        }
+        return;
     }
 
     let userId: number | null = null;
@@ -60,28 +78,34 @@ export class ErrorLoggingFilter implements ExceptionFilter {
       logger.error('Error details', exception.stack || exception.message);
     }
 
-    if (this.configService.get('node_env') === 'dev') {
+    if (isDevelopment) {
       let url = '';
       switch (contextType) {
         case ProtocolEnum.HTTP:
           url = request.url;
           break;
         case ProtocolEnum.GRAPHQL:
-          url = '/graphql';
+          url = `/${ProtocolEnum.GRAPHQL}`;
           break;
+        case ProtocolEnum.WS:
+          url = request.url || `/${ProtocolEnum.WS}`;
+          break;
+        default:
+          url = 'Unknown URL';
       }
 
       const errorEntity = this.errorRepository.create({
         code: exception.statusCode
           ? String(exception.statusCode)
           : 'UNKNOWN_ERROR',
-        message: exception.message || 'An unexpected error occurred',
+        message:
+          exception.message?.slice(0, 254) || 'An unexpected error occurred',
         stack: isAggregateError
           ? exception.errors
               .map((err) => String(err))
               .join('\n')
-              ?.slice(0, 5000)
-          : exception.stack?.slice(0, 5000),
+              ?.slice(0, 4999)
+          : exception.stack?.slice(0, 4999),
         url: url,
         body: request.body ? JSON.stringify(request.body) : null,
         user: userId ? { id: userId } : null,
@@ -95,7 +119,10 @@ export class ErrorLoggingFilter implements ExceptionFilter {
         const status = exception.statusCode || HttpStatus.INTERNAL_SERVER_ERROR;
         response.status(status).json({
           statusCode: status,
-          message: exception.message || 'An unexpected error occurred',
+          message:
+            status === HttpStatus.INTERNAL_SERVER_ERROR
+              ? 'Internal Server Error'
+              : exception.message,
           timestamp: new Date().toISOString(),
           path: request.url,
         });
@@ -117,7 +144,11 @@ export class ErrorLoggingFilter implements ExceptionFilter {
             },
           },
         );
-        break;
+      case ProtocolEnum.WS:
+        response.emit('exception', {
+          message: exception.message || 'An unexpected error occurred',
+          code: exception.statusCode || HttpStatus.INTERNAL_SERVER_ERROR,
+        });
     }
   }
 }

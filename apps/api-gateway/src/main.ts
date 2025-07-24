@@ -28,13 +28,14 @@ async function bootstrap() {
             "'sha256-jy0ROHCLlkmrjNmmholpRXAJgTmhuirtXREXGa8VmVU='",
           ],
           imgSrc: ["'self'", 'data:', 'https://cdn.jsdelivr.net'],
-          connectSrc: ["'self'", 'http://localhost:3000'], // Allow GraphQL endpoint
+          connectSrc: ["'self'"], // Allow GraphQL endpoint
           styleSrc: ["'self'", 'https://cdn.jsdelivr.net', "'unsafe-inline'"], // Allow styles
         },
       },
     }),
   );
-  app.setGlobalPrefix('api');
+
+  app.setGlobalPrefix(`api/${configService.get('app').version}`);
 
   app.useGlobalPipes(
     new ValidationPipe({
@@ -44,9 +45,11 @@ async function bootstrap() {
   );
 
   const config = new DocumentBuilder()
-    .setTitle('LMS System API')
-    .setDescription('API documentation for the LMS System')
-    .setVersion('1.0')
+    .setTitle(`${configService.get('app').name} API`)
+    .setDescription(
+      `API documentation for the ${configService.get('app').name}`,
+    )
+    .setVersion(configService.get('app').version)
     .build();
   const documentFactory = () => SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api-docs', app, documentFactory());
