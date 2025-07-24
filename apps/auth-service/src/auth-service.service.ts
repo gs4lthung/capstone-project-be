@@ -23,65 +23,100 @@ export class AuthServiceService {
   async login(
     data: LoginRequestDto,
   ): Promise<CustomApiResponse<LoginResponseDto>> {
-    if (!data)
-      throw new CustomRcpException(
-        'Invalid login data',
-        HttpStatus.BAD_REQUEST,
+    try {
+      if (!data)
+        throw new CustomRcpException(
+          'Invalid login data',
+          HttpStatus.BAD_REQUEST,
+        );
+
+      const user = await this.userRepository.findOne({
+        where: { email: data.email },
+      });
+      if (!user)
+        throw new CustomRcpException('User not found', HttpStatus.NOT_FOUND);
+
+      const isPasswordValid = await bcrypt.compare(
+        data.password,
+        user.password,
       );
+      if (!isPasswordValid)
+        throw new CustomRcpException(
+          'Invalid password',
+          HttpStatus.UNAUTHORIZED,
+        );
 
-    const user = await this.userRepository.findOne({
-      where: { email: data.email },
-    });
-    if (!user)
-      throw new CustomRcpException('User not found', HttpStatus.NOT_FOUND);
-
-    const isPasswordValid = await bcrypt.compare(data.password, user.password);
-    if (!isPasswordValid)
-      throw new CustomRcpException('Invalid password', HttpStatus.UNAUTHORIZED);
-
-    const payload: JwtPayloadDto = {
-      id: user.id,
-    };
-
-    return new CustomApiResponse<LoginResponseDto>(200, 'Login successful', {
-      accessToken: await this.jwtService.signAsync(payload),
-      user: {
+      const payload: JwtPayloadDto = {
         id: user.id,
-        fullName: user.fullName,
-        email: user.email,
-      },
-    });
+      };
+
+      return new CustomApiResponse<LoginResponseDto>(
+        HttpStatus.OK,
+        'Login successful',
+        {
+          accessToken: await this.jwtService.signAsync(payload),
+          user: {
+            id: user.id,
+            fullName: user.fullName,
+            email: user.email,
+          },
+        },
+      );
+    } catch (error) {
+      if (error instanceof CustomRcpException) {
+        throw error;
+      }
+      throw new CustomRcpException(
+        error.message || 'Internal server error',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        error.stack,
+      );
+    }
   }
 
   async register(data: RegisterRequestDto): Promise<CustomApiResponse<void>> {
-    if (!data)
-      throw new CustomRcpException(
-        'Invalid registration data',
-        HttpStatus.BAD_REQUEST,
+    try {
+      if (!data)
+        throw new CustomRcpException(
+          'Invalid registration data',
+          HttpStatus.BAD_REQUEST,
+        );
+
+      const isEmailExists = await this.userRepository.findOne({
+        where: { email: data.email },
+      });
+      if (isEmailExists)
+        throw new CustomRcpException(
+          'Email already exists',
+          HttpStatus.CONFLICT,
+        );
+
+      const passwordHashed = await bcrypt.hash(
+        data.password,
+        this.configService.get('password_salt_rounds'),
       );
 
-    const isEmailExists = await this.userRepository.findOne({
-      where: { email: data.email },
-    });
-    if (isEmailExists)
-      throw new CustomRcpException('Email already exists', HttpStatus.CONFLICT);
+      const user = this.userRepository.create({
+        fullName: data.fullName,
+        email: data.email,
+        password: passwordHashed,
+      });
 
-    const passwordHashed = await bcrypt.hash(
-      data.password,
-      this.configService.get('password_salt_rounds'),
-    );
+      await this.userRepository.save(user);
 
-    const user = this.userRepository.create({
-      fullName: data.fullName,
-      email: data.email,
-      password: passwordHashed,
-    });
-
-    await this.userRepository.save(user);
-
-    return new CustomApiResponse<void>(
-      HttpStatus.CREATED,
-      'Registration successful',
-    );
+      return new CustomApiResponse<void>(
+        HttpStatus.CREATED,
+        'Registration successful',
+      );
+    } catch (error) {
+      if (error instanceof CustomRcpException) {
+        throw error;
+      }
+      throw new CustomRcpException(
+        error.message || 'Internal server error',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        error.stack,
+      );
+    }
   }
 }

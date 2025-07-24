@@ -18,6 +18,9 @@ export class Error {
   @Column({ type: 'text' })
   message: string;
 
+  @Column({ type: 'varchar', length: 5000, nullable: true })
+  stack: string;
+
   @Column({ type: 'varchar', length: 255, nullable: true })
   url: string;
 

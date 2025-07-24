@@ -8,8 +8,13 @@ import { User } from '@app/database/entities/user.entity';
 export class UserServiceController {
   constructor(private readonly userServiceService: UserServiceService) {}
 
-  @MessagePattern({ cmd: 'findAll' })
+  @MessagePattern({ cmd: 'findAllUsers' })
   async findAll(): Promise<CustomApiResponse<User[]>> {
     return this.userServiceService.findAll();
+  }
+
+  @MessagePattern({ cmd: 'findUserById' })
+  async findOne(id: number): Promise<CustomApiResponse<User>> {
+    return this.userServiceService.findOne(id);
   }
 }

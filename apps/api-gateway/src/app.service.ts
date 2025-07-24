@@ -1,4 +1,5 @@
 import { ConfigService } from '@app/config';
+import { User } from '@app/database/entities/user.entity';
 import { LoginRequestDto } from '@app/shared/dtos/auth/login.request.dto';
 import { LoginResponseDto } from '@app/shared/dtos/auth/login.response.dto';
 import { RegisterRequestDto } from '@app/shared/dtos/auth/register.request.dto';
@@ -12,6 +13,7 @@ export class AppService {
   constructor(
     private readonly configService: ConfigService,
     @Inject('AUTH_SERVICE') private readonly authService: ClientProxy,
+    @Inject('USER_SERVICE') private readonly userService: ClientProxy,
   ) {}
 
   login(data: LoginRequestDto) {
@@ -31,6 +33,27 @@ export class AppService {
     const payload = data;
     return this.authService
       .send<CustomApiResponse<void>>(pattern, payload)
+      .pipe(
+        map((response) => {
+          return response;
+        }),
+      );
+  }
+
+  findAllUsers() {
+    const pattern = { cmd: 'findAllUsers' };
+    return this.userService.send<CustomApiResponse<User[]>>(pattern, {}).pipe(
+      map((response) => {
+        return response;
+      }),
+    );
+  }
+
+  findUserById(id: number) {
+    const pattern = { cmd: 'findUserById' };
+    const payload = id;
+    return this.userService
+      .send<CustomApiResponse<User>>(pattern, payload)
       .pipe(
         map((response) => {
           return response;

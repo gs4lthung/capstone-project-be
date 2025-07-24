@@ -4,7 +4,8 @@ export class CustomRcpException extends RpcException {
   constructor(
     message: string,
     public readonly statusCode: number,
+    public readonly stack?: string,
   ) {
-    super({ message, statusCode });
+    super({ message, statusCode, stack });
   }
 }

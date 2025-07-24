@@ -24,7 +24,6 @@ export class ErrorLoggingFilter implements ExceptionFilter {
 
   async catch(exception: CustomRcpException, host: ArgumentsHost) {
     const logger = new Logger(ErrorLoggingFilter.name);
-    logger.error('An error occurred', exception);
 
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
@@ -35,12 +34,24 @@ export class ErrorLoggingFilter implements ExceptionFilter {
       userId = request.user.id;
     }
 
+    const isAggregateError = exception instanceof AggregateError;
+    if (isAggregateError) {
+      exception.errors.forEach((error) => {
+        logger.error('Aggregate error', String(error));
+      });
+    } else {
+      logger.error('Error details', exception.stack || exception.message);
+    }
+
     if (this.configService.get('node_env') === 'dev') {
       const errorEntity = this.errorRepository.create({
         code: exception.statusCode
           ? String(exception.statusCode)
           : 'UNKNOWN_ERROR',
         message: exception.message || 'An unexpected error occurred',
+        stack: isAggregateError
+          ? exception.errors.map((err) => String(err)).join('\n')
+          : exception.stack,
         url: request.url,
         body: request.body ? JSON.stringify(request.body) : null,
         user: userId ? { id: userId } : null,
@@ -49,21 +60,12 @@ export class ErrorLoggingFilter implements ExceptionFilter {
       await this.errorRepository.save(errorEntity);
     }
 
-    if (exception instanceof CustomRcpException) {
-      const status = exception.statusCode || 500;
-      response.status(status).json({
-        statusCode: status,
-        message: exception.message,
-        timestamp: new Date().toISOString(),
-        path: request.url,
-      });
-    } else {
-      response.status(500).json({
-        statusCode: 500,
-        message: 'Internal Server Error',
-        timestamp: new Date().toISOString(),
-        path: request.url,
-      });
-    }
+    const status = exception.statusCode || 500;
+    response.status(status).json({
+      statusCode: status,
+      message: exception.message,
+      timestamp: new Date().toISOString(),
+      path: request.url,
+    });
   }
 }
