@@ -92,6 +92,7 @@ export class ErrorLoggingFilter implements ExceptionFilter {
           break;
         default:
           url = 'Unknown URL';
+          break;
       }
 
       const errorEntity = this.errorRepository.create({
@@ -132,15 +133,7 @@ export class ErrorLoggingFilter implements ExceptionFilter {
           exception.message || 'An unexpected error occurred',
           {
             extensions: {
-              code:
-                exception.statusCode &&
-                exception.statusCode === HttpStatus.UNAUTHORIZED
-                  ? 'UNAUTHENTICATED'
-                  : exception.statusCode &&
-                      exception.statusCode === HttpStatus.FORBIDDEN
-                    ? 'FORBIDDEN'
-                    : 'INTERNAL_SERVER_ERROR',
-              originalError: exception,
+              code: exception.statusCode || HttpStatus.INTERNAL_SERVER_ERROR,
             },
           },
         );
@@ -149,6 +142,8 @@ export class ErrorLoggingFilter implements ExceptionFilter {
           message: exception.message || 'An unexpected error occurred',
           code: exception.statusCode || HttpStatus.INTERNAL_SERVER_ERROR,
         });
+      default:
+        return;
     }
   }
 }

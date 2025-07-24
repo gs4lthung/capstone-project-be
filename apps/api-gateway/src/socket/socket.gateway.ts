@@ -1,12 +1,5 @@
-import { CustomRcpException } from '@app/shared/exceptions/custom-rcp.exception';
+import { Logger, UseFilters, UseGuards } from '@nestjs/common';
 import {
-  Inject,
-  Logger,
-  UnauthorizedException,
-  UseFilters,
-} from '@nestjs/common';
-import {
-  BaseWsExceptionFilter,
   OnGatewayConnection,
   OnGatewayDisconnect,
   SubscribeMessage,
@@ -16,8 +9,11 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { ErrorLoggingFilter } from '../error/error.filter';
+import { AuthGuard } from '../guards/auth.guard';
 
-@WebSocketGateway()
+@WebSocketGateway({
+  namespace: '/ws',
+})
 @UseFilters(ErrorLoggingFilter)
 export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer() server: Server;
@@ -33,6 +29,7 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('message')
+  @UseGuards(AuthGuard)
   handleMessage(client: Socket, payload: any): void {
     throw new WsException('This is a custom WebSocket exception');
   }

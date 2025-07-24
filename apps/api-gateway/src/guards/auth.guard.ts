@@ -12,7 +12,6 @@ import {
 import { GqlExecutionContext } from '@nestjs/graphql';
 import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
-import { GraphQLError } from 'graphql';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -33,6 +32,9 @@ export class AuthGuard implements CanActivate {
           const ctx = GqlExecutionContext.create(context);
           request = ctx.getContext().req;
           break;
+        case ProtocolEnum.WS:
+          request = context.switchToWs().getClient<Request>();
+          break;
         default:
           throw new CustomRcpException(
             'Unsupported context type',
@@ -40,19 +42,24 @@ export class AuthGuard implements CanActivate {
           );
       }
 
-      const token = this.extractTokenFromHeader(request);
+      let token = '';
+      switch (contextType) {
+        case ProtocolEnum.HTTP:
+        case ProtocolEnum.GRAPHQL:
+          token = this.extractTokenFromHeader(request);
+          break;
+        case ProtocolEnum.WS:
+          token = request.handshake.query.accessToken;
+          break;
+        default:
+          token = this.extractTokenFromHeader(request);
+          break;
+      }
       if (!token) {
-        if (context.getType() === 'http')
-          throw new CustomRcpException(
-            'Authorization token is missing',
-            HttpStatus.UNAUTHORIZED,
-          );
-        else
-          throw new GraphQLError('Authorization token is missing', {
-            extensions: {
-              code: 'UNAUTHENTICATED',
-            },
-          });
+        throw new CustomRcpException(
+          'Authorization token is missing',
+          HttpStatus.UNAUTHORIZED,
+        );
       }
 
       const payload: JwtPayloadDto = await this.jwtService.verifyAsync(token, {
