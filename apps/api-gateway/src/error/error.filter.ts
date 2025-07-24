@@ -14,6 +14,8 @@ import { ConfigService } from '@app/config';
 import { CustomApiRequest } from '@app/shared/requests/custom-api.request';
 import { GqlArgumentsHost } from '@nestjs/graphql';
 import { GraphQLError } from 'graphql';
+import { ContextUtils } from '@app/shared/utils/context.util';
+import { ProtocolEnum } from '@app/shared/enums/protocol.enum';
 
 @Catch()
 export class ErrorLoggingFilter implements ExceptionFilter {
@@ -27,17 +29,21 @@ export class ErrorLoggingFilter implements ExceptionFilter {
   async catch(exception: any, host: ArgumentsHost) {
     const logger = new Logger(ErrorLoggingFilter.name);
 
+    const contextType = ContextUtils.getRequestContextType(host.getType());
+
     let response: Response;
     let request: CustomApiRequest;
 
-    if (host.getType() === 'http') {
-      const ctx = host.switchToHttp();
-      response = ctx.getResponse<Response>();
-      request = ctx.getRequest<CustomApiRequest>();
-    } else {
-      const ctx = GqlArgumentsHost.create(host);
-      response = ctx.getContext().res;
-      request = ctx.getContext().req;
+    switch (contextType) {
+      case ProtocolEnum.HTTP:
+        const ctx = host.switchToHttp();
+        response = ctx.getResponse<Response>();
+        request = ctx.getRequest<CustomApiRequest>();
+        break;
+      case ProtocolEnum.GRAPHQL:
+        const gqlCtx = GqlArgumentsHost.create(host);
+        response = gqlCtx.getContext().res;
+        request = gqlCtx.getContext().req;
     }
 
     let userId: number | null = null;
@@ -55,15 +61,28 @@ export class ErrorLoggingFilter implements ExceptionFilter {
     }
 
     if (this.configService.get('node_env') === 'dev') {
+      let url = '';
+      switch (contextType) {
+        case ProtocolEnum.HTTP:
+          url = request.url;
+          break;
+        case ProtocolEnum.GRAPHQL:
+          url = '/graphql';
+          break;
+      }
+
       const errorEntity = this.errorRepository.create({
         code: exception.statusCode
           ? String(exception.statusCode)
           : 'UNKNOWN_ERROR',
         message: exception.message || 'An unexpected error occurred',
         stack: isAggregateError
-          ? exception.errors.map((err) => String(err)).join('\n')
-          : exception.stack,
-        url: request.url,
+          ? exception.errors
+              .map((err) => String(err))
+              .join('\n')
+              ?.slice(0, 5000)
+          : exception.stack?.slice(0, 5000),
+        url: url,
         body: request.body ? JSON.stringify(request.body) : null,
         user: userId ? { id: userId } : null,
       });
@@ -71,31 +90,34 @@ export class ErrorLoggingFilter implements ExceptionFilter {
       await this.errorRepository.save(errorEntity);
     }
 
-    if (host.getType() === 'http') {
-      const status = exception.statusCode || HttpStatus.INTERNAL_SERVER_ERROR;
-      response.status(status).json({
-        statusCode: status,
-        message: exception.message || 'An unexpected error occurred',
-        timestamp: new Date().toISOString(),
-        path: request.url,
-      });
-    } else {
-      throw new GraphQLError(
-        exception.message || 'An unexpected error occurred',
-        {
-          extensions: {
-            code:
-              exception.statusCode &&
-              exception.statusCode === HttpStatus.UNAUTHORIZED
-                ? 'UNAUTHENTICATED'
-                : exception.statusCode &&
-                    exception.statusCode === HttpStatus.FORBIDDEN
-                  ? 'FORBIDDEN'
-                  : 'INTERNAL_SERVER_ERROR',
-            originalError: exception,
+    switch (contextType) {
+      case ProtocolEnum.HTTP:
+        const status = exception.statusCode || HttpStatus.INTERNAL_SERVER_ERROR;
+        response.status(status).json({
+          statusCode: status,
+          message: exception.message || 'An unexpected error occurred',
+          timestamp: new Date().toISOString(),
+          path: request.url,
+        });
+        break;
+      case ProtocolEnum.GRAPHQL:
+        throw new GraphQLError(
+          exception.message || 'An unexpected error occurred',
+          {
+            extensions: {
+              code:
+                exception.statusCode &&
+                exception.statusCode === HttpStatus.UNAUTHORIZED
+                  ? 'UNAUTHENTICATED'
+                  : exception.statusCode &&
+                      exception.statusCode === HttpStatus.FORBIDDEN
+                    ? 'FORBIDDEN'
+                    : 'INTERNAL_SERVER_ERROR',
+              originalError: exception,
+            },
           },
-        },
-      );
+        );
+        break;
     }
   }
 }
