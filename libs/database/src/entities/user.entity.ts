@@ -8,16 +8,21 @@ import {
 } from 'typeorm';
 import { Error } from './error.entity';
 import { Role } from './role.entity';
+import { Field, ObjectType } from '@nestjs/graphql';
 
 @Entity('users')
+@ObjectType()
 export class User {
   @PrimaryGeneratedColumn()
+  @Field(() => Number)
   id: number;
 
   @Column({ type: 'varchar', length: 50 })
+  @Field(() => String)
   fullName: string;
 
   @Column({ type: 'varchar', length: 100, unique: true })
+  @Field(() => String)
   email: string;
 
   @Column({ type: 'varchar', length: 255 })

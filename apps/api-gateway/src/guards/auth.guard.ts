@@ -7,6 +7,7 @@ import {
   HttpStatus,
   Injectable,
 } from '@nestjs/common';
+import { GqlExecutionContext } from '@nestjs/graphql';
 import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
 
@@ -18,16 +19,23 @@ export class AuthGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest();
-    const token = this.extractTokenFromHeader(request);
-    if (!token) {
-      throw new CustomRcpException(
-        'Authorization token is missing',
-        HttpStatus.UNAUTHORIZED,
-      );
-    }
-
     try {
+      let request;
+      if (context.getType() === 'http') {
+        request = context.switchToHttp().getRequest();
+      } else {
+        const ctx = GqlExecutionContext.create(context);
+        request = ctx.getContext().req;
+      }
+
+      const token = this.extractTokenFromHeader(request);
+      if (!token) {
+        throw new CustomRcpException(
+          'Authorization token is missing',
+          HttpStatus.UNAUTHORIZED,
+        );
+      }
+
       const payload: JwtPayloadDto = await this.jwtService.verifyAsync(token, {
         secret: this.configService.get('jwt').secret,
       });

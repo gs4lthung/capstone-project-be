@@ -1,8 +1,8 @@
 import { ConfigService } from '@app/config';
-import { User } from '@app/database/entities/user.entity';
 import { LoginRequestDto } from '@app/shared/dtos/auth/login.request.dto';
 import { LoginResponseDto } from '@app/shared/dtos/auth/login.response.dto';
 import { RegisterRequestDto } from '@app/shared/dtos/auth/register.request.dto';
+import { UserResponseDto } from '@app/shared/dtos/users/user.response.dto';
 import { CustomApiResponse } from '@app/shared/responses/custom-api.response';
 import { Inject, Injectable } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
@@ -42,7 +42,7 @@ export class AppService {
 
   findAllUsers() {
     const pattern = { cmd: 'findAllUsers' };
-    return this.userService.send<CustomApiResponse<User[]>>(pattern, {}).pipe(
+    return this.userService.send<UserResponseDto[]>(pattern, {}).pipe(
       map((response) => {
         return response;
       }),
@@ -53,7 +53,7 @@ export class AppService {
     const pattern = { cmd: 'findUserById' };
     const payload = id;
     return this.userService
-      .send<CustomApiResponse<User>>(pattern, payload)
+      .send<CustomApiResponse<UserResponseDto>>(pattern, payload)
       .pipe(
         map((response) => {
           return response;

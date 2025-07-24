@@ -1,12 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  HttpCode,
-  HttpStatus,
-  Param,
-  Post,
-} from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import { AppService } from './app.service';
 import { RegisterRequestDto } from '@app/shared/dtos/auth/register.request.dto';
 import { LoginRequestDto } from '@app/shared/dtos/auth/login.request.dto';
@@ -44,33 +36,5 @@ export class AppController {
   })
   async register(@Body() data: RegisterRequestDto) {
     return this.appService.register(data);
-  }
-
-  @Get('users')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({
-    summary: 'Get All Users',
-    description: 'Retrieve a list of all users',
-  })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Users retrieved successfully',
-  })
-  async findAllUsers() {
-    return this.appService.findAllUsers();
-  }
-
-  @Get('users/:id')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({
-    summary: 'Get User by ID',
-    description: 'Retrieve a user by their unique ID',
-  })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'User retrieved successfully',
-  })
-  async findUserById(@Param('id') id: number) {
-    return this.appService.findUserById(id);
   }
 }

@@ -8,12 +8,26 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { SocketGateway } from './socket/socket.gateway';
 import { ErrorModule } from './error/error.module';
 import { JwtService } from '@nestjs/jwt';
+import { GraphQLModule } from '@nestjs/graphql';
+import { AppResolver } from './app.resolver';
+import { ApolloDriver } from '@nestjs/apollo';
 
 @Module({
   imports: [
     ConfigModule,
     DatabaseModule,
     ErrorModule,
+    GraphQLModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      driver: ApolloDriver,
+      useFactory: async (configService: ConfigService) => ({
+        autoSchemaFile: true,
+        context: ({ req }) => ({ headers: req.headers }),
+        playground: configService.get('graphql').playground,
+        introspection: configService.get('graphql').introspection,
+      }),
+    }),
     ClientsModule.registerAsync([
       {
         imports: [ConfigModule],
@@ -54,6 +68,12 @@ import { JwtService } from '@nestjs/jwt';
     }),
   ],
   controllers: [AppController],
-  providers: [AppService, SocketGateway, ConfigService, JwtService],
+  providers: [
+    AppService,
+    AppResolver,
+    SocketGateway,
+    ConfigService,
+    JwtService,
+  ],
 })
 export class AppModule {}

@@ -31,6 +31,10 @@ interface Config {
     time?: number;
   };
   password_salt_rounds?: number;
+  graphql?: {
+    playground?: boolean;
+    introspection?: boolean;
+  };
 }
 
 @Injectable()
@@ -71,6 +75,13 @@ export class ConfigService {
       password_salt_rounds: Number(
         this.nestConfigService.get('PASSWORD_SALT_ROUNDS', 10),
       ),
+      graphql: {
+        playground: this.nestConfigService.get('GRAPHQL_PLAYGROUND', true),
+        introspection: this.nestConfigService.get(
+          'GRAPHQL_INTROSPECTION',
+          true,
+        ),
+      },
     };
   }
 
