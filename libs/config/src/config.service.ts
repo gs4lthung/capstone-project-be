@@ -39,6 +39,10 @@ interface Config {
     playground?: boolean;
     introspection?: boolean;
   };
+  rabbitmq?: {
+    host?: string;
+    port?: number;
+  };
 }
 
 @Injectable()
@@ -89,6 +93,10 @@ export class ConfigService {
           'GRAPHQL_INTROSPECTION',
           true,
         ),
+      },
+      rabbitmq: {
+        host: this.nestConfigService.get('RABBITMQ_HOST', 'localhost'),
+        port: Number(this.nestConfigService.get('RABBITMQ_PORT', 5672)),
       },
     };
   }

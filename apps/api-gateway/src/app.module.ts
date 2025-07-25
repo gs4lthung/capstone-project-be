@@ -56,6 +56,24 @@ import { Error } from '@app/database/entities/error.entity';
           },
         }),
       },
+      {
+        imports: [ConfigModule],
+        inject: [ConfigService],
+        name: 'PAYMENT_SERVICE',
+        useFactory: async (configService: ConfigService) => ({
+          transport: Transport.RMQ,
+          options: {
+            urls: [
+              `amqp://${configService.get('rabbitmq').host}:${configService.get('rabbitmq').port}`,
+            ],
+            queue: 'payment_queue',
+            queueOptions: {
+              durable: true,
+              autoDelete: false,
+            },
+          },
+        }),
+      },
     ]),
     ThrottlerModule.forRootAsync({
       imports: [ConfigModule],
