@@ -68,8 +68,8 @@ import { Error } from '@app/database/entities/error.entity';
             ],
             queue: 'payment_queue',
             queueOptions: {
-              durable: true,
-              autoDelete: false,
+              durable: configService.get('rabbitmq').durable,
+              autoDelete: configService.get('rabbitmq').autoDelete,
             },
           },
         }),
