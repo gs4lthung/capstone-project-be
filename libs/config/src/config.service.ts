@@ -42,6 +42,8 @@ interface Config {
   rabbitmq?: {
     host?: string;
     port?: number;
+    durable?: boolean;
+    autoDelete?: boolean;
   };
 }
 
@@ -97,6 +99,10 @@ export class ConfigService {
       rabbitmq: {
         host: this.nestConfigService.get('RABBITMQ_HOST', 'localhost'),
         port: Number(this.nestConfigService.get('RABBITMQ_PORT', 5672)),
+        durable:
+          this.nestConfigService.get('RABBITMQ_DURABLE', true) === 'true',
+        autoDelete:
+          this.nestConfigService.get('RABBITMQ_AUTO_DELETE', false) === 'true',
       },
     };
   }
