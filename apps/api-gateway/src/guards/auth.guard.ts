@@ -2,6 +2,7 @@ import { ConfigService } from '@app/config';
 import { JwtPayloadDto } from '@app/shared/dtos/auth/jwt.payload.dto';
 import { ProtocolEnum } from '@app/shared/enums/protocol.enum';
 import { CustomRcpException } from '@app/shared/exceptions/custom-rcp.exception';
+import { AuthUtils } from '@app/shared/utils/auth.util';
 import { ContextUtils } from '@app/shared/utils/context.util';
 import {
   CanActivate,
@@ -46,13 +47,13 @@ export class AuthGuard implements CanActivate {
       switch (contextType) {
         case ProtocolEnum.HTTP:
         case ProtocolEnum.GRAPHQL:
-          token = this.extractTokenFromHeader(request);
+          token = AuthUtils.extractTokenFromHeader(request);
           break;
         case ProtocolEnum.WS:
           token = request.handshake.query.accessToken;
           break;
         default:
-          token = this.extractTokenFromHeader(request);
+          token = AuthUtils.extractTokenFromHeader(request);
           break;
       }
       if (!token) {
@@ -71,10 +72,5 @@ export class AuthGuard implements CanActivate {
       throw new CustomRcpException('Invalid token', HttpStatus.UNAUTHORIZED);
     }
     return true;
-  }
-
-  private extractTokenFromHeader(request: Request): string | undefined {
-    const [type, token] = request.headers.authorization?.split(' ') ?? [];
-    return type === 'Bearer' ? token : undefined;
   }
 }
