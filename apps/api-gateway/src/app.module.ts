@@ -14,12 +14,13 @@ import { ApolloDriver } from '@nestjs/apollo';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Error } from '@app/database/entities/error.entity';
 import { LoggerMiddleware } from './middlewares/logger.middleware';
+import { User } from '@app/database/entities/user.entity';
 
 @Module({
   imports: [
     ConfigModule,
     DatabaseModule,
-    TypeOrmModule.forFeature([Error]),
+    TypeOrmModule.forFeature([Error, User]),
     ErrorModule,
     GraphQLModule.forRootAsync({
       imports: [ConfigModule],

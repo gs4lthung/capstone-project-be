@@ -1,7 +1,8 @@
 import { ConfigService } from '@app/config';
+import { User } from '@app/database/entities/user.entity';
 import { JwtPayloadDto } from '@app/shared/dtos/auth/jwt.payload.dto';
 import { ProtocolEnum } from '@app/shared/enums/protocol.enum';
-import { CustomRcpException } from '@app/shared/exceptions/custom-rcp.exception';
+import { CustomRpcException } from '@app/shared/exceptions/custom-rpc.exception';
 import { AuthUtils } from '@app/shared/utils/auth.util';
 import { ContextUtils } from '@app/shared/utils/context.util';
 import {
@@ -12,11 +13,14 @@ import {
 } from '@nestjs/common';
 import { GqlExecutionContext } from '@nestjs/graphql';
 import { JwtService } from '@nestjs/jwt';
+import { InjectRepository } from '@nestjs/typeorm';
 import { Request } from 'express';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
   constructor(
+    @InjectRepository(User) private readonly userRepository: Repository<User>,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
   ) {}
@@ -37,9 +41,10 @@ export class AuthGuard implements CanActivate {
           request = context.switchToWs().getClient<Request>();
           break;
         default:
-          throw new CustomRcpException(
+          throw new CustomRpcException(
             'Unsupported context type',
             HttpStatus.BAD_REQUEST,
+            'Error in AuthGuard: Unsupported context type',
           );
       }
 
@@ -57,7 +62,7 @@ export class AuthGuard implements CanActivate {
           break;
       }
       if (!token) {
-        throw new CustomRcpException(
+        throw new CustomRpcException(
           'Authorization token is missing',
           HttpStatus.UNAUTHORIZED,
         );
@@ -67,9 +72,19 @@ export class AuthGuard implements CanActivate {
         secret: this.configService.get('jwt').secret,
       });
 
+      const isUserExists = await this.userRepository.findOne({
+        where: { id: payload.id, isActive: true },
+      });
+      if (!isUserExists) {
+        throw new CustomRpcException(
+          'User not found or inactive',
+          HttpStatus.UNAUTHORIZED,
+        );
+      }
+
       request.user = { id: payload.id };
     } catch {
-      throw new CustomRcpException('Invalid token', HttpStatus.UNAUTHORIZED);
+      throw new CustomRpcException('Invalid token', HttpStatus.UNAUTHORIZED);
     }
     return true;
   }

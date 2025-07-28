@@ -1,7 +1,8 @@
 import { User } from '@app/database/entities/user.entity';
 import { UserResponseDto } from '@app/shared/dtos/users/user.response.dto';
-import { CustomRcpException } from '@app/shared/exceptions/custom-rcp.exception';
+import { CustomRpcException } from '@app/shared/exceptions/custom-rpc.exception';
 import { CustomApiResponse } from '@app/shared/responses/custom-api.response';
+import { ExceptionUtils } from '@app/shared/utils/exception.util';
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -20,14 +21,7 @@ export class UserServiceService {
           new UserResponseDto(user.id, user.fullName, user.email, user.role),
       );
     } catch (error) {
-      if (error instanceof CustomRcpException) {
-        throw error;
-      }
-      throw new CustomRcpException(
-        error.message,
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        error.stack,
-      );
+      throw ExceptionUtils.wrapAsRpcException(error);
     }
   }
 
@@ -39,7 +33,7 @@ export class UserServiceService {
       });
 
       if (!user)
-        throw new CustomRcpException('User not found', HttpStatus.NOT_FOUND);
+        throw new CustomRpcException('User not found', HttpStatus.NOT_FOUND);
 
       return new CustomApiResponse<UserResponseDto>(
         HttpStatus.OK,
@@ -47,14 +41,7 @@ export class UserServiceService {
         new UserResponseDto(user.id, user.fullName, user.email, user.role),
       );
     } catch (error) {
-      if (error instanceof CustomRcpException) {
-        throw error;
-      }
-      throw new CustomRcpException(
-        error.message,
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        error.stack,
-      );
+      throw ExceptionUtils.wrapAsRpcException(error);
     }
   }
 }

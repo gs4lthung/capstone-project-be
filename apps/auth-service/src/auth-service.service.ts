@@ -4,7 +4,7 @@ import { HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
-import { CustomRcpException } from '@app/shared/exceptions/custom-rcp.exception';
+import { CustomRpcException } from '@app/shared/exceptions/custom-rpc.exception';
 import { CustomApiResponse } from '@app/shared/responses/custom-api.response';
 import { RegisterRequestDto } from '@app/shared/dtos/auth/register.request.dto';
 import { LoginRequestDto } from '@app/shared/dtos/auth/login.request.dto';
@@ -13,6 +13,7 @@ import { JwtService } from '@nestjs/jwt';
 import { JwtPayloadDto } from '@app/shared/dtos/auth/jwt.payload.dto';
 import { RoleEnum } from '@app/shared/enums/role.enum';
 import { Role } from '@app/database/entities/role.entity';
+import { ExceptionUtils } from '@app/shared/utils/exception.util';
 
 @Injectable()
 export class AuthServiceService {
@@ -28,7 +29,7 @@ export class AuthServiceService {
   ): Promise<CustomApiResponse<LoginResponseDto>> {
     try {
       if (!data)
-        throw new CustomRcpException(
+        throw new CustomRpcException(
           'Invalid login data',
           HttpStatus.BAD_REQUEST,
         );
@@ -37,14 +38,14 @@ export class AuthServiceService {
         where: { email: data.email },
       });
       if (!user)
-        throw new CustomRcpException('User not found', HttpStatus.NOT_FOUND);
+        throw new CustomRpcException('User not found', HttpStatus.NOT_FOUND);
 
       const isPasswordValid = await bcrypt.compare(
         data.password,
         user.password,
       );
       if (!isPasswordValid)
-        throw new CustomRcpException(
+        throw new CustomRpcException(
           'Invalid password',
           HttpStatus.UNAUTHORIZED,
         );
@@ -66,21 +67,14 @@ export class AuthServiceService {
         },
       );
     } catch (error) {
-      if (error instanceof CustomRcpException) {
-        throw error;
-      }
-      throw new CustomRcpException(
-        error.message || 'Internal server error',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        error.stack,
-      );
+      throw ExceptionUtils.wrapAsRpcException(error);
     }
   }
 
   async register(data: RegisterRequestDto): Promise<CustomApiResponse<void>> {
     try {
       if (!data)
-        throw new CustomRcpException(
+        throw new CustomRpcException(
           'Invalid registration data',
           HttpStatus.BAD_REQUEST,
         );
@@ -89,7 +83,7 @@ export class AuthServiceService {
         where: { email: data.email },
       });
       if (isEmailExists)
-        throw new CustomRcpException(
+        throw new CustomRpcException(
           'Email already exists',
           HttpStatus.CONFLICT,
         );
@@ -106,7 +100,10 @@ export class AuthServiceService {
       });
 
       if (!role)
-        throw new CustomRcpException('Role not found', HttpStatus.NOT_FOUND);
+        throw new CustomRpcException(
+          'Role not found',
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
 
       const user = this.userRepository.create({
         fullName: data.fullName,
@@ -124,14 +121,7 @@ export class AuthServiceService {
         'Registration successful',
       );
     } catch (error) {
-      if (error instanceof CustomRcpException) {
-        throw error;
-      }
-      throw new CustomRcpException(
-        error.message || 'Internal server error',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        error.stack,
-      );
+      throw ExceptionUtils.wrapAsRpcException(error);
     }
   }
 }
