@@ -9,6 +9,7 @@ import {
 import { Error } from './error.entity';
 import { Role } from './role.entity';
 import { Field, ObjectType } from '@nestjs/graphql';
+import { FcmToken } from './fcmToken.entity';
 
 @Entity('users')
 @ObjectType()
@@ -47,4 +48,10 @@ export class User {
   @ManyToOne(() => Role, (role) => role.users, { nullable: true })
   @JoinColumn({ name: 'roleId' })
   role: Role;
+
+  @OneToMany(() => FcmToken, (fcmToken) => fcmToken.user, {
+    cascade: true,
+    eager: true,
+  })
+  fcmTokens: FcmToken[];
 }

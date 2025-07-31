@@ -45,6 +45,18 @@ interface Config {
     durable?: boolean;
     autoDelete?: boolean;
   };
+  firebase?: {
+    type?: string;
+    project_id?: string;
+    private_key_id?: string;
+    private_key?: string;
+    client_email?: string;
+    client_id?: string;
+    auth_uri?: string;
+    token_uri?: string;
+    auth_provider_x509_cert_url?: string;
+    universe_domain?: string;
+  };
 }
 
 @Injectable()
@@ -103,6 +115,27 @@ export class ConfigService {
           this.nestConfigService.get('RABBITMQ_DURABLE', true) === 'true',
         autoDelete:
           this.nestConfigService.get('RABBITMQ_AUTO_DELETE', false) === 'true',
+      },
+      firebase: {
+        type: this.nestConfigService.get('FIREBASE_TYPE', 'service_account'),
+        project_id: this.nestConfigService.get('FIREBASE_PROJECT_ID', ''),
+        private_key_id: this.nestConfigService.get(
+          'FIREBASE_PRIVATE_KEY_ID',
+          '',
+        ),
+        private_key: this.nestConfigService.get('FIREBASE_PRIVATE_KEY', ''),
+        client_email: this.nestConfigService.get('FIREBASE_CLIENT_EMAIL', ''),
+        client_id: this.nestConfigService.get('FIREBASE_CLIENT_ID', ''),
+        auth_uri: this.nestConfigService.get('FIREBASE_AUTH_URI', ''),
+        token_uri: this.nestConfigService.get('FIREBASE_TOKEN_URI', ''),
+        auth_provider_x509_cert_url: this.nestConfigService.get(
+          'FIREBASE_AUTH_PROVIDER_X509_CERT_URL',
+          '',
+        ),
+        universe_domain: this.nestConfigService.get(
+          'FIREBASE_UNIVERSE_DOMAIN',
+          '',
+        ),
       },
     };
   }

@@ -41,6 +41,12 @@
       ],
       "@app/websocket/*": [
         "libs/websocket/src/*"
+      ],
+      "@app/firebase": [
+        "libs/firebase/src"
+      ],
+      "@app/firebase/*": [
+        "libs/firebase/src/*"
       ]
     }
   }

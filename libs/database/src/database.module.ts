@@ -4,6 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
 import { Error } from './entities/error.entity';
 import { Role } from './entities/role.entity';
+import { FcmToken } from './entities/fcmToken.entity';
 
 @Module({
   imports: [
@@ -17,7 +18,7 @@ import { Role } from './entities/role.entity';
         username: configService.get('database').username,
         password: configService.get('database').password,
         database: configService.get('database').database,
-        entities: [User, Role, Error],
+        entities: [User, Role, Error, FcmToken],
         logging: configService.get('node_env') === 'dev',
         autoLoadEntities: true,
         synchronize: configService.get('node_env') === 'dev',

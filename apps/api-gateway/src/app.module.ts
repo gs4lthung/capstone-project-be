@@ -15,6 +15,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Error } from '@app/database/entities/error.entity';
 import { LoggerMiddleware } from './middlewares/logger.middleware';
 import { User } from '@app/database/entities/user.entity';
+import { FirebaseModule } from '@app/firebase';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { User } from '@app/database/entities/user.entity';
     DatabaseModule,
     TypeOrmModule.forFeature([Error, User]),
     ErrorModule,
+    FirebaseModule,
     GraphQLModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -69,6 +71,24 @@ import { User } from '@app/database/entities/user.entity';
               `amqp://${configService.get('rabbitmq').host}:${configService.get('rabbitmq').port}`,
             ],
             queue: 'payment_queue',
+            queueOptions: {
+              durable: configService.get('rabbitmq').durable,
+              autoDelete: configService.get('rabbitmq').autoDelete,
+            },
+          },
+        }),
+      },
+      {
+        imports: [ConfigModule],
+        inject: [ConfigService],
+        name: 'NOTIFICATION_SERVICE',
+        useFactory: async (configService: ConfigService) => ({
+          transport: Transport.RMQ,
+          options: {
+            urls: [
+              `amqp://${configService.get('rabbitmq').host}:${configService.get('rabbitmq').port}`,
+            ],
+            queue: 'notification_queue',
             queueOptions: {
               durable: configService.get('rabbitmq').durable,
               autoDelete: configService.get('rabbitmq').autoDelete,

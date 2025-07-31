@@ -1,9 +1,18 @@
-import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  HttpCode,
+  HttpStatus,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { AppService } from './app.service';
 import { RegisterRequestDto } from '@app/shared/dtos/auth/register.request.dto';
 import { LoginRequestDto } from '@app/shared/dtos/auth/login.request.dto';
 import { LoginResponseDto } from '@app/shared/dtos/auth/login.response.dto';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { RegisterFcmTokenDto } from '@app/shared/dtos/notifications/register-fcm-token.dto';
+import { AuthGuard } from './guards/auth.guard';
 
 @Controller()
 export class AppController {
@@ -36,5 +45,24 @@ export class AppController {
   })
   async register(@Body() data: RegisterRequestDto) {
     return this.appService.register(data);
+  }
+
+  @Post('notifications/register-fcm-token')
+  @HttpCode(HttpStatus.CREATED)
+  @UseGuards(AuthGuard)
+  @ApiOperation({
+    summary: 'Register FCM Token',
+    description:
+      'Register a Firebase Cloud Messaging (FCM) token for push notifications',
+  })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: 'FCM token registered successfully',
+  })
+  async registerFcmToken(
+    @Body()
+    data: RegisterFcmTokenDto,
+  ) {
+    return this.appService.registerFcmToken(data);
   }
 }

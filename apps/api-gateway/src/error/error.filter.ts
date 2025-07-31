@@ -75,7 +75,10 @@ export class ErrorLoggingFilter implements ExceptionFilter {
         logger.error('Aggregate error', String(error));
       });
     } else {
-      logger.error('Error details', exception.stack || exception.message);
+      logger.error(
+        'Error details',
+        exception || exception.stack || exception.message,
+      );
     }
 
     if (isDevelopment) {
