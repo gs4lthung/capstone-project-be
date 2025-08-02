@@ -4,6 +4,7 @@ import { ExceptionUtils } from '@app/shared/utils/exception.util';
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { userServiceConfig } from './user-service.config';
 
 @Injectable()
 export class UserServiceService {
@@ -14,7 +15,8 @@ export class UserServiceService {
   async findAll(): Promise<User[]> {
     try {
       const users = await this.userRepository.find({
-        relations: ['role', 'fcmTokens'],
+        where: { isActive: true },
+        relations: userServiceConfig.baseUserRelations,
       });
       return users;
     } catch (error) {
@@ -25,13 +27,12 @@ export class UserServiceService {
   async findOne(id: number): Promise<User> {
     try {
       const user = await this.userRepository.findOne({
-        where: { id: id },
-        relations: ['role', 'fcmTokens'],
+        where: { id: id, isActive: true },
+        relations: userServiceConfig.baseUserRelations,
       });
-      console.log('User found:', user);
 
       if (!user)
-        throw new CustomRpcException('User not found', HttpStatus.NOT_FOUND);
+        throw new CustomRpcException('User not  found', HttpStatus.NOT_FOUND);
 
       return user;
     } catch (error) {
