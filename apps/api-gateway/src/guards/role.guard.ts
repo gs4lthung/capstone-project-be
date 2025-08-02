@@ -1,9 +1,6 @@
-import { ConfigService } from '@app/config';
 import { User } from '@app/database/entities/user.entity';
-import { JwtPayloadDto } from '@app/shared/dtos/auth/jwt.payload.dto';
 import { ProtocolEnum } from '@app/shared/enums/protocol.enum';
 import { CustomRpcException } from '@app/shared/exceptions/custom-rpc.exception';
-import { AuthUtils } from '@app/shared/utils/auth.util';
 import { ContextUtils } from '@app/shared/utils/context.util';
 import { ExceptionUtils } from '@app/shared/utils/exception.util';
 import {
@@ -12,22 +9,31 @@ import {
   HttpStatus,
   Injectable,
 } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
 import { GqlExecutionContext } from '@nestjs/graphql';
-import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Request } from 'express';
 import { Repository } from 'typeorm';
 
 @Injectable()
-export class AuthGuard implements CanActivate {
+export class RoleGuard implements CanActivate {
+  private requiredRoles: string[];
+
   constructor(
     @InjectRepository(User) private readonly userRepository: Repository<User>,
-    private readonly jwtService: JwtService,
-    private readonly configService: ConfigService,
+    private readonly reflector: Reflector,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     try {
+      this.requiredRoles = this.reflector.get<string[]>(
+        'roles',
+        context.getHandler(),
+      );
+
+      if (!this.requiredRoles || this.requiredRoles.length === 0) {
+        return true;
+      }
+
       let request;
       const contextType = ContextUtils.getRequestContextType(context.getType());
       switch (contextType) {
@@ -49,44 +55,20 @@ export class AuthGuard implements CanActivate {
           );
       }
 
-      let token = '';
-      switch (contextType) {
-        case ProtocolEnum.HTTP:
-        case ProtocolEnum.GRAPHQL:
-          token = AuthUtils.extractTokenFromHeader(request);
-          break;
-        case ProtocolEnum.WS:
-          token = request.handshake.query.accessToken;
-          break;
-        default:
-          token = AuthUtils.extractTokenFromHeader(request);
-          break;
-      }
-      if (!token) {
-        throw new CustomRpcException(
-          'Authorization token is missing',
-          HttpStatus.UNAUTHORIZED,
-        );
-      }
+      const userId = request.user?.id || request.user?.['id'];
 
-      const payload: JwtPayloadDto = await this.jwtService.verifyAsync(token, {
-        secret: this.configService.get('jwt').secret,
+      const user = await this.userRepository.findOne({
+        where: { id: userId },
+        relations: ['role'],
       });
 
-      const isUserExists = await this.userRepository.findOne({
-        where: { id: payload.id, isActive: true },
-      });
-      if (!isUserExists) {
-        throw new CustomRpcException(
-          'User not found or inactive',
-          HttpStatus.UNAUTHORIZED,
-        );
+      if (!user || !user.role) {
+        return false;
       }
 
-      request.user = { id: payload.id };
+      return this.requiredRoles.includes(user.role.name);
     } catch (error) {
       throw ExceptionUtils.wrapAsRpcException(error);
     }
-    return true;
   }
 }
