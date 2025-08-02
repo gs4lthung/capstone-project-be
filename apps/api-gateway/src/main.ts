@@ -50,9 +50,14 @@ async function bootstrap() {
       `API documentation for the ${configService.get('app').name}`,
     )
     .setVersion(configService.get('app').version)
+    .addBearerAuth()
     .build();
   const documentFactory = () => SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api-docs', app, documentFactory());
+  SwaggerModule.setup('api-docs', app, documentFactory(), {
+    swaggerOptions: {
+      persistAuthorization: true,
+    },
+  });
 
   await app.listen(configService.get('api_gateway').port);
 }

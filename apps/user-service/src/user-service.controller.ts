@@ -1,20 +1,19 @@
 import { Controller } from '@nestjs/common';
 import { UserServiceService } from './user-service.service';
 import { MessagePattern } from '@nestjs/microservices';
-import { CustomApiResponse } from '@app/shared/responses/custom-api.response';
-import { UserResponseDto } from '@app/shared/dtos/users/user.response.dto';
+import { User } from '@app/database/entities/user.entity';
 
 @Controller()
 export class UserServiceController {
   constructor(private readonly userServiceService: UserServiceService) {}
 
   @MessagePattern({ cmd: 'findAllUsers' })
-  async findAll(): Promise<UserResponseDto[]> {
+  async findAll(): Promise<User[]> {
     return this.userServiceService.findAll();
   }
 
   @MessagePattern({ cmd: 'findUserById' })
-  async findOne(id: number): Promise<CustomApiResponse<UserResponseDto>> {
+  async findOne(id: number): Promise<User> {
     return this.userServiceService.findOne(id);
   }
 }

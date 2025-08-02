@@ -1,9 +1,9 @@
 import { ConfigService } from '@app/config';
+import { User } from '@app/database/entities/user.entity';
 import { LoginRequestDto } from '@app/shared/dtos/auth/login.request.dto';
 import { LoginResponseDto } from '@app/shared/dtos/auth/login.response.dto';
 import { RegisterRequestDto } from '@app/shared/dtos/auth/register.request.dto';
 import { RegisterFcmTokenDto } from '@app/shared/dtos/notifications/register-fcm-token.dto';
-import { UserResponseDto } from '@app/shared/dtos/users/user.response.dto';
 import { CustomApiRequest } from '@app/shared/requests/custom-api.request';
 import { CustomApiResponse } from '@app/shared/responses/custom-api.response';
 import { Inject, Injectable, Scope } from '@nestjs/common';
@@ -48,7 +48,7 @@ export class AppService {
 
   findAllUsers() {
     const pattern = { cmd: 'findAllUsers' };
-    return this.userService.send<UserResponseDto[]>(pattern, {}).pipe(
+    return this.userService.send<User[]>(pattern, {}).pipe(
       map((response) => {
         return response;
       }),
@@ -58,13 +58,11 @@ export class AppService {
   findUserById(id: number) {
     const pattern = { cmd: 'findUserById' };
     const payload = id;
-    return this.userService
-      .send<CustomApiResponse<UserResponseDto>>(pattern, payload)
-      .pipe(
-        map((response) => {
-          return response;
-        }),
-      );
+    return this.userService.send<User>(pattern, payload).pipe(
+      map((response) => {
+        return response;
+      }),
+    );
   }
 
   registerFcmToken(data: RegisterFcmTokenDto) {

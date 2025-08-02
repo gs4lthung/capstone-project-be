@@ -33,6 +33,9 @@ import { FirebaseModule } from '@app/firebase';
         context: ({ req }) => ({ headers: req.headers }),
         playground: configService.get('graphql').playground,
         introspection: configService.get('graphql').introspection,
+        buildSchemaOptions: {
+          dateScalarMode: 'timestamp' as const,
+        },
       }),
     }),
     ClientsModule.registerAsync([
