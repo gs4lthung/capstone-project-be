@@ -17,6 +17,8 @@ import { ExceptionUtils } from '@app/shared/utils/exception.util';
 
 @Injectable()
 export class AuthServiceService {
+  private customerRoleId: number | null = null;
+
   constructor(
     @InjectRepository(User) private readonly userRepository: Repository<User>,
     @InjectRepository(Role) private readonly roleRepository: Repository<Role>,
@@ -28,14 +30,9 @@ export class AuthServiceService {
     data: LoginRequestDto,
   ): Promise<CustomApiResponse<LoginResponseDto>> {
     try {
-      if (!data)
-        throw new CustomRpcException(
-          'Invalid login data',
-          HttpStatus.BAD_REQUEST,
-        );
-
       const user = await this.userRepository.findOne({
         where: { email: data.email },
+        select: ['id', 'fullName', 'email', 'password'],
       });
       if (!user)
         throw new CustomRpcException('User not found', HttpStatus.NOT_FOUND);
@@ -93,24 +90,14 @@ export class AuthServiceService {
         this.configService.get('password_salt_rounds'),
       );
 
-      const role = await this.roleRepository.findOne({
-        where: {
-          name: RoleEnum.CUSTOMER,
-        },
-      });
-
-      if (!role)
-        throw new CustomRpcException(
-          'Role not found',
-          HttpStatus.INTERNAL_SERVER_ERROR,
-        );
+      const roleId = await this.getCustomerRoleId();
 
       const user = this.userRepository.create({
         fullName: data.fullName,
         email: data.email,
         password: passwordHashed,
         role: {
-          id: role.id,
+          id: roleId,
         },
       });
 
@@ -123,5 +110,23 @@ export class AuthServiceService {
     } catch (error) {
       throw ExceptionUtils.wrapAsRpcException(error);
     }
+  }
+
+  private async getCustomerRoleId(): Promise<number> {
+    if (this.customerRoleId !== null) return this.customerRoleId;
+
+    const role = await this.roleRepository.findOne({
+      where: { name: RoleEnum.CUSTOMER },
+    });
+
+    if (!role) {
+      throw new CustomRpcException(
+        'Customer role not found',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+
+    this.customerRoleId = role.id;
+    return this.customerRoleId;
   }
 }
