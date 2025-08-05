@@ -1,5 +1,6 @@
 import { ConfigService } from '@app/config';
 import { User } from '@app/database/entities/user.entity';
+import { RedisService } from '@app/redis';
 import { LoginRequestDto } from '@app/shared/dtos/auth/login.request.dto';
 import { LoginResponseDto } from '@app/shared/dtos/auth/login.response.dto';
 import { RegisterRequestDto } from '@app/shared/dtos/auth/register.request.dto';
@@ -9,7 +10,7 @@ import { CustomApiResponse } from '@app/shared/responses/custom-api.response';
 import { Inject, Injectable, Scope } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { ClientProxy } from '@nestjs/microservices';
-import { map } from 'rxjs';
+import { lastValueFrom, map } from 'rxjs';
 
 @Injectable({ scope: Scope.REQUEST })
 export class AppService {
@@ -20,62 +21,73 @@ export class AppService {
     @Inject('USER_SERVICE') private readonly userService: ClientProxy,
     @Inject('NOTIFICATION_SERVICE')
     private readonly notificationService: ClientProxy,
+    private readonly redisService: RedisService,
   ) {}
 
-  login(data: LoginRequestDto) {
+  async login(data: LoginRequestDto) {
     const pattern = { cmd: 'login' };
     const payload = data;
-    return this.authService
-      .send<CustomApiResponse<LoginResponseDto>>(pattern, payload)
-      .pipe(
-        map((response) => {
-          return response;
-        }),
-      );
+
+    const response = await lastValueFrom(
+      this.authService
+        .send<CustomApiResponse<LoginResponseDto>>(pattern, payload)
+        .pipe(
+          map((response) => {
+            return response;
+          }),
+        ),
+    );
+    return response;
   }
 
-  register(data: RegisterRequestDto) {
+  async register(data: RegisterRequestDto) {
     const pattern = { cmd: 'register' };
     const payload = data;
-    return this.authService
-      .send<CustomApiResponse<void>>(pattern, payload)
-      .pipe(
-        map((response) => {
-          return response;
-        }),
-      );
-  }
 
-  findAllUsers() {
-    const pattern = { cmd: 'findAllUsers' };
-    return this.userService.send<User[]>(pattern, {}).pipe(
-      map((response) => {
-        return response;
-      }),
+    const response = await lastValueFrom(
+      this.authService.send<CustomApiResponse<void>>(pattern, payload),
     );
+    return response;
   }
 
-  findUserById(id: number) {
+  async findAllUsers() {
+    console.log('Fetching all users from cache or service');
+    const pattern = { cmd: 'findAllUsers' };
+
+    // const cacheKey = `users`;
+    // const cached = await this.redisService.get<User[]>(cacheKey);
+    // if (cached) {
+    //   console.log('Returning cached users');
+    //   return cached;
+    // }
+
+    const response = await lastValueFrom(
+      this.userService.send<User[]>(pattern, {}),
+    );
+
+    // await this.redisService.set(cacheKey, response);
+    return response;
+  }
+
+  async findUserById(id: number) {
     const pattern = { cmd: 'findUserById' };
     const payload = id;
-    return this.userService.send<User>(pattern, payload).pipe(
-      map((response) => {
-        return response;
-      }),
+
+    const response = await lastValueFrom(
+      this.userService.send<CustomApiResponse<User>>(pattern, payload),
     );
+    return response;
   }
 
-  registerFcmToken(data: RegisterFcmTokenDto) {
+  async registerFcmToken(data: RegisterFcmTokenDto) {
     const pattern = { cmd: 'registerFcmToken' };
 
     const userId = this.request.user.id;
     const payload = { userId, ...data };
-    return this.notificationService
-      .send<CustomApiResponse<void>>(pattern, payload)
-      .pipe(
-        map((response) => {
-          return response;
-        }),
-      );
+
+    const response = await lastValueFrom(
+      this.notificationService.send<CustomApiResponse<void>>(pattern, payload),
+    );
+    return response;
   }
 }

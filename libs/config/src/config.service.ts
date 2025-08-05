@@ -35,6 +35,16 @@ interface Config {
     time?: number;
   };
   password_salt_rounds?: number;
+  cache?: {
+    ttl?: number;
+    max?: number;
+  };
+  redis: {
+    username?: string;
+    password?: string;
+    host?: string;
+    port?: number;
+  };
   graphql?: {
     playground?: boolean;
     introspection?: boolean;
@@ -101,6 +111,16 @@ export class ConfigService {
       password_salt_rounds: Number(
         this.nestConfigService.get('PASSWORD_SALT_ROUNDS', 10),
       ),
+      cache: {
+        ttl: Number(this.nestConfigService.get('CACHE_TTL', 60000)),
+        max: Number(this.nestConfigService.get('CACHE_MAX', 1000)),
+      },
+      redis: {
+        username: this.nestConfigService.get('REDIS_USERNAME', 'default'),
+        password: this.nestConfigService.get('REDIS_PASSWORD', ''),
+        host: this.nestConfigService.get('REDIS_HOST', 'localhost'),
+        port: Number(this.nestConfigService.get('REDIS_PORT', 17454)),
+      },
       graphql: {
         playground: this.nestConfigService.get('GRAPHQL_PLAYGROUND', true),
         introspection: this.nestConfigService.get(

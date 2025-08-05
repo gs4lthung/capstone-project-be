@@ -27,7 +27,9 @@
   },
   "dependencies": {
     "@apollo/server": "^4.12.2",
+    "@keyv/redis": "^5.1.0",
     "@nestjs/apollo": "^13.1.0",
+    "@nestjs/cache-manager": "^3.0.1",
     "@nestjs/common": "^11.1.5",
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.1.5",
@@ -41,21 +43,23 @@
     "@nestjs/throttler": "^6.4.0",
     "@nestjs/typeorm": "^11.0.0",
     "@nestjs/websockets": "^11.1.5",
-    "firebase-admin": "^13.4.0",
-    "graphql": "^16.11.0",
-    "typeorm": "^0.3.25",
-    "rxjs": "^7.8.1",
-    "bcrypt": "^6.0.0",
-    "class-validator": "^0.14.2",
-    "class-transformer": "^0.5.1",
-    "reflect-metadata": "^0.2.0",
-    "pg": "^8.16.3",
-    "socket.io": "^4.8.1",
+    "@types/multer": "^2.0.0",
     "amqp-connection-manager": "^4.1.14",
     "amqplib": "^0.10.8",
-    "helmet": "^8.1.0",
+    "bcrypt": "^6.0.0",
+    "cache-manager": "^7.1.0",
+    "cache-manager-redis-store": "^3.0.1",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.2",
     "concurrently": "^9.2.0",
-    "@types/multer": "^2.0.0"
+    "firebase-admin": "^13.4.0",
+    "graphql": "^16.11.0",
+    "helmet": "^8.1.0",
+    "pg": "^8.16.3",
+    "reflect-metadata": "^0.2.0",
+    "rxjs": "^7.8.1",
+    "socket.io": "^4.8.1",
+    "typeorm": "^0.3.25"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.0.0",
@@ -106,7 +110,8 @@
       "^@app/database(|/.*)$": "<rootDir>/libs/database/src/$1",
       "^@app/shared(|/.*)$": "<rootDir>/libs/shared/src/$1",
       "^@app/websocket(|/.*)$": "<rootDir>/libs/websocket/src/$1",
-      "^@app/firebase(|/.*)$": "<rootDir>/libs/firebase/src/$1"
+      "^@app/firebase(|/.*)$": "<rootDir>/libs/firebase/src/$1",
+      "^@app/redis(|/.*)$": "<rootDir>/libs/redis/src/$1"
     }
   }
 }

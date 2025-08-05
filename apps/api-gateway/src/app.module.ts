@@ -16,6 +16,7 @@ import { Error } from '@app/database/entities/error.entity';
 import { LoggerMiddleware } from './middlewares/logger.middleware';
 import { User } from '@app/database/entities/user.entity';
 import { FirebaseModule } from '@app/firebase';
+import { RedisModule } from '@app/redis';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { FirebaseModule } from '@app/firebase';
     TypeOrmModule.forFeature([Error, User]),
     ErrorModule,
     FirebaseModule,
+    RedisModule,
     GraphQLModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
