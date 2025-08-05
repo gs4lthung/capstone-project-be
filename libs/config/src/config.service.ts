@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService as NestConfigService } from '@nestjs/config';
 
 interface Config {
-  node_env: string;
+  node_env: 'dev' | 'prod' | 'test';
   app: {
     name: string;
     version: string;

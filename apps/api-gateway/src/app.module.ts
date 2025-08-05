@@ -1,4 +1,4 @@
-import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ConfigModule, ConfigService } from '@app/config';
@@ -13,7 +13,6 @@ import { AppResolver } from './app.resolver';
 import { ApolloDriver } from '@nestjs/apollo';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Error } from '@app/database/entities/error.entity';
-import { LoggerMiddleware } from './middlewares/logger.middleware';
 import { User } from '@app/database/entities/user.entity';
 import { FirebaseModule } from '@app/firebase';
 import { RedisModule } from '@app/redis';
@@ -124,8 +123,4 @@ import { RedisModule } from '@app/redis';
     JwtService,
   ],
 })
-export class AppModule implements NestModule {
-  configure(consumer: MiddlewareConsumer) {
-    consumer.apply(LoggerMiddleware).forRoutes('*');
-  }
-}
+export class AppModule {}

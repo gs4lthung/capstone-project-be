@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ConfigService } from '@app/config';
+import { LoggerMiddleware } from './middlewares/logger.middleware';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -43,6 +44,9 @@ async function bootstrap() {
       transformOptions: { enableImplicitConversion: true },
     }),
   );
+
+  if (configService.get('node_env') === 'dev')
+    app.use(new LoggerMiddleware().use);
 
   const config = new DocumentBuilder()
     .setTitle(`${configService.get('app').name} API`)
