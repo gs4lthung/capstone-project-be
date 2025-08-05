@@ -14,6 +14,7 @@ import { JwtPayloadDto } from '@app/shared/dtos/auth/jwt.payload.dto';
 import { RoleEnum } from '@app/shared/enums/role.enum';
 import { Role } from '@app/database/entities/role.entity';
 import { ExceptionUtils } from '@app/shared/utils/exception.util';
+import { RedisService } from '@app/redis';
 
 @Injectable()
 export class AuthServiceService {
@@ -24,6 +25,7 @@ export class AuthServiceService {
     @InjectRepository(Role) private readonly roleRepository: Repository<Role>,
     private readonly configService: ConfigService,
     private readonly jwtService: JwtService,
+    private readonly redisService: RedisService,
   ) {}
 
   async login(
@@ -102,6 +104,8 @@ export class AuthServiceService {
       });
 
       await this.userRepository.save(user);
+
+      await this.redisService.del('users');
 
       return new CustomApiResponse<void>(
         HttpStatus.CREATED,

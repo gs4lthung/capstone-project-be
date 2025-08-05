@@ -7,10 +7,12 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from '@app/database/entities/user.entity';
 import { DatabaseModule } from '@app/database';
 import { Role } from '@app/database/entities/role.entity';
+import { RedisModule } from '@app/redis';
 
 @Module({
   imports: [
     ConfigModule,
+    RedisModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
