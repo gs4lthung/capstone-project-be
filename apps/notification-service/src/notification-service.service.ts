@@ -46,8 +46,7 @@ export class NotificationServiceService {
           platform: data.platform,
           user: user,
         });
-        await this.fcmTokenRepository.save(newToken);
-
+        if (!user.fcmTokens) user.fcmTokens = [];
         user.fcmTokens.push(newToken);
       }
       await this.userRepository.save(user);

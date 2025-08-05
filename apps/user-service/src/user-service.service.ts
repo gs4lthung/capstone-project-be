@@ -4,7 +4,6 @@ import { ExceptionUtils } from '@app/shared/utils/exception.util';
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { userServiceConfig } from './user-service.config';
 
 @Injectable()
 export class UserServiceService {
@@ -16,7 +15,6 @@ export class UserServiceService {
     try {
       const users = await this.userRepository.find({
         where: { isActive: true },
-        relations: userServiceConfig.baseUserRelations,
       });
       return users;
     } catch (error) {
@@ -28,7 +26,6 @@ export class UserServiceService {
     try {
       const user = await this.userRepository.findOne({
         where: { id: id, isActive: true },
-        relations: userServiceConfig.baseUserRelations,
       });
 
       if (!user)

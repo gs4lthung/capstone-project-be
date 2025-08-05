@@ -27,7 +27,7 @@ export class User {
   @Field(() => String)
   email: string;
 
-  @Column({ type: 'varchar', length: 255 })
+  @Column({ type: 'varchar', length: 255, select: false })
   password: string;
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
@@ -48,7 +48,7 @@ export class User {
   @OneToMany(() => Error, (error) => error.user)
   errors: Error[];
 
-  @ManyToOne(() => Role, (role) => role.users, { nullable: true })
+  @ManyToOne(() => Role, (role) => role.users, { nullable: true, eager: true })
   @JoinColumn({ name: 'roleId' })
   @Field(() => Role, { nullable: true })
   role: Role;
