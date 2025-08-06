@@ -6,6 +6,10 @@ interface Config {
   app: {
     name: string;
     version: string;
+    url: string;
+  };
+  front_end?: {
+    url?: string;
   };
   api_gateway: {
     host: string;
@@ -38,6 +42,14 @@ interface Config {
   cache?: {
     ttl?: number;
     max?: number;
+  };
+  mail?: {
+    host?: string;
+    port?: number;
+    user?: string;
+    pass?: string;
+    secure?: boolean;
+    verifyTokenExpiration?: string | number;
   };
   redis: {
     username?: string;
@@ -83,6 +95,13 @@ export class ConfigService {
       app: {
         name: this.nestConfigService.get('APP_NAME', 'Capstone Project'),
         version: this.nestConfigService.get('APP_VERSION', 'v1'),
+        url: this.nestConfigService.get('APP_URL', 'http://localhost:8386'),
+      },
+      front_end: {
+        url: this.nestConfigService.get(
+          'FRONT_END_URL',
+          'http://localhost:3000',
+        ),
       },
       node_env: this.nestConfigService.get('NODE_ENV', 'dev'),
       api_gateway: {
@@ -120,6 +139,20 @@ export class ConfigService {
       cache: {
         ttl: Number(this.nestConfigService.get('CACHE_TTL', 60000)),
         max: Number(this.nestConfigService.get('CACHE_MAX', 1000)),
+      },
+      mail: {
+        host: this.nestConfigService.get('MAIL_HOST', 'smtp.gmail.com'),
+        port: Number(this.nestConfigService.get('MAIL_PORT', 587)),
+        user: this.nestConfigService.get('MAIL_USER', 'mail@gmail.com'),
+        pass: this.nestConfigService.get(
+          'MAIL_PASSWORD',
+          'xxxx xxxx xxxx xxxx',
+        ),
+        secure: this.nestConfigService.get('MAIL_SECURE', false) === 'true',
+        verifyTokenExpiration: this.nestConfigService.get(
+          'MAIL_VERIFY_TOKEN_EXPIRATION',
+          '24h',
+        ),
       },
       redis: {
         username: this.nestConfigService.get('REDIS_USERNAME', 'default'),

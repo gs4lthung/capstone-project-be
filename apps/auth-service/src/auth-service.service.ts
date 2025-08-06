@@ -1,6 +1,6 @@
 import { ConfigService } from '@app/config';
 import { User } from '@app/database/entities/user.entity';
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
@@ -18,6 +18,8 @@ import { RedisService } from '@app/redis';
 import { AuthProviderEnum } from '@app/shared/enums/auth.enum';
 import { AuthProvider } from '@app/database/entities/auth-provider.entity';
 import { GoogleUserDto } from '@app/shared/dtos/auth/google-user.dto';
+import { ClientProxy } from '@nestjs/microservices';
+import { MailSendDto } from '@app/shared/dtos/mails/mail-send.dto';
 
 @Injectable()
 export class AuthServiceService {
@@ -28,6 +30,8 @@ export class AuthServiceService {
     @InjectRepository(Role) private readonly roleRepository: Repository<Role>,
     @InjectRepository(AuthProvider)
     private readonly authProviderRepository: Repository<AuthProvider>,
+    @Inject('MAIL_SERVICE')
+    private readonly mailService: ClientProxy,
     private readonly configService: ConfigService,
     private readonly jwtService: JwtService,
     private readonly redisService: RedisService,
@@ -75,9 +79,7 @@ export class AuthServiceService {
     }
   }
 
-  async loginWithGoogle(
-    data: GoogleUserDto,
-  ): Promise<CustomApiResponse<LoginResponseDto>> {
+  async loginWithGoogle(data: GoogleUserDto): Promise<string> {
     try {
       const existingUser = await this.userRepository.findOne({
         where: { email: data.email },
@@ -106,18 +108,9 @@ export class AuthServiceService {
           id: savedUser.id,
         };
 
-        return new CustomApiResponse<LoginResponseDto>(
-          HttpStatus.CREATED,
-          'User registered successfully',
-          {
-            accessToken: await this.jwtService.signAsync(payload),
-            user: {
-              id: savedUser.id,
-              fullName: savedUser.fullName,
-              email: savedUser.email,
-            },
-          },
-        );
+        await this.redisService.del('users');
+
+        return `${this.configService.get('front_end').url}/login?accessToken=${await this.jwtService.signAsync(payload)}`;
       }
 
       if (!existingUser.isActive || existingUser.isDeleted) {
@@ -146,18 +139,7 @@ export class AuthServiceService {
       const payload: JwtPayloadDto = {
         id: existingUser.id,
       };
-      return new CustomApiResponse<LoginResponseDto>(
-        HttpStatus.OK,
-        'Login successful',
-        {
-          accessToken: await this.jwtService.signAsync(payload),
-          user: {
-            id: existingUser.id,
-            fullName: existingUser.fullName,
-            email: existingUser.email,
-          },
-        },
-      );
+      return `${this.configService.get('front_end').url}/login?accessToken=${await this.jwtService.signAsync(payload)}`;
     } catch (error) {
       throw ExceptionUtils.wrapAsRpcException(error);
     }
@@ -196,14 +178,57 @@ export class AuthServiceService {
         ],
       });
 
+      const payload: JwtPayloadDto = {
+        id: newUser.id,
+      };
+      const emailVerificationToken = await this.jwtService.signAsync(payload, {
+        expiresIn: this.configService.get('mail').verifyTokenExpiration,
+      });
+
+      newUser.emailVerificationToken = emailVerificationToken;
+
       await this.userRepository.save(newUser);
 
       await this.redisService.del('users');
+
+      await this.mailService.emit({ cmd: 'send_mail' }, {
+        to: data.email,
+        subject: 'Email Verification',
+        text: 'Please verify your email address',
+        template: './verify-mail',
+        context: {
+          verificationLink: `${this.configService.get('app').url}/api/${this.configService.get('app').version}/auth/verify-email?token=${emailVerificationToken}`,
+        },
+      } as MailSendDto);
 
       return new CustomApiResponse<void>(
         HttpStatus.CREATED,
         'Registration successful',
       );
+    } catch (error) {
+      throw ExceptionUtils.wrapAsRpcException(error);
+    }
+  }
+
+  async verifyEmail(data: { token: string }): Promise<string> {
+    try {
+      const payload = await this.jwtService.verifyAsync(data.token);
+      const user = await this.userRepository.findOne({
+        where: { id: payload.id, emailVerificationToken: data.token },
+      });
+
+      if (!user) {
+        throw new CustomRpcException(
+          'Invalid or expired verification token',
+          HttpStatus.UNAUTHORIZED,
+        );
+      }
+
+      user.isEmailVerified = true;
+      user.emailVerificationToken = null;
+      await this.userRepository.save(user);
+
+      return `${this.configService.get('front_end').url}`;
     } catch (error) {
       throw ExceptionUtils.wrapAsRpcException(error);
     }

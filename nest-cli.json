@@ -64,15 +64,6 @@
         "tsConfigPath": "libs/shared/tsconfig.lib.json"
       }
     },
-    "payment-service": {
-      "type": "application",
-      "root": "apps/payment-service",
-      "entryFile": "main",
-      "sourceRoot": "apps/payment-service/src",
-      "compilerOptions": {
-        "tsConfigPath": "apps/payment-service/tsconfig.app.json"
-      }
-    },
     "notification-service": {
       "type": "application",
       "root": "apps/notification-service",
@@ -98,6 +89,22 @@
       "sourceRoot": "libs/redis/src",
       "compilerOptions": {
         "tsConfigPath": "libs/redis/tsconfig.lib.json"
+      }
+    },
+    "mail-service": {
+      "type": "application",
+      "root": "apps/mail-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/mail-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/mail-service/tsconfig.app.json",
+        "assets": [
+          {
+            "include": "templates/**/*.hbs",
+            "outDir": "dist/apps/mail-service/src"
+          }
+        ],
+        "watchAssets": true
       }
     }
   }

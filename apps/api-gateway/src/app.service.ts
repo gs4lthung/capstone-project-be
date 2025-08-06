@@ -46,13 +46,11 @@ export class AppService {
     const payload = data;
 
     const response = await lastValueFrom(
-      this.authService
-        .send<CustomApiResponse<LoginResponseDto>>(pattern, payload)
-        .pipe(
-          map((response) => {
-            return response;
-          }),
-        ),
+      this.authService.send<string>(pattern, payload).pipe(
+        map((response) => {
+          return response;
+        }),
+      ),
     );
     return response;
   }
@@ -67,22 +65,24 @@ export class AppService {
     return response;
   }
 
+  async verifyEmail(data: { token: string }) {
+    const pattern = { cmd: 'verifyEmail' };
+    const payload = data;
+
+    const response = await lastValueFrom(
+      this.authService.send<string>(pattern, payload),
+    );
+    return response;
+  }
+
   async findAllUsers() {
     console.log('Fetching all users from cache or service');
     const pattern = { cmd: 'findAllUsers' };
-
-    // const cacheKey = `users`;
-    // const cached = await this.redisService.get<User[]>(cacheKey);
-    // if (cached) {
-    //   console.log('Returning cached users');
-    //   return cached;
-    // }
 
     const response = await lastValueFrom(
       this.userService.send<User[]>(pattern, {}),
     );
 
-    // await this.redisService.set(cacheKey, response);
     return response;
   }
 
@@ -97,7 +97,7 @@ export class AppService {
   }
 
   async registerFcmToken(data: RegisterFcmTokenDto) {
-    const pattern = { cmd: 'registerFcmToken' };
+    const pattern = { cmd: 'register_fcm_token' };
 
     const userId = this.request.user.id;
     const payload = { userId, ...data };

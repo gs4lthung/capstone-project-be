@@ -1,5 +1,5 @@
 import { ConfigService } from '@app/config';
-import { NotificationSendDto } from '@app/shared/dtos/notifications/notification.send.dto';
+import { NotificationSendDto } from '@app/shared/dtos/notifications/notification-send.dto';
 import { ExceptionUtils } from '@app/shared/utils/exception.util';
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import * as admin from 'firebase-admin';

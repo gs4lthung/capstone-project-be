@@ -19,14 +19,17 @@ export class AuthServiceController {
   }
 
   @MessagePattern({ cmd: 'loginWithGoogle' })
-  async loginWithGoogle(
-    data: GoogleUserDto,
-  ): Promise<CustomApiResponse<LoginResponseDto>> {
+  async loginWithGoogle(data: GoogleUserDto): Promise<string> {
     return this.authServiceService.loginWithGoogle(data);
   }
 
   @MessagePattern({ cmd: 'register' })
   async register(data: RegisterRequestDto): Promise<CustomApiResponse<void>> {
     return this.authServiceService.register(data);
+  }
+
+  @MessagePattern({ cmd: 'verifyEmail' })
+  async verifyEmail(data: { token: string }): Promise<string> {
+    return this.authServiceService.verifyEmail(data);
   }
 }

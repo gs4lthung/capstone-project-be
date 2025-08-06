@@ -39,6 +39,9 @@ export class User {
   @Field(() => Boolean)
   isEmailVerified: boolean;
 
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  emailVerificationToken?: string;
+
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   @Field(() => GqlCustomDateTime)
   createdAt: Date;

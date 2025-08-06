@@ -9,6 +9,7 @@ import { DatabaseModule } from '@app/database';
 import { Role } from '@app/database/entities/role.entity';
 import { RedisModule } from '@app/redis';
 import { AuthProvider } from '@app/database/entities/auth-provider.entity';
+import { ClientsModule, Transport } from '@nestjs/microservices';
 
 @Module({
   imports: [
@@ -24,6 +25,26 @@ import { AuthProvider } from '@app/database/entities/auth-provider.entity';
     }),
     DatabaseModule,
     TypeOrmModule.forFeature([User, Role, AuthProvider]),
+    ClientsModule.registerAsync([
+      {
+        imports: [ConfigModule],
+        inject: [ConfigService],
+        name: 'MAIL_SERVICE',
+        useFactory: async (configService: ConfigService) => ({
+          transport: Transport.RMQ,
+          options: {
+            urls: [
+              `amqp://${configService.get('rabbitmq').host}:${configService.get('rabbitmq').port}`,
+            ],
+            queue: 'mail_queue',
+            queueOptions: {
+              durable: configService.get('rabbitmq').durable,
+              autoDelete: configService.get('rabbitmq').autoDelete,
+            },
+          },
+        }),
+      },
+    ]),
   ],
   controllers: [AuthServiceController],
   providers: [AuthServiceService],

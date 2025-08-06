@@ -10,7 +10,7 @@ export class NotificationServiceController {
     private readonly notificationServiceService: NotificationServiceService,
   ) {}
 
-  @MessagePattern({ cmd: 'registerFcmToken' })
+  @MessagePattern({ cmd: 'register_fcm_token' })
   async registerFcmToken(
     userId: number,
     @Payload() data: RegisterFcmTokenDto,

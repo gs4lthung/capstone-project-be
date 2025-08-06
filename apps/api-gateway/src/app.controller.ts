@@ -6,6 +6,7 @@ import {
   HttpStatus,
   Post,
   Request,
+  Response,
   UseGuards,
 } from '@nestjs/common';
 import { AppService } from './app.service';
@@ -53,6 +54,24 @@ export class AppController {
     return this.appService.register(data);
   }
 
+  @Get('auth/verify-email')
+  @ApiOperation({
+    tags: ['Authentication'],
+    summary: 'Email Verification',
+    description:
+      'Verify user email using the token sent during registration. Redirects to the client application upon success.',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Email successfully verified',
+    type: String,
+  })
+  async verifyEmail(@Request() req, @Response() res) {
+    const token = req.query.token as string;
+    const redirectUrl = await this.appService.verifyEmail({ token });
+    return res.redirect(redirectUrl);
+  }
+
   @Get('auth/google')
   @UseGuards(GoogleOAuthGuard)
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -68,12 +87,14 @@ export class AppController {
   })
   @ApiResponse({
     status: HttpStatus.OK,
-    description: 'User successfully authenticated with Google',
-    type: LoginResponseDto,
+    description:
+      'User successfully authenticated with Google, navigate to the client application',
+    type: String,
   })
-  async googleAuthRedirect(@Request() req) {
+  async googleAuthRedirect(@Request() req, @Response() res) {
     const user: GoogleUserDto = req.user;
-    return this.appService.loginWithGoogle(user);
+    const redirectUrl = await this.appService.loginWithGoogle(user);
+    return res.redirect(redirectUrl);
   }
 
   @Post('notifications/register-fcm-token')

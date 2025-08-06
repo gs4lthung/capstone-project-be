@@ -17,10 +17,15 @@ import { User } from '@app/database/entities/user.entity';
 import { FirebaseModule } from '@app/firebase';
 import { RedisModule } from '@app/redis';
 import { GoogleStrategy } from './strategies/google.strategy';
+import { ServeStaticModule } from '@nestjs/serve-static';
 
 @Module({
   imports: [
     ConfigModule,
+    ServeStaticModule.forRoot({
+      rootPath: 'public',
+      serveRoot: '/',
+    }),
     DatabaseModule,
     TypeOrmModule.forFeature([Error, User]),
     ErrorModule,
@@ -68,14 +73,14 @@ import { GoogleStrategy } from './strategies/google.strategy';
       {
         imports: [ConfigModule],
         inject: [ConfigService],
-        name: 'PAYMENT_SERVICE',
+        name: 'NOTIFICATION_SERVICE',
         useFactory: async (configService: ConfigService) => ({
           transport: Transport.RMQ,
           options: {
             urls: [
               `amqp://${configService.get('rabbitmq').host}:${configService.get('rabbitmq').port}`,
             ],
-            queue: 'payment_queue',
+            queue: 'notification_queue',
             queueOptions: {
               durable: configService.get('rabbitmq').durable,
               autoDelete: configService.get('rabbitmq').autoDelete,
@@ -86,14 +91,14 @@ import { GoogleStrategy } from './strategies/google.strategy';
       {
         imports: [ConfigModule],
         inject: [ConfigService],
-        name: 'NOTIFICATION_SERVICE',
+        name: 'MAIL_SERVICE',
         useFactory: async (configService: ConfigService) => ({
           transport: Transport.RMQ,
           options: {
             urls: [
               `amqp://${configService.get('rabbitmq').host}:${configService.get('rabbitmq').port}`,
             ],
-            queue: 'notification_queue',
+            queue: 'mail_queue',
             queueOptions: {
               durable: configService.get('rabbitmq').durable,
               autoDelete: configService.get('rabbitmq').autoDelete,
