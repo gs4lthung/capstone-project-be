@@ -1,6 +1,7 @@
 import { ConfigService } from '@app/config';
 import { User } from '@app/database/entities/user.entity';
 import { RedisService } from '@app/redis';
+import { GoogleUserDto } from '@app/shared/dtos/auth/google-user.dto';
 import { LoginRequestDto } from '@app/shared/dtos/auth/login.request.dto';
 import { LoginResponseDto } from '@app/shared/dtos/auth/login.response.dto';
 import { RegisterRequestDto } from '@app/shared/dtos/auth/register.request.dto';
@@ -26,6 +27,22 @@ export class AppService {
 
   async login(data: LoginRequestDto) {
     const pattern = { cmd: 'login' };
+    const payload = data;
+
+    const response = await lastValueFrom(
+      this.authService
+        .send<CustomApiResponse<LoginResponseDto>>(pattern, payload)
+        .pipe(
+          map((response) => {
+            return response;
+          }),
+        ),
+    );
+    return response;
+  }
+
+  async loginWithGoogle(data: GoogleUserDto) {
+    const pattern = { cmd: 'loginWithGoogle' };
     const payload = data;
 
     const response = await lastValueFrom(

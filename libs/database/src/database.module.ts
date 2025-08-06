@@ -5,6 +5,7 @@ import { User } from './entities/user.entity';
 import { Error } from './entities/error.entity';
 import { Role } from './entities/role.entity';
 import { FcmToken } from './entities/fcmToken.entity';
+import { AuthProvider } from './entities/auth-provider.entity';
 
 @Module({
   imports: [
@@ -18,7 +19,7 @@ import { FcmToken } from './entities/fcmToken.entity';
         username: configService.get('database').username,
         password: configService.get('database').password,
         database: configService.get('database').database,
-        entities: [User, Role, Error, FcmToken],
+        entities: [User, Role, Error, FcmToken, AuthProvider],
         logging: configService.get('node_env') === 'dev',
         autoLoadEntities: true,
         synchronize: configService.get('node_env') === 'dev',

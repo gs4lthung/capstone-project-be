@@ -1,9 +1,11 @@
 import {
   Body,
   Controller,
+  Get,
   HttpCode,
   HttpStatus,
   Post,
+  Request,
   UseGuards,
 } from '@nestjs/common';
 import { AppService } from './app.service';
@@ -13,6 +15,8 @@ import { LoginResponseDto } from '@app/shared/dtos/auth/login.response.dto';
 import { ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { RegisterFcmTokenDto } from '@app/shared/dtos/notifications/register-fcm-token.dto';
 import { AuthGuard } from './guards/auth.guard';
+import { GoogleOAuthGuard } from './guards/google-auth.guard';
+import { GoogleUserDto } from '@app/shared/dtos/auth/google-user.dto';
 
 @Controller()
 export class AppController {
@@ -47,6 +51,29 @@ export class AppController {
   })
   async register(@Body() data: RegisterRequestDto) {
     return this.appService.register(data);
+  }
+
+  @Get('auth/google')
+  @UseGuards(GoogleOAuthGuard)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async googleAuth(@Request() req) {}
+
+  @Get('auth/google-redirect')
+  @UseGuards(GoogleOAuthGuard)
+  @ApiOperation({
+    tags: ['Authentication'],
+    summary: 'Google OAuth Redirect',
+    description:
+      'Redirect endpoint for Google OAuth, handles user authentication and registration',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'User successfully authenticated with Google',
+    type: LoginResponseDto,
+  })
+  async googleAuthRedirect(@Request() req) {
+    const user: GoogleUserDto = req.user;
+    return this.appService.loginWithGoogle(user);
   }
 
   @Post('notifications/register-fcm-token')

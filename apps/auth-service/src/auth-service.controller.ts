@@ -5,6 +5,7 @@ import { CustomApiResponse } from '@app/shared/responses/custom-api.response';
 import { RegisterRequestDto } from '@app/shared/dtos/auth/register.request.dto';
 import { LoginRequestDto } from '@app/shared/dtos/auth/login.request.dto';
 import { LoginResponseDto } from '@app/shared/dtos/auth/login.response.dto';
+import { GoogleUserDto } from '@app/shared/dtos/auth/google-user.dto';
 
 @Controller()
 export class AuthServiceController {
@@ -15,6 +16,13 @@ export class AuthServiceController {
     data: LoginRequestDto,
   ): Promise<CustomApiResponse<LoginResponseDto>> {
     return this.authServiceService.login(data);
+  }
+
+  @MessagePattern({ cmd: 'loginWithGoogle' })
+  async loginWithGoogle(
+    data: GoogleUserDto,
+  ): Promise<CustomApiResponse<LoginResponseDto>> {
+    return this.authServiceService.loginWithGoogle(data);
   }
 
   @MessagePattern({ cmd: 'register' })

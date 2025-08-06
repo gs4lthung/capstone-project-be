@@ -15,6 +15,9 @@ import { RoleEnum } from '@app/shared/enums/role.enum';
 import { Role } from '@app/database/entities/role.entity';
 import { ExceptionUtils } from '@app/shared/utils/exception.util';
 import { RedisService } from '@app/redis';
+import { AuthProviderEnum } from '@app/shared/enums/auth.enum';
+import { AuthProvider } from '@app/database/entities/auth-provider.entity';
+import { GoogleUserDto } from '@app/shared/dtos/auth/google-user.dto';
 
 @Injectable()
 export class AuthServiceService {
@@ -23,6 +26,8 @@ export class AuthServiceService {
   constructor(
     @InjectRepository(User) private readonly userRepository: Repository<User>,
     @InjectRepository(Role) private readonly roleRepository: Repository<Role>,
+    @InjectRepository(AuthProvider)
+    private readonly authProviderRepository: Repository<AuthProvider>,
     private readonly configService: ConfigService,
     private readonly jwtService: JwtService,
     private readonly redisService: RedisService,
@@ -70,18 +75,100 @@ export class AuthServiceService {
     }
   }
 
+  async loginWithGoogle(
+    data: GoogleUserDto,
+  ): Promise<CustomApiResponse<LoginResponseDto>> {
+    try {
+      const existingUser = await this.userRepository.findOne({
+        where: { email: data.email },
+        relations: ['authProviders'],
+      });
+
+      if (!existingUser) {
+        const roleId = await this.getCustomerRoleId();
+        const newUser = this.userRepository.create({
+          fullName: `${data.firstName} ${data.lastName}`,
+          email: data.email,
+          profilePicture: data.picture,
+          isEmailVerified: true,
+          isActive: true,
+          role: { id: roleId } as Role,
+          authProviders: [
+            {
+              provider: AuthProviderEnum.GOOGLE,
+              providerId: data.id,
+            } as AuthProvider,
+          ],
+        });
+        const savedUser = await this.userRepository.save(newUser);
+
+        const payload: JwtPayloadDto = {
+          id: savedUser.id,
+        };
+
+        return new CustomApiResponse<LoginResponseDto>(
+          HttpStatus.CREATED,
+          'User registered successfully',
+          {
+            accessToken: await this.jwtService.signAsync(payload),
+            user: {
+              id: savedUser.id,
+              fullName: savedUser.fullName,
+              email: savedUser.email,
+            },
+          },
+        );
+      }
+
+      if (!existingUser.isActive || existingUser.isDeleted) {
+        throw new CustomRpcException(
+          'User is not active or has been deleted',
+          HttpStatus.UNAUTHORIZED,
+        );
+      }
+
+      const isLinkedWithGoogle = existingUser.authProviders.some(
+        (provider) =>
+          provider.provider === AuthProviderEnum.GOOGLE &&
+          provider.providerId === data.id,
+      );
+
+      if (!isLinkedWithGoogle) {
+        existingUser.isEmailVerified = true;
+        existingUser.profilePicture = data.picture;
+        existingUser.authProviders.push({
+          provider: AuthProviderEnum.GOOGLE,
+          providerId: data.id,
+        } as AuthProvider);
+        await this.userRepository.save(existingUser);
+      }
+
+      const payload: JwtPayloadDto = {
+        id: existingUser.id,
+      };
+      return new CustomApiResponse<LoginResponseDto>(
+        HttpStatus.OK,
+        'Login successful',
+        {
+          accessToken: await this.jwtService.signAsync(payload),
+          user: {
+            id: existingUser.id,
+            fullName: existingUser.fullName,
+            email: existingUser.email,
+          },
+        },
+      );
+    } catch (error) {
+      throw ExceptionUtils.wrapAsRpcException(error);
+    }
+  }
+
   async register(data: RegisterRequestDto): Promise<CustomApiResponse<void>> {
     try {
-      if (!data)
-        throw new CustomRpcException(
-          'Invalid registration data',
-          HttpStatus.BAD_REQUEST,
-        );
-
-      const isEmailExists = await this.userRepository.findOne({
+      const existingUser = await this.userRepository.findOne({
         where: { email: data.email },
       });
-      if (isEmailExists)
+      if (existingUser)
         throw new CustomRpcException(
           'Email already exists',
           HttpStatus.CONFLICT,
@@ -94,16 +181,22 @@ export class AuthServiceService {
 
       const roleId = await this.getCustomerRoleId();
 
-      const user = this.userRepository.create({
+      const newUser = this.userRepository.create({
         fullName: data.fullName,
         email: data.email,
         password: passwordHashed,
         role: {
           id: roleId,
-        },
+        } as Role,
+        authProviders: [
+          {
+            provider: AuthProviderEnum.LOCAL,
+            providerId: data.email,
+          } as AuthProvider,
+        ],
       });
 
-      await this.userRepository.save(user);
+      await this.userRepository.save(newUser);
 
       await this.redisService.del('users');
 

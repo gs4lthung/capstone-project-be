@@ -44,7 +44,7 @@ export class FcmToken {
   @Field(() => GqlCustomDateTime)
   lastSeenAt: Date;
 
-  @ManyToOne(() => User, (user) => user.fcmTokens)
+  @ManyToOne(() => User, (user) => user.fcmTokens, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'userId' })
   user: User;
 }

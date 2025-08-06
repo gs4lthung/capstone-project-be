@@ -11,6 +11,7 @@ import { Role } from './role.entity';
 import { Field, ObjectType } from '@nestjs/graphql';
 import { FcmToken } from './fcmToken.entity';
 import { GqlCustomDateTime } from '@app/shared/scalars/gql-custom-datetime.scalar';
+import { AuthProvider } from './auth-provider.entity';
 
 @Entity('users')
 @ObjectType()
@@ -23,12 +24,20 @@ export class User {
   @Field(() => String)
   fullName: string;
 
-  @Column({ type: 'varchar', length: 100, unique: true })
+  @Column({ type: 'varchar', length: 100, unique: true, nullable: true })
   @Field(() => String)
   email: string;
 
-  @Column({ type: 'varchar', length: 255, select: false })
+  @Column({ type: 'varchar', length: 255, select: false, nullable: true })
   password: string;
+
+  @Column({ type: 'varchar', length: 200, nullable: true })
+  @Field(() => String, { nullable: true })
+  profilePicture?: string;
+
+  @Column({ type: 'boolean', default: false })
+  @Field(() => Boolean)
+  isEmailVerified: boolean;
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   @Field(() => GqlCustomDateTime)
@@ -45,8 +54,16 @@ export class User {
   @Column({ type: 'boolean', default: true })
   isActive: boolean;
 
+  @Column({ type: 'boolean', default: false })
+  isDeleted: boolean;
+
   @OneToMany(() => Error, (error) => error.user)
   errors: Error[];
+
+  @OneToMany(() => AuthProvider, (authProvider) => authProvider.user, {
+    cascade: true,
+  })
+  authProviders: AuthProvider[];
 
   @ManyToOne(() => Role, (role) => role.users, { nullable: true, eager: true })
   @JoinColumn({ name: 'roleId' })

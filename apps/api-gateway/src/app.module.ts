@@ -16,6 +16,7 @@ import { Error } from '@app/database/entities/error.entity';
 import { User } from '@app/database/entities/user.entity';
 import { FirebaseModule } from '@app/firebase';
 import { RedisModule } from '@app/redis';
+import { GoogleStrategy } from './strategies/google.strategy';
 
 @Module({
   imports: [
@@ -121,6 +122,7 @@ import { RedisModule } from '@app/redis';
     SocketGateway,
     ConfigService,
     JwtService,
+    GoogleStrategy,
   ],
 })
 export class AppModule {}

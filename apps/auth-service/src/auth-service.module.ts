@@ -8,6 +8,7 @@ import { User } from '@app/database/entities/user.entity';
 import { DatabaseModule } from '@app/database';
 import { Role } from '@app/database/entities/role.entity';
 import { RedisModule } from '@app/redis';
+import { AuthProvider } from '@app/database/entities/auth-provider.entity';
 
 @Module({
   imports: [
@@ -22,7 +23,7 @@ import { RedisModule } from '@app/redis';
       }),
     }),
     DatabaseModule,
-    TypeOrmModule.forFeature([User, Role]),
+    TypeOrmModule.forFeature([User, Role, AuthProvider]),
   ],
   controllers: [AuthServiceController],
   providers: [AuthServiceService],

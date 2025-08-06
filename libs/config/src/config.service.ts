@@ -55,6 +55,12 @@ interface Config {
     durable?: boolean;
     autoDelete?: boolean;
   };
+  google?: {
+    oauth?: {
+      clientId?: string;
+      clientSecret?: string;
+    };
+  };
   firebase?: {
     type?: string;
     project_id?: string;
@@ -135,6 +141,18 @@ export class ConfigService {
           this.nestConfigService.get('RABBITMQ_DURABLE', true) === 'true',
         autoDelete:
           this.nestConfigService.get('RABBITMQ_AUTO_DELETE', false) === 'true',
+      },
+      google: {
+        oauth: {
+          clientId: this.nestConfigService.get(
+            'GOOGLE_OAUTH_CLIENT_ID',
+            'default-client-id',
+          ),
+          clientSecret: this.nestConfigService.get(
+            'GOOGLE_OAUTH_CLIENT_SECRET',
+            'default-client-secret',
+          ),
+        },
       },
       firebase: {
         type: this.nestConfigService.get('FIREBASE_TYPE', 'service_account'),

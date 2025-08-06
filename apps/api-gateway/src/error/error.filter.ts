@@ -81,7 +81,7 @@ export class ErrorLoggingFilter implements ExceptionFilter {
       );
     }
 
-    if (isDevelopment) {
+    if (!isDevelopment) {
       let url = '';
       switch (contextType) {
         case ProtocolEnum.HTTP:
