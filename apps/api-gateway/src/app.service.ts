@@ -74,6 +74,18 @@ export class AppService {
     );
     return response;
   }
+  async refreshNewAccessToken(data: { refreshToken: string }) {
+    const pattern = { cmd: 'refreshNewAccessToken' };
+    const payload = data;
+
+    const response = await lastValueFrom(
+      this.authService.send<CustomApiResponse<LoginResponseDto>>(
+        pattern,
+        payload,
+      ),
+    );
+    return response;
+  }
 
   async findAllUsers() {
     console.log('Fetching all users from cache or service');

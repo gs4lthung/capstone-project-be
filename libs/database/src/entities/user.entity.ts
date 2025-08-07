@@ -31,6 +31,9 @@ export class User {
   @Column({ type: 'varchar', length: 255, select: false, nullable: true })
   password: string;
 
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  refreshToken?: string;
+
   @Column({ type: 'varchar', length: 200, nullable: true })
   @Field(() => String, { nullable: true })
   profilePicture?: string;

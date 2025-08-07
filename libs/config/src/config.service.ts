@@ -31,8 +31,14 @@ interface Config {
     database: string;
   };
   jwt: {
-    secret: string;
-    expiration: string | number;
+    access_token: {
+      secret: string;
+      expiration: string;
+    };
+    refresh_token: {
+      secret: string;
+      expiration: string;
+    };
   };
   rate_limiter?: {
     max_requests?: number;
@@ -124,8 +130,20 @@ export class ConfigService {
         database: this.nestConfigService.get('DB_NAME', 'mydatabase'),
       },
       jwt: {
-        secret: this.nestConfigService.get('JWT_SECRET', 'defaultsecret'),
-        expiration: this.nestConfigService.get('JWT_EXPIRATION', '7d'),
+        access_token: {
+          secret: this.nestConfigService.get('JWT_ACCESS_TOKEN_SECRET', 'cc'),
+          expiration: this.nestConfigService.get(
+            'JWT_ACCESS_TOKEN_EXPIRATION',
+            '15m',
+          ),
+        },
+        refresh_token: {
+          secret: this.nestConfigService.get('JWT_REFRESH_TOKEN_SECRET', 'cc'),
+          expiration: this.nestConfigService.get(
+            'JWT_REFRESH_TOKEN_EXPIRATION',
+            '7d',
+          ),
+        },
       },
       rate_limiter: {
         max_requests: Number(

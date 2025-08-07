@@ -5,8 +5,9 @@ import {
   HttpCode,
   HttpStatus,
   Post,
+  Req,
   Request,
-  Response,
+  Res,
   UseGuards,
 } from '@nestjs/common';
 import { AppService } from './app.service';
@@ -18,6 +19,10 @@ import { RegisterFcmTokenDto } from '@app/shared/dtos/notifications/register-fcm
 import { AuthGuard } from './guards/auth.guard';
 import { GoogleOAuthGuard } from './guards/google-auth.guard';
 import { GoogleUserDto } from '@app/shared/dtos/auth/google-user.dto';
+import { CustomApiResponse } from '@app/shared/responses/custom-api.response';
+import { Response } from 'express'; // ✅ Import from express
+import { CustomApiRequest } from '@app/shared/requests/custom-api.request';
+import { RefreshNewAccessTokenDto } from '@app/shared/dtos/auth/refresh-new-access-token.dto';
 
 @Controller()
 export class AppController {
@@ -35,8 +40,19 @@ export class AppController {
     description: 'User successfully logged in',
     type: LoginResponseDto,
   })
-  async login(@Body() data: LoginRequestDto) {
-    return this.appService.login(data);
+  async login(
+    @Body() data: LoginRequestDto,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<CustomApiResponse<LoginResponseDto>> {
+    const result = await this.appService.login(data);
+
+    res.cookie('refreshToken', result.metadata.refreshToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'strict',
+    });
+    delete result.metadata.refreshToken;
+    return result;
   }
 
   @Post('auth/register')
@@ -66,7 +82,7 @@ export class AppController {
     description: 'Email successfully verified',
     type: String,
   })
-  async verifyEmail(@Request() req, @Response() res) {
+  async verifyEmail(@Request() req, @Res() res: Response) {
     const token = req.query.token as string;
     const redirectUrl = await this.appService.verifyEmail({ token });
     return res.redirect(redirectUrl);
@@ -75,7 +91,7 @@ export class AppController {
   @Get('auth/google')
   @UseGuards(GoogleOAuthGuard)
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async googleAuth(@Request() req) {}
+  async googleAuth(@Request() req: any) {}
 
   @Get('auth/google-redirect')
   @UseGuards(GoogleOAuthGuard)
@@ -91,10 +107,31 @@ export class AppController {
       'User successfully authenticated with Google, navigate to the client application',
     type: String,
   })
-  async googleAuthRedirect(@Request() req, @Response() res) {
-    const user: GoogleUserDto = req.user;
+  async googleAuthRedirect(@Req() req: CustomApiRequest, @Res() res: Response) {
+    const user: GoogleUserDto = req.googleUser;
     const redirectUrl = await this.appService.loginWithGoogle(user);
     return res.redirect(redirectUrl);
+  }
+
+  @Post('auth/refresh-token')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    tags: ['Authentication'],
+    summary: 'Refresh Access Token',
+    description:
+      'Refresh JWT access token using the refresh token stored in cookies',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'New access token generated successfully',
+    type: LoginResponseDto,
+  })
+  async refreshNewAccessToken(
+    @Body() data: RefreshNewAccessTokenDto,
+  ): Promise<CustomApiResponse<{ accessToken: string }>> {
+    console.log('Refreshing access token with:', data.refreshToken);
+    const result = await this.appService.refreshNewAccessToken(data);
+    return result;
   }
 
   @Post('notifications/register-fcm-token')

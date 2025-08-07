@@ -9,7 +9,7 @@ import { CustomApiResponse } from '@app/shared/responses/custom-api.response';
 import { RegisterRequestDto } from '@app/shared/dtos/auth/register.request.dto';
 import { LoginRequestDto } from '@app/shared/dtos/auth/login.request.dto';
 import { LoginResponseDto } from '@app/shared/dtos/auth/login.response.dto';
-import { JwtService } from '@nestjs/jwt';
+import { JwtService, TokenExpiredError } from '@nestjs/jwt';
 import { JwtPayloadDto } from '@app/shared/dtos/auth/jwt.payload.dto';
 import { RoleEnum } from '@app/shared/enums/role.enum';
 import { Role } from '@app/database/entities/role.entity';
@@ -62,11 +62,29 @@ export class AuthServiceService {
         id: user.id,
       };
 
+      const accessToken = await this.jwtService.signAsync(payload, {
+        secret: this.configService.get('jwt').access_token.secret,
+        expiresIn: this.configService.get('jwt').access_token.expiration,
+      });
+
+      const refreshToken = await this.jwtService.signAsync(payload, {
+        secret: this.configService.get('jwt').refresh_token.secret,
+        expiresIn: this.configService.get('jwt').refresh_token.expiration,
+      });
+
+      const refreshTokenHash = await bcrypt.hash(
+        refreshToken,
+        this.configService.get('password_salt_rounds'),
+      );
+      user.refreshToken = refreshTokenHash;
+      await this.userRepository.save(user);
+
       return new CustomApiResponse<LoginResponseDto>(
         HttpStatus.OK,
         'Login successful',
         {
-          accessToken: await this.jwtService.signAsync(payload),
+          accessToken: accessToken,
+          refreshToken: refreshToken,
           user: {
             id: user.id,
             fullName: user.fullName,
@@ -75,6 +93,62 @@ export class AuthServiceService {
         },
       );
     } catch (error) {
+      throw ExceptionUtils.wrapAsRpcException(error);
+    }
+  }
+
+  async refreshNewAccessToken(data: {
+    refreshToken: string;
+  }): Promise<CustomApiResponse<{ accessToken: string }>> {
+    try {
+      const payload: JwtPayloadDto = await this.jwtService.verifyAsync(
+        data.refreshToken,
+        {
+          secret: this.configService.get('jwt').refresh_token.secret,
+        },
+      );
+
+      const user = await this.userRepository.findOne({
+        where: { id: payload.id },
+        select: ['id', 'fullName', 'email', 'refreshToken'],
+      });
+
+      if (!user)
+        throw new CustomRpcException(
+          'Invalid refresh token',
+          HttpStatus.UNAUTHORIZED,
+        );
+
+      const isMatch = await bcrypt.compare(
+        data.refreshToken,
+        user.refreshToken,
+      );
+      if (!isMatch)
+        throw new CustomRpcException(
+          'Invalid refresh token',
+          HttpStatus.UNAUTHORIZED,
+        );
+
+      const newAccessToken = await this.jwtService.signAsync(
+        { id: user.id },
+        {
+          secret: this.configService.get('jwt').access_token.secret,
+          expiresIn: this.configService.get('jwt').access_token.expiration,
+        },
+      );
+
+      return new CustomApiResponse<{ accessToken: string }>(
+        HttpStatus.OK,
+        'New access token generated successfully',
+        { accessToken: newAccessToken },
+      );
+    } catch (error) {
+      if (error instanceof TokenExpiredError) {
+        throw new CustomRpcException(
+          'Refresh token expired',
+          HttpStatus.UNAUTHORIZED,
+        );
+      }
       throw ExceptionUtils.wrapAsRpcException(error);
     }
   }
@@ -191,15 +265,7 @@ export class AuthServiceService {
 
       await this.redisService.del('users');
 
-      await this.mailService.emit({ cmd: 'send_mail' }, {
-        to: data.email,
-        subject: 'Email Verification',
-        text: 'Please verify your email address',
-        template: './verify-mail',
-        context: {
-          verificationLink: `${this.configService.get('app').url}/api/${this.configService.get('app').version}/auth/verify-email?token=${emailVerificationToken}`,
-        },
-      } as MailSendDto);
+      await this.sendVerificationEmail(newUser.email, emailVerificationToken);
 
       return new CustomApiResponse<void>(
         HttpStatus.CREATED,
@@ -234,6 +300,42 @@ export class AuthServiceService {
     }
   }
 
+  async resendVerificationEmail(
+    email: string,
+  ): Promise<CustomApiResponse<void>> {
+    try {
+      const user = await this.userRepository.findOne({
+        where: { email, isEmailVerified: false },
+      });
+
+      if (!user) {
+        throw new CustomRpcException(
+          'User not found or already verified',
+          HttpStatus.NOT_FOUND,
+        );
+      }
+
+      const payload: JwtPayloadDto = {
+        id: user.id,
+      };
+      const emailVerificationToken = await this.jwtService.signAsync(payload, {
+        expiresIn: this.configService.get('mail').verifyTokenExpiration,
+      });
+
+      user.emailVerificationToken = emailVerificationToken;
+      await this.userRepository.save(user);
+
+      await this.sendVerificationEmail(user.email, emailVerificationToken);
+
+      return new CustomApiResponse<void>(
+        HttpStatus.OK,
+        'Verification email resent successfully',
+      );
+    } catch (error) {
+      throw ExceptionUtils.wrapAsRpcException(error);
+    }
+  }
+
   private async getCustomerRoleId(): Promise<number> {
     if (this.customerRoleId !== null) return this.customerRoleId;
 
@@ -250,5 +352,20 @@ export class AuthServiceService {
 
     this.customerRoleId = role.id;
     return this.customerRoleId;
+  }
+
+  private async sendVerificationEmail(
+    email: string,
+    emailVerificationToken: string,
+  ): Promise<void> {
+    await this.mailService.emit({ cmd: 'send_mail' }, {
+      to: email,
+      subject: 'Email Verification',
+      text: 'Please verify your email address',
+      template: './verify-mail',
+      context: {
+        verificationLink: `${this.configService.get('app').url}/api/${this.configService.get('app').version}/auth/verify-email?token=${emailVerificationToken}`,
+      },
+    } as MailSendDto);
   }
 }

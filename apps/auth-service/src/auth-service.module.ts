@@ -19,8 +19,10 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: async (configService: ConfigService) => ({
-        secret: configService.get('jwt').secret,
-        signOptions: { expiresIn: configService.get('jwt').expiration },
+        secret: configService.get('jwt').access_token.secret,
+        signOptions: {
+          expiresIn: configService.get('jwt').access_token.expiration,
+        },
       }),
     }),
     DatabaseModule,

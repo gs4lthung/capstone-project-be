@@ -32,4 +32,11 @@ export class AuthServiceController {
   async verifyEmail(data: { token: string }): Promise<string> {
     return this.authServiceService.verifyEmail(data);
   }
+
+  @MessagePattern({ cmd: 'refreshNewAccessToken' })
+  async refreshNewAccessToken(data: {
+    refreshToken: string;
+  }): Promise<CustomApiResponse<{ accessToken: string }>> {
+    return this.authServiceService.refreshNewAccessToken(data);
+  }
 }

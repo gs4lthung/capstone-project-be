@@ -5,6 +5,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ConfigService } from '@app/config';
 import { LoggerMiddleware } from './middlewares/logger.middleware';
+import * as cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -14,8 +15,10 @@ async function bootstrap() {
   app.enableCors({
     origin: '*',
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-    // credentials: true,
+    credentials: true,
   });
+
+  app.use(cookieParser());
 
   app.use(
     helmet({

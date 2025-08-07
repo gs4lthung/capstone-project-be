@@ -8,7 +8,7 @@ import { Strategy, VerifyCallback } from 'passport-google-oauth20';
 export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
   constructor(private readonly configService: ConfigService) {
     const googleConfig = configService.get('google').oauth;
-    const callbackUrl = `${configService.get('api_gateway').host === 'localhost' ? 'http' : 'https'}://${configService.get('api_gateway').host}:${configService.get('api_gateway').port}/api/v1/auth/google-redirect`;
+    const callbackUrl = `${configService.get('app').url}/api/v1/auth/google-redirect`;
     super({
       clientID: googleConfig.clientId,
       clientSecret: googleConfig.clientSecret,
