@@ -70,6 +70,8 @@ interface Config {
   rabbitmq?: {
     host?: string;
     port?: number;
+    username?: string;
+    password?: string;
     durable?: boolean;
     autoDelete?: boolean;
   };
@@ -188,6 +190,8 @@ export class ConfigService {
       rabbitmq: {
         host: this.nestConfigService.get('RABBITMQ_HOST', 'localhost'),
         port: Number(this.nestConfigService.get('RABBITMQ_PORT', 5672)),
+        username: this.nestConfigService.get('RABBITMQ_USERNAME', 'guest'),
+        password: this.nestConfigService.get('RABBITMQ_PASSWORD', 'guest'),
         durable:
           this.nestConfigService.get('RABBITMQ_DURABLE', true) === 'true',
         autoDelete:

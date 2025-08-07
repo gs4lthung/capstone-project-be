@@ -5,8 +5,8 @@ import {
   HttpCode,
   HttpStatus,
   Post,
+  Query,
   Req,
-  Request,
   Res,
   UseGuards,
 } from '@nestjs/common';
@@ -14,13 +14,18 @@ import { AppService } from './app.service';
 import { RegisterRequestDto } from '@app/shared/dtos/auth/register.request.dto';
 import { LoginRequestDto } from '@app/shared/dtos/auth/login.request.dto';
 import { LoginResponseDto } from '@app/shared/dtos/auth/login.response.dto';
-import { ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiExcludeEndpoint,
+  ApiOperation,
+  ApiResponse,
+} from '@nestjs/swagger';
 import { RegisterFcmTokenDto } from '@app/shared/dtos/notifications/register-fcm-token.dto';
 import { AuthGuard } from './guards/auth.guard';
 import { GoogleOAuthGuard } from './guards/google-auth.guard';
 import { GoogleUserDto } from '@app/shared/dtos/auth/google-user.dto';
 import { CustomApiResponse } from '@app/shared/responses/custom-api.response';
-import { Response } from 'express'; // ✅ Import from express
+import { Response } from 'express';
 import { CustomApiRequest } from '@app/shared/requests/custom-api.request';
 import { RefreshNewAccessTokenDto } from '@app/shared/dtos/auth/refresh-new-access-token.dto';
 
@@ -82,16 +87,16 @@ export class AppController {
     description: 'Email successfully verified',
     type: String,
   })
-  async verifyEmail(@Request() req, @Res() res: Response) {
-    const token = req.query.token as string;
+  async verifyEmail(@Query('token') token: string, @Res() res: Response) {
     const redirectUrl = await this.appService.verifyEmail({ token });
     return res.redirect(redirectUrl);
   }
 
   @Get('auth/google')
   @UseGuards(GoogleOAuthGuard)
+  @ApiExcludeEndpoint()
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async googleAuth(@Request() req: any) {}
+  async googleAuth(@Req() req: any) {}
 
   @Get('auth/google-redirect')
   @UseGuards(GoogleOAuthGuard)
@@ -108,7 +113,7 @@ export class AppController {
     type: String,
   })
   async googleAuthRedirect(@Req() req: CustomApiRequest, @Res() res: Response) {
-    const user: GoogleUserDto = req.googleUser;
+    const user = req.user as GoogleUserDto;
     const redirectUrl = await this.appService.loginWithGoogle(user);
     return res.redirect(redirectUrl);
   }

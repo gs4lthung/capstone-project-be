@@ -19,7 +19,9 @@ async function bootstrap() {
     {
       transport: Transport.RMQ,
       options: {
-        urls: [`amqp://${host}:${port}`],
+        urls: [
+          `amqp://${configService.get('rabbitmq').username}:${configService.get('rabbitmq').password}@${configService.get('rabbitmq').host}:${configService.get('rabbitmq').port}/${configService.get('rabbitmq').username}`,
+        ],
         queue: 'mail_queue',
         queueOptions: {
           durable: configService.get('rabbitmq').durable,

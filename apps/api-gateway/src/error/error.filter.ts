@@ -16,6 +16,7 @@ import { GqlArgumentsHost } from '@nestjs/graphql';
 import { GraphQLError } from 'graphql';
 import { ContextUtils } from '@app/shared/utils/context.util';
 import { ProtocolEnum } from '@app/shared/enums/protocol.enum';
+import { User } from '@app/database/entities/user.entity';
 
 @Catch()
 export class ErrorLoggingFilter implements ExceptionFilter {
@@ -64,9 +65,10 @@ export class ErrorLoggingFilter implements ExceptionFilter {
         return;
     }
 
+    const user = request.user as User;
     let userId: number | null = null;
-    if (request.user && 'id' in request.user) {
-      userId = request.user.id;
+    if (user && 'id' in user) {
+      userId = user.id;
     }
 
     const isAggregateError = exception instanceof AggregateError;

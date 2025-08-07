@@ -36,7 +36,7 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
           transport: Transport.RMQ,
           options: {
             urls: [
-              `amqp://${configService.get('rabbitmq').host}:${configService.get('rabbitmq').port}`,
+              `amqp://${configService.get('rabbitmq').username}:${configService.get('rabbitmq').password}@${configService.get('rabbitmq').host}:${configService.get('rabbitmq').port}/${configService.get('rabbitmq').username}`,
             ],
             queue: 'mail_queue',
             queueOptions: {
