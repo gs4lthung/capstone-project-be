@@ -80,6 +80,7 @@ export class ErrorLoggingFilter implements ExceptionFilter {
       logger.error(
         'Error details',
         exception || exception.stack || exception.message,
+        typeof exception,
       );
     }
 
@@ -101,11 +102,14 @@ export class ErrorLoggingFilter implements ExceptionFilter {
       }
 
       const errorEntity = this.errorRepository.create({
-        code: exception.statusCode
-          ? String(exception.statusCode)
-          : 'UNKNOWN_ERROR',
+        code:
+          exception.statusCode || exception.status
+            ? String(exception.statusCode || exception.status)
+            : 'UNKNOWN_ERROR',
         message:
-          exception.message?.slice(0, 254) || 'An unexpected error occurred',
+          exception.response?.message ||
+          exception.message?.slice(0, 254) ||
+          'An unexpected error occurred',
         stack: isAggregateError
           ? exception.errors
               .map((err) => String(err))
@@ -122,31 +126,48 @@ export class ErrorLoggingFilter implements ExceptionFilter {
 
     switch (contextType) {
       case ProtocolEnum.HTTP:
-        const status = exception.statusCode || HttpStatus.INTERNAL_SERVER_ERROR;
+        const status =
+          exception.statusCode ||
+          exception.status ||
+          HttpStatus.INTERNAL_SERVER_ERROR;
         response.status(status).json({
           statusCode: status,
           message:
             status === HttpStatus.INTERNAL_SERVER_ERROR
               ? 'Internal Server Error'
-              : exception.message,
+              : exception.response?.message ||
+                exception.message ||
+                'An unexpected error occurred',
           timestamp: new Date().toISOString(),
           path: request.url,
         });
         break;
       case ProtocolEnum.GRAPHQL:
         throw new GraphQLError(
-          exception.message || 'An unexpected error occurred',
+          exception.response.message ||
+            exception.message ||
+            'An unexpected error occurred',
           {
             extensions: {
-              code: exception.statusCode || HttpStatus.INTERNAL_SERVER_ERROR,
+              code:
+                exception.statusCode ||
+                exception.status ||
+                HttpStatus.INTERNAL_SERVER_ERROR,
             },
           },
         );
       case ProtocolEnum.WS:
         response.emit('exception', {
-          message: exception.message || 'An unexpected error occurred',
-          code: exception.statusCode || HttpStatus.INTERNAL_SERVER_ERROR,
+          message:
+            exception.response.message ||
+            exception.message ||
+            'An unexpected error occurred',
+          code:
+            exception.statusCode ||
+            exception.status ||
+            HttpStatus.INTERNAL_SERVER_ERROR,
         });
+        break;
       default:
         return;
     }

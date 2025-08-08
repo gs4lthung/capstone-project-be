@@ -1,5 +1,6 @@
 import {
   Column,
+  DeleteDateColumn,
   Entity,
   JoinColumn,
   ManyToOne,
@@ -57,11 +58,12 @@ export class User {
   @Field(() => GqlCustomDateTime)
   updatedAt: Date;
 
+  @DeleteDateColumn()
+  @Field(() => GqlCustomDateTime, { nullable: true })
+  deletedAt: Date;
+
   @Column({ type: 'boolean', default: true })
   isActive: boolean;
-
-  @Column({ type: 'boolean', default: false })
-  isDeleted: boolean;
 
   @OneToMany(() => Error, (error) => error.user)
   errors: Error[];

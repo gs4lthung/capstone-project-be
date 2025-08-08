@@ -187,9 +187,9 @@ export class AuthServiceService {
         return `${this.configService.get('front_end').url}/login?accessToken=${await this.jwtService.signAsync(payload)}`;
       }
 
-      if (!existingUser.isActive || existingUser.isDeleted) {
+      if (!existingUser.isActive) {
         throw new CustomRpcException(
-          'User is not active or has been deleted',
+          'User is not active',
           HttpStatus.UNAUTHORIZED,
         );
       }
