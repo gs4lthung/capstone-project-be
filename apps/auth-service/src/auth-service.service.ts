@@ -46,7 +46,10 @@ export class AuthServiceService {
         select: ['id', 'fullName', 'email', 'password'],
       });
       if (!user)
-        throw new CustomRpcException('User not found', HttpStatus.NOT_FOUND);
+        throw new CustomRpcException(
+          'AUTH.INVALID_EMAIL_OR_PASSWORD',
+          HttpStatus.UNAUTHORIZED,
+        );
 
       const isPasswordValid = await bcrypt.compare(
         data.password,
@@ -54,7 +57,7 @@ export class AuthServiceService {
       );
       if (!isPasswordValid)
         throw new CustomRpcException(
-          'Invalid password',
+          'AUTH.INVALID_EMAIL_OR_PASSWORD',
           HttpStatus.UNAUTHORIZED,
         );
 
@@ -81,7 +84,7 @@ export class AuthServiceService {
 
       return new CustomApiResponse<LoginResponseDto>(
         HttpStatus.OK,
-        'Login successful',
+        'AUTH.LOGIN_SUCCESS',
         {
           accessToken: accessToken,
           refreshToken: refreshToken,
@@ -114,20 +117,14 @@ export class AuthServiceService {
       });
 
       if (!user)
-        throw new CustomRpcException(
-          'Invalid refresh token',
-          HttpStatus.UNAUTHORIZED,
-        );
+        throw new CustomRpcException('INVALID.TOKEN', HttpStatus.UNAUTHORIZED);
 
       const isMatch = await bcrypt.compare(
         data.refreshToken,
         user.refreshToken,
       );
       if (!isMatch)
-        throw new CustomRpcException(
-          'Invalid refresh token',
-          HttpStatus.UNAUTHORIZED,
-        );
+        throw new CustomRpcException('INVALID.TOKEN', HttpStatus.UNAUTHORIZED);
 
       const newAccessToken = await this.jwtService.signAsync(
         { id: user.id },
@@ -139,13 +136,13 @@ export class AuthServiceService {
 
       return new CustomApiResponse<{ accessToken: string }>(
         HttpStatus.OK,
-        'New access token generated successfully',
+        'AUTH.LOGIN',
         { accessToken: newAccessToken },
       );
     } catch (error) {
       if (error instanceof TokenExpiredError) {
         throw new CustomRpcException(
-          'Refresh token expired',
+          'AUTH.INVALID_TOKEN',
           HttpStatus.UNAUTHORIZED,
         );
       }
@@ -189,7 +186,7 @@ export class AuthServiceService {
 
       if (!existingUser.isActive) {
         throw new CustomRpcException(
-          'User is not active',
+          'AUTH.USER_NOT_ACTIVE',
           HttpStatus.UNAUTHORIZED,
         );
       }
@@ -226,7 +223,7 @@ export class AuthServiceService {
       });
       if (existingUser)
         throw new CustomRpcException(
-          'Email already exists',
+          'AUTH.EMAIL_ALREADY_EXISTS',
           HttpStatus.CONFLICT,
         );
 
@@ -269,7 +266,7 @@ export class AuthServiceService {
 
       return new CustomApiResponse<void>(
         HttpStatus.CREATED,
-        'Registration successful',
+        'AUTH.REGISTER_SUCCESS',
       );
     } catch (error) {
       throw ExceptionUtils.wrapAsRpcException(error);
@@ -285,7 +282,7 @@ export class AuthServiceService {
 
       if (!user) {
         throw new CustomRpcException(
-          'Invalid or expired verification token',
+          'AUTH.INVALID_TOKEN',
           HttpStatus.UNAUTHORIZED,
         );
       }
@@ -310,7 +307,7 @@ export class AuthServiceService {
 
       if (!user) {
         throw new CustomRpcException(
-          'User not found or already verified',
+          'AUTH.INVALID_VERIFICATION',
           HttpStatus.NOT_FOUND,
         );
       }
@@ -329,7 +326,7 @@ export class AuthServiceService {
 
       return new CustomApiResponse<void>(
         HttpStatus.OK,
-        'Verification email resent successfully',
+        'AUTH.EMAIL_SEND_SUCCESS',
       );
     } catch (error) {
       throw ExceptionUtils.wrapAsRpcException(error);

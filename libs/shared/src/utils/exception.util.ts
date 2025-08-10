@@ -11,6 +11,7 @@ export class ExceptionUtils {
       message,
       HttpStatus.INTERNAL_SERVER_ERROR,
       error instanceof Error ? error.stack : undefined,
+      true,
     );
   }
 }

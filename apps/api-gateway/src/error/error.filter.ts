@@ -80,7 +80,6 @@ export class ErrorLoggingFilter implements ExceptionFilter {
       logger.error(
         'Error details',
         exception || exception.stack || exception.message,
-        typeof exception,
       );
     }
 

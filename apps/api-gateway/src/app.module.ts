@@ -18,6 +18,12 @@ import { FirebaseModule } from '@app/firebase';
 import { RedisModule } from '@app/redis';
 import { GoogleStrategy } from './strategies/google.strategy';
 import { ServeStaticModule } from '@nestjs/serve-static';
+import {
+  HeaderResolver,
+  I18nJsonLoader,
+  I18nModule,
+  QueryResolver,
+} from 'nestjs-i18n';
 
 @Module({
   imports: [
@@ -31,6 +37,17 @@ import { ServeStaticModule } from '@nestjs/serve-static';
     ErrorModule,
     FirebaseModule,
     RedisModule,
+    I18nModule.forRoot({
+      fallbackLanguage: 'en',
+      loaderOptions: {
+        path: __dirname + '/src/i18n',
+      },
+      loader: I18nJsonLoader,
+      resolvers: [
+        { use: QueryResolver, options: ['lang'] },
+        new HeaderResolver(['x-lang']),
+      ],
+    }),
     GraphQLModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],

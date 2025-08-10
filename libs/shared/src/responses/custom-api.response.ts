@@ -1,7 +1,7 @@
 export class CustomApiResponse<T = any> {
   public readonly statusCode: number;
 
-  public readonly message: string;
+  public message: string;
 
   public readonly metadata?: T;
 

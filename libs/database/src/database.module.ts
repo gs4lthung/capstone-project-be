@@ -20,7 +20,7 @@ import { AuthProvider } from './entities/auth-provider.entity';
         password: configService.get('database').password,
         database: configService.get('database').database,
         entities: [User, Role, Error, FcmToken, AuthProvider],
-        logging: configService.get('node_env') === 'dev',
+        logging: configService.get('node_env') !== 'dev',
         autoLoadEntities: true,
         synchronize: configService.get('node_env') === 'dev',
         migrationsRun: configService.get('node_env') === 'dev',

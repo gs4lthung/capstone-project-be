@@ -9,6 +9,7 @@ import {
   Req,
   Res,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { AppService } from './app.service';
 import { RegisterRequestDto } from '@app/shared/dtos/auth/register.request.dto';
@@ -28,8 +29,10 @@ import { CustomApiResponse } from '@app/shared/responses/custom-api.response';
 import { Response } from 'express';
 import { CustomApiRequest } from '@app/shared/requests/custom-api.request';
 import { RefreshNewAccessTokenDto } from '@app/shared/dtos/auth/refresh-new-access-token.dto';
+import { I18nResponseInterceptor } from './interceptors/i18-response.interceptor';
 
 @Controller()
+@UseInterceptors(I18nResponseInterceptor)
 export class AppController {
   constructor(private readonly appService: AppService) {}
 
