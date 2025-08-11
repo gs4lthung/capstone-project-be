@@ -5,8 +5,10 @@ import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { Logger } from '@nestjs/common';
 
 async function bootstrap() {
-  const appContext =
-    await NestFactory.createApplicationContext(MailServiceModule);
+  const appContext = await NestFactory.createApplicationContext(
+    MailServiceModule,
+    { bufferLogs: true },
+  );
   const configService = appContext.get(ConfigService);
 
   const host = configService.get('rabbitmq').host;

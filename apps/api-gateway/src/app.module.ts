@@ -14,7 +14,6 @@ import { ApolloDriver } from '@nestjs/apollo';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Error } from '@app/database/entities/error.entity';
 import { User } from '@app/database/entities/user.entity';
-import { FirebaseModule } from '@app/firebase';
 import { RedisModule } from '@app/redis';
 import { GoogleStrategy } from './strategies/google.strategy';
 import { ServeStaticModule } from '@nestjs/serve-static';
@@ -35,7 +34,6 @@ import {
     DatabaseModule,
     TypeOrmModule.forFeature([Error, User]),
     ErrorModule,
-    FirebaseModule,
     RedisModule,
     I18nModule.forRoot({
       fallbackLanguage: 'en',

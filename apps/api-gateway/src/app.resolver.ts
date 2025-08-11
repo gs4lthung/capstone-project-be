@@ -24,7 +24,6 @@ export class AppResolver {
   @RoleDecorator(RoleEnum.CUSTOMER)
   @UseGuards(AuthGuard, RoleGuard)
   async getUserById(@Args('id', { type: () => Int }) id: number) {
-    console.log('Fetching user with ID:', id);
     const user = this.appService.findUserById(id);
     return user;
   }

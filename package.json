@@ -55,6 +55,7 @@
     "cache-manager-redis-store": "^3.0.1",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.2",
+    "cloudinary": "^2.7.0",
     "concurrently": "^9.2.0",
     "cookie-parser": "^1.4.7",
     "firebase-admin": "^13.4.0",
@@ -69,6 +70,7 @@
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.1",
     "socket.io": "^4.8.1",
+    "streamifier": "^0.1.1",
     "typeorm": "^0.3.25"
   },
   "devDependencies": {
@@ -82,6 +84,7 @@
     "@types/node": "^20.3.1",
     "@types/nodemailer": "^6.4.17",
     "@types/passport-google-oauth20": "^2.0.16",
+    "@types/streamifier": "^0.1.2",
     "@types/supertest": "^6.0.0",
     "@typescript-eslint/eslint-plugin": "^8.0.0",
     "@typescript-eslint/parser": "^8.0.0",
@@ -125,7 +128,8 @@
       "^@app/websocket(|/.*)$": "<rootDir>/libs/websocket/src/$1",
       "^@app/firebase(|/.*)$": "<rootDir>/libs/firebase/src/$1",
       "^@app/redis(|/.*)$": "<rootDir>/libs/redis/src/$1",
-      "^@app/i18n(|/.*)$": "<rootDir>/libs/i18n/src/$1"
+      "^@app/i18n(|/.*)$": "<rootDir>/libs/i18n/src/$1",
+      "^@app/cloudinary(|/.*)$": "<rootDir>/libs/cloudinary/src/$1"
     }
   }
 }

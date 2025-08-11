@@ -5,9 +5,11 @@ import {
   HttpCode,
   HttpStatus,
   Post,
+  Put,
   Query,
   Req,
   Res,
+  UploadedFile,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
@@ -30,6 +32,8 @@ import { Response } from 'express';
 import { CustomApiRequest } from '@app/shared/requests/custom-api.request';
 import { RefreshNewAccessTokenDto } from '@app/shared/dtos/auth/refresh-new-access-token.dto';
 import { I18nResponseInterceptor } from './interceptors/i18-response.interceptor';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { User } from '@app/database/entities/user.entity';
 
 @Controller()
 @UseInterceptors(I18nResponseInterceptor)
@@ -140,6 +144,28 @@ export class AppController {
     console.log('Refreshing access token with:', data.refreshToken);
     const result = await this.appService.refreshNewAccessToken(data);
     return result;
+  }
+
+  @Put('users/me/avatar')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiOperation({
+    tags: ['Users'],
+    summary: 'Update User Avatar',
+    description: 'Update the avatar image of a user',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'User avatar updated successfully',
+  })
+  @UseGuards(AuthGuard)
+  @UseInterceptors(FileInterceptor('avatar'))
+  async updateUserAvatar(
+    @Req() req: CustomApiRequest,
+    @UploadedFile() file: Express.Multer.File,
+  ): Promise<CustomApiResponse<void>> {
+    const user = req.user as User;
+    return this.appService.updateUserAvatar(user.id, file);
   }
 
   @Post('notifications/register-fcm-token')

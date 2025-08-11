@@ -13,7 +13,7 @@ import {
   Injectable,
 } from '@nestjs/common';
 import { GqlExecutionContext } from '@nestjs/graphql';
-import { JwtService } from '@nestjs/jwt';
+import { JwtService, TokenExpiredError } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Request } from 'express';
 import { Repository } from 'typeorm';
@@ -64,7 +64,7 @@ export class AuthGuard implements CanActivate {
       }
       if (!token) {
         throw new CustomRpcException(
-          'Authorization token is missing',
+          'AUTH.INVALID_TOKEN',
           HttpStatus.UNAUTHORIZED,
         );
       }
@@ -78,13 +78,18 @@ export class AuthGuard implements CanActivate {
       });
       if (!isUserExists) {
         throw new CustomRpcException(
-          'User not found or inactive',
+          'AUTH.INVALID_TOKEN',
           HttpStatus.UNAUTHORIZED,
         );
       }
 
       request.user = { id: payload.id };
     } catch (error) {
+      if (error instanceof TokenExpiredError)
+        throw new CustomRpcException(
+          'AUTH.INVALID_TOKEN',
+          HttpStatus.UNAUTHORIZED,
+        );
       throw ExceptionUtils.wrapAsRpcException(error);
     }
     return true;

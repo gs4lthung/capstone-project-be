@@ -93,6 +93,11 @@ interface Config {
     auth_provider_x509_cert_url?: string;
     universe_domain?: string;
   };
+  cloudinary?: {
+    name?: string;
+    api_key?: string;
+    api_secret?: string;
+  };
 }
 
 @Injectable()
@@ -229,6 +234,11 @@ export class ConfigService {
           'FIREBASE_UNIVERSE_DOMAIN',
           '',
         ),
+      },
+      cloudinary: {
+        name: this.nestConfigService.get('CLOUDINARY_NAME', ''),
+        api_key: this.nestConfigService.get('CLOUDINARY_API_KEY', ''),
+        api_secret: this.nestConfigService.get('CLOUDINARY_API_SECRET', ''),
       },
     };
   }

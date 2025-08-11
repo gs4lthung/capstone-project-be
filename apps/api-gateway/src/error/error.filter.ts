@@ -2,7 +2,6 @@ import {
   ArgumentsHost,
   Catch,
   ExceptionFilter,
-  HttpStatus,
   Inject,
   Logger,
 } from '@nestjs/common';
@@ -17,6 +16,8 @@ import { GraphQLError } from 'graphql';
 import { ContextUtils } from '@app/shared/utils/context.util';
 import { ProtocolEnum } from '@app/shared/enums/protocol.enum';
 import { User } from '@app/database/entities/user.entity';
+import { I18nContext } from 'nestjs-i18n';
+import { CustomRpcException } from '@app/shared/exceptions/custom-rpc.exception';
 
 @Catch()
 export class ErrorLoggingFilter implements ExceptionFilter {
@@ -27,7 +28,7 @@ export class ErrorLoggingFilter implements ExceptionFilter {
     private readonly errorRepository: Repository<Error>,
   ) {}
 
-  async catch(exception: any, host: ArgumentsHost) {
+  async catch(exception: CustomRpcException, host: ArgumentsHost) {
     const logger = new Logger(ErrorLoggingFilter.name);
 
     const contextType = ContextUtils.getRequestContextType(host.getType());
@@ -101,14 +102,8 @@ export class ErrorLoggingFilter implements ExceptionFilter {
       }
 
       const errorEntity = this.errorRepository.create({
-        code:
-          exception.statusCode || exception.status
-            ? String(exception.statusCode || exception.status)
-            : 'UNKNOWN_ERROR',
-        message:
-          exception.response?.message ||
-          exception.message?.slice(0, 254) ||
-          'An unexpected error occurred',
+        code: String(exception.statusCode),
+        message: exception.message,
         stack: isAggregateError
           ? exception.errors
               .map((err) => String(err))
@@ -123,48 +118,29 @@ export class ErrorLoggingFilter implements ExceptionFilter {
       await this.errorRepository.save(errorEntity);
     }
 
+    const i18nCtx = I18nContext.current(host);
+    const i18nErrorMessage =
+      i18nCtx.t(`messages.${exception.message}`) || i18nCtx.t('ERROR.UNKNOWN');
     switch (contextType) {
       case ProtocolEnum.HTTP:
-        const status =
-          exception.statusCode ||
-          exception.status ||
-          HttpStatus.INTERNAL_SERVER_ERROR;
+        const status = exception.statusCode;
         response.status(status).json({
           statusCode: status,
-          message:
-            status === HttpStatus.INTERNAL_SERVER_ERROR
-              ? 'Internal Server Error'
-              : exception.response?.message ||
-                exception.message ||
-                'An unexpected error occurred',
+          message: i18nErrorMessage,
           timestamp: new Date().toISOString(),
           path: request.url,
         });
         break;
       case ProtocolEnum.GRAPHQL:
-        throw new GraphQLError(
-          exception.response.message ||
-            exception.message ||
-            'An unexpected error occurred',
-          {
-            extensions: {
-              code:
-                exception.statusCode ||
-                exception.status ||
-                HttpStatus.INTERNAL_SERVER_ERROR,
-            },
+        throw new GraphQLError(i18nErrorMessage, {
+          extensions: {
+            code: exception.statusCode,
           },
-        );
+        });
       case ProtocolEnum.WS:
         response.emit('exception', {
-          message:
-            exception.response.message ||
-            exception.message ||
-            'An unexpected error occurred',
-          code:
-            exception.statusCode ||
-            exception.status ||
-            HttpStatus.INTERNAL_SERVER_ERROR,
+          message: i18nErrorMessage,
+          code: exception.statusCode,
         });
         break;
       default:

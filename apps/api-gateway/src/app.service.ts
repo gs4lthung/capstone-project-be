@@ -108,6 +108,16 @@ export class AppService {
     return response;
   }
 
+  async updateUserAvatar(id: number, file: Express.Multer.File) {
+    const pattern = { cmd: 'updateUserAvatar' };
+    const payload = { id, file };
+
+    const response = await lastValueFrom(
+      this.userService.send<CustomApiResponse<void>>(pattern, payload),
+    );
+    return response;
+  }
+
   async registerFcmToken(data: RegisterFcmTokenDto) {
     const pattern = { cmd: 'register_fcm_token' };
 

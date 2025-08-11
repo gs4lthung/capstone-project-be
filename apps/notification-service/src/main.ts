@@ -7,6 +7,7 @@ import { Logger } from '@nestjs/common';
 async function bootstrap() {
   const appContext = await NestFactory.createApplicationContext(
     NotificationServiceModule,
+    { bufferLogs: true },
   );
   const configService = appContext.get(ConfigService);
 
