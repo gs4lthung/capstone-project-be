@@ -31,4 +31,19 @@ export class UserServiceController {
   }): Promise<CustomApiResponse<void>> {
     return this.userServiceService.updateUserAvatar(data.id, data.file);
   }
+
+  @MessagePattern({ cmd: 'softDeleteUser' })
+  async softDeleteUser(id: number): Promise<CustomApiResponse<void>> {
+    return this.userServiceService.softDeleteUser(id);
+  }
+
+  @MessagePattern({ cmd: 'deleteUser' })
+  async deleteUser(id: number): Promise<CustomApiResponse<void>> {
+    return this.userServiceService.deleteUser(id);
+  }
+
+  @MessagePattern({ cmd: 'restoreUser' })
+  async restoreUser(id: number): Promise<CustomApiResponse<void>> {
+    return this.userServiceService.restoreUser(id);
+  }
 }

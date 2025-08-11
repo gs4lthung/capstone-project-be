@@ -13,6 +13,8 @@ import { CacheInterceptor } from './interceptors/cache.interceptor';
 export class AppResolver {
   constructor(private readonly appService: AppService) {}
 
+  //#region Users
+
   @Query(() => [User], { name: 'users' })
   @UseGuards(AuthGuard)
   async getUsers() {
@@ -27,4 +29,6 @@ export class AppResolver {
     const user = this.appService.findUserById(id);
     return user;
   }
+
+  //#endregion Users
 }

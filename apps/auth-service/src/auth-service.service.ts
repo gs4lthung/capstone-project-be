@@ -43,6 +43,7 @@ export class AuthServiceService {
     try {
       const user = await this.userRepository.findOne({
         where: { email: data.email },
+        withDeleted: false,
         select: ['id', 'fullName', 'email', 'password'],
       });
       if (!user)
@@ -154,6 +155,7 @@ export class AuthServiceService {
     try {
       const existingUser = await this.userRepository.findOne({
         where: { email: data.email },
+        withDeleted: false,
         relations: ['authProviders'],
       });
 
@@ -164,7 +166,6 @@ export class AuthServiceService {
           email: data.email,
           profilePicture: data.picture,
           isEmailVerified: true,
-          isActive: true,
           role: { id: roleId } as Role,
           authProviders: [
             {
@@ -182,13 +183,6 @@ export class AuthServiceService {
         await this.redisService.del('users');
 
         return `${this.configService.get('front_end').url}/login?accessToken=${await this.jwtService.signAsync(payload)}`;
-      }
-
-      if (!existingUser.isActive) {
-        throw new CustomRpcException(
-          'USER.NOT_ACTIVE',
-          HttpStatus.UNAUTHORIZED,
-        );
       }
 
       const isLinkedWithGoogle = existingUser.authProviders.some(

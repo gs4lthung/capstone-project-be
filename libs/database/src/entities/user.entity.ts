@@ -62,9 +62,6 @@ export class User {
   @Field(() => GqlCustomDateTime, { nullable: true })
   deletedAt: Date;
 
-  @Column({ type: 'boolean', default: true })
-  isActive: boolean;
-
   @OneToMany(() => Error, (error) => error.user)
   errors: Error[];
 

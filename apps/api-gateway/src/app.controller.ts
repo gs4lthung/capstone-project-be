@@ -1,9 +1,11 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
+  Param,
   Post,
   Put,
   Query,
@@ -43,6 +45,8 @@ import { RoleEnum } from '@app/shared/enums/role.enum';
 @UseInterceptors(I18nResponseInterceptor)
 export class AppController {
   constructor(private readonly appService: AppService) {}
+
+  //#region Authentication
 
   @Post('auth/login')
   @HttpCode(HttpStatus.OK)
@@ -150,6 +154,10 @@ export class AppController {
     return result;
   }
 
+  //#endregion Authentication
+
+  //#region Users
+
   @Post('users')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
@@ -196,6 +204,61 @@ export class AppController {
     const user = req.user as User;
     return this.appService.updateUserAvatar(user.id, file);
   }
+
+  @Delete('users/:id/soft')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    tags: ['Users'],
+    summary: 'Delete User',
+    description: 'Delete a user by ID',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'User deleted successfully',
+  })
+  @CheckRoleDecorator(RoleEnum.ADMIN)
+  @UseGuards(AuthGuard, RoleGuard)
+  async softDeleteUser(
+    @Param('id') id: number,
+  ): Promise<CustomApiResponse<void>> {
+    return this.appService.softDeleteUser(id);
+  }
+
+  @Delete('users/:id')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    tags: ['Users'],
+    summary: 'Delete User',
+    description: 'Delete a user by ID',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'User deleted successfully',
+  })
+  @CheckRoleDecorator(RoleEnum.ADMIN)
+  @UseGuards(AuthGuard, RoleGuard)
+  async deleteUser(@Param('id') id: number): Promise<CustomApiResponse<void>> {
+    return this.appService.deleteUser(id);
+  }
+
+  @Delete('users/:id/restore')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    tags: ['Users'],
+    summary: 'Restore User',
+    description: 'Restore a soft-deleted user by ID',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'User restored successfully',
+  })
+  @CheckRoleDecorator(RoleEnum.ADMIN)
+  @UseGuards(AuthGuard, RoleGuard)
+  async restoreUser(@Param('id') id: number): Promise<CustomApiResponse<void>> {
+    return this.appService.restoreUser(id);
+  }
+
+  //#endregion Users
 
   @Post('notifications/register-fcm-token')
   @HttpCode(HttpStatus.CREATED)

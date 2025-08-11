@@ -6,6 +6,8 @@
     },
     "USER": {
         "CREATE_USER_SUCCESS": "Tạo người dùng thành công",
-        "UPDATE_USER_AVATAR_SUCCESS": "Cập nhật ảnh đại diện người dùng thành công"
+        "UPDATE_USER_AVATAR_SUCCESS": "Cập nhật ảnh đại diện người dùng thành công",
+        "DELETE_USER_SUCCESS": "Xóa người dùng thành công",
+        "RESTORE_USER_SUCCESS": "Khôi phục người dùng thành công"
     }
 }

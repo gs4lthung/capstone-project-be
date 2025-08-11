@@ -26,6 +26,8 @@ export class AppService {
     private readonly redisService: RedisService,
   ) {}
 
+  //#region Authentication
+
   async login(data: LoginRequestDto) {
     const pattern = { cmd: 'login' };
     const payload = data;
@@ -88,6 +90,10 @@ export class AppService {
     return response;
   }
 
+  //#endregion
+
+  //#region Users
+
   async createUser(data: CreateUserDto) {
     const pattern = { cmd: 'createUser' };
     const payload = data;
@@ -140,4 +146,36 @@ export class AppService {
     );
     return response;
   }
+
+  async softDeleteUser(id: number) {
+    const pattern = { cmd: 'softDeleteUser' };
+    const payload = id;
+
+    const response = await lastValueFrom(
+      this.userService.send<CustomApiResponse<void>>(pattern, payload),
+    );
+    return response;
+  }
+
+  async deleteUser(id: number) {
+    const pattern = { cmd: 'deleteUser' };
+    const payload = id;
+
+    const response = await lastValueFrom(
+      this.userService.send<CustomApiResponse<void>>(pattern, payload),
+    );
+    return response;
+  }
+
+  async restoreUser(id: number) {
+    const pattern = { cmd: 'restoreUser' };
+    const payload = id;
+
+    const response = await lastValueFrom(
+      this.userService.send<CustomApiResponse<void>>(pattern, payload),
+    );
+    return response;
+  }
+
+  //#endregion
 }

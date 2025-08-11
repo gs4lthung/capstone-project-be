@@ -47,7 +47,6 @@ export class UserServiceService {
         email: data.email,
         password: passwordHashed,
         role: data.role ? data.role : customerRole,
-        isActive: true,
         isEmailVerified: true,
       });
       await this.userRepository.save(user);
@@ -63,7 +62,7 @@ export class UserServiceService {
   async findAll(): Promise<User[]> {
     try {
       const users = await this.userRepository.find({
-        where: { isActive: true },
+        withDeleted: false,
       });
       return users;
     } catch (error) {
@@ -74,7 +73,8 @@ export class UserServiceService {
   async findOne(id: number): Promise<User> {
     try {
       const user = await this.userRepository.findOne({
-        where: { id: id, isActive: true },
+        where: { id: id },
+        withDeleted: false,
       });
 
       if (!user)
@@ -98,6 +98,67 @@ export class UserServiceService {
       return new CustomApiResponse<void>(
         HttpStatus.OK,
         'USER.UPDATE_USER_AVATAR_SUCCESS',
+      );
+    } catch (error) {
+      throw ExceptionUtils.wrapAsRpcException(error);
+    }
+  }
+
+  async softDeleteUser(id: number): Promise<CustomApiResponse<void>> {
+    try {
+      const isUserExists = await this.userRepository.findOne({
+        where: { id: id },
+      });
+
+      if (!isUserExists) {
+        throw new CustomRpcException('USER.NOT_FOUND', HttpStatus.NOT_FOUND);
+      }
+
+      await this.userRepository.softDelete(id);
+      return new CustomApiResponse<void>(
+        HttpStatus.OK,
+        'USER.DELETE_USER_SUCCESS',
+      );
+    } catch (error) {
+      throw ExceptionUtils.wrapAsRpcException(error);
+    }
+  }
+
+  async deleteUser(id: number): Promise<CustomApiResponse<void>> {
+    try {
+      const isUserExists = await this.userRepository.findOne({
+        where: { id: id },
+      });
+
+      if (!isUserExists) {
+        throw new CustomRpcException('USER.NOT_FOUND', HttpStatus.NOT_FOUND);
+      }
+
+      await this.userRepository.delete(id);
+      return new CustomApiResponse<void>(
+        HttpStatus.OK,
+        'USER.DELETE_USER_SUCCESS',
+      );
+    } catch (error) {
+      throw ExceptionUtils.wrapAsRpcException(error);
+    }
+  }
+
+  async restoreUser(id: number): Promise<CustomApiResponse<void>> {
+    try {
+      const isUserExists = await this.userRepository.findOne({
+        where: { id: id },
+        withDeleted: true,
+      });
+
+      if (!isUserExists) {
+        throw new CustomRpcException('USER.NOT_FOUND', HttpStatus.NOT_FOUND);
+      }
+
+      await this.userRepository.restore(id);
+      return new CustomApiResponse<void>(
+        HttpStatus.OK,
+        'USER.RESTORE_USER_SUCCESS',
       );
     } catch (error) {
       throw ExceptionUtils.wrapAsRpcException(error);

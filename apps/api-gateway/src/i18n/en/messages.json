@@ -6,6 +6,8 @@
     },
     "USER": {
         "CREATE_USER_SUCCESS": "User created successfully",
-        "UPDATE_USER_AVATAR_SUCCESS": "User avatar updated successfully"
+        "UPDATE_USER_AVATAR_SUCCESS": "User avatar updated successfully",
+        "DELETE_USER_SUCCESS": "User deleted successfully",
+        "RESTORE_USER_SUCCESS": "User restored successfully"
     }
 }
