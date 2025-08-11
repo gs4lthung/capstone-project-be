@@ -1,9 +1,7 @@
 import { Role } from '@app/database/entities/role.entity';
-import { RoleEnum } from '@app/shared/enums/role.enum';
 import { ApiProperty } from '@nestjs/swagger';
 import {
   IsEmail,
-  IsEnum,
   IsNotEmpty,
   IsOptional,
   IsStrongPassword,
@@ -53,6 +51,5 @@ export class CreateUserDto {
     },
   })
   @IsOptional()
-  @IsEnum(RoleEnum)
   role?: Role;
 }

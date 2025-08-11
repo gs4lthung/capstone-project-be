@@ -1,12 +1,13 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import helmet from 'helmet';
-import { ValidationPipe } from '@nestjs/common';
+import { HttpStatus, ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ConfigService } from '@app/config';
 import { LoggerMiddleware } from './middlewares/logger.middleware';
 import * as cookieParser from 'cookie-parser';
 import * as compression from 'compression';
+import { CustomRpcException } from '@app/shared/exceptions/custom-rpc.exception';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
@@ -48,6 +49,16 @@ async function bootstrap() {
     new ValidationPipe({
       transform: true,
       transformOptions: { enableImplicitConversion: true },
+      exceptionFactory: (errors) => {
+        console.log(errors);
+        const errorMsg = errors.map((error) => {
+          return Object.values(error.constraints || {}).join(', ');
+        });
+        return new CustomRpcException(
+          errorMsg.join('; '),
+          HttpStatus.BAD_REQUEST,
+        );
+      },
     }),
   );
 

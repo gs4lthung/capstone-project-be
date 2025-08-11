@@ -186,7 +186,7 @@ export class AuthServiceService {
 
       if (!existingUser.isActive) {
         throw new CustomRpcException(
-          'AUTH.USER_NOT_ACTIVE',
+          'USER.NOT_ACTIVE',
           HttpStatus.UNAUTHORIZED,
         );
       }
@@ -223,7 +223,7 @@ export class AuthServiceService {
       });
       if (existingUser)
         throw new CustomRpcException(
-          'AUTH.EMAIL_ALREADY_EXISTS',
+          'USER.ALREADY_EXISTS',
           HttpStatus.CONFLICT,
         );
 

@@ -23,6 +23,17 @@ export class UserServiceService {
 
   async createUser(data: CreateUserDto): Promise<CustomApiResponse<void>> {
     try {
+      const isUserExists = await this.userRepository.findOne({
+        where: { email: data.email },
+      });
+
+      if (isUserExists) {
+        throw new CustomRpcException(
+          'USER.ALREADY_EXISTS',
+          HttpStatus.CONFLICT,
+        );
+      }
+
       const passwordHashed = await bcrypt.hash(
         data.password,
         this.configService.get('password_salt_rounds'),

@@ -6,8 +6,11 @@
     "AUTH": {
         "INVALID_EMAIL_OR_PASSWORD": "Invalid email or password",
         "INVALID_TOKEN": "Invalid token",
-        "INVALID_VERIFICATION": "Invalid verification",
-        "USER_NOT_ACTIVE": "User is not active",
-        "EMAIL_ALREADY_EXISTS": "Email already exists"
+        "INVALID_VERIFICATION": "Invalid verification"
+    },
+    "USER": {
+        "NOT_FOUND": "User not found",
+        "NOT_ACTIVE": "User is not active",
+        "ALREADY_EXISTS": "User already exists"
     }
 }
