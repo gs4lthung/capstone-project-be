@@ -6,6 +6,7 @@ import { LoginRequestDto } from '@app/shared/dtos/auth/login.request.dto';
 import { LoginResponseDto } from '@app/shared/dtos/auth/login.response.dto';
 import { RegisterRequestDto } from '@app/shared/dtos/auth/register.request.dto';
 import { RegisterFcmTokenDto } from '@app/shared/dtos/notifications/register-fcm-token.dto';
+import { CreateUserDto } from '@app/shared/dtos/users/create-user.dto';
 import { CustomApiRequest } from '@app/shared/requests/custom-api.request';
 import { CustomApiResponse } from '@app/shared/responses/custom-api.response';
 import { Inject, Injectable, Scope } from '@nestjs/common';
@@ -83,6 +84,16 @@ export class AppService {
         pattern,
         payload,
       ),
+    );
+    return response;
+  }
+
+  async createUser(data: CreateUserDto) {
+    const pattern = { cmd: 'createUser' };
+    const payload = data;
+
+    const response = await lastValueFrom(
+      this.userService.send<CustomApiResponse<void>>(pattern, payload),
     );
     return response;
   }

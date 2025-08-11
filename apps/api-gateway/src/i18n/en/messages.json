@@ -1,15 +1,11 @@
 {
     "AUTH": {
         "LOGIN_SUCCESS": "Login successful",
-        "INVALID_EMAIL_OR_PASSWORD": "Invalid email or password",
-        "INVALID_TOKEN": "Invalid token",
-        "INVALID_VERIFICATION": "Invalid verification",
-        "USER_NOT_ACTIVE": "User is not active",
-        "EMAIL_ALREADY_EXISTS": "Email already exists",
         "REGISTER_SUCCESS": "Register successful",
         "EMAIL_SEND_SUCCESS": "Email send successful"
     },
     "USER": {
+        "CREATE_USER_SUCCESS": "User created successfully",
         "UPDATE_USER_AVATAR_SUCCESS": "User avatar updated successfully"
     }
 }

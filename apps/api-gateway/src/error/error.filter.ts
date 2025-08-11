@@ -120,7 +120,7 @@ export class ErrorLoggingFilter implements ExceptionFilter {
 
     const i18nCtx = I18nContext.current(host);
     const i18nErrorMessage =
-      i18nCtx.t(`messages.${exception.message}`) || i18nCtx.t('ERROR.UNKNOWN');
+      i18nCtx.t(`errors.${exception.message}`) || exception.message;
     switch (contextType) {
       case ProtocolEnum.HTTP:
         const status = exception.statusCode;

@@ -1,15 +1,11 @@
 {
     "AUTH": {
         "LOGIN_SUCCESS": "Đăng nhập thành công",
-        "INVALID_EMAIL_OR_PASSWORD": "Email hoặc mật khẩu không hợp lệ",
-        "INVALID_TOKEN": "Lỗi token",
-        "INVALID_VERIFICATION": "Lỗi xác minh",
-        "USER_NOT_ACTIVE": "Người dùng không hoạt động",
-        "EMAIL_ALREADY_EXISTS": "Email đã tồn tại",
         "REGISTER_SUCCESS": "Đăng ký thành công",
         "EMAIL_SEND_SUCCESS": "Gửi email thành công"
     },
     "USER": {
+        "CREATE_USER_SUCCESS": "Tạo người dùng thành công",
         "UPDATE_USER_AVATAR_SUCCESS": "Cập nhật ảnh đại diện người dùng thành công"
     }
 }

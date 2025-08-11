@@ -1,12 +1,15 @@
-import { User } from '@app/database/entities/user.entity';
-import { PickType } from '@nestjs/mapped-types';
+import { Role } from '@app/database/entities/role.entity';
+import { RoleEnum } from '@app/shared/enums/role.enum';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsNotEmpty, IsStrongPassword } from 'class-validator';
+import {
+  IsEmail,
+  IsEnum,
+  IsNotEmpty,
+  IsOptional,
+  IsStrongPassword,
+} from 'class-validator';
 
-export class LoginRequestDto extends PickType(User, [
-  'email',
-  'password',
-] as const) {
+export class CreateUserDto {
   @ApiProperty({
     description: 'The email of the user',
     example: 'user@example.com',
@@ -16,8 +19,15 @@ export class LoginRequestDto extends PickType(User, [
   email: string;
 
   @ApiProperty({
+    description: 'The full name of the user',
+    example: 'John Doe',
+  })
+  @IsNotEmpty({ message: 'Full name is required' })
+  fullName: string;
+
+  @ApiProperty({
     description: 'The password of the user',
-    example: 'Password123#',
+    example: 'StrongP@ssw0rd',
   })
   @IsNotEmpty({ message: 'Password is required' })
   @IsStrongPassword(
@@ -34,4 +44,15 @@ export class LoginRequestDto extends PickType(User, [
     },
   )
   password: string;
+
+  @ApiProperty({
+    description: 'The role of the user',
+    example: {
+      id: 1,
+      name: 'Admin',
+    },
+  })
+  @IsOptional()
+  @IsEnum(RoleEnum)
+  role?: Role;
 }

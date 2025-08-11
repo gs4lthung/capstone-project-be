@@ -4,7 +4,7 @@ import { UseGuards, UseInterceptors } from '@nestjs/common';
 import { AuthGuard } from './guards/auth.guard';
 import { User } from '@app/database/entities/user.entity';
 import { RoleGuard } from './guards/role.guard';
-import { RoleDecorator } from '@app/shared/decorators/role.decorator';
+import { CheckRoleDecorator } from '@app/shared/decorators/role.decorator';
 import { RoleEnum } from '@app/shared/enums/role.enum';
 import { CacheInterceptor } from './interceptors/cache.interceptor';
 
@@ -21,7 +21,7 @@ export class AppResolver {
   }
 
   @Query(() => User, { name: 'user' })
-  @RoleDecorator(RoleEnum.CUSTOMER)
+  @CheckRoleDecorator(RoleEnum.ADMIN)
   @UseGuards(AuthGuard, RoleGuard)
   async getUserById(@Args('id', { type: () => Int }) id: number) {
     const user = this.appService.findUserById(id);

@@ -34,6 +34,10 @@ import { RefreshNewAccessTokenDto } from '@app/shared/dtos/auth/refresh-new-acce
 import { I18nResponseInterceptor } from './interceptors/i18-response.interceptor';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { User } from '@app/database/entities/user.entity';
+import { CreateUserDto } from '@app/shared/dtos/users/create-user.dto';
+import { RoleGuard } from './guards/role.guard';
+import { CheckRoleDecorator } from '@app/shared/decorators/role.decorator';
+import { RoleEnum } from '@app/shared/enums/role.enum';
 
 @Controller()
 @UseInterceptors(I18nResponseInterceptor)
@@ -146,6 +150,25 @@ export class AppController {
     return result;
   }
 
+  @Post('users')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({
+    tags: ['Users'],
+    summary: 'Create User',
+    description: 'Create a new user',
+  })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: 'User created successfully',
+  })
+  @CheckRoleDecorator(RoleEnum.ADMIN)
+  @UseGuards(AuthGuard, RoleGuard)
+  async createUser(
+    @Body() data: CreateUserDto,
+  ): Promise<CustomApiResponse<void>> {
+    return this.appService.createUser(data);
+  }
+
   @Put('users/me/avatar')
   @HttpCode(HttpStatus.OK)
   @ApiBearerAuth()
@@ -159,7 +182,13 @@ export class AppController {
     description: 'User avatar updated successfully',
   })
   @UseGuards(AuthGuard)
-  @UseInterceptors(FileInterceptor('avatar'))
+  @UseInterceptors(
+    FileInterceptor('avatar', {
+      limits: {
+        fileSize: 5 * 1024 * 1024,
+      },
+    }),
+  )
   async updateUserAvatar(
     @Req() req: CustomApiRequest,
     @UploadedFile() file: Express.Multer.File,

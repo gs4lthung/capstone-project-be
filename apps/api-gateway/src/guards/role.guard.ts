@@ -50,8 +50,9 @@ export class RoleGuard implements CanActivate {
         default:
           throw new CustomRpcException(
             'Unsupported context type',
-            HttpStatus.BAD_REQUEST,
+            HttpStatus.INTERNAL_SERVER_ERROR,
             'Error in AuthGuard: Unsupported context type',
+            true,
           );
       }
 
@@ -63,12 +64,17 @@ export class RoleGuard implements CanActivate {
       });
 
       if (!user || !user.role) {
-        return false;
+        throw new CustomRpcException('FORBIDDEN', HttpStatus.FORBIDDEN);
       }
 
-      return this.requiredRoles.includes(user.role.name);
+      const hasRole = this.requiredRoles.includes(user.role.name);
+      if (!hasRole) {
+        throw new CustomRpcException('FORBIDDEN', HttpStatus.FORBIDDEN);
+      }
     } catch (error) {
+      console.log(error);
       throw ExceptionUtils.wrapAsRpcException(error);
     }
+    return true;
   }
 }

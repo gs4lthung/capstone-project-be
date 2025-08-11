@@ -1,3 +1,4 @@
 import { SetMetadata } from '@nestjs/common';
 
-export const RoleDecorator = (...args: string[]) => SetMetadata('roles', args);
+export const CheckRoleDecorator = (...args: string[]) =>
+  SetMetadata('roles', args);

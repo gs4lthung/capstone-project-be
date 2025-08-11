@@ -23,6 +23,7 @@ import {
   I18nModule,
   QueryResolver,
 } from 'nestjs-i18n';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import {
       rootPath: 'public',
       serveRoot: '/',
     }),
+    ScheduleModule.forRoot(),
     DatabaseModule,
     TypeOrmModule.forFeature([Error, User]),
     ErrorModule,

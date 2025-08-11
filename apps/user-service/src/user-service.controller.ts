@@ -3,6 +3,7 @@ import { UserServiceService } from './user-service.service';
 import { MessagePattern } from '@nestjs/microservices';
 import { User } from '@app/database/entities/user.entity';
 import { CustomApiResponse } from '@app/shared/responses/custom-api.response';
+import { CreateUserDto } from '@app/shared/dtos/users/create-user.dto';
 
 @Controller()
 export class UserServiceController {
@@ -16,6 +17,11 @@ export class UserServiceController {
   @MessagePattern({ cmd: 'findUserById' })
   async findOne(id: number): Promise<User> {
     return this.userServiceService.findOne(id);
+  }
+
+  @MessagePattern({ cmd: 'createUser' })
+  async createUser(data: CreateUserDto): Promise<CustomApiResponse<void>> {
+    return this.userServiceService.createUser(data);
   }
 
   @MessagePattern({ cmd: 'updateUserAvatar' })
