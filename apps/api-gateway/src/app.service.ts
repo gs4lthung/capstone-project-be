@@ -1,12 +1,12 @@
-import { ConfigService } from '@app/config';
 import { User } from '@app/database/entities/user.entity';
-import { RedisService } from '@app/redis';
 import { GoogleUserDto } from '@app/shared/dtos/auth/google-user.dto';
 import { LoginRequestDto } from '@app/shared/dtos/auth/login.request.dto';
 import { LoginResponseDto } from '@app/shared/dtos/auth/login.response.dto';
 import { RegisterRequestDto } from '@app/shared/dtos/auth/register.request.dto';
 import { RegisterFcmTokenDto } from '@app/shared/dtos/notifications/register-fcm-token.dto';
+import { PaginatedResource } from '@app/shared/dtos/paginated-resource.dto';
 import { CreateUserDto } from '@app/shared/dtos/users/create-user.dto';
+import { FindOptions } from '@app/shared/interfaces/find-options.interface';
 import { CustomApiRequest } from '@app/shared/requests/custom-api.request';
 import { CustomApiResponse } from '@app/shared/responses/custom-api.response';
 import { Inject, Injectable, Scope } from '@nestjs/common';
@@ -17,13 +17,11 @@ import { lastValueFrom, map } from 'rxjs';
 @Injectable({ scope: Scope.REQUEST })
 export class AppService {
   constructor(
-    private readonly configService: ConfigService,
     @Inject(REQUEST) private readonly request: CustomApiRequest,
     @Inject('AUTH_SERVICE') private readonly authService: ClientProxy,
     @Inject('USER_SERVICE') private readonly userService: ClientProxy,
     @Inject('NOTIFICATION_SERVICE')
     private readonly notificationService: ClientProxy,
-    private readonly redisService: RedisService,
   ) {}
 
   //#region Authentication
@@ -104,12 +102,17 @@ export class AppService {
     return response;
   }
 
-  async findAllUsers() {
+  async findAllUsers(
+    findOptions: FindOptions,
+  ): Promise<PaginatedResource<Partial<User>>> {
     console.log('Fetching all users from cache or service');
     const pattern = { cmd: 'findAllUsers' };
 
     const response = await lastValueFrom(
-      this.userService.send<User[]>(pattern, {}),
+      this.userService.send<PaginatedResource<Partial<User>>>(
+        pattern,
+        findOptions,
+      ),
     );
 
     return response;
@@ -125,8 +128,8 @@ export class AppService {
     return response;
   }
 
-  async updateUserAvatar(id: number, file: Express.Multer.File) {
-    const pattern = { cmd: 'updateUserAvatar' };
+  async updateMyAvatar(id: number, file: Express.Multer.File) {
+    const pattern = { cmd: 'updateMyAvatar' };
     const payload = { id, file };
 
     const response = await lastValueFrom(

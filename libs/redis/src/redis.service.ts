@@ -19,6 +19,10 @@ export class RedisService {
     await this.cacheManager.del(key);
   }
 
+  async delByPattern(key: string): Promise<void> {
+    await this.cacheManager.del(`${key}*`);
+  }
+
   async clear(): Promise<void> {
     await this.cacheManager.clear();
   }

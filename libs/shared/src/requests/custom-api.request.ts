@@ -14,4 +14,14 @@ export interface CustomApiRequest extends Request {
         | 'accessToken'
         | 'refreshToken'
       >;
+  query: CustomApiQuery;
+  body: any;
+}
+
+export interface CustomApiQuery {
+  page?: number;
+  size?: number;
+  sort?: string;
+  filter?: string;
+  lang?: 'en' | 'vi';
 }

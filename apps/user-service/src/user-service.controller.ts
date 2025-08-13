@@ -4,14 +4,18 @@ import { MessagePattern } from '@nestjs/microservices';
 import { User } from '@app/database/entities/user.entity';
 import { CustomApiResponse } from '@app/shared/responses/custom-api.response';
 import { CreateUserDto } from '@app/shared/dtos/users/create-user.dto';
+import { PaginatedResource } from '@app/shared/dtos/paginated-resource.dto';
+import { FindOptions } from '@app/shared/interfaces/find-options.interface';
 
 @Controller()
 export class UserServiceController {
   constructor(private readonly userServiceService: UserServiceService) {}
 
   @MessagePattern({ cmd: 'findAllUsers' })
-  async findAll(): Promise<User[]> {
-    return this.userServiceService.findAll();
+  async findAll(
+    findOptions: FindOptions,
+  ): Promise<PaginatedResource<Partial<User>>> {
+    return this.userServiceService.findAll(findOptions);
   }
 
   @MessagePattern({ cmd: 'findUserById' })
@@ -24,12 +28,12 @@ export class UserServiceController {
     return this.userServiceService.createUser(data);
   }
 
-  @MessagePattern({ cmd: 'updateUserAvatar' })
-  async updateUserAvatar(data: {
+  @MessagePattern({ cmd: 'updateMyAvatar' })
+  async updateMyAvatar(data: {
     id: number;
     file: Express.Multer.File;
   }): Promise<CustomApiResponse<void>> {
-    return this.userServiceService.updateUserAvatar(data.id, data.file);
+    return this.userServiceService.updateMyAvatar(data.id, data.file);
   }
 
   @MessagePattern({ cmd: 'softDeleteUser' })

@@ -10,20 +10,22 @@ import { ErrorModule } from './error/error.module';
 import { JwtService } from '@nestjs/jwt';
 import { GraphQLModule } from '@nestjs/graphql';
 import { AppResolver } from './app.resolver';
-import { ApolloDriver } from '@nestjs/apollo';
+import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Error } from '@app/database/entities/error.entity';
 import { User } from '@app/database/entities/user.entity';
-import { RedisModule } from '@app/redis';
 import { GoogleStrategy } from './strategies/google.strategy';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import {
+  AcceptLanguageResolver,
+  GraphQLWebsocketResolver,
   HeaderResolver,
   I18nJsonLoader,
   I18nModule,
   QueryResolver,
 } from 'nestjs-i18n';
 import { ScheduleModule } from '@nestjs/schedule';
+import { RedisModule } from '@app/redis';
 
 @Module({
   imports: [
@@ -34,9 +36,9 @@ import { ScheduleModule } from '@nestjs/schedule';
     }),
     ScheduleModule.forRoot(),
     DatabaseModule,
+    RedisModule,
     TypeOrmModule.forFeature([Error, User]),
     ErrorModule,
-    RedisModule,
     I18nModule.forRoot({
       fallbackLanguage: 'en',
       loaderOptions: {
@@ -44,21 +46,26 @@ import { ScheduleModule } from '@nestjs/schedule';
       },
       loader: I18nJsonLoader,
       resolvers: [
+        GraphQLWebsocketResolver,
         { use: QueryResolver, options: ['lang'] },
+        AcceptLanguageResolver,
         new HeaderResolver(['x-lang']),
       ],
     }),
-    GraphQLModule.forRootAsync({
+    GraphQLModule.forRootAsync<ApolloDriverConfig>({
       imports: [ConfigModule],
       inject: [ConfigService],
       driver: ApolloDriver,
       useFactory: async (configService: ConfigService) => ({
         autoSchemaFile: true,
-        context: ({ req }) => ({ headers: req.headers }),
+        context: (ctx) => ctx,
         playground: configService.get('graphql').playground,
         introspection: configService.get('graphql').introspection,
         buildSchemaOptions: {
           dateScalarMode: 'timestamp' as const,
+        },
+        subscriptions: {
+          'graphql-ws': true,
         },
       }),
     }),

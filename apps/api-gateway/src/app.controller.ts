@@ -31,15 +31,15 @@ import { GoogleOAuthGuard } from './guards/google-auth.guard';
 import { GoogleUserDto } from '@app/shared/dtos/auth/google-user.dto';
 import { CustomApiResponse } from '@app/shared/responses/custom-api.response';
 import { Response } from 'express';
-import { CustomApiRequest } from '@app/shared/requests/custom-api.request';
 import { RefreshNewAccessTokenDto } from '@app/shared/dtos/auth/refresh-new-access-token.dto';
 import { I18nResponseInterceptor } from './interceptors/i18-response.interceptor';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { User } from '@app/database/entities/user.entity';
 import { CreateUserDto } from '@app/shared/dtos/users/create-user.dto';
 import { RoleGuard } from './guards/role.guard';
-import { CheckRoleDecorator } from '@app/shared/decorators/role.decorator';
+import { CheckRoles } from '@app/shared/decorators/check-roles.decorator';
 import { RoleEnum } from '@app/shared/enums/role.enum';
+import { CurrentUser } from '@app/shared/decorators/current-user.decorator';
 
 @Controller()
 @UseInterceptors(I18nResponseInterceptor)
@@ -127,8 +127,10 @@ export class AppController {
       'User successfully authenticated with Google, navigate to the client application',
     type: String,
   })
-  async googleAuthRedirect(@Req() req: CustomApiRequest, @Res() res: Response) {
-    const user = req.user as GoogleUserDto;
+  async googleAuthRedirect(
+    @CurrentUser('google') user: GoogleUserDto,
+    @Res() res: Response,
+  ) {
     const redirectUrl = await this.appService.loginWithGoogle(user);
     return res.redirect(redirectUrl);
   }
@@ -169,7 +171,7 @@ export class AppController {
     status: HttpStatus.CREATED,
     description: 'User created successfully',
   })
-  @CheckRoleDecorator(RoleEnum.ADMIN)
+  @CheckRoles(RoleEnum.ADMIN)
   @UseGuards(AuthGuard, RoleGuard)
   async createUser(
     @Body() data: CreateUserDto,
@@ -197,12 +199,11 @@ export class AppController {
       },
     }),
   )
-  async updateUserAvatar(
-    @Req() req: CustomApiRequest,
+  async updateMyAvatar(
+    @CurrentUser('local') user: User,
     @UploadedFile() file: Express.Multer.File,
   ): Promise<CustomApiResponse<void>> {
-    const user = req.user as User;
-    return this.appService.updateUserAvatar(user.id, file);
+    return this.appService.updateMyAvatar(user.id, file);
   }
 
   @Delete('users/:id/soft')
@@ -216,7 +217,7 @@ export class AppController {
     status: HttpStatus.OK,
     description: 'User deleted successfully',
   })
-  @CheckRoleDecorator(RoleEnum.ADMIN)
+  @CheckRoles(RoleEnum.ADMIN)
   @UseGuards(AuthGuard, RoleGuard)
   async softDeleteUser(
     @Param('id') id: number,
@@ -235,7 +236,7 @@ export class AppController {
     status: HttpStatus.OK,
     description: 'User deleted successfully',
   })
-  @CheckRoleDecorator(RoleEnum.ADMIN)
+  @CheckRoles(RoleEnum.ADMIN)
   @UseGuards(AuthGuard, RoleGuard)
   async deleteUser(@Param('id') id: number): Promise<CustomApiResponse<void>> {
     return this.appService.deleteUser(id);
@@ -252,7 +253,7 @@ export class AppController {
     status: HttpStatus.OK,
     description: 'User restored successfully',
   })
-  @CheckRoleDecorator(RoleEnum.ADMIN)
+  @CheckRoles(RoleEnum.ADMIN)
   @UseGuards(AuthGuard, RoleGuard)
   async restoreUser(@Param('id') id: number): Promise<CustomApiResponse<void>> {
     return this.appService.restoreUser(id);

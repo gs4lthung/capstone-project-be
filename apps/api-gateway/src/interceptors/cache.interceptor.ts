@@ -1,4 +1,5 @@
 import { RedisService } from '@app/redis';
+import { CustomApiQuery } from '@app/shared/requests/custom-api.request';
 import {
   CallHandler,
   ExecutionContext,
@@ -17,9 +18,16 @@ export class CacheInterceptor implements NestInterceptor {
   ): Observable<any> | Promise<Observable<any>> {
     const ctx = GqlExecutionContext.create(context);
     const info = ctx.getInfo();
+    const args = ctx.getArgs<CustomApiQuery>();
 
-    const fieldName = info.fieldName;
-    const cacheKey = `${fieldName}`;
+    const fieldName = info.fieldName as string;
+    const isGetAllApi = fieldName[fieldName.length - 1] === 's';
+    let cacheKey: string;
+    if (isGetAllApi)
+      cacheKey = `${fieldName}:page=${args.page || 1}:size=${args.size || 10}:filter=${args.filter || ''}:sort=${args.sort || ''}`;
+    else cacheKey = fieldName;
+
+    console.log(`Cache key: ${cacheKey}`);
 
     return from(this.redisService.get(cacheKey)).pipe(
       switchMap((cachedData) => {

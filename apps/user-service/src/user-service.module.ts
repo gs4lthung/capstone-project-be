@@ -7,10 +7,12 @@ import { ConfigModule } from '@app/config';
 import { UserServiceController } from './user-service.controller';
 import { CloudinaryModule } from '@app/cloudinary';
 import { Role } from '@app/database/entities/role.entity';
+import { RedisModule } from '@app/redis';
 
 @Module({
   imports: [
     ConfigModule,
+    RedisModule,
     CloudinaryModule,
     DatabaseModule,
     TypeOrmModule.forFeature([User, Role]),

@@ -16,7 +16,7 @@ import { GraphQLError } from 'graphql';
 import { ContextUtils } from '@app/shared/utils/context.util';
 import { ProtocolEnum } from '@app/shared/enums/protocol.enum';
 import { User } from '@app/database/entities/user.entity';
-import { I18nContext } from 'nestjs-i18n';
+import { I18nService } from 'nestjs-i18n';
 import { CustomRpcException } from '@app/shared/exceptions/custom-rpc.exception';
 
 @Catch()
@@ -26,6 +26,7 @@ export class ErrorLoggingFilter implements ExceptionFilter {
     private readonly configService: ConfigService,
     @InjectRepository(Error)
     private readonly errorRepository: Repository<Error>,
+    private readonly i18nService: I18nService,
   ) {}
 
   async catch(exception: CustomRpcException, host: ArgumentsHost) {
@@ -65,6 +66,11 @@ export class ErrorLoggingFilter implements ExceptionFilter {
         }
         return;
     }
+
+    const i18nErrorMessage =
+      this.i18nService.t(`errors.${exception.message}`, {
+        lang: request.query.lang || 'en',
+      }) || exception.message;
 
     const user = request.user as User;
     let userId: number | null = null;
@@ -118,9 +124,6 @@ export class ErrorLoggingFilter implements ExceptionFilter {
       await this.errorRepository.save(errorEntity);
     }
 
-    const i18nCtx = I18nContext.current(host);
-    const i18nErrorMessage =
-      i18nCtx.t(`errors.${exception.message}`) || exception.message;
     switch (contextType) {
       case ProtocolEnum.HTTP:
         const status = exception.statusCode;
