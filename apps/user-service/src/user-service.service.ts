@@ -105,15 +105,12 @@ export class UserServiceService {
         withDeleted: false,
       });
 
-      if (!user) {
-        await this.redisService.set(
+      if (!user)
+        throw new CustomRpcException(
+          'NOT_FOUND',
+          HttpStatus.NOT_FOUND,
           `user:${id}`,
-          '__NULL__',
-          this.configService.get('cache').negative_ttl,
         );
-
-        throw new CustomRpcException('USER.NOT_FOUND', HttpStatus.NOT_FOUND);
-      }
 
       return user;
     } catch (error) {

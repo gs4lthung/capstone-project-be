@@ -25,6 +25,7 @@ export class CacheInterceptor implements NestInterceptor {
     const fieldName = info.fieldName as string;
     const isGetAllReq = fieldName[fieldName.length - 1] === 's';
     let cacheKey: string;
+
     if (isGetAllReq)
       cacheKey = `${fieldName}:page=${args.page || 1}:size=${args.size || 10}:filter=${args.filter || ''}:sort=${args.sort || ''}`;
     else cacheKey = `${fieldName}:${args.id}`;
@@ -34,6 +35,7 @@ export class CacheInterceptor implements NestInterceptor {
         if (cachedData) {
           if (cachedData === '__NULL__')
             throw new CustomRpcException('NOT_FOUND', HttpStatus.NOT_FOUND);
+
           return from(Promise.resolve(cachedData));
         }
         return next.handle().pipe(
