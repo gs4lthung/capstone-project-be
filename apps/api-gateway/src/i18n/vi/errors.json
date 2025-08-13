@@ -1,5 +1,6 @@
 {
     "FORBIDDEN": "Bạn không có quyền truy cập vào tài nguyên này",
+    "NOT_FOUND": "Tài nguyên không tồn tại",
     "INTERNAL_SERVER_ERROR": "Đã xảy ra lỗi không mong muốn",
     "BAD_REQUEST": "Yêu cầu không hợp lệ",
     "UNAUTHORIZED": "Bạn phải xác thực để truy cập tài nguyên này",

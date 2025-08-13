@@ -19,6 +19,7 @@ export interface CustomApiRequest extends Request {
 }
 
 export interface CustomApiQuery {
+  id?: number | string;
   page?: number;
   size?: number;
   sort?: string;

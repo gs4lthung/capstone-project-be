@@ -1,8 +1,10 @@
 import { RedisService } from '@app/redis';
+import { CustomRpcException } from '@app/shared/exceptions/custom-rpc.exception';
 import { CustomApiQuery } from '@app/shared/requests/custom-api.request';
 import {
   CallHandler,
   ExecutionContext,
+  HttpStatus,
   Injectable,
   NestInterceptor,
 } from '@nestjs/common';
@@ -21,17 +23,17 @@ export class CacheInterceptor implements NestInterceptor {
     const args = ctx.getArgs<CustomApiQuery>();
 
     const fieldName = info.fieldName as string;
-    const isGetAllApi = fieldName[fieldName.length - 1] === 's';
+    const isGetAllReq = fieldName[fieldName.length - 1] === 's';
     let cacheKey: string;
-    if (isGetAllApi)
+    if (isGetAllReq)
       cacheKey = `${fieldName}:page=${args.page || 1}:size=${args.size || 10}:filter=${args.filter || ''}:sort=${args.sort || ''}`;
-    else cacheKey = fieldName;
-
-    console.log(`Cache key: ${cacheKey}`);
+    else cacheKey = `${fieldName}:${args.id}`;
 
     return from(this.redisService.get(cacheKey)).pipe(
       switchMap((cachedData) => {
         if (cachedData) {
+          if (cachedData === '__NULL__')
+            throw new CustomRpcException('NOT_FOUND', HttpStatus.NOT_FOUND);
           return from(Promise.resolve(cachedData));
         }
         return next.handle().pipe(

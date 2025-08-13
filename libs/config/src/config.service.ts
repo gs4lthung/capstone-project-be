@@ -48,6 +48,7 @@ interface Config {
   cache?: {
     ttl?: number;
     max?: number;
+    negative_ttl?: number; // TTL for negative cache entries
   };
   mail?: {
     host?: string;
@@ -163,6 +164,9 @@ export class ConfigService {
       ),
       cache: {
         ttl: Number(this.nestConfigService.get('CACHE_TTL', 60000)),
+        negative_ttl: Number(
+          this.nestConfigService.get('CACHE_NEGATIVE_TTL', 86400),
+        ), // TTL for negative cache entries
         max: Number(this.nestConfigService.get('CACHE_MAX', 1000)),
       },
       mail: {

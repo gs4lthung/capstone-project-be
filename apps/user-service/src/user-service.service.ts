@@ -105,8 +105,15 @@ export class UserServiceService {
         withDeleted: false,
       });
 
-      if (!user)
+      if (!user) {
+        await this.redisService.set(
+          `user:${id}`,
+          '__NULL__',
+          this.configService.get('cache').negative_ttl,
+        );
+
         throw new CustomRpcException('USER.NOT_FOUND', HttpStatus.NOT_FOUND);
+      }
 
       return user;
     } catch (error) {
@@ -120,9 +127,14 @@ export class UserServiceService {
   ): Promise<CustomApiResponse<void>> {
     try {
       const res = await this.cloudinaryService.uploadFile(file);
+
       await this.userRepository.update(id, {
         profilePicture: res.url,
       });
+
+      await this.redisService.del(`user:${id}`);
+      await this.redisService.delByPattern('users');
+
       return new CustomApiResponse<void>(
         HttpStatus.OK,
         'USER.UPDATE_USER_AVATAR_SUCCESS',
