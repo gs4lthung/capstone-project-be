@@ -75,30 +75,15 @@ export class ErrorLoggingFilter implements ExceptionFilter {
         return;
     }
 
-    // Store not found resource to Redis cache
-    if (exception.statusCode === HttpStatus.NOT_FOUND && exception.stack) {
-      const cacheKey = exception.stack.split(':')[0];
-      const id = exception.stack.split(':')[1];
-
-      await this.redisService.set(
-        `${cacheKey}:${id}`,
-        '__NULL__',
-        this.configService.get('cache').negative_ttl,
-      );
-    }
-
-    // Translate error message
-    const i18nErrorMessage =
-      this.i18nService.t(`errors.${exception.message}`, {
-        lang: request.query?.lang || 'en',
-      }) || exception.message;
-
-    // Extract user information if available
-    const user = request.user as User;
-    let userId: number | null = null;
-    if (user && 'id' in user) {
-      userId = user.id;
-    }
+    const message =
+      exception.message ||
+      (exception as any).response.message ||
+      'Internal server error';
+    const statusCode =
+      exception.statusCode ||
+      (exception as any).response.statusCode ||
+      HttpStatus.INTERNAL_SERVER_ERROR;
+    const stack = exception.stack;
 
     // Check if the error is an aggregate error and log it out
     const isAggregateError = exception instanceof AggregateError;
@@ -109,22 +94,47 @@ export class ErrorLoggingFilter implements ExceptionFilter {
     } else {
       logger.error(
         'Error details',
-        exception || exception.stack || exception.message,
+        `Code: ${statusCode}, Message: ${message}, Stack: ${stack}`,
       );
+    }
+
+    // Store not found resource to Redis cache
+    if (statusCode === HttpStatus.NOT_FOUND && stack) {
+      const cacheKey = stack.split(':')[0];
+      const id = stack.split(':')[1];
+
+      await this.redisService.set(
+        `${cacheKey}:${id}`,
+        '__NULL__',
+        this.configService.get('cache').negative_ttl,
+      );
+    }
+
+    // Translate error message
+    const i18nErrorMessage =
+      this.i18nService.t(`errors.${message}`, {
+        lang: request.query?.lang || 'en',
+      }) || message;
+
+    // Extract user information if available
+    const user = request.user as User;
+    let userId: number | null = null;
+    if (user && 'id' in user) {
+      userId = user.id;
     }
 
     // Store error in database
     if (!isDevelopment) {
       const ERROR_MESSAGE_LENGTH = 4900;
       const errorEntity = this.errorRepository.create({
-        code: String(exception.statusCode),
-        message: exception.message,
+        code: String(statusCode),
+        message: message,
         stack: isAggregateError
           ? exception.errors
               .map((err) => String(err))
               .join('\n')
               ?.slice(0, ERROR_MESSAGE_LENGTH)
-          : exception.stack?.slice(0, ERROR_MESSAGE_LENGTH),
+          : stack?.slice(0, ERROR_MESSAGE_LENGTH),
         url: requestUrl,
         body: request.body ? JSON.stringify(request.body) : null,
         user: userId ? { id: userId } : null,
@@ -136,9 +146,8 @@ export class ErrorLoggingFilter implements ExceptionFilter {
     // Response based on context types
     switch (contextType) {
       case ProtocolEnum.HTTP:
-        const status = exception.statusCode;
-        response.status(status).json({
-          statusCode: status,
+        response.status(statusCode).json({
+          statusCode: statusCode,
           message: i18nErrorMessage,
           timestamp: new Date().toISOString(),
           path: request.url,
@@ -147,13 +156,13 @@ export class ErrorLoggingFilter implements ExceptionFilter {
       case ProtocolEnum.GRAPHQL:
         throw new GraphQLError(i18nErrorMessage, {
           extensions: {
-            code: exception.statusCode,
+            code: statusCode,
           },
         });
       case ProtocolEnum.WS:
         response.emit('exception', {
           message: i18nErrorMessage,
-          code: exception.statusCode,
+          code: statusCode,
         });
         break;
       default:

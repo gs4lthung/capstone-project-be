@@ -6,7 +6,11 @@ import { ExceptionUtils } from '@app/shared/utils/exception.util';
 
 @Injectable()
 export class CloudinaryService {
-  async uploadFile(file: Express.Multer.File): Promise<CloudinaryResponse> {
+  async uploadFile(
+    prefix: string,
+    postfix: string,
+    file: Express.Multer.File,
+  ): Promise<CloudinaryResponse> {
     try {
       if (!file.buffer) {
         throw new Error('File buffer is empty');
@@ -18,6 +22,9 @@ export class CloudinaryService {
 
       return new Promise<CloudinaryResponse>((resolve, reject) => {
         const uploadStream = cloudinary.uploader.upload_stream(
+          {
+            public_id: `${prefix}:${postfix}`,
+          },
           (error, result) => {
             if (error) return reject(error);
             resolve(result);

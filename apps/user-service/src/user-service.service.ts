@@ -127,7 +127,21 @@ export class UserServiceService {
     file: Express.Multer.File,
   ): Promise<CustomApiResponse<void>> {
     try {
-      const res = await this.cloudinaryService.uploadFile(file);
+      const user = await this.userRepository.findOne({
+        where: { id: id },
+        withDeleted: false,
+      });
+      if (!user)
+        throw new CustomRpcException(
+          'INTERNAL_SERVER_ERROR',
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
+
+      const res = await this.cloudinaryService.uploadFile(
+        'user',
+        user.id.toString(),
+        file,
+      );
 
       await this.userRepository.update(id, {
         profilePicture: res.url,
