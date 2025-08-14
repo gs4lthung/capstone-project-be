@@ -1,3 +1,4 @@
+import { ConfigService } from '@app/config';
 import { RedisService } from '@app/redis';
 import { CustomRpcException } from '@app/shared/exceptions/custom-rpc.exception';
 import { CustomApiQuery } from '@app/shared/requests/custom-api.request';
@@ -13,7 +14,10 @@ import { from, Observable, switchMap, tap } from 'rxjs';
 
 @Injectable()
 export class CacheInterceptor implements NestInterceptor {
-  constructor(private readonly redisService: RedisService) {}
+  constructor(
+    private readonly redisService: RedisService,
+    private readonly configService: ConfigService,
+  ) {}
   intercept(
     context: ExecutionContext,
     next: CallHandler<any>,
@@ -40,7 +44,11 @@ export class CacheInterceptor implements NestInterceptor {
         }
         return next.handle().pipe(
           tap((data) => {
-            this.redisService.set(cacheKey, data);
+            this.redisService.set(
+              cacheKey,
+              data,
+              this.configService.get('cache').ttl,
+            );
           }),
         );
       }),

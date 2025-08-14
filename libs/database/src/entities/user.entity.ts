@@ -1,11 +1,13 @@
 import {
   Column,
+  CreateDateColumn,
   DeleteDateColumn,
   Entity,
   JoinColumn,
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import { Error } from './error.entity';
 import { Role } from './role.entity';
@@ -13,6 +15,7 @@ import { Field, ObjectType } from '@nestjs/graphql';
 import { FcmToken } from './fcmToken.entity';
 import { GqlCustomDateTime } from '@app/shared/scalars/gql-custom-datetime.scalar';
 import { AuthProvider } from './auth-provider.entity';
+import { Notification } from './notification.entity';
 
 @Entity('users')
 @ObjectType()
@@ -46,15 +49,11 @@ export class User {
   @Column({ type: 'varchar', length: 255, nullable: true })
   emailVerificationToken?: string;
 
-  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  @CreateDateColumn()
   @Field(() => GqlCustomDateTime)
   createdAt: Date;
 
-  @Column({
-    type: 'timestamp',
-    default: () => 'CURRENT_TIMESTAMP',
-    onUpdate: 'CURRENT_TIMESTAMP',
-  })
+  @UpdateDateColumn()
   @Field(() => GqlCustomDateTime)
   updatedAt: Date;
 
@@ -81,4 +80,7 @@ export class User {
   })
   @Field(() => [FcmToken], { nullable: true })
   fcmTokens: FcmToken[];
+
+  @OneToMany(() => Notification, (notification) => notification.user)
+  notifications: Notification[];
 }

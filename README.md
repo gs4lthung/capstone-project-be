@@ -1,1 +1,0 @@
-![Nestjs Architecture](image.png)

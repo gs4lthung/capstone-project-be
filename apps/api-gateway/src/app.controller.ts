@@ -261,6 +261,8 @@ export class AppController {
 
   //#endregion Users
 
+  //#region Notifications
+
   @Post('notifications/register-fcm-token')
   @HttpCode(HttpStatus.CREATED)
   @UseGuards(AuthGuard)
@@ -281,4 +283,6 @@ export class AppController {
   ) {
     return this.appService.registerFcmToken(data);
   }
+
+  //#endregion Notifications
 }

@@ -1,4 +1,4 @@
-export class NotificationSendDto {
+export class FirebaseNotification {
   token: string;
   title: string;
   body: string;

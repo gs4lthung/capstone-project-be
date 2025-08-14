@@ -1,8 +1,9 @@
 import { Controller } from '@nestjs/common';
 import { NotificationServiceService } from './notification-service.service';
-import { MessagePattern, Payload } from '@nestjs/microservices';
+import { EventPattern, MessagePattern, Payload } from '@nestjs/microservices';
 import { RegisterFcmTokenDto } from '@app/shared/dtos/notifications/register-fcm-token.dto';
 import { CustomApiResponse } from '@app/shared/responses/custom-api.response';
+import { SendNotification } from '@app/shared/interfaces/send-notification.interface';
 
 @Controller()
 export class NotificationServiceController {
@@ -16,5 +17,10 @@ export class NotificationServiceController {
     @Payload() data: RegisterFcmTokenDto,
   ): Promise<CustomApiResponse<void>> {
     return this.notificationServiceService.registerFcmToken(userId, data);
+  }
+
+  @EventPattern('send_notification')
+  async sendNotification(@Payload() data: SendNotification): Promise<void> {
+    return this.notificationServiceService.sendNotification(data);
   }
 }

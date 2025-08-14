@@ -1,5 +1,5 @@
 import { ConfigService } from '@app/config';
-import { NotificationSendDto } from '@app/shared/dtos/notifications/notification-send.dto';
+import { FirebaseNotification } from '@app/firebase/firebase-notification';
 import { ExceptionUtils } from '@app/shared/utils/exception.util';
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import * as admin from 'firebase-admin';
@@ -29,7 +29,7 @@ export class FirebaseService implements OnModuleInit {
     title,
     body,
     icon,
-  }: NotificationSendDto) {
+  }: FirebaseNotification) {
     try {
       const response = await admin.messaging().send({
         token,

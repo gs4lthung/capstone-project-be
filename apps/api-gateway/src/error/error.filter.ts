@@ -90,7 +90,7 @@ export class ErrorLoggingFilter implements ExceptionFilter {
     // Translate error message
     const i18nErrorMessage =
       this.i18nService.t(`errors.${exception.message}`, {
-        lang: request.query.lang || 'en',
+        lang: request.query?.lang || 'en',
       }) || exception.message;
 
     // Extract user information if available

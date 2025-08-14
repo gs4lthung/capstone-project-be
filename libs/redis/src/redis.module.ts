@@ -6,6 +6,7 @@ import KeyvRedis, { Keyv } from '@keyv/redis';
 
 @Module({
   imports: [
+    ConfigModule,
     CacheModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],

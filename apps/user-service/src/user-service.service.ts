@@ -4,7 +4,7 @@ import { CreateUserDto } from '@app/shared/dtos/users/create-user.dto';
 import { CustomRpcException } from '@app/shared/exceptions/custom-rpc.exception';
 import { CustomApiResponse } from '@app/shared/responses/custom-api.response';
 import { ExceptionUtils } from '@app/shared/utils/exception.util';
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
@@ -15,6 +15,8 @@ import { RedisService } from '@app/redis';
 import { FindOptions } from '@app/shared/interfaces/find-options.interface';
 import { getOrder, getWhere } from '@app/shared/helpers/typeorm.helper';
 import { PaginatedResource } from '@app/shared/dtos/paginated-resource.dto';
+import { ClientProxy } from '@nestjs/microservices';
+import { SendNotification } from '@app/shared/interfaces/send-notification.interface';
 
 @Injectable()
 export class UserServiceService {
@@ -24,6 +26,8 @@ export class UserServiceService {
     private readonly redisService: RedisService,
     @InjectRepository(User) private readonly userRepository: Repository<User>,
     @InjectRepository(Role) private readonly roleRepository: Repository<Role>,
+    @Inject('NOTIFICATION_SERVICE')
+    private readonly notificationService: ClientProxy,
   ) {}
 
   async createUser(data: CreateUserDto): Promise<CustomApiResponse<void>> {
@@ -131,6 +135,12 @@ export class UserServiceService {
 
       await this.redisService.del(`user:${id}`);
       await this.redisService.delByPattern('users');
+
+      this.notificationService.emit<SendNotification>('send_notification', {
+        userId: id,
+        title: 'Profile Picture Updated',
+        body: 'Your profile picture has been updated successfully.',
+      });
 
       return new CustomApiResponse<void>(
         HttpStatus.OK,

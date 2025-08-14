@@ -7,10 +7,12 @@ import { RegisterFcmTokenDto } from '@app/shared/dtos/notifications/register-fcm
 import { PaginatedResource } from '@app/shared/dtos/paginated-resource.dto';
 import { CreateUserDto } from '@app/shared/dtos/users/create-user.dto';
 import { FindOptions } from '@app/shared/interfaces/find-options.interface';
+import { SendNotification } from '@app/shared/interfaces/send-notification.interface';
 import { CustomApiRequest } from '@app/shared/requests/custom-api.request';
 import { CustomApiResponse } from '@app/shared/responses/custom-api.response';
-import { Inject, Injectable, Scope } from '@nestjs/common';
+import { HttpStatus, Inject, Injectable, Scope } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ClientProxy } from '@nestjs/microservices';
 import { lastValueFrom, map } from 'rxjs';
 
@@ -22,6 +24,7 @@ export class AppService {
     @Inject('USER_SERVICE') private readonly userService: ClientProxy,
     @Inject('NOTIFICATION_SERVICE')
     private readonly notificationService: ClientProxy,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   //#region Authentication
@@ -118,12 +121,12 @@ export class AppService {
     return response;
   }
 
-  async findUserById(id: number) {
+  async findUserById(id: number): Promise<User> {
     const pattern = { cmd: 'findUserById' };
     const payload = id;
 
     const response = await lastValueFrom(
-      this.userService.send<CustomApiResponse<User>>(pattern, payload),
+      this.userService.send<User>(pattern, payload),
     );
     return response;
   }
@@ -134,18 +137,6 @@ export class AppService {
 
     const response = await lastValueFrom(
       this.userService.send<CustomApiResponse<void>>(pattern, payload),
-    );
-    return response;
-  }
-
-  async registerFcmToken(data: RegisterFcmTokenDto) {
-    const pattern = { cmd: 'register_fcm_token' };
-
-    const userId = this.request.user.id;
-    const payload = { userId, ...data };
-
-    const response = await lastValueFrom(
-      this.notificationService.send<CustomApiResponse<void>>(pattern, payload),
     );
     return response;
   }
@@ -181,4 +172,20 @@ export class AppService {
   }
 
   //#endregion
+
+  //#region Notifications
+
+  async registerFcmToken(data: RegisterFcmTokenDto) {
+    const pattern = { cmd: 'register_fcm_token' };
+
+    const userId = this.request.user.id;
+    const payload = { userId, ...data };
+
+    const response = await lastValueFrom(
+      this.notificationService.send<CustomApiResponse<void>>(pattern, payload),
+    );
+    return response;
+  }
+
+  //#endregion Notifications
 }

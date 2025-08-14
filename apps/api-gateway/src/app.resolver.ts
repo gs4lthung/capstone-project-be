@@ -42,7 +42,9 @@ export class AppResolver {
   @Query(() => User, { name: 'user' })
   @CheckRoles(RoleEnum.ADMIN)
   @UseGuards(AuthGuard, RoleGuard)
-  async getUserById(@Args('id', { type: () => Int }) id: number) {
+  async getUserById(
+    @Args('id', { type: () => Int }) id: number,
+  ): Promise<User> {
     const user = this.appService.findUserById(id);
     return user;
   }

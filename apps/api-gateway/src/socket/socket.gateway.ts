@@ -1,4 +1,4 @@
-import { Logger, UseFilters, UseGuards } from '@nestjs/common';
+import { Logger, OnModuleInit, UseFilters, UseGuards } from '@nestjs/common';
 import {
   OnGatewayConnection,
   OnGatewayDisconnect,
@@ -10,27 +10,97 @@ import {
 import { Server, Socket } from 'socket.io';
 import { ErrorLoggingFilter } from '../error/error.filter';
 import { AuthGuard } from '../guards/auth.guard';
+import { JwtPayloadDto } from '@app/shared/dtos/auth/jwt.payload.dto';
+import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@app/config';
+import { RedisService } from '@app/redis';
+import { SendNotification } from '@app/shared/interfaces/send-notification.interface';
 
 @WebSocketGateway({
   namespace: '/ws',
 })
+@UseGuards(AuthGuard)
 @UseFilters(ErrorLoggingFilter)
-export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
+export class SocketGateway
+  implements OnGatewayConnection, OnGatewayDisconnect, OnModuleInit
+{
+  constructor(
+    private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
+    private readonly redisService: RedisService,
+  ) {}
   @WebSocketServer() server: Server;
 
   private readonly logger = new Logger(SocketGateway.name);
 
-  handleConnection(client: Socket) {
-    this.logger.log(`Client connected: ${client.id}`);
+  onModuleInit() {
+    this.handleNotificationEvent();
   }
 
-  handleDisconnect(client: Socket) {
-    this.logger.log(`Client disconnected: ${client.id}`);
+  async handleConnection(client: Socket) {
+    try {
+      const token = client.handshake.query.accessToken as string;
+      if (!token) {
+        client.disconnect();
+      }
+
+      const payload: JwtPayloadDto = await this.jwtService.verifyAsync(token, {
+        secret: this.configService.get('jwt').access_token.secret,
+      });
+
+      await this.redisService.setOnlineUser(
+        payload.id,
+        client.id,
+        this.configService.get('cache').ttl,
+      );
+
+      (client as any).userId = payload.id;
+    } catch {
+      client.disconnect();
+    }
+  }
+
+  async handleDisconnect(client: Socket) {
+    const userId = (client as any).userId;
+    if (userId) {
+      await this.redisService.delOnlineUser(userId);
+    }
   }
 
   @SubscribeMessage('message')
-  @UseGuards(AuthGuard)
   handleMessage(client: Socket, payload: any): void {
     throw new WsException('This is a custom WebSocket exception');
+  }
+
+  @SubscribeMessage('heartbeat')
+  handleHeartbeat(client: Socket): void {
+    const userId = (client as any).userId;
+    console.log(userId);
+    if (userId) {
+      this.redisService.refreshOnlineUserTTL(
+        userId,
+        this.configService.get('cache').ttl,
+      );
+    }
+  }
+
+  handleNotificationEvent() {
+    this.redisService.subscribe(
+      'notifications',
+      async (message: SendNotification) => {
+        try {
+          const payload = message;
+          const clientId = await this.redisService.getOnlineUser(
+            payload.userId,
+          );
+          this.server.to(clientId).emit('notification', {
+            title: payload.title,
+            body: payload.body,
+          });
+        } catch {
+          console.error('Error parsing notification message:', message);
+        }
+      },
+    );
   }
 }
