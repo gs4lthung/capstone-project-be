@@ -7,12 +7,10 @@ import { RegisterFcmTokenDto } from '@app/shared/dtos/notifications/register-fcm
 import { PaginatedResource } from '@app/shared/dtos/paginated-resource.dto';
 import { CreateUserDto } from '@app/shared/dtos/users/create-user.dto';
 import { FindOptions } from '@app/shared/interfaces/find-options.interface';
-import { SendNotification } from '@app/shared/interfaces/send-notification.interface';
 import { CustomApiRequest } from '@app/shared/requests/custom-api.request';
 import { CustomApiResponse } from '@app/shared/responses/custom-api.response';
-import { HttpStatus, Inject, Injectable, Scope } from '@nestjs/common';
+import { Inject, Injectable, Scope } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
-import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ClientProxy } from '@nestjs/microservices';
 import { lastValueFrom, map } from 'rxjs';
 
@@ -24,7 +22,6 @@ export class AppService {
     @Inject('USER_SERVICE') private readonly userService: ClientProxy,
     @Inject('NOTIFICATION_SERVICE')
     private readonly notificationService: ClientProxy,
-    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   //#region Authentication

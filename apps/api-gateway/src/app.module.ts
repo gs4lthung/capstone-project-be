@@ -26,7 +26,6 @@ import {
 } from 'nestjs-i18n';
 import { ScheduleModule } from '@nestjs/schedule';
 import { RedisModule } from '@app/redis';
-import { EventEmitterModule } from '@nestjs/event-emitter';
 
 @Module({
   imports: [
@@ -38,7 +37,6 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
     ScheduleModule.forRoot(),
     DatabaseModule,
     RedisModule,
-    EventEmitterModule.forRoot(),
     TypeOrmModule.forFeature([Error, User]),
     ErrorModule,
     I18nModule.forRoot({
