@@ -40,6 +40,7 @@ import { RoleGuard } from './guards/role.guard';
 import { CheckRoles } from '@app/shared/decorators/check-roles.decorator';
 import { RoleEnum } from '@app/shared/enums/role.enum';
 import { CurrentUser } from '@app/shared/decorators/current-user.decorator';
+import { CreatePaymentLinkDto } from '@app/shared/dtos/payments/create-payment-link.dto';
 
 @Controller()
 @UseInterceptors(I18nResponseInterceptor)
@@ -193,7 +194,7 @@ export class AppController {
   })
   @UseGuards(AuthGuard)
   @UseInterceptors(
-    FileInterceptor('avatar', {
+    FileInterceptor('file', {
       limits: {
         fileSize: 5 * 1024 * 1024,
       },
@@ -285,4 +286,26 @@ export class AppController {
   }
 
   //#endregion Notifications
+
+  //#region Payment
+
+  @Post('payment/create-link')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({
+    tags: ['Payment'],
+    summary: 'Create Payment Link',
+    description: 'Create a new payment link',
+  })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: 'Payment link created successfully',
+  })
+  async createPaymentLink(
+    @Body()
+    data: CreatePaymentLinkDto,
+  ) {
+    return this.appService.createPaymentLink(data);
+  }
+
+  //#endregion Payment
 }

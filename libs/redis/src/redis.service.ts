@@ -59,8 +59,8 @@ export class RedisService {
     await this.hset('online_users', userId.toString(), socketId, ttl);
   }
 
-  async refreshOnlineUserTTL(userId: number, ttl: number) {
-    await this.redisClient.hexpire(
+  async refreshOnlineUserTTL(userId: number, socketId: string, ttl: number) {
+    const res = await this.redisClient.hexpire(
       'online_users',
       ttl,
       'XX',
@@ -68,6 +68,7 @@ export class RedisService {
       1,
       userId.toString(),
     );
+    if (res[0] === -2) await this.setOnlineUser(userId, socketId, ttl);
   }
 
   async delOnlineUser(userId: number) {
@@ -96,7 +97,6 @@ export class RedisService {
     this.subClient.on('message', (subscribedChannel, message) => {
       if (subscribedChannel === channel) {
         try {
-          console.log('Received message on channel:', subscribedChannel);
           callback(JSON.parse(message));
         } catch (error) {
           console.error('Error parsing message:', error);

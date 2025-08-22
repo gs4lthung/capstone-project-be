@@ -1,11 +1,11 @@
 import { Logger, OnModuleInit, UseFilters, UseGuards } from '@nestjs/common';
 import {
+  MessageBody,
   OnGatewayConnection,
   OnGatewayDisconnect,
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
-  WsException,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { ErrorLoggingFilter } from '../error/error.filter';
@@ -15,6 +15,10 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@app/config';
 import { RedisService } from '@app/redis';
 import { SendNotification } from '@app/shared/interfaces/send-notification.interface';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Notification } from '@app/database/entities/notification.entity';
+import { Repository } from 'typeorm';
+import { NotificationStatusEnum } from '@app/shared/enums/notification.enum';
 
 @WebSocketGateway({
   namespace: '/ws',
@@ -28,6 +32,8 @@ export class SocketGateway
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly redisService: RedisService,
+    @InjectRepository(Notification)
+    private readonly notificationRepository: Repository<Notification>,
   ) {}
   @WebSocketServer() server: Server;
 
@@ -67,18 +73,14 @@ export class SocketGateway
     }
   }
 
-  @SubscribeMessage('message')
-  handleMessage(client: Socket, payload: any): void {
-    throw new WsException('This is a custom WebSocket exception');
-  }
-
   @SubscribeMessage('heartbeat')
   handleHeartbeat(client: Socket): void {
     const userId = (client as any).userId;
-    console.log(userId);
+    console.log(`Heartbeat received from user ${userId}`);
     if (userId) {
       this.redisService.refreshOnlineUserTTL(
         userId,
+        client.id,
         this.configService.get('cache').ttl,
       );
     }
@@ -88,19 +90,51 @@ export class SocketGateway
     this.redisService.subscribe(
       'notifications',
       async (message: SendNotification) => {
+        const payload = message;
         try {
-          const payload = message;
           const clientId = await this.redisService.getOnlineUser(
             payload.userId,
           );
-          this.server.to(clientId).emit('notification', {
-            title: payload.title,
-            body: payload.body,
-          });
-        } catch {
-          console.error('Error parsing notification message:', message);
+
+          if (clientId) {
+            this.server.to(clientId).emit('notification', {
+              notificationId: payload.notificationId,
+              title: payload.title,
+              body: payload.body,
+            });
+          }
+
+          if (payload.notificationId) {
+            await this.notificationRepository.update(payload.notificationId, {
+              status: NotificationStatusEnum.SENT,
+            });
+          }
+        } catch (error) {
+          if (payload.notificationId) {
+            await this.notificationRepository.update(payload.notificationId, {
+              status: NotificationStatusEnum.ERROR,
+            });
+          }
+          console.error('Error parsing notification message:', error);
         }
       },
     );
+  }
+
+  @SubscribeMessage('notification:delivered')
+  async handleNotificationDelivered(
+    client: Socket,
+    @MessageBody() payload: { notificationId: string },
+  ): Promise<void> {
+    try {
+      await this.notificationRepository.update(payload.notificationId, {
+        status: NotificationStatusEnum.DELIVERED,
+      });
+    } catch (error) {
+      await this.notificationRepository.update(payload.notificationId, {
+        status: NotificationStatusEnum.ERROR,
+      });
+      this.logger.error('Error updating notification status:', error);
+    }
   }
 }

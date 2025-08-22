@@ -5,10 +5,8 @@ import { Logger } from '@nestjs/common';
 import { ConfigService } from '@app/config';
 
 async function bootstrap() {
-  const appContext = await NestFactory.createApplicationContext(
-    UserServiceModule,
-    { bufferLogs: true },
-  );
+  const appContext =
+    await NestFactory.createApplicationContext(UserServiceModule);
   const configService = appContext.get(ConfigService);
 
   const host = configService.get('user_service').host;

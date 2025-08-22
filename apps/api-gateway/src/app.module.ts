@@ -26,6 +26,7 @@ import {
 } from 'nestjs-i18n';
 import { ScheduleModule } from '@nestjs/schedule';
 import { RedisModule } from '@app/redis';
+import { Notification } from '@app/database/entities/notification.entity';
 
 @Module({
   imports: [
@@ -37,7 +38,7 @@ import { RedisModule } from '@app/redis';
     ScheduleModule.forRoot(),
     DatabaseModule,
     RedisModule,
-    TypeOrmModule.forFeature([Error, User]),
+    TypeOrmModule.forFeature([Error, User, Notification]),
     ErrorModule,
     I18nModule.forRoot({
       fallbackLanguage: 'en',
@@ -123,6 +124,24 @@ import { RedisModule } from '@app/redis';
               `amqp://${configService.get('rabbitmq').username}:${configService.get('rabbitmq').password}@${configService.get('rabbitmq').host}:${configService.get('rabbitmq').port}/${configService.get('rabbitmq').username}`,
             ],
             queue: 'mail_queue',
+            queueOptions: {
+              durable: configService.get('rabbitmq').durable,
+              autoDelete: configService.get('rabbitmq').autoDelete,
+            },
+          },
+        }),
+      },
+      {
+        imports: [ConfigModule],
+        inject: [ConfigService],
+        name: 'PAYMENT_SERVICE',
+        useFactory: async (configService: ConfigService) => ({
+          transport: Transport.RMQ,
+          options: {
+            urls: [
+              `amqp://${configService.get('rabbitmq').username}:${configService.get('rabbitmq').password}@${configService.get('rabbitmq').host}:${configService.get('rabbitmq').port}/${configService.get('rabbitmq').username}`,
+            ],
+            queue: 'payment_queue',
             queueOptions: {
               durable: configService.get('rabbitmq').durable,
               autoDelete: configService.get('rabbitmq').autoDelete,

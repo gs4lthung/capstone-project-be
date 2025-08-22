@@ -59,6 +59,12 @@
       ],
       "@app/cloudinary/*": [
         "libs/cloudinary/src/*"
+      ],
+      "@app/payos": [
+        "libs/payos/src"
+      ],
+      "@app/payos/*": [
+        "libs/payos/src/*"
       ]
     }
   }

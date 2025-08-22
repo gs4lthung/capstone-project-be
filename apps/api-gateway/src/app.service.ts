@@ -5,6 +5,7 @@ import { LoginResponseDto } from '@app/shared/dtos/auth/login.response.dto';
 import { RegisterRequestDto } from '@app/shared/dtos/auth/register.request.dto';
 import { RegisterFcmTokenDto } from '@app/shared/dtos/notifications/register-fcm-token.dto';
 import { PaginatedResource } from '@app/shared/dtos/paginated-resource.dto';
+import { CreatePaymentLinkDto } from '@app/shared/dtos/payments/create-payment-link.dto';
 import { CreateUserDto } from '@app/shared/dtos/users/create-user.dto';
 import { FindOptions } from '@app/shared/interfaces/find-options.interface';
 import { CustomApiRequest } from '@app/shared/requests/custom-api.request';
@@ -12,6 +13,7 @@ import { CustomApiResponse } from '@app/shared/responses/custom-api.response';
 import { Inject, Injectable, Scope } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { ClientProxy } from '@nestjs/microservices';
+import { CheckoutResponseDataType } from '@payos/node/lib/type';
 import { lastValueFrom, map } from 'rxjs';
 
 @Injectable({ scope: Scope.REQUEST })
@@ -22,6 +24,8 @@ export class AppService {
     @Inject('USER_SERVICE') private readonly userService: ClientProxy,
     @Inject('NOTIFICATION_SERVICE')
     private readonly notificationService: ClientProxy,
+    @Inject('PAYMENT_SERVICE')
+    private readonly paymentService: ClientProxy,
   ) {}
 
   //#region Authentication
@@ -185,4 +189,21 @@ export class AppService {
   }
 
   //#endregion Notifications
+
+  //#region Payment
+
+  async createPaymentLink(data: CreatePaymentLinkDto) {
+    const pattern = { cmd: 'create_payment_link' };
+    const payload = data;
+
+    const response = await lastValueFrom(
+      this.paymentService.send<CustomApiResponse<CheckoutResponseDataType>>(
+        pattern,
+        payload,
+      ),
+    );
+    return response;
+  }
+
+  //#endregion Payment
 }

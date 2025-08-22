@@ -1,14 +1,12 @@
 import { NestFactory } from '@nestjs/core';
-import { NotificationServiceModule } from './notification-service.module';
+import { PaymentServiceModule } from './payment-service.module';
 import { ConfigService } from '@app/config';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { Logger } from '@nestjs/common';
 
 async function bootstrap() {
-  const appContext = await NestFactory.createApplicationContext(
-    NotificationServiceModule,
-    { bufferLogs: true },
-  );
+  const appContext =
+    await NestFactory.createApplicationContext(PaymentServiceModule);
   const configService = appContext.get(ConfigService);
 
   const host = configService.get('rabbitmq').host;
@@ -17,14 +15,14 @@ async function bootstrap() {
   appContext.close();
 
   const app = await NestFactory.createMicroservice<MicroserviceOptions>(
-    NotificationServiceModule,
+    PaymentServiceModule,
     {
       transport: Transport.RMQ,
       options: {
         urls: [
           `amqp://${configService.get('rabbitmq').username}:${configService.get('rabbitmq').password}@${configService.get('rabbitmq').host}:${configService.get('rabbitmq').port}/${configService.get('rabbitmq').username}`,
         ],
-        queue: 'notification_queue',
+        queue: 'payment_queue',
         queueOptions: {
           durable: configService.get('rabbitmq').durable,
           autoDelete: configService.get('rabbitmq').autoDelete,
@@ -34,7 +32,7 @@ async function bootstrap() {
   );
 
   await app.listen();
-  const logger = new Logger(NotificationServiceModule.name);
-  logger.log(`${NotificationServiceModule.name} is running on ${host}:${port}`);
+  const logger = new Logger(PaymentServiceModule.name);
+  logger.log(`${PaymentServiceModule.name} is running on ${host}:${port}`);
 }
 bootstrap();

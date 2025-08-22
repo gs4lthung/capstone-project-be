@@ -99,6 +99,14 @@ interface Config {
     api_key?: string;
     api_secret?: string;
   };
+  payos: {
+    client_id?: string;
+    api_key?: string;
+    checksum_key?: string;
+    url?: string;
+    return_url?: string;
+    cancel_url?: string;
+  };
 }
 
 @Injectable()
@@ -243,6 +251,17 @@ export class ConfigService {
         name: this.nestConfigService.get('CLOUDINARY_NAME', ''),
         api_key: this.nestConfigService.get('CLOUDINARY_API_KEY', ''),
         api_secret: this.nestConfigService.get('CLOUDINARY_API_SECRET', ''),
+      },
+      payos: {
+        client_id: this.nestConfigService.get('PAYOS_CLIENT_ID', ''),
+        api_key: this.nestConfigService.get('PAYOS_API_KEY', ''),
+        checksum_key: this.nestConfigService.get('PAYOS_CHECKSUM_KEY', ''),
+        url: this.nestConfigService.get(
+          'PAYOS_URL',
+          'https://api-merchant.payos.vn',
+        ),
+        return_url: this.nestConfigService.get('PAYOS_RETURN_URL', ''),
+        cancel_url: this.nestConfigService.get('PAYOS_CANCEL_URL', ''),
       },
     };
   }

@@ -122,6 +122,24 @@
       "compilerOptions": {
         "tsConfigPath": "libs/cloudinary/tsconfig.lib.json"
       }
+    },
+    "payment-service": {
+      "type": "application",
+      "root": "apps/payment-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/payment-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/payment-service/tsconfig.app.json"
+      }
+    },
+    "payos": {
+      "type": "library",
+      "root": "libs/payos",
+      "entryFile": "index",
+      "sourceRoot": "libs/payos/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/payos/tsconfig.lib.json"
+      }
     }
   }
 }

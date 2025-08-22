@@ -9,5 +9,8 @@
         "UPDATE_USER_AVATAR_SUCCESS": "User avatar updated successfully",
         "DELETE_USER_SUCCESS": "User deleted successfully",
         "RESTORE_USER_SUCCESS": "User restored successfully"
+    },
+    "PAYMENT": {
+        "CREATE_LINK_SUCCESS": "Payment link created successfully"
     }
 }

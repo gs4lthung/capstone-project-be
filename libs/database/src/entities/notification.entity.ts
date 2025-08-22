@@ -27,7 +27,7 @@ export class Notification {
   })
   status: NotificationStatusEnum;
 
-  @ManyToOne(() => User, (user) => user.notifications)
+  @ManyToOne(() => User, (user) => user, { nullable: false })
   @JoinColumn({ name: 'userId' })
   user: User;
 

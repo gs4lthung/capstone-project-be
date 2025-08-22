@@ -16,6 +16,7 @@ import { FcmToken } from './fcmToken.entity';
 import { GqlCustomDateTime } from '@app/shared/scalars/gql-custom-datetime.scalar';
 import { AuthProvider } from './auth-provider.entity';
 import { Notification } from './notification.entity';
+import { Order } from './order.entity';
 
 @Entity('users')
 @ObjectType()
@@ -83,4 +84,8 @@ export class User {
 
   @OneToMany(() => Notification, (notification) => notification.user)
   notifications: Notification[];
+
+  @OneToMany(() => Order, (order) => order.user)
+  @Field(() => [Order], { nullable: true })
+  orders: Order[];
 }

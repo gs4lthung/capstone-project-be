@@ -9,12 +9,13 @@
     "build": "nest build",
     "format": "prettier --write \"apps/**/*.ts\" \"libs/**/*.ts\"",
     "start": "nest start",
-    "start:all": "concurrently \"nest start api-gateway --watch\" \"nest start auth-service --watch\" \"nest start user-service --watch\" \"nest start notification-service --watch\" \"nest start mail-service --watch\"",
+    "start:all": "concurrently \"nest start api-gateway --watch\" \"nest start auth-service --watch\" \"nest start user-service --watch\" \"nest start notification-service --watch\" \"nest start mail-service --watch\" \"nest start payment-service --watch\"",
     "start:api-gateway": "nest start api-gateway --watch",
     "start:auth-service": "nest start auth-service --watch",
     "start:user-service": "nest start user-service --watch",
     "start:notification-service": "nest start notification-service --watch",
     "start:mail-service": "nest start mail-service --watch",
+    "start:payment-service": "nest start payment-service --watch",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/apps/api-gateway/main",
@@ -48,6 +49,7 @@
     "@nestjs/throttler": "^6.4.0",
     "@nestjs/typeorm": "^11.0.0",
     "@nestjs/websockets": "^11.1.5",
+    "@payos/node": "^1.0.10",
     "@types/compression": "^1.8.1",
     "@types/multer": "^2.0.0",
     "amqp-connection-manager": "^4.1.14",
@@ -61,6 +63,7 @@
     "compression": "^1.8.1",
     "concurrently": "^9.2.0",
     "cookie-parser": "^1.4.7",
+    "crypto": "^1.0.1",
     "firebase-admin": "^13.4.0",
     "graphql": "^16.11.0",
     "handlebars": "^4.7.8",
@@ -133,7 +136,8 @@
       "^@app/firebase(|/.*)$": "<rootDir>/libs/firebase/src/$1",
       "^@app/redis(|/.*)$": "<rootDir>/libs/redis/src/$1",
       "^@app/i18n(|/.*)$": "<rootDir>/libs/i18n/src/$1",
-      "^@app/cloudinary(|/.*)$": "<rootDir>/libs/cloudinary/src/$1"
+      "^@app/cloudinary(|/.*)$": "<rootDir>/libs/cloudinary/src/$1",
+      "^@app/payos(|/.*)$": "<rootDir>/libs/payos/src/$1"
     }
   }
 }

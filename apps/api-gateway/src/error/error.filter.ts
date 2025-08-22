@@ -77,11 +77,11 @@ export class ErrorLoggingFilter implements ExceptionFilter {
 
     const message =
       exception.message ||
-      (exception as any).response.message ||
+      (exception as any).response?.message ||
       'Internal server error';
     const statusCode =
       exception.statusCode ||
-      (exception as any).response.statusCode ||
+      (exception as any).response?.statusCode ||
       HttpStatus.INTERNAL_SERVER_ERROR;
     const stack = exception.stack;
 
