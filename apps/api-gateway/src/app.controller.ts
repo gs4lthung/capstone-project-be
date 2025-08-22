@@ -16,9 +16,11 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { AppService } from './app.service';
-import { RegisterRequestDto } from '@app/shared/dtos/auth/register.request.dto';
-import { LoginRequestDto } from '@app/shared/dtos/auth/login.request.dto';
-import { LoginResponseDto } from '@app/shared/dtos/auth/login.response.dto';
+import { RegisterRequestDto } from '@app/shared/dtos/auth/register.dto';
+import {
+  LoginRequestDto,
+  LoginResponseDto,
+} from '@app/shared/dtos/auth/login.dto';
 import {
   ApiBearerAuth,
   ApiExcludeEndpoint,
@@ -40,7 +42,7 @@ import { RoleGuard } from './guards/role.guard';
 import { CheckRoles } from '@app/shared/decorators/check-roles.decorator';
 import { RoleEnum } from '@app/shared/enums/role.enum';
 import { CurrentUser } from '@app/shared/decorators/current-user.decorator';
-import { CreatePaymentLinkDto } from '@app/shared/dtos/payments/create-payment-link.dto';
+import { CreatePaymentLinkRequestDto } from '@app/shared/dtos/payments/create-payment-link.dto';
 
 @Controller()
 @UseInterceptors(I18nResponseInterceptor)
@@ -302,7 +304,7 @@ export class AppController {
   })
   async createPaymentLink(
     @Body()
-    data: CreatePaymentLinkDto,
+    data: CreatePaymentLinkRequestDto,
   ) {
     return this.appService.createPaymentLink(data);
   }

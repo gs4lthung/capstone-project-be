@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { CheckoutRequestType } from '@payos/node/lib/type';
 
-export class CreatePaymentLinkDto
+export class CreatePaymentLinkRequestDto
   implements
     Omit<
       CheckoutRequestType,

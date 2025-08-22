@@ -1,6 +1,6 @@
 import { Order } from '@app/database/entities/order.entity';
 import { PayosService } from '@app/payos';
-import { CreatePaymentLinkDto } from '@app/shared/dtos/payments/create-payment-link.dto';
+import { CreatePaymentLinkRequestDto } from '@app/shared/dtos/payments/create-payment-link.dto';
 import { CustomApiResponse } from '@app/shared/responses/custom-api.response';
 import { CryptoUtils } from '@app/shared/utils/crypto.util';
 import { DateTimeUtils } from '@app/shared/utils/datetime.util';
@@ -23,7 +23,7 @@ export class PaymentServiceService {
   ) {}
 
   async createPaymentLink(
-    data: CreatePaymentLinkDto,
+    data: CreatePaymentLinkRequestDto,
   ): Promise<CustomApiResponse<CheckoutResponseDataType>> {
     let savedOrder: Order;
     try {

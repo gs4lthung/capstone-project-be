@@ -1,6 +1,6 @@
 import { ConfigService } from '@app/config';
 import { Order } from '@app/database/entities/order.entity';
-import { CreatePaymentLinkDto } from '@app/shared/dtos/payments/create-payment-link.dto';
+import { CreatePaymentLinkRequestDto } from '@app/shared/dtos/payments/create-payment-link.dto';
 import { PaymentStatusEnum } from '@app/shared/enums/payment.enum';
 import { CustomRpcException } from '@app/shared/exceptions/custom-rpc.exception';
 import { CryptoUtils } from '@app/shared/utils/crypto.util';
@@ -32,7 +32,7 @@ export class PayosService {
   }
 
   async createPaymentLink(
-    data: CreatePaymentLinkDto,
+    data: CreatePaymentLinkRequestDto,
   ): Promise<CheckoutResponseDataType> {
     try {
       if (!data.orderCode || !data.expiredAt || !data.orderId)

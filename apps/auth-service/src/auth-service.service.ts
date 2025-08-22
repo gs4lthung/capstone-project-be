@@ -6,9 +6,11 @@ import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { CustomRpcException } from '@app/shared/exceptions/custom-rpc.exception';
 import { CustomApiResponse } from '@app/shared/responses/custom-api.response';
-import { RegisterRequestDto } from '@app/shared/dtos/auth/register.request.dto';
-import { LoginRequestDto } from '@app/shared/dtos/auth/login.request.dto';
-import { LoginResponseDto } from '@app/shared/dtos/auth/login.response.dto';
+import { RegisterRequestDto } from '@app/shared/dtos/auth/register.dto';
+import {
+  LoginRequestDto,
+  LoginResponseDto,
+} from '@app/shared/dtos/auth/login.dto';
 import { JwtService, TokenExpiredError } from '@nestjs/jwt';
 import { JwtPayloadDto } from '@app/shared/dtos/auth/jwt.payload.dto';
 import { RoleEnum } from '@app/shared/enums/role.enum';

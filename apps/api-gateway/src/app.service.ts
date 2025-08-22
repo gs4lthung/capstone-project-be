@@ -1,11 +1,13 @@
 import { User } from '@app/database/entities/user.entity';
 import { GoogleUserDto } from '@app/shared/dtos/auth/google-user.dto';
-import { LoginRequestDto } from '@app/shared/dtos/auth/login.request.dto';
-import { LoginResponseDto } from '@app/shared/dtos/auth/login.response.dto';
-import { RegisterRequestDto } from '@app/shared/dtos/auth/register.request.dto';
+import {
+  LoginRequestDto,
+  LoginResponseDto,
+} from '@app/shared/dtos/auth/login.dto';
+import { RegisterRequestDto } from '@app/shared/dtos/auth/register.dto';
 import { RegisterFcmTokenDto } from '@app/shared/dtos/notifications/register-fcm-token.dto';
 import { PaginatedResource } from '@app/shared/dtos/paginated-resource.dto';
-import { CreatePaymentLinkDto } from '@app/shared/dtos/payments/create-payment-link.dto';
+import { CreatePaymentLinkRequestDto } from '@app/shared/dtos/payments/create-payment-link.dto';
 import { CreateUserDto } from '@app/shared/dtos/users/create-user.dto';
 import { FindOptions } from '@app/shared/interfaces/find-options.interface';
 import { CustomApiRequest } from '@app/shared/requests/custom-api.request';
@@ -192,7 +194,7 @@ export class AppService {
 
   //#region Payment
 
-  async createPaymentLink(data: CreatePaymentLinkDto) {
+  async createPaymentLink(data: CreatePaymentLinkRequestDto) {
     const pattern = { cmd: 'create_payment_link' };
     const payload = data;
 
