@@ -76,7 +76,6 @@ export class SocketGateway
   @SubscribeMessage('heartbeat')
   handleHeartbeat(client: Socket): void {
     const userId = (client as any).userId;
-    console.log(`Heartbeat received from user ${userId}`);
     if (userId) {
       this.redisService.refreshOnlineUserTTL(
         userId,

@@ -78,8 +78,6 @@ export class NotificationServiceService {
     const channel = ctx.getChannelRef();
     let notification: Notification;
     try {
-      console.log('Sending notification:', { userId, title, body });
-
       const user = await this.userRepository.findOne({
         where: { id: userId },
         withDeleted: false,

@@ -36,7 +36,6 @@ import { Response } from 'express';
 import { RefreshNewAccessTokenDto } from '@app/shared/dtos/auth/refresh-new-access-token.dto';
 import { I18nResponseInterceptor } from './interceptors/i18-response.interceptor';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { User } from '@app/database/entities/user.entity';
 import { CreateUserDto } from '@app/shared/dtos/users/create-user.dto';
 import { RoleGuard } from './guards/role.guard';
 import { CheckRoles } from '@app/shared/decorators/check-roles.decorator';
@@ -154,7 +153,6 @@ export class AppController {
   async refreshNewAccessToken(
     @Body() data: RefreshNewAccessTokenDto,
   ): Promise<CustomApiResponse<{ accessToken: string }>> {
-    console.log('Refreshing access token with:', data.refreshToken);
     const result = await this.appService.refreshNewAccessToken(data);
     return result;
   }
@@ -203,10 +201,9 @@ export class AppController {
     }),
   )
   async updateMyAvatar(
-    @CurrentUser('local') user: User,
     @UploadedFile() file: Express.Multer.File,
   ): Promise<CustomApiResponse<void>> {
-    return this.appService.updateMyAvatar(user.id, file);
+    return this.appService.updateMyAvatar(file);
   }
 
   @Delete('users/:id/soft')
@@ -293,6 +290,8 @@ export class AppController {
 
   @Post('payment/create-link')
   @HttpCode(HttpStatus.CREATED)
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({
     tags: ['Payment'],
     summary: 'Create Payment Link',

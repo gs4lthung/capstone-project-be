@@ -63,7 +63,7 @@ export class Order {
   @Field(() => GqlCustomDateTime)
   updatedAt: Date;
 
-  @ManyToOne(() => User, (user) => user.orders)
+  @ManyToOne(() => User, (user) => user.orders, { nullable: false })
   @JoinColumn({ name: 'userId' })
   @Field(() => User)
   user: User;

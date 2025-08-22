@@ -29,11 +29,14 @@ export class UserServiceController {
   }
 
   @MessagePattern({ cmd: 'updateMyAvatar' })
-  async updateMyAvatar(data: {
+  async updateMyAvatar({
+    id,
+    file,
+  }: {
     id: number;
     file: Express.Multer.File;
   }): Promise<CustomApiResponse<void>> {
-    return this.userServiceService.updateMyAvatar(data.id, data.file);
+    return this.userServiceService.updateMyAvatar(id, file);
   }
 
   @MessagePattern({ cmd: 'softDeleteUser' })

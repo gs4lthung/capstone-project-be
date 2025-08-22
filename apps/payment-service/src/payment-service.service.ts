@@ -1,4 +1,5 @@
 import { Order } from '@app/database/entities/order.entity';
+import { User } from '@app/database/entities/user.entity';
 import { PayosService } from '@app/payos';
 import { CreatePaymentLinkRequestDto } from '@app/shared/dtos/payments/create-payment-link.dto';
 import { CustomApiResponse } from '@app/shared/responses/custom-api.response';
@@ -23,6 +24,7 @@ export class PaymentServiceService {
   ) {}
 
   async createPaymentLink(
+    userId: number,
     data: CreatePaymentLinkRequestDto,
   ): Promise<CustomApiResponse<CheckoutResponseDataType>> {
     let savedOrder: Order;
@@ -38,18 +40,26 @@ export class PaymentServiceService {
         expiredAt: DateTimeUtils.convertUnixTimestampToDate(
           this.ORDER_EXPIRED_TIME,
         ),
-      };
+        user: { id: userId } as User,
+      } as Order;
 
       savedOrder = this.orderRepository.create(orderData);
       await this.orderRepository.save(savedOrder);
 
+      const payosData = {
+        ...orderData,
+        orderId: savedOrder.id,
+      };
+      delete payosData.user;
+
+      const payosResponse = await this.payOsService.createPaymentLink({
+        ...payosData,
+      });
+
       return new CustomApiResponse<CheckoutResponseDataType>(
         HttpStatus.CREATED,
         'PAYMENT.CREATE_LINK_SUCCESS',
-        await this.payOsService.createPaymentLink({
-          ...orderData,
-          orderId: savedOrder.id,
-        }),
+        payosResponse,
       );
     } catch (error) {
       this.logger.error(error);

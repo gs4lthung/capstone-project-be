@@ -50,7 +50,6 @@ async function bootstrap() {
       transform: true,
       transformOptions: { enableImplicitConversion: true },
       exceptionFactory: (errors) => {
-        console.log(errors);
         const errorMsg = errors.map((error) => {
           return Object.values(error.constraints || {}).join(', ');
         });

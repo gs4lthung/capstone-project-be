@@ -6,14 +6,12 @@ import { Injectable } from '@nestjs/common';
 export class MailServiceService {
   constructor(private readonly mailService: MailerService) {}
   async sendMail(data: MailSendDto): Promise<void> {
-    const info = await this.mailService.sendMail({
+    await this.mailService.sendMail({
       to: data.to,
       subject: data.subject,
       text: data.text,
       template: data.template,
       context: data.context,
     });
-
-    console.log('Message sent: %s', info.messageId);
   }
 }

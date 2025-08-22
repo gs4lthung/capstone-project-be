@@ -78,12 +78,16 @@ export class ErrorLoggingFilter implements ExceptionFilter {
     const message =
       exception.message ||
       (exception as any).response?.message ||
-      'Internal server error';
+      'INTERNAL_SERVER_ERROR';
     const statusCode =
       exception.statusCode ||
       (exception as any).response?.statusCode ||
       HttpStatus.INTERNAL_SERVER_ERROR;
     const stack = exception.stack;
+    const responseMessage =
+      statusCode === HttpStatus.INTERNAL_SERVER_ERROR
+        ? 'INTERNAL_SERVER_ERROR'
+        : message;
 
     // Check if the error is an aggregate error and log it out
     const isAggregateError = exception instanceof AggregateError;
@@ -112,9 +116,9 @@ export class ErrorLoggingFilter implements ExceptionFilter {
 
     // Translate error message
     const i18nErrorMessage =
-      this.i18nService.t(`errors.${message}`, {
+      this.i18nService.t(`errors.${responseMessage}`, {
         lang: request.query?.lang || 'en',
-      }) || message;
+      }) || responseMessage;
 
     // Extract user information if available
     const user = request.user as User;

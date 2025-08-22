@@ -1,6 +1,6 @@
 import { Controller } from '@nestjs/common';
 import { PaymentServiceService } from './payment-service.service';
-import { MessagePattern, Payload } from '@nestjs/microservices';
+import { MessagePattern } from '@nestjs/microservices';
 import { CreatePaymentLinkRequestDto } from '@app/shared/dtos/payments/create-payment-link.dto';
 import { CustomApiResponse } from '@app/shared/responses/custom-api.response';
 import { CheckoutResponseDataType } from '@payos/node/lib/type';
@@ -10,10 +10,13 @@ export class PaymentServiceController {
   constructor(private readonly paymentServiceService: PaymentServiceService) {}
 
   @MessagePattern({ cmd: 'create_payment_link' })
-  async createPaymentLink(
-    @Payload()
-    data: CreatePaymentLinkRequestDto,
-  ): Promise<CustomApiResponse<CheckoutResponseDataType>> {
-    return this.paymentServiceService.createPaymentLink(data);
+  async createPaymentLink({
+    userId,
+    data,
+  }: {
+    userId: number;
+    data: CreatePaymentLinkRequestDto;
+  }): Promise<CustomApiResponse<CheckoutResponseDataType>> {
+    return this.paymentServiceService.createPaymentLink(userId, data);
   }
 }

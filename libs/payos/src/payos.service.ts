@@ -34,14 +34,13 @@ export class PayosService {
   async createPaymentLink(
     data: CreatePaymentLinkRequestDto,
   ): Promise<CheckoutResponseDataType> {
+    const orderId = data.orderId;
     try {
       if (!data.orderCode || !data.expiredAt || !data.orderId)
         throw new CustomRpcException(
           'Missing required fields',
           HttpStatus.INTERNAL_SERVER_ERROR,
         );
-
-      if (data.orderId) delete data.orderId;
 
       const expiredAtAsUnixTimestamp = DateTimeUtils.convertDateToUnixTimestamp(
         data.expiredAt as Date,
@@ -55,19 +54,25 @@ export class PayosService {
         secretKey,
       );
 
-      const response = await this.payOS.createPaymentLink({
+      const payosData = {
         ...data,
         expiredAt: expiredAtAsUnixTimestamp,
         returnUrl: this.returnUrl,
         cancelUrl: this.cancelUrl,
         signature: signature,
+      };
+      delete payosData.orderId;
+
+      const response = await this.payOS.createPaymentLink({
+        ...payosData,
       });
       return response;
     } catch (error) {
-      await this.orderRepository.update(data.orderId, {
+      this.logger.error(error);
+      await this.orderRepository.update(orderId, {
         status: PaymentStatusEnum.ERROR,
       });
-      ExceptionUtils.wrapAsRpcException(error);
+      throw ExceptionUtils.wrapAsRpcException(error);
     }
   }
 

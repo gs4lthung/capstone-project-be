@@ -72,7 +72,6 @@ export class RoleGuard implements CanActivate {
         throw new CustomRpcException('FORBIDDEN', HttpStatus.FORBIDDEN);
       }
     } catch (error) {
-      console.log(error);
       throw ExceptionUtils.wrapAsRpcException(error);
     }
     return true;

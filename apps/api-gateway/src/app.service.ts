@@ -111,7 +111,6 @@ export class AppService {
   async findAllUsers(
     findOptions: FindOptions,
   ): Promise<PaginatedResource<Partial<User>>> {
-    console.log('Fetching all users from cache or service');
     const pattern = { cmd: 'findAllUsers' };
 
     const response = await lastValueFrom(
@@ -134,9 +133,9 @@ export class AppService {
     return response;
   }
 
-  async updateMyAvatar(id: number, file: Express.Multer.File) {
+  async updateMyAvatar(file: Express.Multer.File) {
     const pattern = { cmd: 'updateMyAvatar' };
-    const payload = { id, file };
+    const payload = { id: this.request.user.id, file };
 
     const response = await lastValueFrom(
       this.userService.send<CustomApiResponse<void>>(pattern, payload),
@@ -180,9 +179,7 @@ export class AppService {
 
   async registerFcmToken(data: RegisterFcmTokenDto) {
     const pattern = { cmd: 'register_fcm_token' };
-
-    const userId = this.request.user.id;
-    const payload = { userId, ...data };
+    const payload = { userId: this.request.user.id, ...data };
 
     const response = await lastValueFrom(
       this.notificationService.send<CustomApiResponse<void>>(pattern, payload),
@@ -196,7 +193,7 @@ export class AppService {
 
   async createPaymentLink(data: CreatePaymentLinkRequestDto) {
     const pattern = { cmd: 'create_payment_link' };
-    const payload = data;
+    const payload = { userId: this.request.user.id, data: data };
 
     const response = await lastValueFrom(
       this.paymentService.send<CustomApiResponse<CheckoutResponseDataType>>(

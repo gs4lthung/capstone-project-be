@@ -7,7 +7,6 @@ import { RoleGuard } from './guards/role.guard';
 import { CheckRoles } from '@app/shared/decorators/check-roles.decorator';
 import { RoleEnum } from '@app/shared/enums/role.enum';
 import { CacheInterceptor } from './interceptors/cache.interceptor';
-import { PaginatedGqlArgs } from '@app/shared/dtos/paginated-gql-args.dto';
 import { FilteringParams } from '@app/shared/decorators/filtering-params.decorator';
 import { Filtering } from '@app/shared/interfaces/filtering.interface';
 import { PaginationParams } from '@app/shared/decorators/pagination-params.decorator';
@@ -26,7 +25,6 @@ export class AppResolver {
   @Query(() => [User], { name: 'users' })
   @UseGuards(AuthGuard)
   async getUsers(
-    @Args() paginatedArgs: PaginatedGqlArgs,
     @PaginationParams() pagination: Pagination,
     @SortingParams() sort: Sorting,
     @FilteringParams() filter: Filtering,
