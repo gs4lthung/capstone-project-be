@@ -1,7 +1,7 @@
 import { User } from '@app/database/entities/user.entity';
 import { PickType } from '@nestjs/mapped-types';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsNotEmpty, IsStrongPassword } from 'class-validator';
+import { IsEmail, IsNotEmpty } from 'class-validator';
 
 export class LoginRequestDto extends PickType(User, [
   'email',
@@ -20,19 +20,6 @@ export class LoginRequestDto extends PickType(User, [
     example: 'Password123#',
   })
   @IsNotEmpty({ message: 'Password is required' })
-  @IsStrongPassword(
-    {
-      minLength: 8,
-      minLowercase: 1,
-      minUppercase: 1,
-      minNumbers: 1,
-      minSymbols: 1,
-    },
-    {
-      message:
-        'Password must be strong (at least 8 characters, 1 lowercase, 1 uppercase, 1 number, and 1 symbol)',
-    },
-  )
   password: string;
 }
 

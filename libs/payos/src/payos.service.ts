@@ -10,7 +10,10 @@ import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 import PayOS = require('@payos/node');
-import { CheckoutResponseDataType } from '@payos/node/lib/type';
+import {
+  CheckoutResponseDataType,
+  PaymentLinkDataType,
+} from '@payos/node/lib/type';
 import { Repository } from 'typeorm';
 @Injectable()
 export class PayosService {
@@ -76,7 +79,13 @@ export class PayosService {
     }
   }
 
-  async getPaymentLinkInformation(orderId: string) {
-    await this.payOS.getPaymentLinkInformation(orderId);
+  async getPaymentLinkInformation(
+    orderCode: number,
+  ): Promise<PaymentLinkDataType> {
+    try {
+      return await this.payOS.getPaymentLinkInformation(orderCode);
+    } catch (error) {
+      throw ExceptionUtils.wrapAsRpcException(error);
+    }
   }
 }

@@ -43,6 +43,14 @@ interface Config {
       secret: string;
       expiration: string;
     };
+    verify_email_token: {
+      secret: string;
+      expiration: string;
+    };
+    reset_password_token: {
+      secret: string;
+      expiration: string;
+    };
   };
   rate_limiter?: {
     max_requests?: number;
@@ -60,7 +68,6 @@ interface Config {
     user?: string;
     pass?: string;
     secure?: boolean;
-    verifyTokenExpiration?: string | number;
   };
   redis: {
     username?: string;
@@ -168,6 +175,26 @@ export class ConfigService {
             '7d',
           ),
         },
+        verify_email_token: {
+          secret: this.nestConfigService.get(
+            'JWT_VERIFY_EMAIL_TOKEN_SECRET',
+            'cc',
+          ),
+          expiration: this.nestConfigService.get(
+            'JWT_VERIFY_EMAIL_TOKEN_EXPIRATION',
+            '15m',
+          ),
+        },
+        reset_password_token: {
+          secret: this.nestConfigService.get(
+            'JWT_RESET_PASSWORD_TOKEN_SECRET',
+            'cc',
+          ),
+          expiration: this.nestConfigService.get(
+            'JWT_RESET_PASSWORD_TOKEN_EXPIRATION',
+            '1h',
+          ),
+        },
       },
       rate_limiter: {
         max_requests: Number(
@@ -194,10 +221,6 @@ export class ConfigService {
           'xxxx xxxx xxxx xxxx',
         ),
         secure: this.nestConfigService.get('MAIL_SECURE', false) === 'true',
-        verifyTokenExpiration: this.nestConfigService.get(
-          'MAIL_VERIFY_TOKEN_EXPIRATION',
-          '24h',
-        ),
       },
       redis: {
         username: this.nestConfigService.get('REDIS_USERNAME', 'default'),

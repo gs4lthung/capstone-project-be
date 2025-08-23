@@ -42,6 +42,7 @@ import { CheckRoles } from '@app/shared/decorators/check-roles.decorator';
 import { RoleEnum } from '@app/shared/enums/role.enum';
 import { CurrentUser } from '@app/shared/decorators/current-user.decorator';
 import { CreatePaymentLinkRequestDto } from '@app/shared/dtos/payments/create-payment-link.dto';
+import { ResetPasswordDto } from '@app/shared/dtos/auth/reset-password.dto';
 
 @Controller()
 @UseInterceptors(I18nResponseInterceptor)
@@ -157,10 +158,44 @@ export class AppController {
     return result;
   }
 
+  @Post('auth/request-reset-password')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({
+    tags: ['Authentication'],
+    summary: 'Request Password Reset',
+    description: "Request a password reset link to be sent to the user's email",
+  })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: 'Password reset email sent successfully',
+    type: String,
+  })
+  async requestResetPassword(
+    @Body() data: { email: string },
+  ): Promise<CustomApiResponse<void>> {
+    return this.appService.requestResetPassword(data);
+  }
+
+  @Post('auth/reset-password')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({
+    tags: ['Authentication'],
+    summary: 'Reset Password',
+    description: 'Reset the user password',
+  })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: 'User password reset successfully',
+  })
+  async resetPassword(
+    @Body() data: ResetPasswordDto,
+  ): Promise<CustomApiResponse<void>> {
+    return this.appService.resetPassword(data);
+  }
+
   //#endregion Authentication
 
   //#region Users
-
   @Post('users')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({

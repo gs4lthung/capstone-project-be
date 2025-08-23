@@ -8,6 +8,7 @@ import {
   LoginResponseDto,
 } from '@app/shared/dtos/auth/login.dto';
 import { GoogleUserDto } from '@app/shared/dtos/auth/google-user.dto';
+import { ResetPasswordDto } from '@app/shared/dtos/auth/reset-password.dto';
 
 @Controller()
 export class AuthServiceController {
@@ -40,5 +41,19 @@ export class AuthServiceController {
     refreshToken: string;
   }): Promise<CustomApiResponse<{ accessToken: string }>> {
     return this.authServiceService.refreshNewAccessToken(data);
+  }
+
+  @MessagePattern({ cmd: 'request_reset_password' })
+  async requestResetPassword(data: {
+    email: string;
+  }): Promise<CustomApiResponse<void>> {
+    return this.authServiceService.requestResetPassword(data);
+  }
+
+  @MessagePattern({ cmd: 'reset_password' })
+  async resetPassword(
+    data: ResetPasswordDto,
+  ): Promise<CustomApiResponse<void>> {
+    return this.authServiceService.resetPassword(data);
   }
 }

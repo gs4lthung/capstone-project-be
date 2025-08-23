@@ -6,6 +6,7 @@ import {
   LoginResponseDto,
 } from '@app/shared/dtos/auth/login.dto';
 import { RegisterRequestDto } from '@app/shared/dtos/auth/register.dto';
+import { ResetPasswordDto } from '@app/shared/dtos/auth/reset-password.dto';
 import { RegisterFcmTokenDto } from '@app/shared/dtos/notifications/register-fcm-token.dto';
 import { PaginatedResource } from '@app/shared/dtos/paginated-resource.dto';
 import { CreatePaymentLinkRequestDto } from '@app/shared/dtos/payments/create-payment-link.dto';
@@ -92,6 +93,28 @@ export class AppService {
         pattern,
         payload,
       ),
+    );
+    return response;
+  }
+
+  async requestResetPassword(data: { email: string }) {
+    const pattern = { cmd: 'request_reset_password' };
+    const payload = data;
+
+    const response = await lastValueFrom(
+      this.authService.send<CustomApiResponse<void>>(pattern, payload),
+    );
+    return response;
+  }
+
+  async resetPassword(
+    data: ResetPasswordDto,
+  ): Promise<CustomApiResponse<void>> {
+    const pattern = { cmd: 'reset_password' };
+    const payload = data;
+
+    const response = await lastValueFrom(
+      this.authService.send<CustomApiResponse<void>>(pattern, payload),
     );
     return response;
   }

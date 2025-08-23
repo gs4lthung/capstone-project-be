@@ -22,6 +22,7 @@ import { AuthProvider } from '@app/database/entities/auth-provider.entity';
 import { GoogleUserDto } from '@app/shared/dtos/auth/google-user.dto';
 import { ClientProxy } from '@nestjs/microservices';
 import { MailSendDto } from '@app/shared/dtos/mails/mail-send.dto';
+import { ResetPasswordDto } from '@app/shared/dtos/auth/reset-password.dto';
 
 @Injectable()
 export class AuthServiceService {
@@ -39,6 +40,7 @@ export class AuthServiceService {
     private readonly redisService: RedisService,
   ) {}
 
+  //#region Login
   async login(
     data: LoginRequestDto,
   ): Promise<CustomApiResponse<LoginResponseDto>> {
@@ -211,7 +213,9 @@ export class AuthServiceService {
       throw ExceptionUtils.wrapAsRpcException(error);
     }
   }
+  //#endregion
 
+  //#region Register
   async register(data: RegisterRequestDto): Promise<CustomApiResponse<void>> {
     try {
       const existingUser = await this.userRepository.findOne({
@@ -249,7 +253,8 @@ export class AuthServiceService {
         id: newUser.id,
       };
       const emailVerificationToken = await this.jwtService.signAsync(payload, {
-        expiresIn: this.configService.get('mail').verifyTokenExpiration,
+        secret: this.configService.get('jwt').verify_email_token.secret,
+        expiresIn: this.configService.get('jwt').verify_email_token.expiration,
       });
 
       newUser.emailVerificationToken = emailVerificationToken;
@@ -268,6 +273,10 @@ export class AuthServiceService {
       throw ExceptionUtils.wrapAsRpcException(error);
     }
   }
+
+  //#endregion
+
+  //#region Email Verification
 
   async verifyEmail(data: { token: string }): Promise<string> {
     try {
@@ -293,12 +302,12 @@ export class AuthServiceService {
     }
   }
 
-  async resendVerificationEmail(
-    email: string,
-  ): Promise<CustomApiResponse<void>> {
+  async resendVerificationEmail(data: {
+    email: string;
+  }): Promise<CustomApiResponse<void>> {
     try {
       const user = await this.userRepository.findOne({
-        where: { email, isEmailVerified: false },
+        where: { email: data.email, isEmailVerified: false },
       });
 
       if (!user) {
@@ -312,7 +321,8 @@ export class AuthServiceService {
         id: user.id,
       };
       const emailVerificationToken = await this.jwtService.signAsync(payload, {
-        expiresIn: this.configService.get('mail').verifyTokenExpiration,
+        secret: this.configService.get('jwt').verify_email_token.secret,
+        expiresIn: this.configService.get('jwt').verify_email_token.expiration,
       });
 
       user.emailVerificationToken = emailVerificationToken;
@@ -328,6 +338,107 @@ export class AuthServiceService {
       throw ExceptionUtils.wrapAsRpcException(error);
     }
   }
+
+  private async sendVerificationEmail(
+    email: string,
+    emailVerificationToken: string,
+  ): Promise<void> {
+    this.mailService.emit({ cmd: 'send_mail' }, {
+      to: email,
+      subject: 'Email Verification',
+      text: 'Please verify your email address',
+      template: './verify-mail',
+      context: {
+        verificationLink: `${this.configService.get('app').url}/api/${this.configService.get('app').version}/auth/verify-email?token=${emailVerificationToken}`,
+      },
+    } as MailSendDto);
+  }
+
+  //#endregion
+
+  //#region Reset Password
+
+  async requestResetPassword(data: {
+    email: string;
+  }): Promise<CustomApiResponse<void>> {
+    try {
+      const user = await this.userRepository.findOne({
+        where: { email: data.email },
+        withDeleted: false,
+      });
+
+      if (!user) {
+        throw new CustomRpcException(
+          'AUTH.USER_NOT_FOUND',
+          HttpStatus.NOT_FOUND,
+        );
+      }
+
+      const resetPasswordToken = await this.jwtService.signAsync(
+        { id: user.id },
+        {
+          secret: this.configService.get('jwt').reset_password_token.secret,
+          expiresIn:
+            this.configService.get('jwt').reset_password_token.expiration,
+        },
+      );
+
+      user.resetPasswordToken = resetPasswordToken;
+      await this.userRepository.save(user);
+
+      this.mailService.emit({ cmd: 'send_mail' }, {
+        to: user.email,
+        subject: 'Reset Password',
+        text: 'Please reset your password',
+        template: './reset-password',
+        context: {
+          resetLink: `${this.configService.get('app').url}/api/${this.configService.get('app').version}/auth/reset-password?token=${resetPasswordToken}`,
+        },
+      } as MailSendDto);
+
+      return new CustomApiResponse<void>(
+        HttpStatus.OK,
+        'AUTH.RESET_PASSWORD_EMAIL_SENT',
+      );
+    } catch (error) {
+      throw ExceptionUtils.wrapAsRpcException(error);
+    }
+  }
+
+  async resetPassword(
+    data: ResetPasswordDto,
+  ): Promise<CustomApiResponse<void>> {
+    try {
+      const user = await this.userRepository.findOne({
+        where: { resetPasswordToken: data.token },
+        withDeleted: false,
+      });
+
+      if (!user) {
+        throw new CustomRpcException(
+          'AUTH.INVALID_TOKEN',
+          HttpStatus.UNAUTHORIZED,
+        );
+      }
+
+      const passwordHashed = await bcrypt.hash(
+        data.newPassword,
+        this.configService.get('password_salt_rounds'),
+      );
+      user.password = passwordHashed;
+      user.resetPasswordToken = null;
+      await this.userRepository.save(user);
+
+      return new CustomApiResponse<void>(
+        HttpStatus.OK,
+        'AUTH.PASSWORD_RESET_SUCCESS',
+      );
+    } catch (error) {
+      throw ExceptionUtils.wrapAsRpcException(error);
+    }
+  }
+
+  //#endregion
 
   private async getCustomerRoleId(): Promise<number> {
     if (this.customerRoleId !== null) return this.customerRoleId;
@@ -345,20 +456,5 @@ export class AuthServiceService {
 
     this.customerRoleId = role.id;
     return this.customerRoleId;
-  }
-
-  private async sendVerificationEmail(
-    email: string,
-    emailVerificationToken: string,
-  ): Promise<void> {
-    await this.mailService.emit({ cmd: 'send_mail' }, {
-      to: email,
-      subject: 'Email Verification',
-      text: 'Please verify your email address',
-      template: './verify-mail',
-      context: {
-        verificationLink: `${this.configService.get('app').url}/api/${this.configService.get('app').version}/auth/verify-email?token=${emailVerificationToken}`,
-      },
-    } as MailSendDto);
   }
 }

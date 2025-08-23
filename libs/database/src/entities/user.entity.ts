@@ -50,6 +50,9 @@ export class User {
   @Column({ type: 'varchar', length: 255, nullable: true })
   emailVerificationToken?: string;
 
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  resetPasswordToken?: string;
+
   @CreateDateColumn()
   @Field(() => GqlCustomDateTime)
   createdAt: Date;
