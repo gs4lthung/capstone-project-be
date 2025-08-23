@@ -65,6 +65,5 @@ export class Order {
 
   @ManyToOne(() => User, (user) => user.orders, { nullable: false })
   @JoinColumn({ name: 'userId' })
-  @Field(() => User)
   user: User;
 }

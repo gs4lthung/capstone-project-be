@@ -20,7 +20,7 @@ export class AuthServiceController {
     return this.authServiceService.login(data);
   }
 
-  @MessagePattern({ cmd: 'loginWithGoogle' })
+  @MessagePattern({ cmd: 'login_with_google' })
   async loginWithGoogle(data: GoogleUserDto): Promise<string> {
     return this.authServiceService.loginWithGoogle(data);
   }
@@ -30,12 +30,12 @@ export class AuthServiceController {
     return this.authServiceService.register(data);
   }
 
-  @MessagePattern({ cmd: 'verifyEmail' })
+  @MessagePattern({ cmd: 'verify_email' })
   async verifyEmail(data: { token: string }): Promise<string> {
     return this.authServiceService.verifyEmail(data);
   }
 
-  @MessagePattern({ cmd: 'refreshNewAccessToken' })
+  @MessagePattern({ cmd: 'refresh_new_access_token' })
   async refreshNewAccessToken(data: {
     refreshToken: string;
   }): Promise<CustomApiResponse<{ accessToken: string }>> {

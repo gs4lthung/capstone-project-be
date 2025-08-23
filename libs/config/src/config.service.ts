@@ -23,6 +23,10 @@ interface Config {
     host: string;
     port: number;
   };
+  order_service: {
+    host: string;
+    port: number;
+  };
   database: {
     host: string;
     port: number;
@@ -137,6 +141,10 @@ export class ConfigService {
       user_service: {
         host: this.nestConfigService.get('USER_SERVICE_HOST', 'localhost'),
         port: this.nestConfigService.get('USER_SERVICE_PORT', 8388),
+      },
+      order_service: {
+        host: this.nestConfigService.get('ORDER_SERVICE_HOST', 'localhost'),
+        port: this.nestConfigService.get('ORDER_SERVICE_PORT', 8389),
       },
       database: {
         host: this.nestConfigService.get('DB_HOST', 'localhost'),

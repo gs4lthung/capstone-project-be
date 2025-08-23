@@ -9,7 +9,6 @@ import { SocketGateway } from './socket/socket.gateway';
 import { ErrorModule } from './error/error.module';
 import { JwtService } from '@nestjs/jwt';
 import { GraphQLModule } from '@nestjs/graphql';
-import { AppResolver } from './app.resolver';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Error } from '@app/database/entities/error.entity';
@@ -27,6 +26,7 @@ import {
 import { ScheduleModule } from '@nestjs/schedule';
 import { RedisModule } from '@app/redis';
 import { Notification } from '@app/database/entities/notification.entity';
+import { UserResolver } from './graphql/user.resolver';
 
 @Module({
   imports: [
@@ -149,6 +149,18 @@ import { Notification } from '@app/database/entities/notification.entity';
           },
         }),
       },
+      {
+        imports: [ConfigModule],
+        inject: [ConfigService],
+        name: 'ORDER_SERVICE',
+        useFactory: async (configService: ConfigService) => ({
+          transport: Transport.TCP,
+          options: {
+            host: configService.get('order_service').host,
+            port: configService.get('order_service').port,
+          },
+        }),
+      },
     ]),
     ThrottlerModule.forRootAsync({
       imports: [ConfigModule],
@@ -166,7 +178,7 @@ import { Notification } from '@app/database/entities/notification.entity';
   controllers: [AppController],
   providers: [
     AppService,
-    AppResolver,
+    UserResolver,
     SocketGateway,
     ConfigService,
     JwtService,

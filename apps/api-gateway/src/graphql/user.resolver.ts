@@ -6,29 +6,27 @@ import {
   ResolveField,
   Resolver,
 } from '@nestjs/graphql';
-import { AppService } from './app.service';
+import { AppService } from '../app.service';
 import { UseGuards, UseInterceptors } from '@nestjs/common';
-import { AuthGuard } from './guards/auth.guard';
 import { User } from '@app/database/entities/user.entity';
-import { RoleGuard } from './guards/role.guard';
-import { CheckRoles } from '@app/shared/decorators/check-roles.decorator';
-import { RoleEnum } from '@app/shared/enums/role.enum';
-import { CacheInterceptor } from './interceptors/cache.interceptor';
-import { FilteringParams } from '@app/shared/decorators/filtering-params.decorator';
-import { Filtering } from '@app/shared/interfaces/filtering.interface';
+import { AuthGuard } from '../guards/auth.guard';
 import { PaginationParams } from '@app/shared/decorators/pagination-params.decorator';
 import { Pagination } from '@app/shared/interfaces/pagination.interface';
 import { SortingParams } from '@app/shared/decorators/sorting-params.decorator';
 import { Sorting } from '@app/shared/interfaces/sorting.interface';
-import { FindOptions } from '@app/shared/interfaces/find-options.interface';
+import { FilteringParams } from '@app/shared/decorators/filtering-params.decorator';
+import { Filtering } from '@app/shared/interfaces/filtering.interface';
+import { CheckRoles } from '@app/shared/decorators/check-roles.decorator';
+import { RoleEnum } from '@app/shared/enums/role.enum';
+import { RoleGuard } from '../guards/role.guard';
 import { Order } from '@app/database/entities/order.entity';
+import { FindOptions } from '@app/shared/interfaces/find-options.interface';
+import { CacheInterceptor } from '../interceptors/cache.interceptor';
 
-@Resolver()
+@Resolver(() => User)
 @UseInterceptors(CacheInterceptor)
-export class AppResolver {
+export class UserResolver {
   constructor(private readonly appService: AppService) {}
-
-  //#region Users
 
   @Query(() => [User], { name: 'users' })
   @UseGuards(AuthGuard)
@@ -59,6 +57,4 @@ export class AppResolver {
   async findUserOrders(@Parent() user: User): Promise<Order[]> {
     return this.appService.findUserOrders(user.id);
   }
-
-  //#endregion Users
 }

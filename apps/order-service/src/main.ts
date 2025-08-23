@@ -1,21 +1,21 @@
 import { NestFactory } from '@nestjs/core';
-import { UserServiceModule } from './user-service.module';
+import { OrderServiceModule } from './order-service.module';
+import { ConfigService } from '@app/config';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { Logger } from '@nestjs/common';
-import { ConfigService } from '@app/config';
 
 async function bootstrap() {
   const appContext =
-    await NestFactory.createApplicationContext(UserServiceModule);
+    await NestFactory.createApplicationContext(OrderServiceModule);
   const configService = appContext.get(ConfigService);
 
-  const host = configService.get('user_service').host;
-  const port = configService.get('user_service').port;
+  const host = configService.get('order_service').host;
+  const port = configService.get('order_service').port;
 
   appContext.close();
 
   const app = await NestFactory.createMicroservice<MicroserviceOptions>(
-    UserServiceModule,
+    OrderServiceModule,
     {
       transport: Transport.TCP,
       options: {
@@ -25,7 +25,7 @@ async function bootstrap() {
     },
   );
   await app.listen();
-  const logger = new Logger(UserServiceModule.name);
-  logger.log(`${UserServiceModule.name} is running on ${host}:${port}`);
+  const logger = new Logger(OrderServiceModule.name);
+  logger.log(`${OrderServiceModule.name} is running on ${host}:${port}`);
 }
 bootstrap();

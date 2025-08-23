@@ -1,3 +1,4 @@
+import { Order } from '@app/database/entities/order.entity';
 import { User } from '@app/database/entities/user.entity';
 import { GoogleUserDto } from '@app/shared/dtos/auth/google-user.dto';
 import {
@@ -28,6 +29,7 @@ export class AppService {
     private readonly notificationService: ClientProxy,
     @Inject('PAYMENT_SERVICE')
     private readonly paymentService: ClientProxy,
+    @Inject('ORDER_SERVICE') private readonly orderService: ClientProxy,
   ) {}
 
   //#region Authentication
@@ -49,7 +51,7 @@ export class AppService {
   }
 
   async loginWithGoogle(data: GoogleUserDto) {
-    const pattern = { cmd: 'loginWithGoogle' };
+    const pattern = { cmd: 'login_with_google' };
     const payload = data;
 
     const response = await lastValueFrom(
@@ -73,7 +75,7 @@ export class AppService {
   }
 
   async verifyEmail(data: { token: string }) {
-    const pattern = { cmd: 'verifyEmail' };
+    const pattern = { cmd: 'verify_email' };
     const payload = data;
 
     const response = await lastValueFrom(
@@ -82,7 +84,7 @@ export class AppService {
     return response;
   }
   async refreshNewAccessToken(data: { refreshToken: string }) {
-    const pattern = { cmd: 'refreshNewAccessToken' };
+    const pattern = { cmd: 'refresh_new_access_token' };
     const payload = data;
 
     const response = await lastValueFrom(
@@ -99,7 +101,7 @@ export class AppService {
   //#region Users
 
   async createUser(data: CreateUserDto) {
-    const pattern = { cmd: 'createUser' };
+    const pattern = { cmd: 'create_user' };
     const payload = data;
 
     const response = await lastValueFrom(
@@ -111,7 +113,7 @@ export class AppService {
   async findAllUsers(
     findOptions: FindOptions,
   ): Promise<PaginatedResource<Partial<User>>> {
-    const pattern = { cmd: 'findAllUsers' };
+    const pattern = { cmd: 'find_all_users' };
 
     const response = await lastValueFrom(
       this.userService.send<PaginatedResource<Partial<User>>>(
@@ -124,7 +126,7 @@ export class AppService {
   }
 
   async findUserById(id: number): Promise<User> {
-    const pattern = { cmd: 'findUserById' };
+    const pattern = { cmd: 'find_user_by_id' };
     const payload = id;
 
     const response = await lastValueFrom(
@@ -134,7 +136,7 @@ export class AppService {
   }
 
   async updateMyAvatar(file: Express.Multer.File) {
-    const pattern = { cmd: 'updateMyAvatar' };
+    const pattern = { cmd: 'update_my_avatar' };
     const payload = { id: this.request.user.id, file };
 
     const response = await lastValueFrom(
@@ -144,7 +146,7 @@ export class AppService {
   }
 
   async softDeleteUser(id: number) {
-    const pattern = { cmd: 'softDeleteUser' };
+    const pattern = { cmd: 'soft_delete_user' };
     const payload = id;
 
     const response = await lastValueFrom(
@@ -154,7 +156,7 @@ export class AppService {
   }
 
   async deleteUser(id: number) {
-    const pattern = { cmd: 'deleteUser' };
+    const pattern = { cmd: 'delete_user' };
     const payload = id;
 
     const response = await lastValueFrom(
@@ -164,7 +166,7 @@ export class AppService {
   }
 
   async restoreUser(id: number) {
-    const pattern = { cmd: 'restoreUser' };
+    const pattern = { cmd: 'restore_user' };
     const payload = id;
 
     const response = await lastValueFrom(
@@ -205,4 +207,18 @@ export class AppService {
   }
 
   //#endregion Payment
+
+  //#region Orders
+
+  async findUserOrders(userId: number): Promise<Order[]> {
+    const pattern = { cmd: 'find_user_orders' };
+    const payload = { userId };
+
+    const response = await lastValueFrom(
+      this.orderService.send<Order[]>(pattern, payload),
+    );
+    return response;
+  }
+
+  //#endregion Orders
 }
