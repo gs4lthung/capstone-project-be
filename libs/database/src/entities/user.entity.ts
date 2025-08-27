@@ -11,26 +11,20 @@ import {
 } from 'typeorm';
 import { Error } from './error.entity';
 import { Role } from './role.entity';
-import { Field, ObjectType } from '@nestjs/graphql';
 import { FcmToken } from './fcmToken.entity';
-import { GqlCustomDateTime } from '@app/shared/scalars/gql-custom-datetime.scalar';
 import { AuthProvider } from './auth-provider.entity';
 import { Notification } from './notification.entity';
 import { Order } from './order.entity';
 
 @Entity('users')
-@ObjectType()
 export class User {
   @PrimaryGeneratedColumn()
-  @Field(() => Number)
   id: number;
 
   @Column({ type: 'varchar', length: 50 })
-  @Field(() => String)
   fullName: string;
 
   @Column({ type: 'varchar', length: 100, unique: true, nullable: true })
-  @Field(() => String)
   email: string;
 
   @Column({ type: 'varchar', length: 255, select: false, nullable: true })
@@ -40,11 +34,9 @@ export class User {
   refreshToken?: string;
 
   @Column({ type: 'varchar', length: 200, nullable: true })
-  @Field(() => String, { nullable: true })
   profilePicture?: string;
 
   @Column({ type: 'boolean', default: false })
-  @Field(() => Boolean)
   isEmailVerified: boolean;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
@@ -54,15 +46,12 @@ export class User {
   resetPasswordToken?: string;
 
   @CreateDateColumn()
-  @Field(() => GqlCustomDateTime)
   createdAt: Date;
 
   @UpdateDateColumn()
-  @Field(() => GqlCustomDateTime)
   updatedAt: Date;
 
   @DeleteDateColumn()
-  @Field(() => GqlCustomDateTime, { nullable: true })
   deletedAt: Date;
 
   @OneToMany(() => Error, (error) => error.user)
@@ -75,20 +64,17 @@ export class User {
 
   @ManyToOne(() => Role, (role) => role.users, { nullable: true, eager: true })
   @JoinColumn({ name: 'roleId' })
-  @Field(() => Role, { nullable: true })
   role: Role;
 
   @OneToMany(() => FcmToken, (fcmToken) => fcmToken.user, {
     cascade: true,
     eager: true,
   })
-  @Field(() => [FcmToken], { nullable: true })
   fcmTokens: FcmToken[];
 
   @OneToMany(() => Notification, (notification) => notification.user)
   notifications: Notification[];
 
   @OneToMany(() => Order, (order) => order.user)
-  @Field(() => [Order], { nullable: true })
   orders: Order[];
 }

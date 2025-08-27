@@ -3,11 +3,11 @@ import { ConfigModule, ConfigService } from '@app/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
 import { Error } from './entities/error.entity';
-import { Role } from './entities/role.entity';
-import { FcmToken } from './entities/fcmToken.entity';
 import { AuthProvider } from './entities/auth-provider.entity';
+import { FcmToken } from './entities/fcmToken.entity';
 import { Notification } from './entities/notification.entity';
 import { Order } from './entities/order.entity';
+import { Role } from './entities/role.entity';
 
 @Module({
   imports: [
@@ -23,17 +23,19 @@ import { Order } from './entities/order.entity';
         database: configService.get('database').database,
         entities: [
           User,
-          Role,
           Error,
-          FcmToken,
           AuthProvider,
+          FcmToken,
           Notification,
           Order,
+          Role,
         ],
-        logging: configService.get('node_env') !== 'dev',
-        autoLoadEntities: true,
+        logging: configService.get('node_env') === 'dev',
         synchronize: configService.get('node_env') === 'dev',
-        migrationsRun: configService.get('node_env') === 'dev',
+        ssl:
+          configService.get('node_env') !== 'dev'
+            ? { rejectUnauthorized: false }
+            : false,
       }),
       inject: [ConfigService],
     }),
@@ -41,4 +43,8 @@ import { Order } from './entities/order.entity';
   providers: [],
   exports: [TypeOrmModule],
 })
-export class DatabaseModule {}
+export class DatabaseModule {
+  constructor() {
+    console.log(__dirname + '/entities/*.entity{.ts,.js}');
+  }
+}
