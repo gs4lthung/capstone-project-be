@@ -52,3 +52,18 @@ Run migration file
 ```bash
 npm run migration:run
 ```
+
+### Build all services
+```bash
+npm run build:all
+```
+
+### Build a **specific service**
+```bash
+npm run build:${service}
+```
+
+### Docker compose
+```bash
+docker compose up -d
+```
