@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService as NestConfigService } from '@nestjs/config';
 
-interface Config {
+export interface Config {
   node_env: 'dev' | 'prod' | 'test';
   app: {
     name: string;
@@ -11,22 +11,10 @@ interface Config {
   front_end?: {
     url?: string;
   };
-  api_gateway: {
-    host: string;
-    port: number;
-  };
-  auth_service: {
-    host: string;
-    port: number;
-  };
-  user_service: {
-    host: string;
-    port: number;
-  };
-  order_service: {
-    host: string;
-    port: number;
-  };
+  api_gateway: TcpServiceConfig;
+  auth_service: TcpServiceConfig;
+  user_service: TcpServiceConfig;
+  order_service: TcpServiceConfig;
   database: {
     host: string;
     port: number;
@@ -118,6 +106,11 @@ interface Config {
     return_url?: string;
     cancel_url?: string;
   };
+}
+
+export interface TcpServiceConfig {
+  host: string;
+  port: number;
 }
 
 @Injectable()
@@ -303,5 +296,9 @@ export class ConfigService {
 
   getAll(): Config {
     return this.config;
+  }
+
+  getByServiceName(serviceName: string): TcpServiceConfig | undefined {
+    return this.config[serviceName] as TcpServiceConfig;
   }
 }

@@ -3,7 +3,11 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ConfigModule, ConfigService } from '@app/config';
 import { DatabaseModule } from '@app/database';
-import { ClientsModule, Transport } from '@nestjs/microservices';
+import {
+  ClientsModule,
+  ClientsProviderAsyncOptions,
+  Transport,
+} from '@nestjs/microservices';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { SocketGateway } from './socket/socket.gateway';
 import { ErrorModule } from './error/error.module';
@@ -27,6 +31,19 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { RedisModule } from '@app/redis';
 import { Notification } from '@app/database/entities/notification.entity';
 import { UserResolver } from './graphql/user.resolver';
+
+const tcp_services = [
+  { name: 'auth_service' },
+  { name: 'user_service' },
+  { name: 'order_service' },
+];
+
+const rmb_services = [
+  { name: 'PAYMENT_SERVICE', queue: 'payment_queue' },
+  { name: 'NOTIFICATION_SERVICE', queue: 'notification_queue' },
+  { name: 'MESSAGE_SERVICE', queue: 'message_queue' },
+  { name: 'MAIL_SERVICE', queue: 'mail_queue' },
+];
 
 @Module({
   imports: [
@@ -71,96 +88,41 @@ import { UserResolver } from './graphql/user.resolver';
       }),
     }),
     ClientsModule.registerAsync([
-      {
-        imports: [ConfigModule],
-        inject: [ConfigService],
-        name: 'AUTH_SERVICE',
-        useFactory: async (configService: ConfigService) => ({
-          transport: Transport.TCP,
-          options: {
-            host: configService.get('auth_service').host,
-            port: configService.get('auth_service').port,
-          },
-        }),
-      },
-      {
-        imports: [ConfigModule],
-        inject: [ConfigService],
-        name: 'USER_SERVICE',
-        useFactory: async (configService: ConfigService) => ({
-          transport: Transport.TCP,
-          options: {
-            host: configService.get('user_service').host,
-            port: configService.get('user_service').port,
-          },
-        }),
-      },
-      {
-        imports: [ConfigModule],
-        inject: [ConfigService],
-        name: 'NOTIFICATION_SERVICE',
-        useFactory: async (configService: ConfigService) => ({
-          transport: Transport.RMQ,
-          options: {
-            urls: [
-              `amqp://${configService.get('rabbitmq').username}:${configService.get('rabbitmq').password}@${configService.get('rabbitmq').host}:${configService.get('rabbitmq').port}/${configService.get('rabbitmq').username}`,
-            ],
-            queue: 'notification_queue',
-            queueOptions: {
-              durable: configService.get('rabbitmq').durable,
-              autoDelete: configService.get('rabbitmq').autoDelete,
-            },
-          },
-        }),
-      },
-      {
-        imports: [ConfigModule],
-        inject: [ConfigService],
-        name: 'MAIL_SERVICE',
-        useFactory: async (configService: ConfigService) => ({
-          transport: Transport.RMQ,
-          options: {
-            urls: [
-              `amqp://${configService.get('rabbitmq').username}:${configService.get('rabbitmq').password}@${configService.get('rabbitmq').host}:${configService.get('rabbitmq').port}/${configService.get('rabbitmq').username}`,
-            ],
-            queue: 'mail_queue',
-            queueOptions: {
-              durable: configService.get('rabbitmq').durable,
-              autoDelete: configService.get('rabbitmq').autoDelete,
-            },
-          },
-        }),
-      },
-      {
-        imports: [ConfigModule],
-        inject: [ConfigService],
-        name: 'PAYMENT_SERVICE',
-        useFactory: async (configService: ConfigService) => ({
-          transport: Transport.RMQ,
-          options: {
-            urls: [
-              `amqp://${configService.get('rabbitmq').username}:${configService.get('rabbitmq').password}@${configService.get('rabbitmq').host}:${configService.get('rabbitmq').port}/${configService.get('rabbitmq').username}`,
-            ],
-            queue: 'payment_queue',
-            queueOptions: {
-              durable: configService.get('rabbitmq').durable,
-              autoDelete: configService.get('rabbitmq').autoDelete,
-            },
-          },
-        }),
-      },
-      {
-        imports: [ConfigModule],
-        inject: [ConfigService],
-        name: 'ORDER_SERVICE',
-        useFactory: async (configService: ConfigService) => ({
-          transport: Transport.TCP,
-          options: {
-            host: configService.get('order_service').host,
-            port: configService.get('order_service').port,
-          },
-        }),
-      },
+      ...tcp_services.map(
+        ({ name }) =>
+          ({
+            imports: [ConfigModule],
+            inject: [ConfigService],
+            name: name.toUpperCase(),
+            useFactory: async (configService: ConfigService) => ({
+              transport: Transport.TCP,
+              options: {
+                host: configService.getByServiceName(name).host,
+                port: configService.getByServiceName(name).port,
+              },
+            }),
+          }) as ClientsProviderAsyncOptions,
+      ),
+      ...rmb_services.map(
+        ({ name, queue }) =>
+          ({
+            imports: [ConfigModule],
+            inject: [ConfigService],
+            name: name,
+            useFactory: async (configService: ConfigService) => ({
+              transport: Transport.RMQ,
+              options: {
+                urls: [
+                  `amqp://${configService.get('rabbitmq').username}:${configService.get('rabbitmq').password}@${configService.get('rabbitmq').host}:${configService.get('rabbitmq').port}/${configService.get('rabbitmq').username}`,
+                ],
+                queue: queue,
+                queueOptions: {
+                  durable: true,
+                },
+              },
+            }),
+          }) as ClientsProviderAsyncOptions,
+      ),
     ]),
     ThrottlerModule.forRootAsync({
       imports: [ConfigModule],

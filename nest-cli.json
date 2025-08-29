@@ -149,6 +149,15 @@
       "compilerOptions": {
         "tsConfigPath": "apps/order-service/tsconfig.app.json"
       }
+    },
+    "message-service": {
+      "type": "application",
+      "root": "apps/message-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/message-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/message-service/tsconfig.app.json"
+      }
     }
   }
 }

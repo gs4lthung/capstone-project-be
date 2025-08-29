@@ -1,12 +1,12 @@
 import { NestFactory } from '@nestjs/core';
-import { MailServiceModule } from './mail-service.module';
+import { MessageServiceModule } from './message-service.module';
 import { ConfigService } from '@app/config';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { ConsoleLogger, Logger } from '@nestjs/common';
 
 async function bootstrap() {
   const appContext = await NestFactory.createApplicationContext(
-    MailServiceModule,
+    MessageServiceModule,
     { bufferLogs: true },
   );
   const configService = appContext.get(ConfigService);
@@ -17,7 +17,7 @@ async function bootstrap() {
   appContext.close();
 
   const app = await NestFactory.createMicroservice<MicroserviceOptions>(
-    MailServiceModule,
+    MessageServiceModule,
     {
       transport: Transport.RMQ,
       options: {
@@ -31,13 +31,13 @@ async function bootstrap() {
         },
       },
       logger: new ConsoleLogger({
-        prefix: 'MAIL',
+        prefix: 'MESSAGE',
       }),
     },
   );
 
   await app.listen();
-  const logger = new Logger(MailServiceModule.name);
-  logger.log(`${MailServiceModule.name} is running on ${host}:${port}`);
+  const logger = new Logger(MessageServiceModule.name);
+  logger.log(`${MessageServiceModule.name} is running on ${host}:${port}`);
 }
 bootstrap();
