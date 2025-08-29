@@ -27,24 +27,22 @@ Except for Hotfixes, we want our codes to follow a one-way merge starting from *
 ```
 
 1. `"type"` must be one of the following types
-
-    - `feature`: adding, refactoring or removing a feature
-    - `bugfix`: fixing a bug
-    - `hotfix`: changing code with a temporary solution and/or without following the usual process (usually because of an emergency)
-    - `chore`: changing that don't modify the logic or test code
-    - `release`: a branch for tagging a specific release version
-    - `merge`: a temporary branch for resolving merge conflicts, usually between the latest development and a feature or Hotfix branch
+   - `feature`: adding, refactoring or removing a feature
+   - `bugfix`: fixing a bug
+   - `hotfix`: changing code with a temporary solution and/or without following the usual process (usually because of an emergency)
+   - `chore`: changing that don't modify the logic or test code
+   - `release`: a branch for tagging a specific release version
+   - `merge`: a temporary branch for resolving merge conflicts, usually between the latest development and a feature or Hotfix branch
 
 2. `"ticket"` (optional)
 
    A ticket number (e.g. Jira, GitHub issue, etc.)
-    - if the branch is related to a ticket, the ticket number must be included in the branch name
-    - if the branch is not related to a ticket, the branch name must contain a short description of the task
+   - if the branch is related to a ticket, the ticket number must be included in the branch name
+   - if the branch is not related to a ticket, the branch name must contain a short description of the task
 
 3. `"subject"`
 
    The subject contains a short description of the change
-
    - use the imperative, present tense (use "add" instead of "added" or "adds")
    - don't capitalize the first letter
    - no dot (.) at the end

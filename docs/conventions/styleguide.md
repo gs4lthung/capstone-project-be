@@ -31,14 +31,14 @@ Key Sections:
 
 ```ts
 var FooVar;
-function BarFunc() { }
+function BarFunc() {}
 ```
 
 **Good**
 
 ```ts
 var fooVar;
-function barFunc() { }
+function barFunc() {}
 ```
 
 ## Class
@@ -50,13 +50,13 @@ function barFunc() { }
 **Bad**
 
 ```ts
-class foo { }
+class foo {}
 ```
 
 **Good**
 
 ```ts
-class Foo { }
+class Foo {}
 ```
 
 - Use `camelCase` of class members and methods
@@ -67,8 +67,8 @@ class Foo { }
 
 ```ts
 class Foo {
-    Bar: number;
-    Baz() { }
+  Bar: number;
+  Baz() {}
 }
 ```
 
@@ -76,8 +76,8 @@ class Foo {
 
 ```ts
 class Foo {
-    bar: number;
-    baz() { }
+  bar: number;
+  baz() {}
 }
 ```
 
@@ -98,15 +98,13 @@ class Foo {
 **Bad**
 
 ```ts
-interface IFoo {
-}
+interface IFoo {}
 ```
 
 **Good**
 
 ```ts
-interface Foo {
-}
+interface Foo {}
 ```
 
 ## Type
@@ -128,15 +126,13 @@ interface Foo {
 **Bad**
 
 ```ts
-namespace foo {
-}
+namespace foo {}
 ```
 
 **Good**
 
 ```ts
-namespace Foo {
-}
+namespace Foo {}
 ```
 
 ## Enum
@@ -148,15 +144,13 @@ namespace Foo {
 **Bad**
 
 ```ts
-enum color {
-}
+enum color {}
 ```
 
 **Good**
 
 ```ts
-enum Color {
-}
+enum Color {}
 ```
 
 - Use `PascalCase` for enum member
@@ -167,7 +161,7 @@ enum Color {
 
 ```ts
 enum Color {
-    red
+  red,
 }
 ```
 
@@ -175,7 +169,7 @@ enum Color {
 
 ```ts
 enum Color {
-    Red
+  Red,
 }
 ```
 
@@ -183,7 +177,7 @@ enum Color {
 
 - Prefer not to use either for explicit unavailability
 
-> Reason: these values are commonly used to keep a consistent structure between values. In TypeScript you use *types* to denote the structure
+> Reason: these values are commonly used to keep a consistent structure between values. In TypeScript you use _types_ to denote the structure
 
 **Bad**
 
@@ -194,7 +188,7 @@ let foo = { x: 123, y: undefined };
 **Good**
 
 ```ts
-let foo: { x: number, y?: number } = { x:123 };
+let foo: { x: number; y?: number } = { x: 123 };
 ```
 
 - Use `undefined` in general (do consider returning an object like `{valid:boolean, value?:Foo}` instead)
@@ -218,16 +212,16 @@ return undefined;
 **Bad**
 
 ```ts
-cb(undefined)
+cb(undefined);
 ```
 
 **Good**
 
 ```ts
-cb(null)
+cb(null);
 ```
 
-- Use *truthy* check for **objects** being `null` or `undefined`
+- Use _truthy_ check for **objects** being `null` or `undefined`
 
 **Bad**
 
@@ -265,7 +259,7 @@ Examples:
 
 ```ts
 // Space before type i.e. foo:<space>string
-const foo: string = "hello";
+const foo: string = 'hello';
 ```
 
 ## Quotes
@@ -310,7 +304,7 @@ When the file exports a component and your framework (like React) wants componen
 
 ## type vs. interface
 
-- Use `type` when you *might* need a union or intersection:
+- Use `type` when you _might_ need a union or intersection:
 
 ```
 type Foo = number | { someProperty: number }

@@ -16,12 +16,12 @@ Use English language when naming your variables and functions.
 
 ```js
 /* Bad */
-const primerNombre = 'Gustavo'
-const amigos = ['Kate', 'John']
+const primerNombre = 'Gustavo';
+const amigos = ['Kate', 'John'];
 
 /* Good */
-const firstName = 'Gustavo'
-const friends = ['Kate', 'John']
+const firstName = 'Gustavo';
+const friends = ['Kate', 'John'];
 ```
 
 > Like it or not, English is the dominant language in programming: the syntax of all programming languages is written in English, as well as countless documentations and educational materials. By writing your code in English you dramatically increase its cohesiveness.
@@ -32,16 +32,16 @@ Pick **one** naming convention and follow it. It may be `camelCase`, `PascalCase
 
 ```js
 /* Bad */
-const page_count = 5
-const shouldUpdate = true
+const page_count = 5;
+const shouldUpdate = true;
 
 /* Good */
-const pageCount = 5
-const shouldUpdate = true
+const pageCount = 5;
+const shouldUpdate = true;
 
 /* Good as well */
-const page_count = 5
-const should_update = true
+const page_count = 5;
+const should_update = true;
 ```
 
 ## S-I-D
@@ -54,14 +54,14 @@ A name must be _short_, _intuitive_ and _descriptive_:
 
 ```js
 /* Bad */
-const a = 5 // "a" could mean anything
-const isPaginatable = a > 10 // "Paginatable" sounds extremely unnatural
-const shouldPaginatize = a > 10 // Made up verbs are so much fun!
+const a = 5; // "a" could mean anything
+const isPaginatable = a > 10; // "Paginatable" sounds extremely unnatural
+const shouldPaginatize = a > 10; // Made up verbs are so much fun!
 
 /* Good */
-const postCount = 5
-const hasPagination = postCount > 10
-const shouldPaginate = postCount > 10 // alternatively
+const postCount = 5;
+const hasPagination = postCount > 10;
+const shouldPaginate = postCount > 10; // alternatively
 ```
 
 ## Avoid contractions
@@ -70,10 +70,10 @@ Do **not** use contractions. They contribute to nothing but decreased readabilit
 
 ```js
 /* Bad */
-const onItmClk = () => {}
+const onItmClk = () => {};
 
 /* Good */
-const onItemClick = () => {}
+const onItemClick = () => {};
 ```
 
 ## Avoid context duplication
@@ -96,12 +96,12 @@ A name should reflect the expected result.
 
 ```jsx
 /* Bad */
-const isEnabled = itemCount > 3
-return <Button disabled={!isEnabled} />
+const isEnabled = itemCount > 3;
+return <Button disabled={!isEnabled} />;
 
 /* Good */
-const isDisabled = itemCount <= 3
-return <Button disabled={isDisabled} />
+const isDisabled = itemCount <= 3;
+return <Button disabled={isDisabled} />;
 ```
 
 ---
@@ -140,7 +140,7 @@ Accesses data immediately (i.e. shorthand getter of internal data).
 
 ```js
 function getFruitCount() {
-  return this.fruits.length
+  return this.fruits.length;
 }
 ```
 
@@ -150,8 +150,8 @@ You can use `get` when performing asynchronous operations as well:
 
 ```js
 async function getUser(id) {
-  const user = await fetch(`/api/user/${id}`)
-  return user
+  const user = await fetch(`/api/user/${id}`);
+  return user;
 }
 ```
 
@@ -160,14 +160,14 @@ async function getUser(id) {
 Sets a variable in a declarative way, with value `A` to value `B`.
 
 ```js
-let fruits = 0
+let fruits = 0;
 
 function setFruits(nextFruits) {
-  fruits = nextFruits
+  fruits = nextFruits;
 }
 
-setFruits(5)
-console.log(fruits) // 5
+setFruits(5);
+console.log(fruits); // 5
 ```
 
 ### `reset`
@@ -175,17 +175,17 @@ console.log(fruits) // 5
 Sets a variable back to its initial value or state.
 
 ```js
-const initialFruits = 5
-let fruits = initialFruits
-setFruits(10)
-console.log(fruits) // 10
+const initialFruits = 5;
+let fruits = initialFruits;
+setFruits(10);
+console.log(fruits); // 10
 
 function resetFruits() {
-  fruits = initialFruits
+  fruits = initialFruits;
 }
 
-resetFruits()
-console.log(fruits) // 5
+resetFruits();
+console.log(fruits); // 5
 ```
 
 ### `remove`
@@ -196,11 +196,11 @@ For example, if you have a collection of selected filters on a search page, remo
 
 ```js
 function removeFilter(filterName, filters) {
-  return filters.filter((name) => name !== filterName)
+  return filters.filter((name) => name !== filterName);
 }
 
-const selectedFilters = ['price', 'availability', 'size']
-removeFilter('price', selectedFilters)
+const selectedFilters = ['price', 'availability', 'size'];
+removeFilter('price', selectedFilters);
 ```
 
 > See also [delete](#delete).
@@ -213,7 +213,7 @@ Imagine you are a content editor, and there is that notorious post you wish to g
 
 ```js
 function deletePost(id) {
-  return database.find({ id }).delete()
+  return database.find({ id }).delete();
 }
 ```
 
@@ -233,7 +233,7 @@ Creates new data from the existing one. Mostly applicable to strings, objects, o
 
 ```js
 function composePageUrl(pageName, pageId) {
-  return pageName.toLowerCase() + '-' + pageId
+  return pageName.toLowerCase() + '-' + pageId;
 }
 ```
 
@@ -245,10 +245,10 @@ Handles an action. Often used when naming a callback method.
 
 ```js
 function handleLinkClick() {
-  console.log('Clicked a link!')
+  console.log('Clicked a link!');
 }
 
-link.addEventListener('click', handleLinkClick)
+link.addEventListener('click', handleLinkClick);
 ```
 
 ---
@@ -262,12 +262,12 @@ A function is often an action on _something_. It is important to state what its 
 ```js
 /* A pure function operating with primitives */
 function filter(list, predicate) {
-  return list.filter(predicate)
+  return list.filter(predicate);
 }
 
 /* Function operating exactly on posts */
 function getRecentPosts(posts) {
-  return filter(posts, (post) => post.date === Date.now())
+  return filter(posts, (post) => post.date === Date.now());
 }
 ```
 
@@ -284,12 +284,12 @@ Prefix enhances the meaning of a variable. It is rarely used in function names.
 Describes a characteristic or state of the current context (usually `boolean`).
 
 ```js
-const color = 'blue'
-const isBlue = color === 'blue' // characteristic
-const isPresent = true // state
+const color = 'blue';
+const isBlue = color === 'blue'; // characteristic
+const isPresent = true; // state
 
 if (isBlue && isPresent) {
-  console.log('Blue is present!')
+  console.log('Blue is present!');
 }
 ```
 
@@ -299,11 +299,11 @@ Describes whether the current context possesses a certain value or state (usuall
 
 ```js
 /* Bad */
-const isProductsExist = productsCount > 0
-const areProductsPresent = productsCount > 0
+const isProductsExist = productsCount > 0;
+const areProductsPresent = productsCount > 0;
 
 /* Good */
-const hasProducts = productsCount > 0
+const hasProducts = productsCount > 0;
 ```
 
 ### `should`
@@ -312,7 +312,7 @@ Reflects a positive conditional statement (usually `boolean`) coupled with a cer
 
 ```js
 function shouldUpdateUrl(url, expectedUrl) {
-  return url !== expectedUrl
+  return url !== expectedUrl;
 }
 ```
 
@@ -326,7 +326,7 @@ Represents a minimum or maximum value. Used when describing boundaries or limits
  * the given min/max boundaries.
  */
 function renderPosts(posts, minPosts, maxPosts) {
-  return posts.slice(0, randomBetween(minPosts, maxPosts))
+  return posts.slice(0, randomBetween(minPosts, maxPosts));
 }
 ```
 
@@ -336,12 +336,12 @@ Indicate the previous or the next state of a variable in the current context. Us
 
 ```jsx
 async function getPosts() {
-  const prevPosts = this.state.posts
+  const prevPosts = this.state.posts;
 
-  const latestPosts = await fetch('...')
-  const nextPosts = concat(prevPosts, latestPosts)
+  const latestPosts = await fetch('...');
+  const nextPosts = concat(prevPosts, latestPosts);
 
-  this.setState({ posts: nextPosts })
+  this.setState({ posts: nextPosts });
 }
 ```
 
@@ -351,10 +351,10 @@ Like a prefix, variable names can be made singular or plural depending on whethe
 
 ```js
 /* Bad */
-const friends = 'Bob'
-const friend = ['Bob', 'Tony', 'Tanya']
+const friends = 'Bob';
+const friend = ['Bob', 'Tony', 'Tanya'];
 
 /* Good */
-const friend = 'Bob'
-const friends = ['Bob', 'Tony', 'Tanya']
+const friend = 'Bob';
+const friends = ['Bob', 'Tony', 'Tanya'];
 ```

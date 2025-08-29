@@ -19,18 +19,17 @@ We use convention at [here](https://www.conventionalcommits.org/en/v1.0.0/)
 ```
 
 1. `"type"` must be one of the following types
-
-    - `build`: changes that affect the build system or external dependencies
-    - `chore`: changes that don't modify the logic or test code
-    - `ci`: changes to our CI configuration files and scripts
-    - `docs`: documentation only changes (add/update/delete)
-    - `feat`: to add/update/delete a feature
-    - `fix`: to fix a normal bug, critical bug (maybe refactor that code)
-    - `perf`: to improve performance
-    - `refactor`: a code change that neither fixes a bug nor adds a feature
-    - `revert`: to revert a previous commit
-    - `style`: changes that do not affect the meaning of the code (whitespace, formatting, missing semi-colons, etc.)
-    - `test`: adding missing tests or correcting existing tests
+   - `build`: changes that affect the build system or external dependencies
+   - `chore`: changes that don't modify the logic or test code
+   - `ci`: changes to our CI configuration files and scripts
+   - `docs`: documentation only changes (add/update/delete)
+   - `feat`: to add/update/delete a feature
+   - `fix`: to fix a normal bug, critical bug (maybe refactor that code)
+   - `perf`: to improve performance
+   - `refactor`: a code change that neither fixes a bug nor adds a feature
+   - `revert`: to revert a previous commit
+   - `style`: changes that do not affect the meaning of the code (whitespace, formatting, missing semi-colons, etc.)
+   - `test`: adding missing tests or correcting existing tests
 
 2. `"scope"` (optional)
 
@@ -39,13 +38,12 @@ We use convention at [here](https://www.conventionalcommits.org/en/v1.0.0/)
 3. `"subject"`
 
    The subject contains a short description of the change
-
    - use the imperative, present tense (use "add" instead of "added" or "adds")
    - don't capitalize the first letter
    - no dot (.) at the end
    - is one of the following types
-       - ticket: `<ticket No> <a short description>`
-       - some special tasks (no ticket) such as documentation, building or refactoring the source code: `<a short description>`
+     - ticket: `<ticket No> <a short description>`
+     - some special tasks (no ticket) such as documentation, building or refactoring the source code: `<a short description>`
 
 ## Example
 
