@@ -1,9 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
-import { MessageServiceModule } from './../src/message-service.module';
+import { MessageServiceModule } from '../src/chat-service.module';
 
-describe('MessageServiceController (e2e)', () => {
+describe('ChatServiceController (e2e)', () => {
   let app: INestApplication;
 
   beforeEach(async () => {

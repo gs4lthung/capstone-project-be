@@ -15,6 +15,8 @@ import { FcmToken } from './fcmToken.entity';
 import { AuthProvider } from './auth-provider.entity';
 import { Notification } from './notification.entity';
 import { Order } from './order.entity';
+import { ChatMember } from './chat-members.entity';
+import { Message } from './message.entity';
 
 @Entity('users')
 export class User {
@@ -77,4 +79,10 @@ export class User {
 
   @OneToMany(() => Order, (order) => order.user)
   orders: Order[];
+
+  @OneToMany(() => ChatMember, (member) => member.user)
+  chatMembers: ChatMember[];
+
+  @OneToMany(() => Message, (message) => message.sender)
+  messages: Message[];
 }

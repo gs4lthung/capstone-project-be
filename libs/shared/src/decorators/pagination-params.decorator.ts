@@ -3,7 +3,7 @@ import {
   BadRequestException,
   createParamDecorator,
 } from '@nestjs/common';
-import { CustomApiRequest } from '../requests/custom-api.request';
+import { CustomApiRequest } from '../interfaces/requests/custom-api.request';
 import { Pagination } from '../interfaces/pagination.interface';
 import { ContextUtils } from '../utils/context.util';
 import { ProtocolEnum } from '../enums/protocol.enum';

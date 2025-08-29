@@ -1,7 +1,7 @@
 import { Controller } from '@nestjs/common';
 import { AuthServiceService } from './auth-service.service';
 import { MessagePattern } from '@nestjs/microservices';
-import { CustomApiResponse } from '@app/shared/responses/custom-api.response';
+import { CustomApiResponse } from '@app/shared/interfaces/responses/custom-api.response';
 import { RegisterRequestDto } from '@app/shared/dtos/auth/register.dto';
 import {
   LoginRequestDto,

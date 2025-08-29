@@ -2,7 +2,7 @@ import { Controller } from '@nestjs/common';
 import { PaymentServiceService } from './payment-service.service';
 import { MessagePattern } from '@nestjs/microservices';
 import { CreatePaymentLinkRequestDto } from '@app/shared/dtos/payments/create-payment-link.dto';
-import { CustomApiResponse } from '@app/shared/responses/custom-api.response';
+import { CustomApiResponse } from '@app/shared/interfaces/responses/custom-api.response';
 import { CheckoutResponseDataType } from '@payos/node/lib/type';
 
 @Controller()

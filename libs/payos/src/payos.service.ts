@@ -2,7 +2,7 @@ import { ConfigService } from '@app/config';
 import { Order } from '@app/database/entities/order.entity';
 import { CreatePaymentLinkRequestDto } from '@app/shared/dtos/payments/create-payment-link.dto';
 import { PaymentStatusEnum } from '@app/shared/enums/payment.enum';
-import { CustomRpcException } from '@app/shared/exceptions/custom-rpc.exception';
+import { CustomRpcException } from '@app/shared/interfaces/exceptions/custom-rpc.exception';
 import { CryptoUtils } from '@app/shared/utils/crypto.util';
 import { DateTimeUtils } from '@app/shared/utils/datetime.util';
 import { ExceptionUtils } from '@app/shared/utils/exception.util';

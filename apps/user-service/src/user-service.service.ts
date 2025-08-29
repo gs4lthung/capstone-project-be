@@ -1,8 +1,8 @@
 import { CloudinaryService } from '@app/cloudinary';
 import { User } from '@app/database/entities/user.entity';
 import { CreateUserDto } from '@app/shared/dtos/users/create-user.dto';
-import { CustomRpcException } from '@app/shared/exceptions/custom-rpc.exception';
-import { CustomApiResponse } from '@app/shared/responses/custom-api.response';
+import { CustomRpcException } from '@app/shared/interfaces/exceptions/custom-rpc.exception';
+import { CustomApiResponse } from '@app/shared/interfaces/responses/custom-api.response';
 import { ExceptionUtils } from '@app/shared/utils/exception.util';
 import { HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';

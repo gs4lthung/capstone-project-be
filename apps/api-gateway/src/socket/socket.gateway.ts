@@ -8,7 +8,7 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { ErrorLoggingFilter } from '../error/error.filter';
+import { ErrorLoggingFilter } from '../filters/error.filter';
 import { AuthGuard } from '../guards/auth.guard';
 import { JwtPayloadDto } from '@app/shared/dtos/auth/jwt.payload.dto';
 import { JwtService } from '@nestjs/jwt';

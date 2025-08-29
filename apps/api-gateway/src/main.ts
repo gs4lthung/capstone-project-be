@@ -1,20 +1,22 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import helmet from 'helmet';
-import { ConsoleLogger, HttpStatus, ValidationPipe } from '@nestjs/common';
+import { HttpStatus, ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ConfigService } from '@app/config';
 import { LoggerMiddleware } from './middlewares/logger.middleware';
 import * as cookieParser from 'cookie-parser';
 import * as compression from 'compression';
-import { CustomRpcException } from '@app/shared/exceptions/custom-rpc.exception';
+import { CustomRpcException } from '@app/shared/interfaces/exceptions/custom-rpc.exception';
+import { InternalDisabledLogger } from '@app/shared/loggers/internal-disable.logger';
 
 async function bootstrap() {
+  const logger = new InternalDisabledLogger({
+    prefix: 'API_GATEWAY',
+  });
+
   const app = await NestFactory.create(AppModule, {
-    bufferLogs: true,
-    logger: new ConsoleLogger({
-      prefix: 'GATEWAY',
-    }),
+    logger,
   });
 
   const configService = app.get(ConfigService);
@@ -85,5 +87,9 @@ async function bootstrap() {
   });
 
   await app.listen(configService.get('api_gateway').port);
+
+  logger.verbose(
+    `API Gateway is running on port ${configService.get('api_gateway').port}`,
+  );
 }
 bootstrap();

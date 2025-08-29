@@ -11,14 +11,14 @@ import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Error } from '@app/database/entities/error.entity';
 import { ConfigService } from '@app/config';
-import { CustomApiRequest } from '@app/shared/requests/custom-api.request';
+import { CustomApiRequest } from '@app/shared/interfaces/requests/custom-api.request';
 import { GqlArgumentsHost } from '@nestjs/graphql';
 import { GraphQLError } from 'graphql';
 import { ContextUtils } from '@app/shared/utils/context.util';
 import { ProtocolEnum } from '@app/shared/enums/protocol.enum';
 import { User } from '@app/database/entities/user.entity';
 import { I18nService } from 'nestjs-i18n';
-import { CustomRpcException } from '@app/shared/exceptions/custom-rpc.exception';
+import { CustomRpcException } from '@app/shared/interfaces/exceptions/custom-rpc.exception';
 import { RedisService } from '@app/redis';
 
 @Catch()

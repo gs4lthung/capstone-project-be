@@ -7,13 +7,14 @@ import {
 } from '@app/shared/dtos/auth/login.dto';
 import { RegisterRequestDto } from '@app/shared/dtos/auth/register.dto';
 import { ResetPasswordDto } from '@app/shared/dtos/auth/reset-password.dto';
+import { CreatePersonalChatDto } from '@app/shared/dtos/chats/chat.dto';
 import { RegisterFcmTokenDto } from '@app/shared/dtos/notifications/register-fcm-token.dto';
 import { PaginatedResource } from '@app/shared/dtos/paginated-resource.dto';
 import { CreatePaymentLinkRequestDto } from '@app/shared/dtos/payments/create-payment-link.dto';
 import { CreateUserDto } from '@app/shared/dtos/users/create-user.dto';
 import { FindOptions } from '@app/shared/interfaces/find-options.interface';
-import { CustomApiRequest } from '@app/shared/requests/custom-api.request';
-import { CustomApiResponse } from '@app/shared/responses/custom-api.response';
+import { CustomApiRequest } from '@app/shared/interfaces/requests/custom-api.request';
+import { CustomApiResponse } from '@app/shared/interfaces/responses/custom-api.response';
 import { Inject, Injectable, Scope } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { ClientProxy } from '@nestjs/microservices';
@@ -31,6 +32,7 @@ export class AppService {
     @Inject('PAYMENT_SERVICE')
     private readonly paymentService: ClientProxy,
     @Inject('ORDER_SERVICE') private readonly orderService: ClientProxy,
+    @Inject('CHAT_SERVICE') private readonly chatService: ClientProxy,
   ) {}
 
   //#region Authentication
@@ -244,4 +246,21 @@ export class AppService {
   }
 
   //#endregion Orders
+
+  //#region Chats
+
+  async createPersonalChat(data: CreatePersonalChatDto) {
+    const pattern = { cmd: 'create_personal_chat' };
+    const payload = {
+      ...data,
+      createdBy: this.request.user.id,
+    } as CreatePersonalChatDto;
+
+    const response = await lastValueFrom(
+      this.chatService.send<CustomApiResponse<void>>(pattern, payload),
+    );
+    return response;
+  }
+
+  //#endregion Chats
 }

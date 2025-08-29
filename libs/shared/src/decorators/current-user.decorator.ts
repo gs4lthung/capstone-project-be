@@ -1,5 +1,5 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
-import { CustomApiRequest } from '../requests/custom-api.request';
+import { CustomApiRequest } from '../interfaces/requests/custom-api.request';
 import { User } from '@app/database/entities/user.entity';
 import { GoogleUserDto } from '../dtos/auth/google-user.dto';
 

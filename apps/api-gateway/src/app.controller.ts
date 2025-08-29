@@ -31,7 +31,7 @@ import { RegisterFcmTokenDto } from '@app/shared/dtos/notifications/register-fcm
 import { AuthGuard } from './guards/auth.guard';
 import { GoogleOAuthGuard } from './guards/google-auth.guard';
 import { GoogleUserDto } from '@app/shared/dtos/auth/google-user.dto';
-import { CustomApiResponse } from '@app/shared/responses/custom-api.response';
+import { CustomApiResponse } from '@app/shared/interfaces/responses/custom-api.response';
 import { Response } from 'express';
 import { RefreshNewAccessTokenDto } from '@app/shared/dtos/auth/refresh-new-access-token.dto';
 import { I18nResponseInterceptor } from './interceptors/i18-response.interceptor';
@@ -43,6 +43,7 @@ import { RoleEnum } from '@app/shared/enums/role.enum';
 import { CurrentUser } from '@app/shared/decorators/current-user.decorator';
 import { CreatePaymentLinkRequestDto } from '@app/shared/dtos/payments/create-payment-link.dto';
 import { ResetPasswordDto } from '@app/shared/dtos/auth/reset-password.dto';
+import { CreatePersonalChatDto } from '@app/shared/dtos/chats/chat.dto';
 
 @Controller()
 @UseInterceptors(I18nResponseInterceptor)
@@ -321,7 +322,7 @@ export class AppController {
 
   //#endregion Notifications
 
-  //#region Payment
+  //#region Payments
 
   @Post('payment/create-link')
   @HttpCode(HttpStatus.CREATED)
@@ -343,5 +344,29 @@ export class AppController {
     return this.appService.createPaymentLink(data);
   }
 
-  //#endregion Payment
+  //#endregion Payments
+
+  //#region Chats
+
+  @Post('chats/personal')
+  @HttpCode(HttpStatus.CREATED)
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    tags: ['Chat'],
+    summary: 'Create Personal Chat',
+    description: 'Create a new personal chat',
+  })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: 'Personal chat created successfully',
+  })
+  async createPersonalChat(
+    @Body()
+    data: CreatePersonalChatDto,
+  ) {
+    return this.appService.createPersonalChat(data);
+  }
+
+  //#endregion
 }

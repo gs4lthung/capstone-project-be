@@ -1,34 +1,33 @@
 import { NestFactory } from '@nestjs/core';
 import { UserServiceModule } from './user-service.module';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
-import { ConsoleLogger, Logger } from '@nestjs/common';
 import { ConfigService } from '@app/config';
+import { InternalDisabledLogger } from '@app/shared/loggers/internal-disable.logger';
 
 async function bootstrap() {
-  const appContext =
-    await NestFactory.createApplicationContext(UserServiceModule);
-  const configService = appContext.get(ConfigService);
+  const logger = new InternalDisabledLogger({
+    prefix: 'USER',
+  });
+
+  const app = await NestFactory.create(UserServiceModule, {
+    logger,
+  });
+
+  const configService = app.get(ConfigService);
 
   const host = configService.get('user_service').host;
   const port = configService.get('user_service').port;
 
-  appContext.close();
-
-  const app = await NestFactory.createMicroservice<MicroserviceOptions>(
-    UserServiceModule,
-    {
-      transport: Transport.TCP,
-      options: {
-        host,
-        port,
-      },
-      logger: new ConsoleLogger({
-        prefix: 'USER',
-      }),
+  app.connectMicroservice<MicroserviceOptions>({
+    transport: Transport.TCP,
+    options: {
+      host,
+      port,
     },
-  );
-  await app.listen();
-  const logger = new Logger(UserServiceModule.name);
-  logger.log(`${UserServiceModule.name} is running on ${host}:${port}`);
+  });
+
+  await app.startAllMicroservices();
+
+  logger.verbose(`User Service is running on ${host}:${port}`);
 }
 bootstrap();

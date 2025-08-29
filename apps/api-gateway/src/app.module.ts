@@ -10,7 +10,7 @@ import {
 } from '@nestjs/microservices';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { SocketGateway } from './socket/socket.gateway';
-import { ErrorModule } from './error/error.module';
+import { ErrorModule } from './filters/filter.module';
 import { JwtService } from '@nestjs/jwt';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
@@ -33,9 +33,9 @@ import { Notification } from '@app/database/entities/notification.entity';
 import { UserResolver } from './graphql/user.resolver';
 
 const tcp_services = [
-  { name: 'auth_service' },
-  { name: 'user_service' },
-  { name: 'order_service' },
+  { name: 'AUTH_SERVICE' },
+  { name: 'USER_SERVICE' },
+  { name: 'ORDER_SERVICE' },
 ];
 
 const rmb_services = [
@@ -43,6 +43,7 @@ const rmb_services = [
   { name: 'NOTIFICATION_SERVICE', queue: 'notification_queue' },
   { name: 'MESSAGE_SERVICE', queue: 'message_queue' },
   { name: 'MAIL_SERVICE', queue: 'mail_queue' },
+  { name: 'CHAT_SERVICE', queue: 'chat_queue' },
 ];
 
 @Module({
@@ -93,12 +94,12 @@ const rmb_services = [
           ({
             imports: [ConfigModule],
             inject: [ConfigService],
-            name: name.toUpperCase(),
+            name: name,
             useFactory: async (configService: ConfigService) => ({
               transport: Transport.TCP,
               options: {
-                host: configService.getByServiceName(name).host,
-                port: configService.getByServiceName(name).port,
+                host: configService.getByServiceName(name.toLowerCase()).host,
+                port: configService.getByServiceName(name.toLowerCase()).port,
               },
             }),
           }) as ClientsProviderAsyncOptions,

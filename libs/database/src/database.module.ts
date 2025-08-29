@@ -8,6 +8,10 @@ import { FcmToken } from './entities/fcmToken.entity';
 import { Notification } from './entities/notification.entity';
 import { Order } from './entities/order.entity';
 import { Role } from './entities/role.entity';
+import { Chat } from './entities/chat.entity';
+import { ChatMember } from './entities/chat-members.entity';
+import { Message } from './entities/message.entity';
+import { MessageRead } from './entities/message-read.entity';
 
 @Module({
   imports: [
@@ -29,8 +33,12 @@ import { Role } from './entities/role.entity';
           Notification,
           Order,
           Role,
+          Chat,
+          ChatMember,
+          Message,
+          MessageRead,
         ],
-        logging: configService.get('node_env') === 'dev',
+        logging: false,
         synchronize: configService.get('node_env') === 'dev',
         ssl:
           configService.get('node_env') !== 'dev'
@@ -43,8 +51,4 @@ import { Role } from './entities/role.entity';
   providers: [],
   exports: [TypeOrmModule],
 })
-export class DatabaseModule {
-  constructor() {
-    console.log(__dirname + '/entities/*.entity{.ts,.js}');
-  }
-}
+export class DatabaseModule {}

@@ -1,15 +1,15 @@
 import { NestFactory } from '@nestjs/core';
-import { MailServiceModule } from './mail-service.module';
 import { ConfigService } from '@app/config';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { InternalDisabledLogger } from '@app/shared/loggers/internal-disable.logger';
+import { MessageServiceModule } from './chat-service.module';
 
 async function bootstrap() {
   const logger = new InternalDisabledLogger({
-    prefix: 'MAIL',
+    prefix: 'CHAT',
   });
 
-  const app = await NestFactory.create(MailServiceModule, {
+  const app = await NestFactory.create(MessageServiceModule, {
     logger,
   });
 
@@ -21,7 +21,7 @@ async function bootstrap() {
       urls: [
         `amqp://${configService.get('rabbitmq').username}:${configService.get('rabbitmq').password}@${configService.get('rabbitmq').host}:${configService.get('rabbitmq').port}/${configService.get('rabbitmq').username}`,
       ],
-      queue: 'mail_queue',
+      queue: 'chat_queue',
       queueOptions: {
         durable: configService.get('rabbitmq').durable,
         autoDelete: configService.get('rabbitmq').autoDelete,
@@ -31,6 +31,6 @@ async function bootstrap() {
 
   await app.startAllMicroservices();
 
-  logger.verbose(`Mail Service is running on mail_queue`);
+  logger.verbose(`Message Service is running on chat_queue`);
 }
 bootstrap();

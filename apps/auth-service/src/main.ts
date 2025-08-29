@@ -1,35 +1,33 @@
 import { NestFactory } from '@nestjs/core';
 import { AuthServiceModule } from './auth-service.module';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
-import { ConsoleLogger, Logger } from '@nestjs/common';
 import { ConfigService } from '@app/config';
+import { InternalDisabledLogger } from '@app/shared/loggers/internal-disable.logger';
 
 async function bootstrap() {
-  const appContext =
-    await NestFactory.createApplicationContext(AuthServiceModule);
-  const configService = appContext.get(ConfigService);
+  const logger = new InternalDisabledLogger({
+    prefix: 'AUTH',
+  });
+
+  const app = await NestFactory.create(AuthServiceModule, {
+    logger,
+  });
+
+  const configService = app.get(ConfigService);
 
   const host = configService.get('auth_service').host;
   const port = configService.get('auth_service').port;
 
-  appContext.close();
-
-  const app = await NestFactory.createMicroservice<MicroserviceOptions>(
-    AuthServiceModule,
-    {
-      transport: Transport.TCP,
-      options: {
-        host,
-        port,
-      },
-      logger: new ConsoleLogger({
-        prefix: 'AUTH',
-      }),
+  app.connectMicroservice<MicroserviceOptions>({
+    transport: Transport.TCP,
+    options: {
+      host,
+      port,
     },
-  );
+  });
 
-  await app.listen();
-  const logger = new Logger('AuthService');
-  logger.log(`Auth Service is running on ${host}:${port}`);
+  await app.startAllMicroservices();
+
+  logger.verbose(`Auth Service is running on port ${port}`);
 }
 bootstrap();

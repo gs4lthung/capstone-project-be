@@ -8,7 +8,7 @@ import {
   RmqContext,
 } from '@nestjs/microservices';
 import { RegisterFcmTokenDto } from '@app/shared/dtos/notifications/register-fcm-token.dto';
-import { CustomApiResponse } from '@app/shared/responses/custom-api.response';
+import { CustomApiResponse } from '@app/shared/interfaces/responses/custom-api.response';
 import { SendNotification } from '@app/shared/interfaces/send-notification.interface';
 
 @Controller()

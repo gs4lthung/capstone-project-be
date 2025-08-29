@@ -150,13 +150,13 @@
         "tsConfigPath": "apps/order-service/tsconfig.app.json"
       }
     },
-    "message-service": {
+    "chat-service": {
       "type": "application",
-      "root": "apps/message-service",
+      "root": "apps/chat-service",
       "entryFile": "main",
-      "sourceRoot": "apps/message-service/src",
+      "sourceRoot": "apps/chat-service/src",
       "compilerOptions": {
-        "tsConfigPath": "apps/message-service/tsconfig.app.json"
+        "tsConfigPath": "apps/chat-service/tsconfig.app.json"
       }
     }
   }

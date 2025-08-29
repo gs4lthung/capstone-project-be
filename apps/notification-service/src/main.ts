@@ -2,42 +2,35 @@ import { NestFactory } from '@nestjs/core';
 import { NotificationServiceModule } from './notification-service.module';
 import { ConfigService } from '@app/config';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
-import { ConsoleLogger, Logger } from '@nestjs/common';
+import { InternalDisabledLogger } from '@app/shared/loggers/internal-disable.logger';
 
 async function bootstrap() {
-  const appContext = await NestFactory.createApplicationContext(
-    NotificationServiceModule,
-    { bufferLogs: true },
-  );
-  const configService = appContext.get(ConfigService);
+  const logger = new InternalDisabledLogger({
+    prefix: 'NOTIFICATION',
+  });
 
-  const host = configService.get('rabbitmq').host;
-  const port = configService.get('rabbitmq').port;
+  const app = await NestFactory.create(NotificationServiceModule, {
+    logger,
+  });
 
-  appContext.close();
+  const configService = app.get(ConfigService);
 
-  const app = await NestFactory.createMicroservice<MicroserviceOptions>(
-    NotificationServiceModule,
-    {
-      transport: Transport.RMQ,
-      options: {
-        urls: [
-          `amqp://${configService.get('rabbitmq').username}:${configService.get('rabbitmq').password}@${configService.get('rabbitmq').host}:${configService.get('rabbitmq').port}/${configService.get('rabbitmq').username}`,
-        ],
-        queue: 'notification_queue',
-        queueOptions: {
-          durable: configService.get('rabbitmq').durable,
-          autoDelete: configService.get('rabbitmq').autoDelete,
-        },
+  app.connectMicroservice<MicroserviceOptions>({
+    transport: Transport.RMQ,
+    options: {
+      urls: [
+        `amqp://${configService.get('rabbitmq').username}:${configService.get('rabbitmq').password}@${configService.get('rabbitmq').host}:${configService.get('rabbitmq').port}/${configService.get('rabbitmq').username}`,
+      ],
+      queue: 'notification_queue',
+      queueOptions: {
+        durable: configService.get('rabbitmq').durable,
+        autoDelete: configService.get('rabbitmq').autoDelete,
       },
-      logger: new ConsoleLogger({
-        prefix: 'NOTIFICATION',
-      }),
     },
-  );
+  });
 
-  await app.listen();
-  const logger = new Logger(NotificationServiceModule.name);
-  logger.log(`${NotificationServiceModule.name} is running on ${host}:${port}`);
+  await app.startAllMicroservices();
+
+  logger.verbose(`Notification Service is running on notification_queue`);
 }
 bootstrap();
