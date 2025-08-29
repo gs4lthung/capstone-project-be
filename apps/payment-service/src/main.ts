@@ -2,7 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { PaymentServiceModule } from './payment-service.module';
 import { ConfigService } from '@app/config';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
-import { Logger } from '@nestjs/common';
+import { ConsoleLogger, Logger } from '@nestjs/common';
 
 async function bootstrap() {
   const appContext =
@@ -28,6 +28,9 @@ async function bootstrap() {
           autoDelete: configService.get('rabbitmq').autoDelete,
         },
       },
+      logger: new ConsoleLogger({
+        prefix: 'PAYMENT',
+      }),
     },
   );
 

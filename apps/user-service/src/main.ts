@@ -1,7 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { UserServiceModule } from './user-service.module';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
-import { Logger } from '@nestjs/common';
+import { ConsoleLogger, Logger } from '@nestjs/common';
 import { ConfigService } from '@app/config';
 
 async function bootstrap() {
@@ -22,6 +22,9 @@ async function bootstrap() {
         host,
         port,
       },
+      logger: new ConsoleLogger({
+        prefix: 'USER',
+      }),
     },
   );
   await app.listen();

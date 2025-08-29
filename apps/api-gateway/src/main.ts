@@ -1,7 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import helmet from 'helmet';
-import { HttpStatus, ValidationPipe } from '@nestjs/common';
+import { ConsoleLogger, HttpStatus, ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ConfigService } from '@app/config';
 import { LoggerMiddleware } from './middlewares/logger.middleware';
@@ -10,7 +10,12 @@ import * as compression from 'compression';
 import { CustomRpcException } from '@app/shared/exceptions/custom-rpc.exception';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, { bufferLogs: true });
+  const app = await NestFactory.create(AppModule, {
+    bufferLogs: true,
+    logger: new ConsoleLogger({
+      prefix: 'GATEWAY',
+    }),
+  });
 
   const configService = app.get(ConfigService);
 

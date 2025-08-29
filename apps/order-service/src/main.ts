@@ -2,7 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { OrderServiceModule } from './order-service.module';
 import { ConfigService } from '@app/config';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
-import { Logger } from '@nestjs/common';
+import { ConsoleLogger, Logger } from '@nestjs/common';
 
 async function bootstrap() {
   const appContext =
@@ -22,6 +22,9 @@ async function bootstrap() {
         host,
         port,
       },
+      logger: new ConsoleLogger({
+        prefix: 'ORDER',
+      }),
     },
   );
   await app.listen();
