@@ -158,6 +158,15 @@
       "compilerOptions": {
         "tsConfigPath": "apps/chat-service/tsconfig.app.json"
       }
+    },
+    "ffmpeg": {
+      "type": "library",
+      "root": "libs/ffmpeg",
+      "entryFile": "index",
+      "sourceRoot": "libs/ffmpeg/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/ffmpeg/tsconfig.lib.json"
+      }
     }
   }
 }

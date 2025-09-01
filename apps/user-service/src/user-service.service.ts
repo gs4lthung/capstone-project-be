@@ -17,6 +17,7 @@ import { getOrder, getWhere } from '@app/shared/helpers/typeorm.helper';
 import { PaginatedResource } from '@app/shared/graphql/paginated-resource';
 import { ClientProxy } from '@nestjs/microservices';
 import { SendNotification } from '@app/shared/interfaces/send-notification.interface';
+import * as fs from 'fs';
 
 @Injectable()
 export class UserServiceService {
@@ -137,11 +138,13 @@ export class UserServiceService {
           HttpStatus.INTERNAL_SERVER_ERROR,
         );
 
-      const res = await this.cloudinaryService.uploadFile(
-        'user',
-        user.id.toString(),
-        file,
-      );
+      const fileBuffer = fs.readFileSync(`${file.path}`);
+      const res = await this.cloudinaryService.uploadFile({
+        file: {
+          ...file,
+          buffer: fileBuffer,
+        },
+      });
 
       await this.userRepository.update(id, {
         profilePicture: res.url,

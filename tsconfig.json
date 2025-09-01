@@ -65,6 +65,12 @@
       ],
       "@app/payos/*": [
         "libs/payos/src/*"
+      ],
+      "@app/ffmpeg": [
+        "libs/ffmpeg/src"
+      ],
+      "@app/ffmpeg/*": [
+        "libs/ffmpeg/src/*"
       ]
     }
   }

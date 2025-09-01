@@ -229,13 +229,7 @@ export class AppController {
     description: 'User avatar updated successfully',
   })
   @UseGuards(AuthGuard)
-  @UseInterceptors(
-    FileInterceptor('file', {
-      limits: {
-        fileSize: 5 * 1024 * 1024,
-      },
-    }),
-  )
+  @UseInterceptors(FileInterceptor('avatar'))
   async updateMyAvatar(
     @UploadedFile() file: Express.Multer.File,
   ): Promise<CustomApiResponse<void>> {

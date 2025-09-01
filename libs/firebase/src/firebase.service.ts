@@ -1,5 +1,6 @@
 import { ConfigService } from '@app/config';
 import { FirebaseNotification } from '@app/firebase/firebase-notification';
+import { UploadFileDto } from '@app/shared/dtos/files/file.dto';
 import { ExceptionUtils } from '@app/shared/utils/exception.util';
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import * as admin from 'firebase-admin';
@@ -42,6 +43,33 @@ export class FirebaseService implements OnModuleInit {
         },
       });
       return response;
+    } catch (error) {
+      throw ExceptionUtils.wrapAsRpcException(error);
+    }
+  }
+
+  async uploadFile(data: UploadFileDto) {
+    try {
+      const bucket = admin.storage().bucket();
+      const filePath = `${data.file.destination}/${data.file.filename}`;
+
+      const fileUpload = bucket.file(filePath);
+      const stream = fileUpload.createWriteStream({
+        metadata: {
+          contentType: data.file.mimetype,
+        },
+      });
+
+      return new Promise((resolve, reject) => {
+        stream.on('error', (error) => reject(error));
+
+        stream.on('finish', async () => {
+          await fileUpload.makePublic();
+          resolve(fileUpload.publicUrl());
+        });
+
+        stream.end(data.file.buffer);
+      });
     } catch (error) {
       throw ExceptionUtils.wrapAsRpcException(error);
     }

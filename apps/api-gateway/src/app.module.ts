@@ -31,6 +31,8 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { RedisModule } from '@app/redis';
 import { Notification } from '@app/database/entities/notification.entity';
 import { UserResolver } from './resolvers/user.resolver';
+import { MulterModule } from '@nestjs/platform-express';
+import { FileUtils } from '@app/shared/utils/file.util';
 
 const tcp_services = [
   { name: 'AUTH_SERVICE' },
@@ -52,6 +54,16 @@ const rmb_services = [
     ServeStaticModule.forRoot({
       rootPath: 'public',
       serveRoot: '/',
+    }),
+    MulterModule.registerAsync({
+      useFactory: () => ({
+        dest: './uploads',
+        limits: {
+          fileSize: 5 * 1024 * 1024, // 5MB
+        },
+        storage: FileUtils.fileStorage,
+        fileFilter: FileUtils.fileFilter,
+      }),
     }),
     ScheduleModule.forRoot(),
     DatabaseModule,
