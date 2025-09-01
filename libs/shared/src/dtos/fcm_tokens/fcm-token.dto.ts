@@ -1,5 +1,5 @@
 import { Field, ObjectType } from '@nestjs/graphql';
-import { GqlCustomDateTime } from '@app/shared/scalars/gql-custom-datetime.scalar';
+import { GqlCustomDateTime } from '@app/shared/graphql/scalars/gql-custom-datetime.scalar';
 
 @ObjectType()
 export class FcmTokenDto {

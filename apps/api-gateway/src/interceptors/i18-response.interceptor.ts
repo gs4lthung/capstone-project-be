@@ -1,4 +1,4 @@
-import { CustomApiResponse } from '@app/shared/interfaces/responses/custom-api.response';
+import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
 import {
   CallHandler,
   ExecutionContext,

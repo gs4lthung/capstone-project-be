@@ -1,6 +1,6 @@
 import { User } from '@app/database/entities/user.entity';
 import { ProtocolEnum } from '@app/shared/enums/protocol.enum';
-import { CustomRpcException } from '@app/shared/interfaces/exceptions/custom-rpc.exception';
+import { CustomRpcException } from '@app/shared/customs/custom-rpc-exception';
 import { ContextUtils } from '@app/shared/utils/context.util';
 import { ExceptionUtils } from '@app/shared/utils/exception.util';
 import {

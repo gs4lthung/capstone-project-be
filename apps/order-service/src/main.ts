@@ -2,10 +2,10 @@ import { NestFactory } from '@nestjs/core';
 import { OrderServiceModule } from './order-service.module';
 import { ConfigService } from '@app/config';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
-import { InternalDisabledLogger } from '@app/shared/loggers/internal-disable.logger';
+import { CustomLogger } from '@app/shared/customs/custom-logger';
 
 async function bootstrap() {
-  const logger = new InternalDisabledLogger({
+  const logger = new CustomLogger({
     prefix: 'ORDER',
   });
 

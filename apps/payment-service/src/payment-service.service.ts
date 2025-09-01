@@ -2,7 +2,7 @@ import { Order } from '@app/database/entities/order.entity';
 import { User } from '@app/database/entities/user.entity';
 import { PayosService } from '@app/payos';
 import { CreatePaymentLinkRequestDto } from '@app/shared/dtos/payments/create-payment-link.dto';
-import { CustomApiResponse } from '@app/shared/interfaces/responses/custom-api.response';
+import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
 import { CryptoUtils } from '@app/shared/utils/crypto.util';
 import { DateTimeUtils } from '@app/shared/utils/datetime.util';
 import { ExceptionUtils } from '@app/shared/utils/exception.util';

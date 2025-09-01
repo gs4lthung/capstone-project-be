@@ -2,10 +2,10 @@ import { NestFactory } from '@nestjs/core';
 import { AuthServiceModule } from './auth-service.module';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { ConfigService } from '@app/config';
-import { InternalDisabledLogger } from '@app/shared/loggers/internal-disable.logger';
+import { CustomLogger } from '@app/shared/customs/custom-logger';
 
 async function bootstrap() {
-  const logger = new InternalDisabledLogger({
+  const logger = new CustomLogger({
     prefix: 'AUTH',
   });
 

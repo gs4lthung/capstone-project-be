@@ -2,9 +2,9 @@ import { Controller } from '@nestjs/common';
 import { UserServiceService } from './user-service.service';
 import { MessagePattern } from '@nestjs/microservices';
 import { User } from '@app/database/entities/user.entity';
-import { CustomApiResponse } from '@app/shared/interfaces/responses/custom-api.response';
+import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
 import { CreateUserDto } from '@app/shared/dtos/users/create-user.dto';
-import { PaginatedResource } from '@app/shared/dtos/paginated-resource.dto';
+import { PaginatedResource } from '@app/shared/graphql/paginated-resource';
 import { FindOptions } from '@app/shared/interfaces/find-options.interface';
 
 @Controller()

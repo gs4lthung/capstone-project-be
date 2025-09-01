@@ -5,7 +5,7 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common';
 import { Filtering } from '../interfaces/filtering.interface';
-import { CustomApiRequest } from '../interfaces/requests/custom-api.request';
+import { CustomApiRequest } from '../customs/custom-api-request';
 import { FilterRule } from '../enums/filter-rules.enum';
 import { ContextUtils } from '../utils/context.util';
 import { ProtocolEnum } from '../enums/protocol.enum';

@@ -1,5 +1,5 @@
 import { HttpStatus } from '@nestjs/common';
-import { CustomRpcException } from '../interfaces/exceptions/custom-rpc.exception';
+import { CustomRpcException } from '../customs/custom-rpc-exception';
 
 export class ExceptionUtils {
   static wrapAsRpcException(error: unknown): CustomRpcException {

@@ -1,8 +1,8 @@
 import { CloudinaryService } from '@app/cloudinary';
 import { User } from '@app/database/entities/user.entity';
 import { CreateUserDto } from '@app/shared/dtos/users/create-user.dto';
-import { CustomRpcException } from '@app/shared/interfaces/exceptions/custom-rpc.exception';
-import { CustomApiResponse } from '@app/shared/interfaces/responses/custom-api.response';
+import { CustomRpcException } from '@app/shared/customs/custom-rpc-exception';
+import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
 import { ExceptionUtils } from '@app/shared/utils/exception.util';
 import { HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -14,7 +14,7 @@ import { RoleEnum } from '@app/shared/enums/role.enum';
 import { RedisService } from '@app/redis';
 import { FindOptions } from '@app/shared/interfaces/find-options.interface';
 import { getOrder, getWhere } from '@app/shared/helpers/typeorm.helper';
-import { PaginatedResource } from '@app/shared/dtos/paginated-resource.dto';
+import { PaginatedResource } from '@app/shared/graphql/paginated-resource';
 import { ClientProxy } from '@nestjs/microservices';
 import { SendNotification } from '@app/shared/interfaces/send-notification.interface';
 

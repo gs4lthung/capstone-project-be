@@ -7,11 +7,11 @@ import { ConfigService } from '@app/config';
 import { LoggerMiddleware } from './middlewares/logger.middleware';
 import * as cookieParser from 'cookie-parser';
 import * as compression from 'compression';
-import { CustomRpcException } from '@app/shared/interfaces/exceptions/custom-rpc.exception';
-import { InternalDisabledLogger } from '@app/shared/loggers/internal-disable.logger';
+import { CustomRpcException } from '@app/shared/customs/custom-rpc-exception';
+import { CustomLogger } from '@app/shared/customs/custom-logger';
 
 async function bootstrap() {
-  const logger = new InternalDisabledLogger({
+  const logger = new CustomLogger({
     prefix: 'API_GATEWAY',
   });
 

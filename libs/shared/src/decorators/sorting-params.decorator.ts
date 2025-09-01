@@ -5,7 +5,7 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common';
 import { Sorting } from '../interfaces/sorting.interface';
-import { CustomApiRequest } from '../interfaces/requests/custom-api.request';
+import { CustomApiRequest } from '../customs/custom-api-request';
 import { ContextUtils } from '../utils/context.util';
 import { ProtocolEnum } from '../enums/protocol.enum';
 import { GqlArgumentsHost } from '@nestjs/graphql';

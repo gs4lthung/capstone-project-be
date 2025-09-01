@@ -4,8 +4,8 @@ import { HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
-import { CustomRpcException } from '@app/shared/interfaces/exceptions/custom-rpc.exception';
-import { CustomApiResponse } from '@app/shared/interfaces/responses/custom-api.response';
+import { CustomRpcException } from '@app/shared/customs/custom-rpc-exception';
+import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
 import { RegisterRequestDto } from '@app/shared/dtos/auth/register.dto';
 import {
   LoginRequestDto,

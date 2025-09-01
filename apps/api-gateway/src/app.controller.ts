@@ -31,7 +31,7 @@ import { RegisterFcmTokenDto } from '@app/shared/dtos/notifications/register-fcm
 import { AuthGuard } from './guards/auth.guard';
 import { GoogleOAuthGuard } from './guards/google-auth.guard';
 import { GoogleUserDto } from '@app/shared/dtos/auth/google-user.dto';
-import { CustomApiResponse } from '@app/shared/interfaces/responses/custom-api.response';
+import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
 import { Response } from 'express';
 import { RefreshNewAccessTokenDto } from '@app/shared/dtos/auth/refresh-new-access-token.dto';
 import { I18nResponseInterceptor } from './interceptors/i18-response.interceptor';

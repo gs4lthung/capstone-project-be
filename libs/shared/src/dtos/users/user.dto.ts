@@ -1,4 +1,4 @@
-import { GqlCustomDateTime } from '@app/shared/scalars/gql-custom-datetime.scalar';
+import { GqlCustomDateTime } from '@app/shared/graphql/scalars/gql-custom-datetime.scalar';
 import { Field, ObjectType } from '@nestjs/graphql';
 import { RoleDto } from '../roles/role.dto';
 import { FcmTokenDto } from '../fcm_tokens/fcm-token.dto';

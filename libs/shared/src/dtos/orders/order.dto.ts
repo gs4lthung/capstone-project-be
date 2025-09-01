@@ -1,5 +1,5 @@
 import { PaymentStatusEnum } from '@app/shared/enums/payment.enum';
-import { GqlCustomDateTime } from '@app/shared/scalars/gql-custom-datetime.scalar';
+import { GqlCustomDateTime } from '@app/shared/graphql/scalars/gql-custom-datetime.scalar';
 import { Field, ObjectType } from '@nestjs/graphql';
 
 @ObjectType()

@@ -1,7 +1,7 @@
 import { ConfigService } from '@app/config';
 import { RedisService } from '@app/redis';
-import { CustomRpcException } from '@app/shared/interfaces/exceptions/custom-rpc.exception';
-import { CustomApiQuery } from '@app/shared/interfaces/requests/custom-api.request';
+import { CustomRpcException } from '@app/shared/customs/custom-rpc-exception';
+import { CustomApiQuery } from '@app/shared/customs/custom-api-request';
 import {
   CallHandler,
   ExecutionContext,

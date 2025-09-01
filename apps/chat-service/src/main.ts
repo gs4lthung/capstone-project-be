@@ -1,15 +1,15 @@
 import { NestFactory } from '@nestjs/core';
 import { ConfigService } from '@app/config';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
-import { InternalDisabledLogger } from '@app/shared/loggers/internal-disable.logger';
-import { MessageServiceModule } from './chat-service.module';
+import { CustomLogger } from '@app/shared/customs/custom-logger';
+import { ChatServiceModule } from './chat-service.module';
 
 async function bootstrap() {
-  const logger = new InternalDisabledLogger({
+  const logger = new CustomLogger({
     prefix: 'CHAT',
   });
 
-  const app = await NestFactory.create(MessageServiceModule, {
+  const app = await NestFactory.create(ChatServiceModule, {
     logger,
   });
 
@@ -31,6 +31,6 @@ async function bootstrap() {
 
   await app.startAllMicroservices();
 
-  logger.verbose(`Message Service is running on chat_queue`);
+  logger.verbose(`Chat Service is running on chat_queue`);
 }
 bootstrap();

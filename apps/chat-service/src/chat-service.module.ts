@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
 import { ChatServiceController } from './chat-service.controller';
-import { ChatServiceService } from './chat-service.service';
 import { ConfigModule } from '@app/config';
 import { DatabaseModule } from '@app/database';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -9,6 +8,7 @@ import { ChatMember } from '@app/database/entities/chat-members.entity';
 import { Message } from '@app/database/entities/message.entity';
 import { MessageRead } from '@app/database/entities/message-read.entity';
 import { User } from '@app/database/entities/user.entity';
+import { ChatServiceService } from './chat-service.service';
 
 @Module({
   imports: [
@@ -19,4 +19,4 @@ import { User } from '@app/database/entities/user.entity';
   controllers: [ChatServiceController],
   providers: [ChatServiceService],
 })
-export class MessageServiceModule {}
+export class ChatServiceModule {}

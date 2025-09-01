@@ -1,7 +1,7 @@
 import { Controller } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { CreatePersonalChatDto } from '@app/shared/dtos/chats/chat.dto';
-import { CustomApiResponse } from '@app/shared/interfaces/responses/custom-api.response';
+import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
 import { ChatServiceService } from './chat-service.service';
 
 @Controller()

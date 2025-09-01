@@ -2,7 +2,7 @@ import { ConfigService } from '@app/config';
 import { User } from '@app/database/entities/user.entity';
 import { JwtPayloadDto } from '@app/shared/dtos/auth/jwt.payload.dto';
 import { ProtocolEnum } from '@app/shared/enums/protocol.enum';
-import { CustomRpcException } from '@app/shared/interfaces/exceptions/custom-rpc.exception';
+import { CustomRpcException } from '@app/shared/customs/custom-rpc-exception';
 import { AuthUtils } from '@app/shared/utils/auth.util';
 import { ContextUtils } from '@app/shared/utils/context.util';
 import { ExceptionUtils } from '@app/shared/utils/exception.util';

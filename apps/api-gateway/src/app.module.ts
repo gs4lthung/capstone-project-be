@@ -30,7 +30,7 @@ import {
 import { ScheduleModule } from '@nestjs/schedule';
 import { RedisModule } from '@app/redis';
 import { Notification } from '@app/database/entities/notification.entity';
-import { UserResolver } from './graphql/user.resolver';
+import { UserResolver } from './resolvers/user.resolver';
 
 const tcp_services = [
   { name: 'AUTH_SERVICE' },
