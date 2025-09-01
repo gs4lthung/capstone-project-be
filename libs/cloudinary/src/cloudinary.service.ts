@@ -9,7 +9,6 @@ import { UploadFileDto } from '@app/shared/dtos/files/file.dto';
 export class CloudinaryService {
   async uploadFile(data: UploadFileDto): Promise<CloudinaryResponse> {
     try {
-      console.log(data.file);
       return new Promise<CloudinaryResponse>((resolve, reject) => {
         const uploadStream = cloudinary.uploader.upload_stream(
           {

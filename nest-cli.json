@@ -167,6 +167,15 @@
       "compilerOptions": {
         "tsConfigPath": "libs/ffmpeg/tsconfig.lib.json"
       }
+    },
+    "video-service": {
+      "type": "application",
+      "root": "apps/video-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/video-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/video-service/tsconfig.app.json"
+      }
     }
   }
 }

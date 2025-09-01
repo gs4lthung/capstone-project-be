@@ -20,6 +20,7 @@ import { REQUEST } from '@nestjs/core';
 import { ClientProxy } from '@nestjs/microservices';
 import { CheckoutResponseDataType } from '@payos/node/lib/type';
 import { lastValueFrom, map } from 'rxjs';
+import { UploadVideoDto } from '@app/shared/dtos/videos/video.dto';
 
 @Injectable({ scope: Scope.REQUEST })
 export class AppService {
@@ -33,6 +34,7 @@ export class AppService {
     private readonly paymentService: ClientProxy,
     @Inject('ORDER_SERVICE') private readonly orderService: ClientProxy,
     @Inject('CHAT_SERVICE') private readonly chatService: ClientProxy,
+    @Inject('VIDEO_SERVICE') private readonly videoService: ClientProxy,
   ) {}
 
   //#region Authentication
@@ -263,4 +265,22 @@ export class AppService {
   }
 
   //#endregion Chats
+
+  //#region Videos
+
+  async uploadVideo(
+    data: UploadVideoDto,
+    files: {
+      video: Express.Multer.File[];
+      video_thumbnail: Express.Multer.File[];
+    },
+  ) {
+    const pattern = { cmd: 'upload_video' };
+    const payload = { userId: this.request.user.id, data, files };
+
+    const response = await lastValueFrom(
+      this.videoService.send<CustomApiResponse<void>>(pattern, payload),
+    );
+    return response;
+  }
 }

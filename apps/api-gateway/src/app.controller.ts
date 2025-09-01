@@ -12,6 +12,7 @@ import {
   Req,
   Res,
   UploadedFile,
+  UploadedFiles,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
@@ -35,7 +36,10 @@ import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
 import { Response } from 'express';
 import { RefreshNewAccessTokenDto } from '@app/shared/dtos/auth/refresh-new-access-token.dto';
 import { I18nResponseInterceptor } from './interceptors/i18-response.interceptor';
-import { FileInterceptor } from '@nestjs/platform-express';
+import {
+  FileFieldsInterceptor,
+  FileInterceptor,
+} from '@nestjs/platform-express';
 import { CreateUserDto } from '@app/shared/dtos/users/create-user.dto';
 import { RoleGuard } from './guards/role.guard';
 import { CheckRoles } from '@app/shared/decorators/check-roles.decorator';
@@ -44,6 +48,8 @@ import { CurrentUser } from '@app/shared/decorators/current-user.decorator';
 import { CreatePaymentLinkRequestDto } from '@app/shared/dtos/payments/create-payment-link.dto';
 import { ResetPasswordDto } from '@app/shared/dtos/auth/reset-password.dto';
 import { CreatePersonalChatDto } from '@app/shared/dtos/chats/chat.dto';
+import { FileSizeLimitEnum } from '@app/shared/enums/file.enum';
+import { UploadVideoDto } from '@app/shared/dtos/videos/video.dto';
 
 @Controller()
 @UseInterceptors(I18nResponseInterceptor)
@@ -229,7 +235,13 @@ export class AppController {
     description: 'User avatar updated successfully',
   })
   @UseGuards(AuthGuard)
-  @UseInterceptors(FileInterceptor('avatar'))
+  @UseInterceptors(
+    FileInterceptor('avatar', {
+      limits: {
+        fileSize: FileSizeLimitEnum.IMAGE,
+      },
+    }),
+  )
   async updateMyAvatar(
     @UploadedFile() file: Express.Multer.File,
   ): Promise<CustomApiResponse<void>> {
@@ -363,4 +375,43 @@ export class AppController {
   }
 
   //#endregion
+
+  //#region Video
+
+  @Post('videos')
+  @HttpCode(HttpStatus.CREATED)
+  @UseGuards(AuthGuard)
+  @UseInterceptors(
+    FileFieldsInterceptor(
+      [
+        { name: 'video', maxCount: 1 },
+        { name: 'video_thumbnail', maxCount: 1 },
+      ],
+      {
+        limits: {
+          fileSize: FileSizeLimitEnum.VIDEO,
+        },
+      },
+    ),
+  )
+  @ApiBearerAuth()
+  @ApiOperation({
+    tags: ['Video'],
+    summary: 'Upload Video',
+    description: 'Upload a new video',
+  })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: 'Video uploaded successfully',
+  })
+  async uploadVideo(
+    @Body() data: UploadVideoDto,
+    @UploadedFiles()
+    files: {
+      video: Express.Multer.File[];
+      video_thumbnail: Express.Multer.File[];
+    },
+  ) {
+    return this.appService.uploadVideo(data, files);
+  }
 }

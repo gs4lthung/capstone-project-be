@@ -46,6 +46,7 @@ const rmb_services = [
   { name: 'MESSAGE_SERVICE', queue: 'message_queue' },
   { name: 'MAIL_SERVICE', queue: 'mail_queue' },
   { name: 'CHAT_SERVICE', queue: 'chat_queue' },
+  { name: 'VIDEO_SERVICE', queue: 'video_queue' },
 ];
 
 @Module({
@@ -58,9 +59,6 @@ const rmb_services = [
     MulterModule.registerAsync({
       useFactory: () => ({
         dest: './uploads',
-        limits: {
-          fileSize: 5 * 1024 * 1024, // 5MB
-        },
         storage: FileUtils.fileStorage,
         fileFilter: FileUtils.fileFilter,
       }),

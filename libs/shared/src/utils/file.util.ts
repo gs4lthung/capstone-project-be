@@ -52,6 +52,12 @@ export class FileUtils {
         case 'avatar':
           destination = `uploads/users/${customReq.user.id}/avatar`;
           break;
+        case 'video':
+          destination = `uploads/users/${customReq.user.id}/videos`;
+          break;
+        case 'video_thumbnail':
+          destination = `uploads/users/${customReq.user.id}/videos/thumbnails`;
+          break;
       }
 
       fs.mkdir(destination, { recursive: true }, (err) => {
@@ -72,11 +78,61 @@ export class FileUtils {
 
       switch (file.fieldname) {
         case 'avatar':
-          fileName = `${baseName}${extension}`;
+          fileName = `avatar_${baseName}${extension}`;
+          break;
+        case 'video':
+          fileName = `video_${baseName}${extension}`;
+          break;
+        case 'video_thumbnail':
+          fileName = `video_thumbnail_${baseName}${extension}`;
           break;
       }
 
       cb(null, fileName);
     },
   });
+
+  static excludeFileFromPath(filePath: string): string {
+    if (!fs.existsSync(filePath)) {
+      throw new Error(`File not found: ${filePath}`);
+    }
+    return path.dirname(filePath);
+  }
+
+  static convertFilePathToExpressFilePath(
+    filePath: string | Error,
+  ): fs.PathOrFileDescriptor {
+    if (filePath instanceof Error) {
+      throw filePath;
+    }
+    return filePath;
+  }
+
+  static getFileFromFolder(folderPath: string): Express.Multer.File[] {
+    if (!fs.existsSync(folderPath)) {
+      throw new Error(`Folder not found: ${folderPath}`);
+    }
+
+    return fs.readdirSync(folderPath).map((file) => {
+      const filePath = path.join(folderPath, file);
+      return {
+        buffer: fs.readFileSync(filePath),
+        originalname: file,
+        path: filePath,
+      } as Express.Multer.File;
+    });
+  }
+
+  static deleteFilesInFolder(folderPath: string) {
+    if (!fs.existsSync(folderPath)) {
+      throw new Error(`Folder not found: ${folderPath}`);
+    }
+
+    fs.readdirSync(folderPath).forEach((file) => {
+      const filePath = path.join(folderPath, file);
+      if (fs.statSync(filePath).isFile()) {
+        fs.unlinkSync(filePath);
+      }
+    });
+  }
 }
