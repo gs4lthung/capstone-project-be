@@ -7,7 +7,10 @@ import {
 } from '@app/shared/dtos/auth/login.dto';
 import { RegisterRequestDto } from '@app/shared/dtos/auth/register.dto';
 import { ResetPasswordDto } from '@app/shared/dtos/auth/reset-password.dto';
-import { CreatePersonalChatDto } from '@app/shared/dtos/chats/chat.dto';
+import {
+  CreatePersonalChatDto,
+  SendMessageDto,
+} from '@app/shared/dtos/chats/chat.dto';
 import { RegisterFcmTokenDto } from '@app/shared/dtos/notifications/register-fcm-token.dto';
 import { PaginatedResource } from '@app/shared/graphql/paginated-resource';
 import { CreatePaymentLinkRequestDto } from '@app/shared/dtos/payments/create-payment-link.dto';
@@ -21,6 +24,7 @@ import { ClientProxy } from '@nestjs/microservices';
 import { CheckoutResponseDataType } from '@payos/node/lib/type';
 import { lastValueFrom, map } from 'rxjs';
 import { UploadVideoDto } from '@app/shared/dtos/videos/video.dto';
+import { Chat } from '@app/database/entities/chat.entity';
 
 @Injectable({ scope: Scope.REQUEST })
 export class AppService {
@@ -260,6 +264,36 @@ export class AppService {
 
     const response = await lastValueFrom(
       this.chatService.send<CustomApiResponse<void>>(pattern, payload),
+    );
+    return response;
+  }
+
+  async sendMessage(
+    data: SendMessageDto,
+    files: {
+      chat_image?: Express.Multer.File[];
+      chat_video?: Express.Multer.File[];
+    },
+  ) {
+    const pattern = { cmd: 'send_message' };
+    const payload = {
+      userId: this.request.user.id,
+      data,
+      files,
+    };
+
+    const response = await lastValueFrom(
+      this.chatService.send<CustomApiResponse<void>>(pattern, payload),
+    );
+    return response;
+  }
+
+  async findUserChats(userId: number): Promise<Chat[]> {
+    const pattern = { cmd: 'find_user_chats' };
+    const payload = { userId };
+
+    const response = await lastValueFrom(
+      this.chatService.send<Chat[]>(pattern, payload),
     );
     return response;
   }

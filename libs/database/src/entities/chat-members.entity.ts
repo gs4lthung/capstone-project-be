@@ -19,6 +19,7 @@ export class ChatMember {
   chat: Chat;
 
   @ManyToOne(() => User, (user) => user.chatMembers, {
+    eager: true,
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'userId' })

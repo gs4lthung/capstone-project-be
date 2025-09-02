@@ -1,6 +1,52 @@
+import {
+  ChatMemberRole,
+  ChatMessageType,
+  ChatTypeEnum,
+} from '@app/shared/enums/chat.enum';
+import { Field, ObjectType } from '@nestjs/graphql';
 import { ApiProperty } from '@nestjs/swagger';
-import { ArrayMaxSize, ArrayMinSize, IsArray } from 'class-validator';
+import {
+  ArrayMaxSize,
+  ArrayMinSize,
+  IsArray,
+  IsEnum,
+  IsString,
+} from 'class-validator';
+import { UserDto } from '../users/user.dto';
+import { GqlCustomDateTime } from '@app/shared/graphql/scalars/gql-custom-datetime.scalar';
 
+@ObjectType()
+export class ChatDto {
+  @Field(() => Number)
+  id: number;
+
+  @Field(() => String, { nullable: true })
+  name: string;
+
+  @Field(() => String)
+  type: ChatTypeEnum;
+
+  @Field(() => UserDto)
+  createdBy: UserDto;
+
+  @Field(() => GqlCustomDateTime)
+  createdAt: Date;
+
+  @Field(() => GqlCustomDateTime)
+  updatedAt: Date;
+}
+
+@ObjectType()
+export class ChatMemberDto {
+  @Field(() => UserDto)
+  user: UserDto;
+
+  @Field(() => String)
+  role: ChatMemberRole;
+
+  @Field(() => GqlCustomDateTime)
+  joinedAt: Date;
+}
 export class CreatePersonalChatDto {
   @ApiProperty({
     description: 'List of participant user IDs',
@@ -18,4 +64,26 @@ export class CreatePersonalChatDto {
   participants: number[];
 
   createdBy?: number;
+}
+
+export class SendMessageDto {
+  @ApiProperty({
+    description: 'The message content',
+    example: 'Hello, how are you?',
+  })
+  @IsString({
+    message: 'Message must be a string',
+  })
+  message: string;
+
+  @ApiProperty({
+    description: 'The type of the message',
+    example: ChatMessageType.TEXT,
+  })
+  @IsEnum(ChatMessageType, {
+    message: 'Invalid message type',
+  })
+  type: ChatMessageType;
+
+  chatId: number;
 }

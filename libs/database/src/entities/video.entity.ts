@@ -22,7 +22,11 @@ export class Video {
   @Column({ type: 'array', default: [] })
   tags: string[];
 
-  @Column({ type: 'enum', default: PickleBallLevelEnum.BEGINNER_1_0 })
+  @Column({
+    type: 'enum',
+    enum: PickleBallLevelEnum,
+    default: PickleBallLevelEnum.BEGINNER_1_0,
+  })
   level?: PickleBallLevelEnum;
 
   @Column({ type: 'varchar', length: 255 })

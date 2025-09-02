@@ -15,13 +15,11 @@ import { SortingParams } from '@app/shared/decorators/sorting-params.decorator';
 import { Sorting } from '@app/shared/interfaces/sorting.interface';
 import { FilteringParams } from '@app/shared/decorators/filtering-params.decorator';
 import { Filtering } from '@app/shared/interfaces/filtering.interface';
-import { CheckRoles } from '@app/shared/decorators/check-roles.decorator';
-import { RoleEnum } from '@app/shared/enums/role.enum';
-import { RoleGuard } from '../guards/role.guard';
 import { FindOptions } from '@app/shared/interfaces/find-options.interface';
 import { CacheInterceptor } from '../interceptors/cache.interceptor';
 import { UserDto } from '@app/shared/dtos/users/user.dto';
 import { OrderDto } from '@app/shared/dtos/orders/order.dto';
+import { ChatDto } from '@app/shared/dtos/chats/chat.dto';
 
 @Resolver(() => UserDto)
 @UseInterceptors(CacheInterceptor)
@@ -44,8 +42,7 @@ export class UserResolver {
   }
 
   @Query(() => UserDto, { name: 'user' })
-  @CheckRoles(RoleEnum.ADMIN)
-  @UseGuards(AuthGuard, RoleGuard)
+  @UseGuards(AuthGuard)
   async findUserById(
     @Args('id', { type: () => Int }) id: number,
   ): Promise<UserDto> {
@@ -56,5 +53,10 @@ export class UserResolver {
   @ResolveField(() => [OrderDto], { name: 'orders' })
   async findUserOrders(@Parent() user: UserDto): Promise<OrderDto[]> {
     return this.appService.findUserOrders(user.id);
+  }
+
+  @ResolveField(() => [ChatDto], { name: 'chats' })
+  async findUserChats(@Parent() user: UserDto): Promise<ChatDto[]> {
+    return this.appService.findUserChats(user.id);
   }
 }

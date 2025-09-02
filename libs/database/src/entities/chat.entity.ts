@@ -25,7 +25,7 @@ export class Chat {
   @Column({ type: 'varchar', nullable: true })
   name: string;
 
-  @ManyToOne(() => User)
+  @ManyToOne(() => User, (user) => user.id, { eager: true })
   @JoinColumn({ name: 'created_by' })
   createdBy: User;
 

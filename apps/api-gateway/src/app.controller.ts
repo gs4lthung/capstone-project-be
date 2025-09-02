@@ -47,7 +47,10 @@ import { RoleEnum } from '@app/shared/enums/role.enum';
 import { CurrentUser } from '@app/shared/decorators/current-user.decorator';
 import { CreatePaymentLinkRequestDto } from '@app/shared/dtos/payments/create-payment-link.dto';
 import { ResetPasswordDto } from '@app/shared/dtos/auth/reset-password.dto';
-import { CreatePersonalChatDto } from '@app/shared/dtos/chats/chat.dto';
+import {
+  CreatePersonalChatDto,
+  SendMessageDto,
+} from '@app/shared/dtos/chats/chat.dto';
 import { FileSizeLimitEnum } from '@app/shared/enums/file.enum';
 import { UploadVideoDto } from '@app/shared/dtos/videos/video.dto';
 
@@ -372,6 +375,46 @@ export class AppController {
     data: CreatePersonalChatDto,
   ) {
     return this.appService.createPersonalChat(data);
+  }
+
+  @Post('chats/:id')
+  @HttpCode(HttpStatus.CREATED)
+  @UseGuards(AuthGuard)
+  @UseInterceptors(
+    FileFieldsInterceptor(
+      [
+        { name: 'chat_image', maxCount: 1 },
+        { name: 'chat_video', maxCount: 1 },
+      ],
+      {
+        limits: {
+          fileSize: FileSizeLimitEnum.VIDEO,
+        },
+      },
+    ),
+  )
+  @ApiBearerAuth()
+  @ApiOperation({
+    tags: ['Chat'],
+    summary: 'Send Message',
+    description: 'Send a message in a chat',
+  })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: 'Message sent successfully',
+  })
+  async createGroupChat(
+    @UploadedFiles()
+    files: {
+      chat_image?: Express.Multer.File[];
+      chat_video?: Express.Multer.File[];
+    },
+    @Param('id') id: number,
+    @Body()
+    data: SendMessageDto,
+  ) {
+    data.chatId = id;
+    return this.appService.sendMessage(data, files);
   }
 
   //#endregion
