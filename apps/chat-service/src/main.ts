@@ -15,22 +15,19 @@ async function bootstrap() {
 
   const configService = app.get(ConfigService);
 
+  const host = configService.get('chat_service').host;
+  const port = configService.get('chat_service').port;
+
   app.connectMicroservice<MicroserviceOptions>({
-    transport: Transport.RMQ,
+    transport: Transport.TCP,
     options: {
-      urls: [
-        `amqp://${configService.get('rabbitmq').username}:${configService.get('rabbitmq').password}@${configService.get('rabbitmq').host}:${configService.get('rabbitmq').port}/${configService.get('rabbitmq').username}`,
-      ],
-      queue: 'chat_queue',
-      queueOptions: {
-        durable: configService.get('rabbitmq').durable,
-        autoDelete: configService.get('rabbitmq').autoDelete,
-      },
+      host,
+      port,
     },
   });
 
   await app.startAllMicroservices();
 
-  logger.verbose(`Chat Service is running on chat_queue`);
+  logger.verbose(`${ChatServiceModule.name} is running on ${host}:${port}`);
 }
 bootstrap();

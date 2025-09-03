@@ -156,12 +156,14 @@ export class ChatServiceService {
 
   async findByUser(userId: number): Promise<Chat[]> {
     try {
-      console.log('Fetching chats for userId:', userId);
       const chats = await this.chatRepository.find({
-        // where: { members: In([{ user: { id: userId } }]) },
+        where: {
+          members: {
+            user: { id: userId },
+          },
+        },
         withDeleted: false,
       });
-      console.log('Fetched chats:', chats);
       return chats;
     } catch (error) {
       throw ExceptionUtils.wrapAsRpcException(error);

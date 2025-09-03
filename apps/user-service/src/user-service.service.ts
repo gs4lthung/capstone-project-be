@@ -31,7 +31,7 @@ export class UserServiceService {
     private readonly notificationService: ClientProxy,
   ) {}
 
-  async createUser(data: CreateUserDto): Promise<CustomApiResponse<void>> {
+  async create(data: CreateUserDto): Promise<CustomApiResponse<void>> {
     try {
       const isUserExists = await this.userRepository.findOne({
         where: { email: data.email },
@@ -168,7 +168,7 @@ export class UserServiceService {
     }
   }
 
-  async softDeleteUser(id: number): Promise<CustomApiResponse<void>> {
+  async softDelete(id: number): Promise<CustomApiResponse<void>> {
     try {
       const isUserExists = await this.userRepository.findOne({
         where: { id: id },
@@ -191,7 +191,7 @@ export class UserServiceService {
     }
   }
 
-  async deleteUser(id: number): Promise<CustomApiResponse<void>> {
+  async delete(id: number): Promise<CustomApiResponse<void>> {
     try {
       const isUserExists = await this.userRepository.findOne({
         where: { id: id },
@@ -214,7 +214,7 @@ export class UserServiceService {
     }
   }
 
-  async restoreUser(id: number): Promise<CustomApiResponse<void>> {
+  async restore(id: number): Promise<CustomApiResponse<void>> {
     try {
       const isUserExists = await this.userRepository.findOne({
         where: { id: id },

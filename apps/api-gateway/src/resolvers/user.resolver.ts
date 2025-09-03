@@ -6,7 +6,6 @@ import {
   ResolveField,
   Resolver,
 } from '@nestjs/graphql';
-import { AppService } from '../app.service';
 import { UseGuards, UseInterceptors } from '@nestjs/common';
 import { AuthGuard } from '../guards/auth.guard';
 import { PaginationParams } from '@app/shared/decorators/pagination-params.decorator';
@@ -20,11 +19,18 @@ import { CacheInterceptor } from '../interceptors/cache.interceptor';
 import { UserDto } from '@app/shared/dtos/users/user.dto';
 import { OrderDto } from '@app/shared/dtos/orders/order.dto';
 import { ChatDto } from '@app/shared/dtos/chats/chat.dto';
+import { UserService } from '../services/user.service';
+import { OrderService } from '../services/order.service';
+import { ChatService } from '../services/chat.service';
 
 @Resolver(() => UserDto)
 @UseInterceptors(CacheInterceptor)
 export class UserResolver {
-  constructor(private readonly appService: AppService) {}
+  constructor(
+    private readonly userService: UserService,
+    private readonly orderService: OrderService,
+    private readonly chatService: ChatService,
+  ) {}
 
   @Query(() => [UserDto], { name: 'users' })
   @UseGuards(AuthGuard)
@@ -33,7 +39,7 @@ export class UserResolver {
     @SortingParams() sort: Sorting,
     @FilteringParams() filter: Filtering,
   ): Promise<UserDto[]> {
-    const users = await this.appService.findAllUsers({
+    const users = await this.userService.findAll({
       pagination,
       sort,
       filter,
@@ -46,17 +52,17 @@ export class UserResolver {
   async findUserById(
     @Args('id', { type: () => Int }) id: number,
   ): Promise<UserDto> {
-    const user = this.appService.findUserById(id);
+    const user = this.userService.findOne(id);
     return user;
   }
 
-  @ResolveField(() => [OrderDto], { name: 'orders' })
+  @ResolveField(() => [OrderDto], { name: 'user_orders' })
   async findUserOrders(@Parent() user: UserDto): Promise<OrderDto[]> {
-    return this.appService.findUserOrders(user.id);
+    return this.orderService.findUserOrders(user.id);
   }
 
-  @ResolveField(() => [ChatDto], { name: 'chats' })
+  @ResolveField(() => [ChatDto], { name: 'user_chats' })
   async findUserChats(@Parent() user: UserDto): Promise<ChatDto[]> {
-    return this.appService.findUserChats(user.id);
+    return this.chatService.findUserChats(user.id);
   }
 }

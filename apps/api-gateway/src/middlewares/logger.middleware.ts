@@ -19,7 +19,7 @@ export class LoggerMiddleware implements NestMiddleware {
       if (req.body) {
         logger.log(
           isGraphQLRequest
-            ? print(parse(req.body.query))
+            ? null //print(parse(req.body.query))
             : JSON.stringify(req.body),
         );
       }

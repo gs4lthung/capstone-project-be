@@ -33,11 +33,28 @@ import { Notification } from '@app/database/entities/notification.entity';
 import { UserResolver } from './resolvers/user.resolver';
 import { MulterModule } from '@nestjs/platform-express';
 import { FileUtils } from '@app/shared/utils/file.util';
+import { CloudinaryModule } from '@app/cloudinary';
+import { Role } from '@app/database/entities/role.entity';
+import { UserService } from './services/user.service';
+import { AuthService } from './services/auth.service';
+import { AuthProvider } from '@app/database/entities/auth-provider.entity';
+import { ChatService } from './services/chat.service';
+import { Chat } from '@app/database/entities/chat.entity';
+import { ChatMember } from '@app/database/entities/chat-members.entity';
+import { Message } from '@app/database/entities/message.entity';
+import { MessageRead } from '@app/database/entities/message-read.entity';
+import { UserController } from './controllers/user.controller';
+import { AuthController } from './controllers/auth.controller';
+import { ChatController } from './controllers/chat.controller';
+import { OrderController } from './controllers/order.controller';
+import { OrderService } from './services/order.service';
+import { Order } from '@app/database/entities/order.entity';
 
 const tcp_services = [
   { name: 'AUTH_SERVICE' },
   { name: 'USER_SERVICE' },
   { name: 'ORDER_SERVICE' },
+  { name: 'CHAT_SERVICE' },
 ];
 
 const rmb_services = [
@@ -45,7 +62,6 @@ const rmb_services = [
   { name: 'NOTIFICATION_SERVICE', queue: 'notification_queue' },
   { name: 'MESSAGE_SERVICE', queue: 'message_queue' },
   { name: 'MAIL_SERVICE', queue: 'mail_queue' },
-  { name: 'CHAT_SERVICE', queue: 'chat_queue' },
   { name: 'VIDEO_SERVICE', queue: 'video_queue' },
 ];
 
@@ -66,7 +82,19 @@ const rmb_services = [
     ScheduleModule.forRoot(),
     DatabaseModule,
     RedisModule,
-    TypeOrmModule.forFeature([Error, User, Notification]),
+    CloudinaryModule,
+    TypeOrmModule.forFeature([
+      Error,
+      User,
+      Notification,
+      Role,
+      AuthProvider,
+      Chat,
+      ChatMember,
+      Message,
+      MessageRead,
+      Order,
+    ]),
     ErrorModule,
     I18nModule.forRoot({
       fallbackLanguage: 'en',
@@ -96,6 +124,7 @@ const rmb_services = [
         subscriptions: {
           'graphql-ws': true,
         },
+        fieldResolverEnhancers: ['interceptors'],
       }),
     }),
     ClientsModule.registerAsync([
@@ -148,10 +177,20 @@ const rmb_services = [
       }),
     }),
   ],
-  controllers: [AppController],
+  controllers: [
+    AppController,
+    UserController,
+    AuthController,
+    ChatController,
+    OrderController,
+  ],
   providers: [
     AppService,
+    UserService,
     UserResolver,
+    AuthService,
+    ChatService,
+    OrderService,
     SocketGateway,
     ConfigService,
     JwtService,

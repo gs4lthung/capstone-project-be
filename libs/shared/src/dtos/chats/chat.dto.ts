@@ -34,6 +34,9 @@ export class ChatDto {
 
   @Field(() => GqlCustomDateTime)
   updatedAt: Date;
+
+  @Field(() => [ChatMemberDto], { nullable: true })
+  members: ChatMemberDto[];
 }
 
 @ObjectType()

@@ -15,6 +15,7 @@ export interface Config {
   auth_service: TcpServiceConfig;
   user_service: TcpServiceConfig;
   order_service: TcpServiceConfig;
+  chat_service: TcpServiceConfig;
   database: {
     host: string;
     port: number;
@@ -145,6 +146,10 @@ export class ConfigService {
       order_service: {
         host: this.nestConfigService.get('ORDER_SERVICE_HOST', 'localhost'),
         port: this.nestConfigService.get('ORDER_SERVICE_PORT', 8389),
+      },
+      chat_service: {
+        host: this.nestConfigService.get('CHAT_SERVICE_HOST', 'localhost'),
+        port: this.nestConfigService.get('CHAT_SERVICE_PORT', 8390),
       },
       database: {
         host: this.nestConfigService.get('DB_HOST', 'localhost'),

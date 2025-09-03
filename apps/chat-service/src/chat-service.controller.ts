@@ -7,19 +7,20 @@ import {
 import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
 import { ChatServiceService } from './chat-service.service';
 import { Chat } from '@app/database/entities/chat.entity';
+import { ChatMsgPattern } from '@app/shared/msg_patterns/chat.msg_pattern';
 
 @Controller()
 export class ChatServiceController {
   constructor(private readonly chatServiceService: ChatServiceService) {}
 
-  @MessagePattern({ cmd: 'create_personal_chat' })
+  @MessagePattern({ cmd: ChatMsgPattern.CREATE_PERSONAL_CHAT })
   async createPersonalChat(
     @Payload() data: CreatePersonalChatDto,
   ): Promise<CustomApiResponse<void>> {
     return this.chatServiceService.createPersonalChat(data);
   }
 
-  @MessagePattern({ cmd: 'send_message' })
+  @MessagePattern({ cmd: ChatMsgPattern.SEND_MESSAGE })
   async sendMessage({
     userId,
     data,
@@ -35,7 +36,7 @@ export class ChatServiceController {
     return this.chatServiceService.sendMessage(userId, data, files);
   }
 
-  @MessagePattern({ cmd: 'find_user_chats' })
+  @MessagePattern({ cmd: ChatMsgPattern.FIND_USER_CHATS })
   async findByUser(data: { userId: number }): Promise<Chat[]> {
     return this.chatServiceService.findByUser(data.userId);
   }

@@ -26,7 +26,7 @@ export class Chat {
   name: string;
 
   @ManyToOne(() => User, (user) => user.id, { eager: true })
-  @JoinColumn({ name: 'created_by' })
+  @JoinColumn({ name: 'createdBy' })
   createdBy: User;
 
   @CreateDateColumn()

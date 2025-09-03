@@ -28,6 +28,6 @@ async function bootstrap() {
 
   await app.startAllMicroservices();
 
-  logger.verbose(`User Service is running on ${host}:${port}`);
+  logger.verbose(`${UserServiceModule.name} is running on ${host}:${port}`);
 }
 bootstrap();

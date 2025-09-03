@@ -6,29 +6,30 @@ import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
 import { CreateUserDto } from '@app/shared/dtos/users/create-user.dto';
 import { PaginatedResource } from '@app/shared/graphql/paginated-resource';
 import { FindOptions } from '@app/shared/interfaces/find-options.interface';
+import { UserMsgPattern } from '@app/shared/msg_patterns/user.msg_pattern';
 
 @Controller()
 export class UserServiceController {
   constructor(private readonly userServiceService: UserServiceService) {}
 
-  @MessagePattern({ cmd: 'find_all_users' })
+  @MessagePattern({ cmd: UserMsgPattern.FIND_ALL_USERS })
   async findAll(
     findOptions: FindOptions,
   ): Promise<PaginatedResource<Partial<User>>> {
     return this.userServiceService.findAll(findOptions);
   }
 
-  @MessagePattern({ cmd: 'find_user_by_id' })
+  @MessagePattern({ cmd: UserMsgPattern.FIND_USER_BY_ID })
   async findOne(id: number): Promise<User> {
     return this.userServiceService.findOne(id);
   }
 
-  @MessagePattern({ cmd: 'create_user' })
-  async createUser(data: CreateUserDto): Promise<CustomApiResponse<void>> {
-    return this.userServiceService.createUser(data);
+  @MessagePattern({ cmd: UserMsgPattern.CREATE_USER })
+  async create(data: CreateUserDto): Promise<CustomApiResponse<void>> {
+    return this.userServiceService.create(data);
   }
 
-  @MessagePattern({ cmd: 'update_my_avatar' })
+  @MessagePattern({ cmd: UserMsgPattern.UPDATE_MY_AVATAR })
   async updateMyAvatar({
     id,
     file,
@@ -39,18 +40,18 @@ export class UserServiceController {
     return this.userServiceService.updateMyAvatar(id, file);
   }
 
-  @MessagePattern({ cmd: 'soft_delete_user' })
-  async softDeleteUser(id: number): Promise<CustomApiResponse<void>> {
-    return this.userServiceService.softDeleteUser(id);
+  @MessagePattern({ cmd: UserMsgPattern.SOFT_DELETE_USER })
+  async softDelete(id: number): Promise<CustomApiResponse<void>> {
+    return this.userServiceService.softDelete(id);
   }
 
-  @MessagePattern({ cmd: 'delete_user' })
-  async deleteUser(id: number): Promise<CustomApiResponse<void>> {
-    return this.userServiceService.deleteUser(id);
+  @MessagePattern({ cmd: UserMsgPattern.DELETE_USER })
+  async delete(id: number): Promise<CustomApiResponse<void>> {
+    return this.userServiceService.delete(id);
   }
 
-  @MessagePattern({ cmd: 'restore_user' })
-  async restoreUser(id: number): Promise<CustomApiResponse<void>> {
-    return this.userServiceService.restoreUser(id);
+  @MessagePattern({ cmd: UserMsgPattern.RESTORE_USER })
+  async restore(id: number): Promise<CustomApiResponse<void>> {
+    return this.userServiceService.restore(id);
   }
 }
