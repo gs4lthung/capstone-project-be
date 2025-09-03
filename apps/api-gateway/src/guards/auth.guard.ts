@@ -85,6 +85,11 @@ export class AuthGuard implements CanActivate {
       }
 
       request.user = { id: payload.id };
+
+      if (contextType === ProtocolEnum.WS) {
+        const client = context.switchToWs().getClient();
+        client.userId = payload.id;
+      }
     } catch (error) {
       if (error instanceof TokenExpiredError)
         throw new CustomRpcException(

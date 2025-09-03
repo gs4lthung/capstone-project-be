@@ -4,18 +4,16 @@ import { MessagePattern } from '@nestjs/microservices';
 import { User } from '@app/database/entities/user.entity';
 import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
 import { CreateUserDto } from '@app/shared/dtos/users/create-user.dto';
-import { PaginatedResource } from '@app/shared/graphql/paginated-resource';
 import { FindOptions } from '@app/shared/interfaces/find-options.interface';
 import { UserMsgPattern } from '@app/shared/msg_patterns/user.msg_pattern';
+import { PaginatedUser } from '@app/shared/dtos/users/user.dto';
 
 @Controller()
 export class UserServiceController {
   constructor(private readonly userServiceService: UserServiceService) {}
 
   @MessagePattern({ cmd: UserMsgPattern.FIND_ALL_USERS })
-  async findAll(
-    findOptions: FindOptions,
-  ): Promise<PaginatedResource<Partial<User>>> {
+  async findAll(findOptions: FindOptions): Promise<PaginatedUser> {
     return this.userServiceService.findAll(findOptions);
   }
 

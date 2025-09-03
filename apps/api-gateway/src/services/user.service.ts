@@ -1,7 +1,6 @@
 import { User } from '@app/database/entities/user.entity';
 import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
 import { CreateUserDto } from '@app/shared/dtos/users/create-user.dto';
-import { PaginatedResource } from '@app/shared/graphql/paginated-resource';
 import { Inject, Injectable, Scope } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 
@@ -10,6 +9,7 @@ import { REQUEST } from '@nestjs/core';
 import { CustomApiRequest } from '@app/shared/customs/custom-api-request';
 import { lastValueFrom } from 'rxjs';
 import { UserMsgPattern } from '@app/shared/msg_patterns/user.msg_pattern';
+import { PaginatedUser } from '@app/shared/dtos/users/user.dto';
 
 @Injectable({ scope: Scope.REQUEST })
 export class UserService {
@@ -27,17 +27,14 @@ export class UserService {
     return response;
   }
 
-  async findAll(
-    findOptions: FindOptions,
-  ): Promise<PaginatedResource<Partial<User>>> {
+  async findAll(findOptions: FindOptions): Promise<PaginatedUser> {
     const pattern = { cmd: UserMsgPattern.FIND_ALL_USERS };
 
     const response = await lastValueFrom(
-      this.userService.send<PaginatedResource<Partial<User>>>(
-        pattern,
-        findOptions,
-      ),
+      this.userService.send<PaginatedUser>(pattern, findOptions),
     );
+
+    console.log(response);
 
     return response;
   }

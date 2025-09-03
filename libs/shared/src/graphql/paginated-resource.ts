@@ -1,17 +1,20 @@
-import { Field, ObjectType } from '@nestjs/graphql';
-import { GraphQLObjectType } from 'graphql';
+import { Type } from '@nestjs/common';
+import { Field, Int, ObjectType } from '@nestjs/graphql';
 
-@ObjectType()
-export class PaginatedResource<T> {
-  @Field(() => [GraphQLObjectType])
-  items: T[];
+export function PaginatedResource<T>(classRef: Type<T>): any {
+  @ObjectType({ isAbstract: true })
+  abstract class PaginatedType {
+    @Field(() => [classRef])
+    items: T[];
 
-  @Field(() => Number)
-  total: number;
+    @Field(() => Int)
+    total: number;
 
-  @Field(() => Number)
-  page: number;
+    @Field(() => Int)
+    page: number;
 
-  @Field(() => Number)
-  pageSize: number;
+    @Field(() => Int)
+    pageSize: number;
+  }
+  return PaginatedType;
 }

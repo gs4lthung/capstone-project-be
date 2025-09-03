@@ -14,10 +14,10 @@ import { RoleEnum } from '@app/shared/enums/role.enum';
 import { RedisService } from '@app/redis';
 import { FindOptions } from '@app/shared/interfaces/find-options.interface';
 import { getOrder, getWhere } from '@app/shared/helpers/typeorm.helper';
-import { PaginatedResource } from '@app/shared/graphql/paginated-resource';
 import { ClientProxy } from '@nestjs/microservices';
 import { SendNotification } from '@app/shared/interfaces/send-notification.interface';
 import * as fs from 'fs';
+import { PaginatedUser } from '@app/shared/dtos/users/user.dto';
 
 @Injectable()
 export class UserServiceService {
@@ -74,9 +74,7 @@ export class UserServiceService {
     }
   }
 
-  async findAll(
-    findOptions: FindOptions,
-  ): Promise<PaginatedResource<Partial<User>>> {
+  async findAll(findOptions: FindOptions): Promise<PaginatedUser> {
     try {
       let where = {};
       let order = {};
@@ -150,8 +148,8 @@ export class UserServiceService {
         profilePicture: res.url,
       });
 
-      await this.redisService.del(`user:${id}`);
-      await this.redisService.delByPattern('users');
+      await this.redisService.del(`user`);
+      await this.redisService.delByPattern('users*');
 
       this.notificationService.emit<SendNotification>('send_notification', {
         userId: id,

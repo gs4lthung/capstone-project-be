@@ -1,5 +1,5 @@
 import { Controller } from '@nestjs/common';
-import { MessagePattern, Payload } from '@nestjs/microservices';
+import { EventPattern, MessagePattern, Payload } from '@nestjs/microservices';
 import {
   CreatePersonalChatDto,
   SendMessageDto,
@@ -8,6 +8,7 @@ import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
 import { ChatServiceService } from './chat-service.service';
 import { Chat } from '@app/database/entities/chat.entity';
 import { ChatMsgPattern } from '@app/shared/msg_patterns/chat.msg_pattern';
+import { User } from '@app/database/entities/user.entity';
 
 @Controller()
 export class ChatServiceController {
@@ -20,19 +21,22 @@ export class ChatServiceController {
     return this.chatServiceService.createPersonalChat(data);
   }
 
-  @MessagePattern({ cmd: ChatMsgPattern.SEND_MESSAGE })
-  async sendMessage({
-    userId,
-    data,
-    files,
-  }: {
-    userId: number;
-    data: SendMessageDto;
-    files: {
-      chat_image?: Express.Multer.File[];
-      chat_video?: Express.Multer.File[];
-    };
-  }): Promise<CustomApiResponse<void>> {
+  @EventPattern({ cmd: ChatMsgPattern.SEND_MESSAGE })
+  async sendMessage(
+    @Payload()
+    {
+      userId,
+      data,
+      files,
+    }: {
+      userId: number;
+      data: SendMessageDto;
+      files: {
+        chat_image?: Express.Multer.File[];
+        chat_video?: Express.Multer.File[];
+      };
+    },
+  ): Promise<User[]> {
     return this.chatServiceService.sendMessage(userId, data, files);
   }
 

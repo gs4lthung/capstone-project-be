@@ -27,8 +27,9 @@ export const PaginationParams = createParamDecorator(
       case ProtocolEnum.GRAPHQL:
         const gqlCtx = GqlArgumentsHost.create(host);
         request = gqlCtx.getContext().req;
-        page = parseFloat(DtoUtils.getGqlArgs(request.body.query, 'page'));
-        size = parseFloat(DtoUtils.getGqlArgs(request.body.query, 'size'));
+        page = parseFloat(DtoUtils.getGqlArgs(request.body.query, 'page')) || 1;
+        size =
+          parseFloat(DtoUtils.getGqlArgs(request.body.query, 'size')) || 10;
         break;
     }
     if (page < 1 || size < 1)

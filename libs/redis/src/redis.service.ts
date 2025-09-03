@@ -52,8 +52,27 @@ export class RedisService {
     await this.cacheManager.del(key);
   }
 
-  async delByPattern(key: string): Promise<void> {
-    await this.cacheManager.del(`${key}*`);
+  async delByPattern(pattern: string): Promise<void> {
+    let cursor = '0';
+    let keys: string[] = [];
+
+    do {
+      const [nextCursor, resultKeys] = await this.redisClient.scan(
+        cursor,
+        'MATCH',
+        pattern,
+        'COUNT',
+        1000,
+      );
+      cursor = nextCursor;
+      keys = keys.concat(resultKeys);
+    } while (cursor !== '0');
+
+    if (keys.length > 0) {
+      const pipeline = this.redisClient.pipeline();
+      keys.forEach((key) => pipeline.del(key));
+      await pipeline.exec();
+    }
   }
 
   async clear(): Promise<void> {

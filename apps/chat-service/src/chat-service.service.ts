@@ -11,7 +11,7 @@ import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
 import { ExceptionUtils } from '@app/shared/utils/exception.util';
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In, DeepPartial } from 'typeorm';
+import { Repository, In, DeepPartial, Not } from 'typeorm';
 import { Message } from '@app/database/entities/message.entity';
 import { MessageRead } from '@app/database/entities/message-read.entity';
 
@@ -93,7 +93,7 @@ export class ChatServiceService {
       chat_image?: Express.Multer.File[];
       chat_video?: Express.Multer.File[];
     },
-  ) {
+  ): Promise<User[]> {
     try {
       const chat = await this.chatRepository.findOne({
         where: { id: data.chatId },
@@ -145,10 +145,14 @@ export class ChatServiceService {
 
       await this.messageRepository.save(newMessage);
 
-      return new CustomApiResponse<void>(
-        HttpStatus.CREATED,
-        'Message sent successfully',
-      );
+      const anotherMembers = await this.chatMemberRepository.find({
+        where: {
+          chat: { id: data.chatId },
+          user: { id: Not(userId) },
+        },
+      });
+
+      return anotherMembers.map((member) => member.user);
     } catch (error) {
       throw ExceptionUtils.wrapAsRpcException(error);
     }

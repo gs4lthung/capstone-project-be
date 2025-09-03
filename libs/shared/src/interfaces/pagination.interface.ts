@@ -1,5 +1,5 @@
 export interface Pagination {
-  page: number | 1;
-  size: number | 10;
+  page: number;
+  size: number;
   offset: number;
 }

@@ -1,5 +1,6 @@
 import { Logger, OnModuleInit, UseFilters, UseGuards } from '@nestjs/common';
 import {
+  ConnectedSocket,
   MessageBody,
   OnGatewayConnection,
   OnGatewayDisconnect,
@@ -19,6 +20,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Notification } from '@app/database/entities/notification.entity';
 import { Repository } from 'typeorm';
 import { NotificationStatusEnum } from '@app/shared/enums/notification.enum';
+import { SendMessageDto } from '@app/shared/dtos/chats/chat.dto';
+import { ChatService } from '../services/chat.service';
 
 @WebSocketGateway({
   namespace: '/ws',
@@ -34,6 +37,7 @@ export class SocketGateway
     private readonly redisService: RedisService,
     @InjectRepository(Notification)
     private readonly notificationRepository: Repository<Notification>,
+    private readonly chatService: ChatService,
   ) {}
   @WebSocketServer() server: Server;
 
@@ -134,6 +138,29 @@ export class SocketGateway
         status: NotificationStatusEnum.ERROR,
       });
       this.logger.error('Error updating notification status:', error);
+    }
+  }
+
+  @SubscribeMessage('message:send')
+  async handleSendMessage(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: SendMessageDto,
+  ): Promise<void> {
+    try {
+      const userId = (client as any).userId;
+
+      const anotherMembers = await this.chatService.sendMessage(userId, data);
+      for (const member of anotherMembers) {
+        const clientId = await this.redisService.getOnlineUser(member.id);
+        if (clientId) {
+          this.server.to(clientId).emit('message:received', {
+            userId: member.id,
+            data,
+          });
+        }
+      }
+    } catch (error) {
+      this.logger.error('Error sending message:', error);
     }
   }
 }

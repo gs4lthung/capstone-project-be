@@ -10,7 +10,7 @@ import {
   ArrayMinSize,
   IsArray,
   IsEnum,
-  IsString,
+  IsNotEmpty,
 } from 'class-validator';
 import { UserDto } from '../users/user.dto';
 import { GqlCustomDateTime } from '@app/shared/graphql/scalars/gql-custom-datetime.scalar';
@@ -70,23 +70,12 @@ export class CreatePersonalChatDto {
 }
 
 export class SendMessageDto {
-  @ApiProperty({
-    description: 'The message content',
-    example: 'Hello, how are you?',
-  })
-  @IsString({
-    message: 'Message must be a string',
-  })
+  @IsNotEmpty()
   message: string;
 
-  @ApiProperty({
-    description: 'The type of the message',
-    example: ChatMessageType.TEXT,
-  })
-  @IsEnum(ChatMessageType, {
-    message: 'Invalid message type',
-  })
+  @IsEnum(ChatMessageType)
   type: ChatMessageType;
 
+  @IsNotEmpty()
   chatId: number;
 }

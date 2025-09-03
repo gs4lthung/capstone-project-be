@@ -1,28 +1,26 @@
 import { Chat } from '@app/database/entities/chat.entity';
+import { User } from '@app/database/entities/user.entity';
 
-import { CustomApiRequest } from '@app/shared/customs/custom-api-request';
 import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
 import {
   CreatePersonalChatDto,
   SendMessageDto,
 } from '@app/shared/dtos/chats/chat.dto';
 import { ChatMsgPattern } from '@app/shared/msg_patterns/chat.msg_pattern';
-import { Inject, Injectable, Scope } from '@nestjs/common';
-import { REQUEST } from '@nestjs/core';
+import { Inject, Injectable } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { lastValueFrom } from 'rxjs';
 
-@Injectable({ scope: Scope.REQUEST })
+@Injectable()
 export class ChatService {
   constructor(
-    @Inject(REQUEST) private readonly request: CustomApiRequest,
     @Inject('CHAT_SERVICE') private readonly chatService: ClientProxy,
   ) {}
-  async createPersonalChat(data: CreatePersonalChatDto) {
+  async createPersonalChat(userId: number, data: CreatePersonalChatDto) {
     const pattern = { cmd: ChatMsgPattern.CREATE_PERSONAL_CHAT };
     const payload = {
       ...data,
-      createdBy: this.request.user.id,
+      createdBy: userId,
     } as CreatePersonalChatDto;
 
     const response = await lastValueFrom(
@@ -32,21 +30,22 @@ export class ChatService {
   }
 
   async sendMessage(
+    userId: number,
     data: SendMessageDto,
-    files: {
+    files?: {
       chat_image?: Express.Multer.File[];
       chat_video?: Express.Multer.File[];
     },
   ) {
     const pattern = { cmd: ChatMsgPattern.SEND_MESSAGE };
     const payload = {
-      userId: this.request.user.id,
+      userId,
       data,
       files,
     };
 
     const response = await lastValueFrom(
-      this.chatService.send<CustomApiResponse<void>>(pattern, payload),
+      this.chatService.send<User[]>(pattern, payload),
     );
     return response;
   }

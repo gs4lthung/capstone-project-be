@@ -16,12 +16,13 @@ import { FilteringParams } from '@app/shared/decorators/filtering-params.decorat
 import { Filtering } from '@app/shared/interfaces/filtering.interface';
 import { FindOptions } from '@app/shared/interfaces/find-options.interface';
 import { CacheInterceptor } from '../interceptors/cache.interceptor';
-import { UserDto } from '@app/shared/dtos/users/user.dto';
+import { PaginatedUser, UserDto } from '@app/shared/dtos/users/user.dto';
 import { OrderDto } from '@app/shared/dtos/orders/order.dto';
 import { ChatDto } from '@app/shared/dtos/chats/chat.dto';
 import { UserService } from '../services/user.service';
 import { OrderService } from '../services/order.service';
 import { ChatService } from '../services/chat.service';
+import { PaginatedGqlArgs } from '@app/shared/graphql/paginated-gql-args';
 
 @Resolver(() => UserDto)
 @UseInterceptors(CacheInterceptor)
@@ -32,19 +33,22 @@ export class UserResolver {
     private readonly chatService: ChatService,
   ) {}
 
-  @Query(() => [UserDto], { name: 'users' })
+  @Query(() => PaginatedUser, { name: 'users' })
   @UseGuards(AuthGuard)
   async findUsers(
-    @PaginationParams() pagination: Pagination,
+    @Args() args: PaginatedGqlArgs,
+    @PaginationParams()
+    pagination: Pagination,
     @SortingParams() sort: Sorting,
     @FilteringParams() filter: Filtering,
-  ): Promise<UserDto[]> {
+  ): Promise<PaginatedUser> {
     const users = await this.userService.findAll({
       pagination,
       sort,
       filter,
     } as FindOptions);
-    return users.items as UserDto[];
+
+    return users;
   }
 
   @Query(() => UserDto, { name: 'user' })
