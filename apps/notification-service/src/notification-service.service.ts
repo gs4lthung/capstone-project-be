@@ -12,6 +12,7 @@ import { HttpStatus, Injectable } from '@nestjs/common';
 import { RmqContext } from '@nestjs/microservices';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { RoleEnum } from '@app/shared/enums/role.enum';
 
 @Injectable()
 export class NotificationServiceService {
@@ -113,6 +114,22 @@ export class NotificationServiceService {
       });
       channel.noAck(ctx.getMessage(), false, false);
       throw ExceptionUtils.wrapAsRpcException(error);
+    }
+  }
+
+  async sendNotificationToAdmins(
+    { title, body }: SendNotification,
+    ctx: RmqContext,
+  ) {
+    const admins = await this.userRepository.find({
+      where: {
+        role: {
+          name: RoleEnum.ADMIN,
+        },
+      },
+    });
+    for (const admin of admins) {
+      await this.sendNotification({ userId: admin.id, title, body }, ctx);
     }
   }
 }

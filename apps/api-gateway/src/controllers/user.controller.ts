@@ -21,6 +21,7 @@ import { FileSizeLimitEnum } from '@app/shared/enums/file.enum';
 import { UserService } from '../services/user.service';
 import { AuthGuard } from '../guards/auth.guard';
 import { RoleGuard } from '../guards/role.guard';
+import { CreateCoachProfileDto } from '@app/shared/dtos/users/coaches/coach.dto';
 
 @Controller('users')
 export class UserController {
@@ -121,5 +122,24 @@ export class UserController {
   @UseGuards(AuthGuard, RoleGuard)
   async restoreUser(@Param('id') id: number): Promise<CustomApiResponse<void>> {
     return this.userService.restore(id);
+  }
+
+  @Post('me/coach_profile')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiBearerAuth()
+  @ApiOperation({
+    tags: ['Users'],
+    summary: 'Create Coach Profile',
+    description: 'Create a coach profile for the authenticated user',
+  })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: 'Coach profile created successfully',
+  })
+  @UseGuards(AuthGuard)
+  async createCoachProfile(
+    @Body() data: CreateCoachProfileDto,
+  ): Promise<CustomApiResponse<void>> {
+    return this.userService.createCoachProfile(data);
   }
 }

@@ -10,6 +10,7 @@ import {
 import { RegisterFcmTokenDto } from '@app/shared/dtos/notifications/register-fcm-token.dto';
 import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
 import { SendNotification } from '@app/shared/interfaces/send-notification.interface';
+import { NotificationMsgPattern } from '@app/shared/msg_patterns/notification.msg_pattern';
 
 @Controller()
 export class NotificationServiceController {
@@ -17,7 +18,7 @@ export class NotificationServiceController {
     private readonly notificationServiceService: NotificationServiceService,
   ) {}
 
-  @MessagePattern({ cmd: 'register_fcm_token' })
+  @MessagePattern({ cmd: NotificationMsgPattern.REGISTER_FCM_TOKEN })
   async registerFcmToken(
     userId: number,
     @Payload() data: RegisterFcmTokenDto,
@@ -25,7 +26,7 @@ export class NotificationServiceController {
     return this.notificationServiceService.registerFcmToken(userId, data);
   }
 
-  @EventPattern('send_notification')
+  @EventPattern(NotificationMsgPattern.SEND_NOTIFICATION)
   async sendNotification(
     @Payload() data: SendNotification,
     @Ctx() ctx: RmqContext,

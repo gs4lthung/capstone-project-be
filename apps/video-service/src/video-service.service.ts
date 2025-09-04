@@ -41,6 +41,7 @@ export class VideoServiceService {
       console.log('Thumbnail uploaded to Cloudinary:', thumbnailRes);
 
       await this.videoRepository.save({
+        user: { id: userId },
         publicUrl: videoRes.url,
         thumbnailUrl: thumbnailRes.url,
         ...data,

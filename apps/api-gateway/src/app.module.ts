@@ -49,6 +49,9 @@ import { ChatController } from './controllers/chat.controller';
 import { OrderController } from './controllers/order.controller';
 import { OrderService } from './services/order.service';
 import { Order } from '@app/database/entities/order.entity';
+import { CoachProfile } from '@app/database/entities/coach_profile.entity';
+import { CoachCredential } from '@app/database/entities/coach_credential.entity';
+import { Video } from '@app/database/entities/video.entity';
 
 const tcp_services = [
   { name: 'AUTH_SERVICE' },
@@ -94,6 +97,9 @@ const rmb_services = [
       Message,
       MessageRead,
       Order,
+      CoachProfile,
+      CoachCredential,
+      Video,
     ]),
     ErrorModule,
     I18nModule.forRoot({

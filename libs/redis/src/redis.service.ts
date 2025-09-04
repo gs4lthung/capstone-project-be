@@ -49,7 +49,7 @@ export class RedisService {
   }
 
   async del(key: string): Promise<void> {
-    await this.cacheManager.del(key);
+    await this.redisClient.del(key);
   }
 
   async delByPattern(pattern: string): Promise<void> {

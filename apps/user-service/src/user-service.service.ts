@@ -18,6 +18,8 @@ import { ClientProxy } from '@nestjs/microservices';
 import { SendNotification } from '@app/shared/interfaces/send-notification.interface';
 import * as fs from 'fs';
 import { PaginatedUser } from '@app/shared/dtos/users/user.dto';
+import { CreateCoachProfileDto } from '@app/shared/dtos/users/coaches/coach.dto';
+import { NotificationMsgPattern } from '@app/shared/msg_patterns/notification.msg_pattern';
 
 @Injectable()
 export class UserServiceService {
@@ -148,7 +150,7 @@ export class UserServiceService {
         profilePicture: res.url,
       });
 
-      await this.redisService.del(`user`);
+      await this.redisService.del(`user:${id}:`);
       await this.redisService.delByPattern('users*');
 
       this.notificationService.emit<SendNotification>('send_notification', {
@@ -230,6 +232,52 @@ export class UserServiceService {
       return new CustomApiResponse<void>(
         HttpStatus.OK,
         'USER.RESTORE_USER_SUCCESS',
+      );
+    } catch (error) {
+      throw ExceptionUtils.wrapAsRpcException(error);
+    }
+  }
+
+  async createCoachProfile(
+    userId: number,
+    data: CreateCoachProfileDto,
+  ): Promise<CustomApiResponse<void>> {
+    try {
+      const user = await this.userRepository.findOne({
+        where: { id: userId },
+        withDeleted: false,
+      });
+      if (!user)
+        throw new CustomRpcException('NOT_FOUND', HttpStatus.NOT_FOUND);
+
+      if (user.coachProfile)
+        throw new CustomRpcException(
+          'COACH_PROFILE_ALREADY_EXISTS',
+          HttpStatus.CONFLICT,
+        );
+
+      await this.userRepository.save({
+        ...user,
+        coachProfile: {
+          ...data,
+        },
+      });
+
+      await this.redisService.del(`user:${userId}`);
+      await this.redisService.delByPattern('users*');
+
+      this.notificationService.emit<SendNotification>(
+        NotificationMsgPattern.SEND_NOTIFICATION,
+        {
+          userId: userId,
+          title: 'Coach Profile Created',
+          body: 'Your coach profile has been created successfully.',
+        },
+      );
+
+      return new CustomApiResponse<void>(
+        HttpStatus.CREATED,
+        'COACH_PROFILE_CREATE_SUCCESS',
       );
     } catch (error) {
       throw ExceptionUtils.wrapAsRpcException(error);

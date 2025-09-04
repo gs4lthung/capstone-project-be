@@ -6,6 +6,7 @@ import {
   JoinColumn,
   ManyToOne,
   OneToMany,
+  OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
@@ -17,6 +18,8 @@ import { Notification } from './notification.entity';
 import { Order } from './order.entity';
 import { ChatMember } from './chat-members.entity';
 import { Message } from './message.entity';
+import { Video } from './video.entity';
+import { CoachProfile } from './coach_profile.entity';
 
 @Entity('users')
 export class User {
@@ -85,4 +88,13 @@ export class User {
 
   @OneToMany(() => Message, (message) => message.sender)
   messages: Message[];
+
+  @OneToMany(() => Video, (video) => video.user)
+  videos: Video[];
+
+  @OneToOne(() => CoachProfile, (coachProfile) => coachProfile.user, {
+    cascade: true,
+    eager: true,
+  })
+  coachProfile: CoachProfile;
 }

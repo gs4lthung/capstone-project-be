@@ -48,6 +48,8 @@ export class UserResolver {
       filter,
     } as FindOptions);
 
+    console.log(users);
+
     return users;
   }
 

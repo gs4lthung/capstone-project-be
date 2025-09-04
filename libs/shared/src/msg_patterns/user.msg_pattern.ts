@@ -6,4 +6,5 @@ export enum UserMsgPattern {
   SOFT_DELETE_USER = 'soft_delete_user',
   DELETE_USER = 'delete_user',
   RESTORE_USER = 'restore_user',
+  CREATE_COACH_PROFILE = 'create_coach_profile',
 }

@@ -12,6 +12,9 @@ import { Chat } from './entities/chat.entity';
 import { ChatMember } from './entities/chat-members.entity';
 import { Message } from './entities/message.entity';
 import { MessageRead } from './entities/message-read.entity';
+import { Video } from './entities/video.entity';
+import { CoachProfile } from './entities/coach_profile.entity';
+import { CoachCredential } from './entities/coach_credential.entity';
 
 @Module({
   imports: [
@@ -37,6 +40,9 @@ import { MessageRead } from './entities/message-read.entity';
           ChatMember,
           Message,
           MessageRead,
+          Video,
+          CoachProfile,
+          CoachCredential,
         ],
         logging: false,
         synchronize: configService.get('node_env') === 'dev',

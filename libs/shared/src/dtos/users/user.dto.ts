@@ -3,6 +3,7 @@ import { Field, ObjectType } from '@nestjs/graphql';
 import { RoleDto } from '../roles/role.dto';
 import { FcmTokenDto } from '../fcm_tokens/fcm-token.dto';
 import { PaginatedResource } from '@app/shared/graphql/paginated-resource';
+import { CoachProfileDto } from './coaches/coach.dto';
 
 @ObjectType()
 export class UserDto {
@@ -35,6 +36,9 @@ export class UserDto {
 
   @Field(() => [FcmTokenDto], { nullable: true })
   fcmTokens: FcmTokenDto[];
+
+  @Field(() => CoachProfileDto, { nullable: true })
+  coachProfile?: CoachProfileDto;
 }
 
 @ObjectType()

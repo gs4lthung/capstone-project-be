@@ -4,9 +4,12 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  JoinColumn,
+  ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { User } from './user.entity';
 
 @Entity('videos')
 export class Video {
@@ -19,7 +22,7 @@ export class Video {
   @Column({ type: 'varchar', length: 255 })
   description: string;
 
-  @Column({ type: 'array', default: [] })
+  @Column('text', { array: true })
   tags: string[];
 
   @Column({
@@ -43,4 +46,8 @@ export class Video {
 
   @DeleteDateColumn()
   deletedAt: Date;
+
+  @ManyToOne(() => User, (user) => user.videos, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'userId' })
+  user: User;
 }

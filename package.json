@@ -12,7 +12,7 @@
     "migration:generate": "npm run typeorm -- migration:generate -d libs/database/src/data-source.ts",
     "migration:revert": "npm run typeorm -- migration:revert -d libs/database/src/data-source.ts",
     "migration:revert:prod": "node ./node_modules/typeorm/cli.js migration:revert -d dist/libs/database/src/data-source.js",
-    "seed": "ts-node -r tsconfig-paths/register libs/database/src/seeds/seed.ts",
+    "seed": "ts-node -r tsconfig-paths/register",
     "seed:prod": "node dist/libs/database/src/seeds/seed.js",
     "build": "nest build",
     "build:database": "npx tsc -p ./libs/database/tsconfig.lib.json",
