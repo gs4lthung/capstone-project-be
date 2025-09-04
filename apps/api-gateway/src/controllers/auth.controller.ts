@@ -46,16 +46,8 @@ export class AuthController {
   })
   async login(
     @Body() data: LoginRequestDto,
-    @Res({ passthrough: true }) res: Response,
   ): Promise<CustomApiResponse<LoginResponseDto>> {
     const result = await this.authService.login(data);
-
-    res.cookie('refreshToken', result.metadata.refreshToken, {
-      httpOnly: true,
-      secure: true,
-      sameSite: 'strict',
-    });
-    delete result.metadata.refreshToken;
     return result;
   }
 

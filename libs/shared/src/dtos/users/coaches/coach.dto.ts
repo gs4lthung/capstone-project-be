@@ -120,6 +120,8 @@ class CreateCoachProfileCredentialDto {
 }
 
 export class UpdateCoachProfileDto {
+  @IsNotEmpty()
+  id: number;
   bio: string;
   specialties: string;
   basePrice: number;
@@ -131,6 +133,8 @@ export class UpdateCoachProfileDto {
 }
 
 class UpdateCoachProfileCredentialDto {
+  @IsNotEmpty()
+  id: number;
   title: string;
   issuedBy?: string;
   issueDate?: Date;

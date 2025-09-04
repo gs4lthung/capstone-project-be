@@ -18,8 +18,12 @@ import { ClientProxy } from '@nestjs/microservices';
 import { SendNotification } from '@app/shared/interfaces/send-notification.interface';
 import * as fs from 'fs';
 import { PaginatedUser } from '@app/shared/dtos/users/user.dto';
-import { CreateCoachProfileDto } from '@app/shared/dtos/users/coaches/coach.dto';
+import {
+  CreateCoachProfileDto,
+  UpdateCoachProfileDto,
+} from '@app/shared/dtos/users/coaches/coach.dto';
 import { NotificationMsgPattern } from '@app/shared/msg_patterns/notification.msg_pattern';
+import { CoachCredentialStatus } from '@app/shared/enums/coach.enum';
 
 @Injectable()
 export class UserServiceService {
@@ -279,6 +283,67 @@ export class UserServiceService {
         HttpStatus.CREATED,
         'COACH_PROFILE_CREATE_SUCCESS',
       );
+    } catch (error) {
+      throw ExceptionUtils.wrapAsRpcException(error);
+    }
+  }
+
+  async updateCoachProfile(
+    userId: number,
+    data: UpdateCoachProfileDto,
+  ): Promise<CustomApiResponse<void>> {
+    try {
+      const user = await this.userRepository.findOne({
+        where: { id: userId },
+        withDeleted: false,
+      });
+      if (!user)
+        throw new CustomRpcException('NOT_FOUND', HttpStatus.NOT_FOUND);
+
+      if (!user.coachProfile)
+        throw new CustomRpcException(
+          'COACH_PROFILE_NOT_FOUND',
+          HttpStatus.NOT_FOUND,
+        );
+
+      let updatedCredentials = [];
+      let nonUpdateCredentials = [];
+      if (data.credentials) {
+        if (
+          user.coachProfile.credentials &&
+          user.coachProfile.credentials.length > 0
+        ) {
+          const existingCredentials = user.coachProfile.credentials;
+          updatedCredentials = data.credentials.map((cred) => {
+            const existingCred = existingCredentials.find(
+              (c) =>
+                c.id === cred.id && c.status === CoachCredentialStatus.PENDING,
+            );
+            return existingCred ? { ...existingCred, ...cred } : cred;
+          });
+          nonUpdateCredentials = data.credentials.map((cred) => {
+            const existingCred = existingCredentials.find(
+              (c) =>
+                c.id === cred.id && c.status !== CoachCredentialStatus.PENDING,
+            );
+            return existingCred;
+          });
+
+          if (nonUpdateCredentials.length > 0) {
+            throw new CustomRpcException(
+              'CREDENTIALS_UNDER_REVIEW',
+              HttpStatus.BAD_REQUEST,
+            );
+          }
+        } else {
+          updatedCredentials = data.credentials.map((cred) => cred);
+        }
+
+        updatedCredentials = updatedCredentials.map((cred) => ({
+          ...cred,
+          status: CoachCredentialStatus.PENDING,
+        }));
+      }
     } catch (error) {
       throw ExceptionUtils.wrapAsRpcException(error);
     }
