@@ -118,3 +118,26 @@ class CreateCoachProfileCredentialDto {
   @MaxLength(255)
   credentialUrl?: string;
 }
+
+export class UpdateCoachProfileDto {
+  bio: string;
+  specialties: string;
+  basePrice: number;
+  credentials: UpdateCoachProfileCredentialDto[];
+
+  constructor(partial: Partial<UpdateCoachProfileDto>) {
+    Object.assign(this, partial);
+  }
+}
+
+class UpdateCoachProfileCredentialDto {
+  title: string;
+  issuedBy?: string;
+  issueDate?: Date;
+  expirationDate?: Date;
+  credentialUrl?: string;
+
+  constructor(partial: Partial<UpdateCoachProfileCredentialDto>) {
+    Object.assign(this, partial);
+  }
+}

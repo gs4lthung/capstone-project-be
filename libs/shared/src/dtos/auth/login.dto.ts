@@ -27,7 +27,7 @@ export class LoginResponseDto {
   constructor(
     accessToken: string,
     refreshToken: string,
-    user: Pick<User, 'id' | 'fullName' | 'email'>,
+    user: Pick<User, 'id' | 'fullName' | 'email' | 'role'>,
   ) {
     this.accessToken = accessToken;
     this.refreshToken = refreshToken;
@@ -61,5 +61,5 @@ export class LoginResponseDto {
     required: true,
   })
   @IsNotEmpty({ message: 'User information is required' })
-  user: Pick<User, 'id' | 'fullName' | 'email'>;
+  user: Pick<User, 'id' | 'fullName' | 'email' | 'role'>;
 }
