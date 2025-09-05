@@ -21,11 +21,6 @@ import { FileSizeLimitEnum } from '@app/shared/enums/file.enum';
 import { UserService } from '../services/user.service';
 import { AuthGuard } from '../guards/auth.guard';
 import { RoleGuard } from '../guards/role.guard';
-import {
-  CreateCoachProfileDto,
-  UpdateCoachProfileDto,
-  VerifyCoachProfileDto,
-} from '@app/shared/dtos/users/coaches/coach.dto';
 
 @Controller('users')
 export class UserController {
@@ -126,63 +121,5 @@ export class UserController {
   @UseGuards(AuthGuard, RoleGuard)
   async restoreUser(@Param('id') id: number): Promise<CustomApiResponse<void>> {
     return this.userService.restore(id);
-  }
-
-  @Post('me/coach_profile')
-  @HttpCode(HttpStatus.CREATED)
-  @ApiBearerAuth()
-  @ApiOperation({
-    tags: ['Users'],
-    summary: 'Create Coach Profile',
-    description: 'Create a coach profile for the authenticated user',
-  })
-  @ApiResponse({
-    status: HttpStatus.CREATED,
-    description: 'Coach profile created successfully',
-  })
-  @UseGuards(AuthGuard)
-  async createCoachProfile(
-    @Body() data: CreateCoachProfileDto,
-  ): Promise<CustomApiResponse<void>> {
-    return this.userService.createCoachProfile(data);
-  }
-
-  @Put('me/coach_profile')
-  @HttpCode(HttpStatus.OK)
-  @ApiBearerAuth()
-  @ApiOperation({
-    tags: ['Users'],
-    summary: 'Update Coach Profile',
-    description: 'Update the coach profile of the authenticated user',
-  })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Coach profile updated successfully',
-  })
-  @UseGuards(AuthGuard)
-  async updateCoachProfile(
-    @Body() data: UpdateCoachProfileDto,
-  ): Promise<CustomApiResponse<void>> {
-    return this.userService.updateCoachProfile(data);
-  }
-
-  @Put('coach_profile/verify')
-  @HttpCode(HttpStatus.OK)
-  @ApiBearerAuth()
-  @ApiOperation({
-    tags: ['Users'],
-    summary: 'Verify Coach Profile',
-    description: 'Verify a coach profile by admin',
-  })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Coach profile verified successfully',
-  })
-  @CheckRoles(RoleEnum.ADMIN)
-  @UseGuards(AuthGuard, RoleGuard)
-  async verifyCoachProfile(
-    @Body() data: VerifyCoachProfileDto,
-  ): Promise<CustomApiResponse<void>> {
-    return this.userService.verifyCoachProfile(data);
   }
 }

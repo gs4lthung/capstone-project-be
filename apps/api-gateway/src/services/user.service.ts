@@ -10,11 +10,6 @@ import { CustomApiRequest } from '@app/shared/customs/custom-api-request';
 import { lastValueFrom } from 'rxjs';
 import { UserMsgPattern } from '@app/shared/msg_patterns/user.msg_pattern';
 import { PaginatedUser } from '@app/shared/dtos/users/user.dto';
-import {
-  CreateCoachProfileDto,
-  UpdateCoachProfileDto,
-  VerifyCoachProfileDto,
-} from '@app/shared/dtos/users/coaches/coach.dto';
 
 @Injectable({ scope: Scope.REQUEST })
 export class UserService {
@@ -88,33 +83,6 @@ export class UserService {
     const pattern = { cmd: UserMsgPattern.RESTORE_USER };
     const payload = id;
 
-    const response = await lastValueFrom(
-      this.userService.send<CustomApiResponse<void>>(pattern, payload),
-    );
-    return response;
-  }
-
-  async createCoachProfile(data: CreateCoachProfileDto) {
-    const pattern = { cmd: UserMsgPattern.CREATE_COACH_PROFILE };
-    const payload = { userId: this.request.user.id, data };
-    const response = await lastValueFrom(
-      this.userService.send<CustomApiResponse<void>>(pattern, payload),
-    );
-    return response;
-  }
-
-  async updateCoachProfile(data: UpdateCoachProfileDto) {
-    const pattern = { cmd: UserMsgPattern.UPDATE_COACH_PROFILE };
-    const payload = { userId: this.request.user.id, data };
-    const response = await lastValueFrom(
-      this.userService.send<CustomApiResponse<void>>(pattern, payload),
-    );
-    return response;
-  }
-
-  async verifyCoachProfile(data: VerifyCoachProfileDto) {
-    const pattern = { cmd: UserMsgPattern.VERIFY_COACH_PROFILE };
-    const payload = { adminId: this.request.user.id, data };
     const response = await lastValueFrom(
       this.userService.send<CustomApiResponse<void>>(pattern, payload),
     );

@@ -176,6 +176,15 @@
       "compilerOptions": {
         "tsConfigPath": "apps/video-service/tsconfig.app.json"
       }
+    },
+    "coach-service": {
+      "type": "application",
+      "root": "apps/coach-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/coach-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/coach-service/tsconfig.app.json"
+      }
     }
   }
 }

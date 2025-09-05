@@ -52,12 +52,15 @@ import { Order } from '@app/database/entities/order.entity';
 import { CoachProfile } from '@app/database/entities/coach_profile.entity';
 import { CoachCredential } from '@app/database/entities/coach_credential.entity';
 import { Video } from '@app/database/entities/video.entity';
+import { CoachController } from './controllers/coach.controller';
+import { CoachService } from './services/coach.service';
 
 const tcp_services = [
   { name: 'AUTH_SERVICE' },
   { name: 'USER_SERVICE' },
   { name: 'ORDER_SERVICE' },
   { name: 'CHAT_SERVICE' },
+  { name: 'COACH_SERVICE' },
 ];
 
 const rmb_services = [
@@ -189,11 +192,13 @@ const rmb_services = [
     AuthController,
     ChatController,
     OrderController,
+    CoachController,
   ],
   providers: [
     AppService,
     UserService,
     UserResolver,
+    CoachService,
     AuthService,
     ChatService,
     OrderService,
