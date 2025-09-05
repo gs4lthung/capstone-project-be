@@ -43,10 +43,8 @@ export class CoachProfile {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  
-
   @OneToMany(() => CoachCredential, (credential) => credential.coachProfile, {
-    cascade: true,
+    cascade: ['insert', 'update', 'remove'],
     eager: true,
   })
   credentials: CoachCredential[];

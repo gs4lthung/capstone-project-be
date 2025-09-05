@@ -33,4 +33,12 @@ export class NotificationServiceController {
   ): Promise<void> {
     return this.notificationServiceService.sendNotification(data, ctx);
   }
+
+  @EventPattern(NotificationMsgPattern.SEND_NOTIFICATION_TO_ADMINS)
+  async sendNotificationToAdmins(
+    @Payload() data: SendNotification,
+    @Ctx() ctx: RmqContext,
+  ): Promise<void> {
+    return this.notificationServiceService.sendNotificationToAdmins(data, ctx);
+  }
 }

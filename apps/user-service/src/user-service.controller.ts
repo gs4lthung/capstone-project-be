@@ -7,7 +7,11 @@ import { CreateUserDto } from '@app/shared/dtos/users/create-user.dto';
 import { FindOptions } from '@app/shared/interfaces/find-options.interface';
 import { UserMsgPattern } from '@app/shared/msg_patterns/user.msg_pattern';
 import { PaginatedUser } from '@app/shared/dtos/users/user.dto';
-import { CreateCoachProfileDto } from '@app/shared/dtos/users/coaches/coach.dto';
+import {
+  CreateCoachProfileDto,
+  UpdateCoachProfileDto,
+  VerifyCoachProfileDto,
+} from '@app/shared/dtos/users/coaches/coach.dto';
 
 @Controller()
 export class UserServiceController {
@@ -61,6 +65,28 @@ export class UserServiceController {
   }): Promise<CustomApiResponse<void>> {
     return this.userServiceService.createCoachProfile(
       payload.userId,
+      payload.data,
+    );
+  }
+
+  @MessagePattern({ cmd: UserMsgPattern.UPDATE_COACH_PROFILE })
+  async updateCoachProfile(payload: {
+    userId: number;
+    data: UpdateCoachProfileDto;
+  }): Promise<CustomApiResponse<void>> {
+    return this.userServiceService.updateCoachProfile(
+      payload.userId,
+      payload.data,
+    );
+  }
+
+  @MessagePattern({ cmd: UserMsgPattern.VERIFY_COACH_PROFILE })
+  async verifyCoachProfile(payload: {
+    adminId: number;
+    data: VerifyCoachProfileDto;
+  }): Promise<CustomApiResponse<void>> {
+    return this.userServiceService.verifyCoachProfile(
+      payload.adminId,
       payload.data,
     );
   }

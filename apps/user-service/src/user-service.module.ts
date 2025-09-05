@@ -9,6 +9,8 @@ import { CloudinaryModule } from '@app/cloudinary';
 import { Role } from '@app/database/entities/role.entity';
 import { RedisModule } from '@app/redis';
 import { ClientsModule, Transport } from '@nestjs/microservices';
+import { CoachCredential } from '@app/database/entities/coach_credential.entity';
+import { CoachProfile } from '@app/database/entities/coach_profile.entity';
 
 @Module({
   imports: [
@@ -16,7 +18,7 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
     RedisModule,
     CloudinaryModule,
     DatabaseModule,
-    TypeOrmModule.forFeature([User, Role]),
+    TypeOrmModule.forFeature([User, Role, CoachCredential, CoachProfile]),
     ClientsModule.registerAsync([
       {
         imports: [ConfigModule],

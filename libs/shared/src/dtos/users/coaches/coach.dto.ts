@@ -2,7 +2,13 @@ import { CoachCredentialStatus } from '@app/shared/enums/coach.enum';
 import { GqlCustomDateTime } from '@app/shared/graphql/scalars/gql-custom-datetime.scalar';
 import { Field, ObjectType } from '@nestjs/graphql';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsDate, IsNotEmpty, IsString, MaxLength } from 'class-validator';
+import {
+  IsDate,
+  IsEnum,
+  IsNotEmpty,
+  IsString,
+  MaxLength,
+} from 'class-validator';
 
 @ObjectType()
 export class CoachProfileDto {
@@ -133,7 +139,6 @@ export class UpdateCoachProfileDto {
 }
 
 class UpdateCoachProfileCredentialDto {
-  @IsNotEmpty()
   id: number;
   title: string;
   issuedBy?: string;
@@ -142,6 +147,29 @@ class UpdateCoachProfileCredentialDto {
   credentialUrl?: string;
 
   constructor(partial: Partial<UpdateCoachProfileCredentialDto>) {
+    Object.assign(this, partial);
+  }
+}
+
+export class VerifyCoachProfileDto {
+  @IsNotEmpty()
+  id: number;
+
+  credentials: VerifyCoachProfileCredentialDto[];
+
+  constructor(partial: Partial<VerifyCoachProfileDto>) {
+    Object.assign(this, partial);
+  }
+}
+
+class VerifyCoachProfileCredentialDto {
+  @IsNotEmpty()
+  id: number;
+
+  @IsEnum(CoachCredentialStatus)
+  status: CoachCredentialStatus;
+
+  constructor(partial: Partial<VerifyCoachProfileCredentialDto>) {
     Object.assign(this, partial);
   }
 }

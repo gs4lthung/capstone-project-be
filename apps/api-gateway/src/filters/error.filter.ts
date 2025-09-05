@@ -103,7 +103,11 @@ export class ErrorLoggingFilter implements ExceptionFilter {
     }
 
     // Store not found resource to Redis cache
-    if (statusCode === HttpStatus.NOT_FOUND && stack) {
+    if (
+      statusCode === HttpStatus.NOT_FOUND &&
+      stack &&
+      contextType === ProtocolEnum.GRAPHQL
+    ) {
       const cacheKey = stack.split(':')[0];
       const id = stack.split(':')[1];
 
