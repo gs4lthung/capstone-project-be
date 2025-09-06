@@ -7,11 +7,13 @@ import {
   MoreThan,
   MoreThanOrEqual,
   Not,
+  Repository,
   SelectQueryBuilder,
 } from 'typeorm';
 import { FilterRule } from '../enums/filter-rules.enum';
 import { Sorting } from '../interfaces/sorting.interface';
 import { Filtering } from '../interfaces/filtering.interface';
+import { FindOptions } from '../interfaces/find-options.interface';
 
 export const getOrder = (sort: Sorting) =>
   sort ? { [sort.property]: sort.direction } : {};
@@ -125,4 +127,49 @@ export function applyFilters<T>(
   });
 
   return qb;
+}
+
+export class BaseTypeOrmService<T> {
+  constructor(protected readonly repository: Repository<T>) {}
+
+  async find<R>(
+    findOptions: FindOptions,
+    alias: string,
+    returnType: new (data: any) => R,
+  ): Promise<R> {
+    const filters = Array.isArray(findOptions.filter)
+      ? findOptions.filter
+      : findOptions.filter
+        ? [findOptions.filter]
+        : [];
+
+    const qb: SelectQueryBuilder<T> = this.repository.createQueryBuilder(alias);
+
+    const { relations } = this.repository.metadata;
+    relations
+      .filter((r) => r.isEager)
+      .forEach((r) => {
+        qb.leftJoinAndSelect(`${alias}.${r.propertyName}`, r.propertyName);
+      });
+
+    if (filters.length) {
+      applyFilters(qb, alias, filters);
+    }
+
+    if (findOptions.sort) {
+      qb.orderBy(getOrder(findOptions.sort));
+    }
+
+    qb.skip(findOptions.pagination.offset);
+    qb.take(findOptions.pagination.size);
+
+    const [items, total] = await qb.getManyAndCount();
+
+    return new returnType({
+      items,
+      page: findOptions.pagination.page,
+      pageSize: findOptions.pagination.size,
+      total,
+    });
+  }
 }

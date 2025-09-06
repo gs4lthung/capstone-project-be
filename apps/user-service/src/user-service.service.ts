@@ -13,18 +13,14 @@ import { Role } from '@app/database/entities/role.entity';
 import { RoleEnum } from '@app/shared/enums/role.enum';
 import { RedisService } from '@app/redis';
 import { FindOptions } from '@app/shared/interfaces/find-options.interface';
-import {
-  applyFilters,
-  getOrder,
-  getWhere,
-} from '@app/shared/helpers/typeorm.helper';
+import { BaseTypeOrmService } from '@app/shared/helpers/typeorm.helper';
 import { ClientProxy } from '@nestjs/microservices';
 import { SendNotification } from '@app/shared/interfaces/send-notification.interface';
 import * as fs from 'fs';
 import { PaginatedUser } from '@app/shared/dtos/users/user.dto';
 
 @Injectable()
-export class UserServiceService {
+export class UserServiceService extends BaseTypeOrmService<User> {
   constructor(
     private readonly cloudinaryService: CloudinaryService,
     private readonly configService: ConfigService,
@@ -33,7 +29,9 @@ export class UserServiceService {
     @InjectRepository(Role) private readonly roleRepository: Repository<Role>,
     @Inject('NOTIFICATION_SERVICE')
     private readonly notificationService: ClientProxy,
-  ) {}
+  ) {
+    super(userRepository);
+  }
 
   async create(data: CreateUserDto): Promise<CustomApiResponse<void>> {
     try {
@@ -79,38 +77,7 @@ export class UserServiceService {
   }
 
   async findAll(findOptions: FindOptions): Promise<PaginatedUser> {
-    try {
-      const filters = Array.isArray(findOptions.filter)
-        ? findOptions.filter
-        : findOptions.filter
-          ? [findOptions.filter]
-          : [];
-
-      const qb = this.userRepository.createQueryBuilder('user');
-
-      if (filters.length) {
-        applyFilters(qb, 'user', filters);
-      }
-
-      if (findOptions.sort) {
-        const order = getOrder(findOptions.sort);
-        qb.orderBy(order);
-      }
-
-      qb.skip(findOptions.pagination.offset);
-      qb.take(findOptions.pagination.size);
-
-      const [users, total] = await qb.getManyAndCount();
-
-      return {
-        items: users,
-        page: findOptions.pagination.page,
-        total: total,
-        pageSize: findOptions.pagination.size,
-      };
-    } catch (error) {
-      throw ExceptionUtils.wrapAsRpcException(error);
-    }
+    return super.find(findOptions, 'user', PaginatedUser);
   }
 
   async findOne(id: number): Promise<User> {

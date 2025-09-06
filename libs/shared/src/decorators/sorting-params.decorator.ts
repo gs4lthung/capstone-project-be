@@ -2,7 +2,6 @@ import {
   ArgumentsHost,
   BadRequestException,
   createParamDecorator,
-  InternalServerErrorException,
 } from '@nestjs/common';
 import { Sorting } from '../interfaces/sorting.interface';
 import { CustomApiRequest } from '../customs/custom-api-request';
@@ -12,7 +11,7 @@ import { GqlArgumentsHost } from '@nestjs/graphql';
 import { DtoUtils } from '../utils/dto.util';
 
 export const SortingParams = createParamDecorator(
-  (data, host: ArgumentsHost): Sorting => {
+  (data, host: ArgumentsHost): Sorting | null => {
     const contextType = ContextUtils.getRequestContextType(host.getType());
     let request: CustomApiRequest;
 
@@ -22,8 +21,9 @@ export const SortingParams = createParamDecorator(
       case ProtocolEnum.HTTP:
         const ctx = host.switchToHttp();
         request = ctx.getRequest<CustomApiRequest>();
-        sort = request.query.sort;
+        sort = request.query.sort as string;
         break;
+
       case ProtocolEnum.GRAPHQL:
         const gqlCtx = GqlArgumentsHost.create(host);
         request = gqlCtx.getContext().req;
@@ -33,18 +33,20 @@ export const SortingParams = createParamDecorator(
 
     if (!sort) return null;
 
-    if (typeof data != 'object')
-      throw new InternalServerErrorException('Invalid sort params');
+    // allow nested properties like role.name_asc or coachProfile.fullName_desc
+    const sortPattern = /^([a-zA-Z0-9_.]+)_(asc|desc)$/i;
+    const match = sort.match(sortPattern);
 
-    const sortPattern = /^([a-zA-Z0-9]+):(asc|desc)$/;
-    if (!sort.match(sortPattern))
-      throw new BadRequestException('Invalid sort params');
-
-    const [property, direction] = sort.split(':');
-    if (!data.includes(property)) {
-      throw new BadRequestException('Invalid sort property');
+    if (!match) {
+      throw new BadRequestException(`Invalid sort parameter: ${sort}`);
     }
 
-    return { property, direction: direction.toUpperCase() as 'ASC' | 'DESC' };
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const [_, property, direction] = match;
+
+    return {
+      property,
+      direction: direction.toUpperCase() as 'ASC' | 'DESC',
+    };
   },
 );

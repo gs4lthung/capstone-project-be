@@ -15,6 +15,10 @@ export function PaginatedResource<T>(classRef: Type<T>): any {
 
     @Field(() => Int)
     pageSize: number;
+
+    constructor(partial?: Partial<PaginatedType>) {
+      if (partial) Object.assign(this, partial);
+    }
   }
   return PaginatedType;
 }
