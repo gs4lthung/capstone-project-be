@@ -4,6 +4,6 @@ import { Sorting } from './sorting.interface';
 
 export interface FindOptions {
   pagination?: Pagination;
-  sorting?: Sorting;
-  filtering?: Filtering;
+  sort?: Sorting;
+  filter?: Filtering;
 }

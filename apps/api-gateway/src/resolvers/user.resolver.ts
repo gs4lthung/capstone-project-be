@@ -47,9 +47,6 @@ export class UserResolver {
       sort,
       filter,
     } as FindOptions);
-
-    console.log(users);
-
     return users;
   }
 

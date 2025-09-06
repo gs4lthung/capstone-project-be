@@ -11,3 +11,10 @@ export enum CoachCredentialStatus {
   EXPIRED = 'EXPIRED',
   REVOKED = 'REVOKED',
 }
+
+export enum CoachPackageStatus {
+  DRAFT = 'DRAFT',
+  ACTIVE = 'ACTIVE',
+  INACTIVE = 'INACTIVE',
+  ARCHIVED = 'ARCHIVED',
+}

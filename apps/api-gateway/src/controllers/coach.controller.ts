@@ -10,6 +10,7 @@ import {
 import { CoachService } from '../services/coach.service';
 import { ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import {
+  CreateCoachPackageDto,
   CreateCoachProfileDto,
   UpdateCoachProfileDto,
   VerifyCoachProfileDto,
@@ -23,7 +24,7 @@ import { AuthGuard } from '../guards/auth.guard';
 @Controller('coaches')
 export class CoachController {
   constructor(private readonly coachService: CoachService) {}
-  @Post('profile/me')
+  @Post('profiles')
   @HttpCode(HttpStatus.CREATED)
   @ApiBearerAuth()
   @ApiOperation({
@@ -42,7 +43,7 @@ export class CoachController {
     return this.coachService.createCoachProfile(data);
   }
 
-  @Put('profile/me')
+  @Put('profiles')
   @HttpCode(HttpStatus.OK)
   @ApiBearerAuth()
   @ApiOperation({
@@ -61,7 +62,7 @@ export class CoachController {
     return this.coachService.updateCoachProfile(data);
   }
 
-  @Put('profile/verify')
+  @Put('profiles/verify')
   @HttpCode(HttpStatus.OK)
   @ApiBearerAuth()
   @ApiOperation({
@@ -79,5 +80,24 @@ export class CoachController {
     @Body() data: VerifyCoachProfileDto,
   ): Promise<CustomApiResponse<void>> {
     return this.coachService.verifyCoachProfile(data);
+  }
+
+  @Post('packages')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiBearerAuth()
+  @ApiOperation({
+    tags: ['Users'],
+    summary: 'Create Coach Package',
+    description: 'Create a coach package for the authenticated user',
+  })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: 'Coach package created successfully',
+  })
+  @UseGuards(AuthGuard)
+  async createCoachPackage(
+    @Body() data: CreateCoachPackageDto,
+  ): Promise<CustomApiResponse<void>> {
+    return this.coachService.createCoachPackage(data);
   }
 }

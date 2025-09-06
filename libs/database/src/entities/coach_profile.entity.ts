@@ -11,6 +11,7 @@ import {
 import { User } from './user.entity';
 import { CoachVerificationStatus } from '@app/shared/enums/coach.enum';
 import { CoachCredential } from './coach_credential.entity';
+import { CoachPackage } from './coach_packages';
 
 @Entity('coach_profiles')
 export class CoachProfile {
@@ -48,4 +49,9 @@ export class CoachProfile {
     eager: true,
   })
   credentials: CoachCredential[];
+
+  @OneToMany(() => CoachPackage, (pack) => pack.coachProfile, {
+    eager: true,
+  })
+  packages: CoachPackage[];
 }

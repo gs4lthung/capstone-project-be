@@ -1,26 +1,50 @@
 import { ConfigService } from '@app/config';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Inject, Injectable } from '@nestjs/common';
-import { Cache } from 'cache-manager';
-import Redis from 'ioredis';
+import {
+  Injectable,
+  Logger,
+  OnModuleDestroy,
+  OnModuleInit,
+} from '@nestjs/common';
+import Redis, { RedisOptions } from 'ioredis';
 
 @Injectable()
-export class RedisService {
+export class RedisService implements OnModuleInit, OnModuleDestroy {
+  logger = new Logger('Redis Service');
+
   private readonly redisClient: Redis;
   private readonly subClient: Redis;
-  constructor(
-    private readonly configService: ConfigService,
-    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
-  ) {
+  constructor(private readonly configService: ConfigService) {
     const redisConfig = {
       host: this.configService.get('redis').host,
       port: this.configService.get('redis').port,
       username: this.configService.get('redis').username,
       password: this.configService.get('redis').password,
       keepAlive: 30000,
-    };
+      connectTimeout: 10000,
+      lazyConnect: true,
+      retryStrategy: (times: number) => Math.min(times * 50, 2000),
+    } as RedisOptions;
     this.redisClient = new Redis(redisConfig);
     this.subClient = new Redis(redisConfig);
+  }
+
+  onModuleInit() {
+    this.redisClient.on('connect', () => {
+      this.logger.verbose('Redis client connected');
+    });
+    this.redisClient.on('error', (error) => {
+      this.logger.error('Redis connection error:', error);
+    });
+    this.subClient.on('connect', () => {
+      this.logger.verbose('Redis subscriber client connected');
+    });
+    this.subClient.on('error', (error) => {
+      this.logger.error('Redis subscriber connection error:', error);
+    });
+  }
+
+  onModuleDestroy() {
+    this.logger.verbose('Redis client disconnected');
   }
 
   async get(key: string): Promise<any | null> {
@@ -76,7 +100,7 @@ export class RedisService {
   }
 
   async clear(): Promise<void> {
-    await this.cacheManager.clear();
+    await this.redisClient.flushall();
   }
 
   async setOnlineUser(userId: number, socketId: string, ttl: number) {

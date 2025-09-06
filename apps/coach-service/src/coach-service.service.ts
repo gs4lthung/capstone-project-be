@@ -1,11 +1,12 @@
 import { CoachCredential } from '@app/database/entities/coach_credential.entity';
+import { CoachPackage } from '@app/database/entities/coach_packages';
 import { CoachProfile } from '@app/database/entities/coach_profile.entity';
-import { Role } from '@app/database/entities/role.entity';
 import { User } from '@app/database/entities/user.entity';
 import { RedisService } from '@app/redis';
 import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
 import { CustomRpcException } from '@app/shared/customs/custom-rpc-exception';
 import {
+  CreateCoachPackageDto,
   CreateCoachProfileDto,
   UpdateCoachProfileDto,
   VerifyCoachProfileDto,
@@ -32,7 +33,8 @@ export class CoachServiceService {
     private readonly coachCredentialRepository: Repository<CoachCredential>,
     @InjectRepository(CoachProfile)
     private readonly coachProfileRepository: Repository<CoachProfile>,
-    @InjectRepository(Role) private readonly roleRepository: Repository<Role>,
+    @InjectRepository(CoachPackage)
+    private readonly coachPackageRepository: Repository<CoachPackage>,
     @Inject('NOTIFICATION_SERVICE')
     private readonly notificationService: ClientProxy,
   ) {}
@@ -234,6 +236,41 @@ export class CoachServiceService {
       return new CustomApiResponse<void>(
         HttpStatus.OK,
         'COACH_PROFILE_VERIFICATION_SUCCESS',
+      );
+    } catch (error) {
+      throw ExceptionUtils.wrapAsRpcException(error);
+    }
+  }
+
+  async createCoachPackage(
+    userId: number,
+    data: CreateCoachPackageDto,
+  ): Promise<CustomApiResponse<void>> {
+    try {
+      const user = await this.userRepository.findOne({
+        where: { id: userId },
+        withDeleted: false,
+      });
+      if (!user)
+        throw new CustomRpcException('NOT_FOUND', HttpStatus.NOT_FOUND);
+
+      if (!user.coachProfile)
+        throw new CustomRpcException(
+          'COACH_PROFILE_NOT_FOUND',
+          HttpStatus.NOT_FOUND,
+        );
+
+      await this.coachPackageRepository.save({
+        ...data,
+        coachProfile: user.coachProfile,
+      });
+
+      await this.redisService.del(`user:${userId}`);
+      await this.redisService.delByPattern('users*');
+
+      return new CustomApiResponse<void>(
+        HttpStatus.CREATED,
+        'COACH_PACKAGE_CREATE_SUCCESS',
       );
     } catch (error) {
       throw ExceptionUtils.wrapAsRpcException(error);

@@ -13,7 +13,11 @@ import { Role } from '@app/database/entities/role.entity';
 import { RoleEnum } from '@app/shared/enums/role.enum';
 import { RedisService } from '@app/redis';
 import { FindOptions } from '@app/shared/interfaces/find-options.interface';
-import { getOrder, getWhere } from '@app/shared/helpers/typeorm.helper';
+import {
+  applyFilters,
+  getOrder,
+  getWhere,
+} from '@app/shared/helpers/typeorm.helper';
 import { ClientProxy } from '@nestjs/microservices';
 import { SendNotification } from '@app/shared/interfaces/send-notification.interface';
 import * as fs from 'fs';
@@ -76,19 +80,27 @@ export class UserServiceService {
 
   async findAll(findOptions: FindOptions): Promise<PaginatedUser> {
     try {
-      let where = {};
-      let order = {};
+      const filters = Array.isArray(findOptions.filter)
+        ? findOptions.filter
+        : findOptions.filter
+          ? [findOptions.filter]
+          : [];
 
-      if (findOptions.filtering) where = getWhere(findOptions.filtering);
-      if (findOptions.sorting) order = getOrder(findOptions.sorting);
+      const qb = this.userRepository.createQueryBuilder('user');
 
-      const [users, total] = await this.userRepository.findAndCount({
-        where: where,
-        order: order,
-        take: findOptions.pagination.size,
-        skip: findOptions.pagination.offset,
-        withDeleted: false,
-      });
+      if (filters.length) {
+        applyFilters(qb, 'user', filters);
+      }
+
+      if (findOptions.sort) {
+        const order = getOrder(findOptions.sort);
+        qb.orderBy(order);
+      }
+
+      qb.skip(findOptions.pagination.offset);
+      qb.take(findOptions.pagination.size);
+
+      const [users, total] = await qb.getManyAndCount();
 
       return {
         items: users,

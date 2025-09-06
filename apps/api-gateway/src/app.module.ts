@@ -54,6 +54,7 @@ import { CoachCredential } from '@app/database/entities/coach_credential.entity'
 import { Video } from '@app/database/entities/video.entity';
 import { CoachController } from './controllers/coach.controller';
 import { CoachService } from './services/coach.service';
+import { AmqpConnectionManagerSocketOptions } from '@nestjs/microservices/external/rmq-url.interface';
 
 const tcp_services = [
   { name: 'AUTH_SERVICE' },
@@ -139,7 +140,8 @@ const rmb_services = [
     ClientsModule.registerAsync([
       ...tcp_services.map(
         ({ name }) =>
-          ({
+          (console.log(`Setting up TCP client for ${name}`),
+          {
             imports: [ConfigModule],
             inject: [ConfigService],
             name: name,
@@ -154,7 +156,8 @@ const rmb_services = [
       ),
       ...rmb_services.map(
         ({ name, queue }) =>
-          ({
+          (console.log(`Setting up RMQ client for ${name} on ${queue}`),
+          {
             imports: [ConfigModule],
             inject: [ConfigService],
             name: name,
@@ -168,6 +171,10 @@ const rmb_services = [
                 queueOptions: {
                   durable: true,
                 },
+                socketOptions: {
+                  reconnectTimeInSeconds: 5,
+                  heartbeatIntervalInSeconds: 5,
+                } as AmqpConnectionManagerSocketOptions,
               },
             }),
           }) as ClientsProviderAsyncOptions,

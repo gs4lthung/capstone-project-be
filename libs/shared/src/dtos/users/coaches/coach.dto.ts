@@ -35,6 +35,9 @@ export class CoachProfileDto {
 
   @Field(() => [CoachCredentialDto], { nullable: true })
   credentials?: CoachCredentialDto[];
+
+  @Field(() => [CoachPackageDto], { nullable: true })
+  packages?: CoachPackageDto[];
 }
 
 @ObjectType()
@@ -56,6 +59,35 @@ export class CoachCredentialDto {
 
   @Field(() => String)
   status: CoachCredentialStatus;
+
+  @Field(() => GqlCustomDateTime)
+  updatedAt: Date;
+}
+@ObjectType()
+export class CoachPackageDto {
+  @Field(() => Number)
+  id: number;
+
+  @Field(() => String)
+  title: string;
+
+  @Field(() => String, { nullable: true })
+  description?: string;
+
+  @Field(() => Number)
+  totalSessions: number;
+
+  @Field(() => Number)
+  sessionDurationMin: number;
+
+  @Field(() => Number)
+  price: number;
+
+  @Field(() => String)
+  status: string;
+
+  @Field(() => GqlCustomDateTime)
+  createdAt: Date;
 
   @Field(() => GqlCustomDateTime)
   updatedAt: Date;
@@ -170,6 +202,28 @@ class VerifyCoachProfileCredentialDto {
   status: CoachCredentialStatus;
 
   constructor(partial: Partial<VerifyCoachProfileCredentialDto>) {
+    Object.assign(this, partial);
+  }
+}
+
+export class CreateCoachPackageDto {
+  @IsNotEmpty()
+  @IsString()
+  title: string;
+
+  @IsString()
+  description?: string;
+
+  @IsNotEmpty()
+  totalSessions: number;
+
+  @IsNotEmpty()
+  sessionDurationMin: number;
+
+  @IsNotEmpty()
+  price: number;
+
+  constructor(partial: Partial<CreateCoachPackageDto>) {
     Object.assign(this, partial);
   }
 }

@@ -6,17 +6,23 @@ import { RedisModule } from '@app/redis';
 import { DatabaseModule } from '@app/database';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from '@app/database/entities/user.entity';
-import { Role } from '@app/database/entities/role.entity';
 import { CoachProfile } from '@app/database/entities/coach_profile.entity';
 import { CoachCredential } from '@app/database/entities/coach_credential.entity';
 import { ClientsModule, Transport } from '@nestjs/microservices';
+import { CoachPackage } from '@app/database/entities/coach_packages';
+import { AmqpConnectionManagerSocketOptions } from '@nestjs/microservices/external/rmq-url.interface';
 
 @Module({
   imports: [
     ConfigModule,
     RedisModule,
     DatabaseModule,
-    TypeOrmModule.forFeature([User, Role, CoachCredential, CoachProfile]),
+    TypeOrmModule.forFeature([
+      User,
+      CoachCredential,
+      CoachProfile,
+      CoachPackage,
+    ]),
     ClientsModule.registerAsync([
       {
         imports: [ConfigModule],
@@ -33,6 +39,10 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
               durable: configService.get('rabbitmq').durable,
               autoDelete: configService.get('rabbitmq').autoDelete,
             },
+            socketOptions: {
+              reconnectTimeInSeconds: 5,
+              heartbeatIntervalInSeconds: 5,
+            } as AmqpConnectionManagerSocketOptions,
           },
         }),
       },

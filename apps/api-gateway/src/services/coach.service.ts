@@ -1,6 +1,7 @@
 import { CustomApiRequest } from '@app/shared/customs/custom-api-request';
 import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
 import {
+  CreateCoachPackageDto,
   CreateCoachProfileDto,
   UpdateCoachProfileDto,
   VerifyCoachProfileDto,
@@ -39,6 +40,15 @@ export class CoachService {
   async verifyCoachProfile(data: VerifyCoachProfileDto) {
     const pattern = { cmd: CoachMsgPattern.VERIFY_COACH_PROFILE };
     const payload = { adminId: this.request.user.id, data };
+    const response = await lastValueFrom(
+      this.coachService.send<CustomApiResponse<void>>(pattern, payload),
+    );
+    return response;
+  }
+
+  async createCoachPackage(data: CreateCoachPackageDto) {
+    const pattern = { cmd: CoachMsgPattern.CREATE_COACH_PACKAGE };
+    const payload = { userId: this.request.user.id, data };
     const response = await lastValueFrom(
       this.coachService.send<CustomApiResponse<void>>(pattern, payload),
     );

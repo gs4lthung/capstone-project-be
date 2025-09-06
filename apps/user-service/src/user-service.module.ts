@@ -9,6 +9,7 @@ import { CloudinaryModule } from '@app/cloudinary';
 import { Role } from '@app/database/entities/role.entity';
 import { RedisModule } from '@app/redis';
 import { ClientsModule, Transport } from '@nestjs/microservices';
+import { AmqpConnectionManagerSocketOptions } from '@nestjs/microservices/external/rmq-url.interface';
 
 @Module({
   imports: [
@@ -33,6 +34,10 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
               durable: configService.get('rabbitmq').durable,
               autoDelete: configService.get('rabbitmq').autoDelete,
             },
+            socketOptions: {
+              reconnectTimeInSeconds: 5,
+              heartbeatIntervalInSeconds: 5,
+            } as AmqpConnectionManagerSocketOptions,
           },
         }),
       },

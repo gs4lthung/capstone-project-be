@@ -2,6 +2,7 @@ import { Controller } from '@nestjs/common';
 import { CoachServiceService } from './coach-service.service';
 import { MessagePattern } from '@nestjs/microservices';
 import {
+  CreateCoachPackageDto,
   CreateCoachProfileDto,
   UpdateCoachProfileDto,
   VerifyCoachProfileDto,
@@ -42,6 +43,17 @@ export class CoachServiceController {
   }): Promise<CustomApiResponse<void>> {
     return this.coachServiceService.verifyCoachProfile(
       payload.adminId,
+      payload.data,
+    );
+  }
+
+  @MessagePattern({ cmd: CoachMsgPattern.CREATE_COACH_PACKAGE })
+  async createCoachPackage(payload: {
+    userId: number;
+    data: CreateCoachPackageDto;
+  }): Promise<CustomApiResponse<void>> {
+    return this.coachServiceService.createCoachPackage(
+      payload.userId,
       payload.data,
     );
   }
