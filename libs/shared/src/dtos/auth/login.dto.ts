@@ -63,3 +63,18 @@ export class LoginResponseDto {
   @IsNotEmpty({ message: 'User information is required' })
   user: Pick<User, 'id' | 'fullName' | 'email' | 'role'>;
 }
+
+export class CurrentUserResponseDto {
+  constructor(user: Pick<User, 'id' | 'fullName' | 'email' | 'role'>) {
+    this.user = user;
+  }
+
+  @ApiProperty({
+    description: 'Information about the authenticated user',
+    type: User,
+    example: {},
+    required: true,
+  })
+  @IsNotEmpty({ message: 'User information is required' })
+  user: Pick<User, 'id' | 'fullName' | 'email' | 'role'>;
+}
