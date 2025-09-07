@@ -1,5 +1,6 @@
 export enum AuthMsgPattern {
   LOGIN = 'login',
+  GET_USER_PROFILE = 'current_user',
   LOGIN_WITH_GOOGLE = 'login_with_google',
   REGISTER = 'register',
   VERIFY_EMAIL = 'verify_email',

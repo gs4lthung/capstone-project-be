@@ -8,6 +8,7 @@ import { CustomRpcException } from '@app/shared/customs/custom-rpc-exception';
 import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
 import { RegisterRequestDto } from '@app/shared/dtos/auth/register.dto';
 import {
+  CurrentUserResponseDto,
   LoginRequestDto,
   LoginResponseDto,
 } from '@app/shared/dtos/auth/login.dto';
@@ -103,6 +104,43 @@ export class AuthServiceService {
       );
     } catch (error) {
       throw ExceptionUtils.wrapAsRpcException(error);
+    }
+  }
+
+  async getCurrentUser(
+    userId: number,
+  ): Promise<CustomApiResponse<CurrentUserResponseDto>> {
+    try {
+      const user = await this.userRepository.findOne({
+        where: { id: userId },
+        withDeleted: false,
+        relations: ['role'],
+        select: ['id', 'fullName', 'email', 'role'],
+      });
+
+      await this.userRepository.save(user);
+      const role = user.role;
+      return new CustomApiResponse<CurrentUserResponseDto>(
+        HttpStatus.OK,
+        'AUTH.LOGIN_SUCCESS',
+        {
+          user: {
+            id: user.id,
+            fullName: user.fullName,
+            email: user.email,
+            role: {
+              id: role.id,
+              name: role.name,
+              users: role.users,
+            },
+          },
+        },
+      );
+    } catch {
+      throw new CustomRpcException(
+        'AUTH.INVALID_TOKEN',
+        HttpStatus.UNAUTHORIZED,
+      );
     }
   }
 
