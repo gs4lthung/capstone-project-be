@@ -185,6 +185,15 @@
       "compilerOptions": {
         "tsConfigPath": "apps/coach-service/tsconfig.app.json"
       }
+    },
+    "aws": {
+      "type": "library",
+      "root": "libs/aws",
+      "entryFile": "index",
+      "sourceRoot": "libs/aws/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/aws/tsconfig.lib.json"
+      }
     }
   }
 }

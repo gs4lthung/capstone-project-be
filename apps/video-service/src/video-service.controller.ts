@@ -2,12 +2,14 @@ import { Controller } from '@nestjs/common';
 import { VideoServiceService } from './video-service.service';
 import { MessagePattern } from '@nestjs/microservices';
 import { UploadVideoDto } from '@app/shared/dtos/videos/video.dto';
+import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
+import { VideoMsgPattern } from '@app/shared/msg_patterns/video.msg_pattern';
 
 @Controller()
 export class VideoServiceController {
   constructor(private readonly videoServiceService: VideoServiceService) {}
 
-  @MessagePattern({ cmd: 'upload_video' })
+  @MessagePattern({ cmd: VideoMsgPattern.UPLOAD_VIDEO })
   async uploadVideo({
     userId,
     data,
@@ -19,7 +21,7 @@ export class VideoServiceController {
       video: Express.Multer.File[];
       video_thumbnail: Express.Multer.File[];
     };
-  }) {
+  }): Promise<CustomApiResponse<void>> {
     return this.videoServiceService.uploadVideo(userId, data, files);
   }
 }

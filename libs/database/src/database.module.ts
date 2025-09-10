@@ -52,6 +52,8 @@ import { CoachPackage } from './entities/coach_packages';
           configService.get('node_env') !== 'dev'
             ? { rejectUnauthorized: false }
             : false,
+        retryAttempts: 2,
+        retryDelay: 1000,
       }),
       inject: [ConfigService],
     }),

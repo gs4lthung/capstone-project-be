@@ -34,8 +34,6 @@ export class UserService {
       this.userService.send<PaginatedUser>(pattern, findOptions),
     );
 
-    console.log(response);
-
     return response;
   }
 

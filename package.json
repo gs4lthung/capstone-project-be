@@ -52,6 +52,8 @@
   },
   "dependencies": {
     "@apollo/server": "^4.12.2",
+    "@aws-sdk/client-s3": "^3.884.0",
+    "@aws-sdk/lib-storage": "^3.884.0",
     "@fastify/static": "^8.2.0",
     "@keyv/redis": "^5.1.0",
     "@nestjs-modules/mailer": "^2.0.2",
@@ -83,7 +85,6 @@
     "cache-manager-redis-store": "^3.0.1",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.2",
-    "cloudinary": "^2.7.0",
     "compression": "^1.8.1",
     "concurrently": "^9.2.0",
     "cookie-parser": "^1.4.7",
@@ -104,7 +105,8 @@
     "rxjs": "^7.8.1",
     "socket.io": "^4.8.1",
     "streamifier": "^0.1.1",
-    "typeorm": "^0.3.25"
+    "typeorm": "^0.3.25",
+    "uninstall": "^0.0.0"
   },
   "devDependencies": {
     "@nestjs/cli": "^11.0.10",
@@ -164,9 +166,9 @@
       "^@app/firebase(|/.*)$": "<rootDir>/libs/firebase/src/$1",
       "^@app/redis(|/.*)$": "<rootDir>/libs/redis/src/$1",
       "^@app/i18n(|/.*)$": "<rootDir>/libs/i18n/src/$1",
-      "^@app/cloudinary(|/.*)$": "<rootDir>/libs/cloudinary/src/$1",
       "^@app/payos(|/.*)$": "<rootDir>/libs/payos/src/$1",
-      "^@app/ffmpeg(|/.*)$": "<rootDir>/libs/ffmpeg/src/$1"
+      "^@app/ffmpeg(|/.*)$": "<rootDir>/libs/ffmpeg/src/$1",
+      "^@app/aws(|/.*)$": "<rootDir>/libs/aws/src/$1"
     }
   }
 }

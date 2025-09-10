@@ -5,17 +5,17 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from '@app/database/entities/user.entity';
 import { ConfigModule, ConfigService } from '@app/config';
 import { UserServiceController } from './user-service.controller';
-import { CloudinaryModule } from '@app/cloudinary';
 import { Role } from '@app/database/entities/role.entity';
 import { RedisModule } from '@app/redis';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { AmqpConnectionManagerSocketOptions } from '@nestjs/microservices/external/rmq-url.interface';
+import { AwsModule } from '@app/aws';
 
 @Module({
   imports: [
     ConfigModule,
     RedisModule,
-    CloudinaryModule,
+    AwsModule,
     DatabaseModule,
     TypeOrmModule.forFeature([User, Role]),
     ClientsModule.registerAsync([

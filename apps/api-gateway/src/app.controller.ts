@@ -77,41 +77,4 @@ export class AppController {
   //#endregion
 
   //#region Video
-
-  @Post('videos')
-  @HttpCode(HttpStatus.CREATED)
-  @UseGuards(AuthGuard)
-  @UseInterceptors(
-    FileFieldsInterceptor(
-      [
-        { name: 'video', maxCount: 1 },
-        { name: 'video_thumbnail', maxCount: 1 },
-      ],
-      {
-        limits: {
-          fileSize: FileSizeLimitEnum.VIDEO,
-        },
-      },
-    ),
-  )
-  @ApiBearerAuth()
-  @ApiOperation({
-    tags: ['Video'],
-    summary: 'Upload Video',
-    description: 'Upload a new video',
-  })
-  @ApiResponse({
-    status: HttpStatus.CREATED,
-    description: 'Video uploaded successfully',
-  })
-  async uploadVideo(
-    @Body() data: UploadVideoDto,
-    @UploadedFiles()
-    files: {
-      video: Express.Multer.File[];
-      video_thumbnail: Express.Multer.File[];
-    },
-  ) {
-    return this.appService.uploadVideo(data, files);
-  }
 }

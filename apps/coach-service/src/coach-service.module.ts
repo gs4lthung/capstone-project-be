@@ -11,6 +11,7 @@ import { CoachCredential } from '@app/database/entities/coach_credential.entity'
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { CoachPackage } from '@app/database/entities/coach_packages';
 import { AmqpConnectionManagerSocketOptions } from '@nestjs/microservices/external/rmq-url.interface';
+import { Role } from '@app/database/entities/role.entity';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { AmqpConnectionManagerSocketOptions } from '@nestjs/microservices/extern
       CoachCredential,
       CoachProfile,
       CoachPackage,
+      Role,
     ]),
     ClientsModule.registerAsync([
       {

@@ -1,6 +1,7 @@
 import { CoachCredential } from '@app/database/entities/coach_credential.entity';
 import { CoachPackage } from '@app/database/entities/coach_packages';
 import { CoachProfile } from '@app/database/entities/coach_profile.entity';
+import { Role } from '@app/database/entities/role.entity';
 import { User } from '@app/database/entities/user.entity';
 import { RedisService } from '@app/redis';
 import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
@@ -35,6 +36,8 @@ export class CoachServiceService {
     private readonly coachProfileRepository: Repository<CoachProfile>,
     @InjectRepository(CoachPackage)
     private readonly coachPackageRepository: Repository<CoachPackage>,
+    @InjectRepository(Role)
+    private readonly roleRepository: Repository<Role>,
     @Inject('NOTIFICATION_SERVICE')
     private readonly notificationService: ClientProxy,
   ) {}
@@ -191,6 +194,7 @@ export class CoachServiceService {
 
       const coachProfile = await this.coachProfileRepository.findOne({
         where: { id: data.id },
+        relations: ['user'],
         withDeleted: false,
       });
       if (!coachProfile)
@@ -212,10 +216,32 @@ export class CoachServiceService {
         if (cred.status === CoachCredentialStatus.PENDING) continue;
         if (cred.status === CoachCredentialStatus.REJECTED) {
           updatedProfileStatus = CoachVerificationStatus.REJECTED;
+          this.notificationService.emit<SendNotification>(
+            NotificationMsgPattern.SEND_NOTIFICATION,
+            {
+              userId: coachProfile.user.id,
+              title: 'COACH.NOTIFICATION.PROFILE.REJECTED.TITLE',
+              body: 'COACH.NOTIFICATION.PROFILE.REJECTED.BODY',
+            },
+          );
           break;
         }
         if (cred.status === CoachCredentialStatus.VERIFIED) {
           updatedProfileStatus = CoachVerificationStatus.APPROVED;
+          const coachRole = await this.roleRepository.findOne({
+            where: { name: RoleEnum.COACH },
+          });
+          await this.userRepository.update(coachProfile.user.id, {
+            role: coachRole,
+          });
+          this.notificationService.emit<SendNotification>(
+            NotificationMsgPattern.SEND_NOTIFICATION,
+            {
+              userId: coachProfile.user.id,
+              title: 'COACH.NOTIFICATION.PROFILE.APPROVED.TITLE',
+              body: 'COACH.NOTIFICATION.PROFILE.APPROVED.BODY',
+            },
+          );
         }
       }
 
@@ -232,6 +258,9 @@ export class CoachServiceService {
           return cred;
         }),
       );
+
+      await this.redisService.del(`user:${coachProfile.user.id}`);
+      await this.redisService.delByPattern('users*');
 
       return new CustomApiResponse<void>(
         HttpStatus.OK,
@@ -258,6 +287,15 @@ export class CoachServiceService {
         throw new CustomRpcException(
           'COACH_PROFILE_NOT_FOUND',
           HttpStatus.NOT_FOUND,
+        );
+
+      if (
+        user.coachProfile.verificationStatus !==
+        CoachVerificationStatus.APPROVED
+      )
+        throw new CustomRpcException(
+          'COACH_PROFILE_NOT_APPROVED',
+          HttpStatus.BAD_REQUEST,
         );
 
       await this.coachPackageRepository.save({

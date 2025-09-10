@@ -10,6 +10,20 @@
         "DELETE_USER_SUCCESS": "Xóa người dùng thành công",
         "RESTORE_USER_SUCCESS": "Khôi phục người dùng thành công"
     },
+    "COACH": {
+        "NOTIFICATION": {
+            "PROFILE": {
+                "APPROVED": {
+                    "TITLE": "Hồ sơ huấn luyện viên của bạn đã được phê duyệt",
+                    "BODY": "Chúc mừng! Hồ sơ huấn luyện viên của bạn hiện đã được công khai."
+                },
+                "REJECTED": {
+                    "TITLE": "Hồ sơ huấn luyện viên của bạn đã bị từ chối",
+                    "BODY": "Chúng tôi rất tiếc phải thông báo rằng hồ sơ huấn luyện viên của bạn đã bị từ chối. Vui lòng xem lại các hướng dẫn và thử lại."
+                }
+            }
+        }
+    },
     "PAYMENT": {
         "CREATE_LINK_SUCCESS": "Tạo liên kết thanh toán thành công"
     }

@@ -1,4 +1,3 @@
-import { CloudinaryService } from '@app/cloudinary';
 import { User } from '@app/database/entities/user.entity';
 import { CreateUserDto } from '@app/shared/dtos/users/create-user.dto';
 import { CustomRpcException } from '@app/shared/customs/custom-rpc-exception';
@@ -18,13 +17,14 @@ import { ClientProxy } from '@nestjs/microservices';
 import { SendNotification } from '@app/shared/interfaces/send-notification.interface';
 import * as fs from 'fs';
 import { PaginatedUser } from '@app/shared/dtos/users/user.dto';
+import { AwsService } from '@app/aws';
 
 @Injectable()
 export class UserServiceService extends BaseTypeOrmService<User> {
   constructor(
-    private readonly cloudinaryService: CloudinaryService,
     private readonly configService: ConfigService,
     private readonly redisService: RedisService,
+    private readonly awsService: AwsService,
     @InjectRepository(User) private readonly userRepository: Repository<User>,
     @InjectRepository(Role) private readonly roleRepository: Repository<Role>,
     @Inject('NOTIFICATION_SERVICE')
@@ -116,7 +116,7 @@ export class UserServiceService extends BaseTypeOrmService<User> {
         );
 
       const fileBuffer = fs.readFileSync(`${file.path}`);
-      const res = await this.cloudinaryService.uploadFile({
+      const res = await this.awsService.uploadFileToPublicBucket({
         file: {
           ...file,
           buffer: fileBuffer,

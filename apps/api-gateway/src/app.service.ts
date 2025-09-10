@@ -8,7 +8,6 @@ import { REQUEST } from '@nestjs/core';
 import { ClientProxy } from '@nestjs/microservices';
 import { CheckoutResponseDataType } from '@payos/node/lib/type';
 import { lastValueFrom } from 'rxjs';
-import { UploadVideoDto } from '@app/shared/dtos/videos/video.dto';
 
 @Injectable({ scope: Scope.REQUEST })
 export class AppService {
@@ -83,20 +82,4 @@ export class AppService {
   //#endregion Chats
 
   //#region Videos
-
-  async uploadVideo(
-    data: UploadVideoDto,
-    files: {
-      video: Express.Multer.File[];
-      video_thumbnail: Express.Multer.File[];
-    },
-  ) {
-    const pattern = { cmd: 'upload_video' };
-    const payload = { userId: this.request.user.id, data, files };
-
-    const response = await lastValueFrom(
-      this.videoService.send<CustomApiResponse<void>>(pattern, payload),
-    );
-    return response;
-  }
 }

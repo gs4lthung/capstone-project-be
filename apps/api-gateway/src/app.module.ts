@@ -33,7 +33,6 @@ import { Notification } from '@app/database/entities/notification.entity';
 import { UserResolver } from './resolvers/user.resolver';
 import { MulterModule } from '@nestjs/platform-express';
 import { FileUtils } from '@app/shared/utils/file.util';
-import { CloudinaryModule } from '@app/cloudinary';
 import { Role } from '@app/database/entities/role.entity';
 import { UserService } from './services/user.service';
 import { AuthService } from './services/auth.service';
@@ -55,6 +54,9 @@ import { Video } from '@app/database/entities/video.entity';
 import { CoachController } from './controllers/coach.controller';
 import { CoachService } from './services/coach.service';
 import { AmqpConnectionManagerSocketOptions } from '@nestjs/microservices/external/rmq-url.interface';
+import { CustomWebsocketI18nResolver } from './resolvers/ws.resolver';
+import { VideoController } from './controllers/video.controller';
+import { VideoService } from './services/video.service';
 
 const tcp_services = [
   { name: 'AUTH_SERVICE' },
@@ -89,7 +91,6 @@ const rmb_services = [
     ScheduleModule.forRoot(),
     DatabaseModule,
     RedisModule,
-    CloudinaryModule,
     TypeOrmModule.forFeature([
       Error,
       User,
@@ -114,6 +115,7 @@ const rmb_services = [
       loader: I18nJsonLoader,
       resolvers: [
         GraphQLWebsocketResolver,
+        CustomWebsocketI18nResolver,
         { use: QueryResolver, options: ['lang'] },
         AcceptLanguageResolver,
         new HeaderResolver(['x-lang']),
@@ -134,7 +136,7 @@ const rmb_services = [
         subscriptions: {
           'graphql-ws': true,
         },
-        fieldResolverEnhancers: ['interceptors'],
+        fieldResolverEnhancers: ['interceptors', 'guards', 'filters'],
       }),
     }),
     ClientsModule.registerAsync([
@@ -199,6 +201,7 @@ const rmb_services = [
     AuthController,
     ChatController,
     OrderController,
+    VideoController,
     CoachController,
   ],
   providers: [
@@ -206,6 +209,7 @@ const rmb_services = [
     UserService,
     UserResolver,
     CoachService,
+    VideoService,
     AuthService,
     ChatService,
     OrderService,

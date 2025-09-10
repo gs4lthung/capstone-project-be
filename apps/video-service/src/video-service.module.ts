@@ -5,12 +5,12 @@ import { FfmpegModule } from '@app/ffmpeg';
 import { DatabaseModule } from '@app/database';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Video } from '@app/database/entities/video.entity';
-import { CloudinaryModule } from '@app/cloudinary';
+import { AwsModule } from '@app/aws';
 
 @Module({
   imports: [
     FfmpegModule,
-    CloudinaryModule,
+    AwsModule,
     DatabaseModule,
     TypeOrmModule.forFeature([Video]),
   ],

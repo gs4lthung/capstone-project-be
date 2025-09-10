@@ -83,50 +83,91 @@ export function applyFilters<T>(
   qb: SelectQueryBuilder<T>,
   alias: string,
   filters: Filtering[],
+  joinedAliases: Set<string>,
 ) {
-  const joinedRelations = new Set<string>();
+  filters.forEach((filter, idx) => {
+    const parts = filter.property.split('.');
 
-  filters.forEach((f, i) => {
-    const parts = f.property.split('.');
-    let currentAlias = alias;
+    let columnAlias: string;
+    if (parts.length > 1) {
+      const relationAlias = parts[0]; // e.g. role
+      const column = parts[1]; // e.g. name
 
-    // Auto-join nested relations
-    for (let j = 0; j < parts.length - 1; j++) {
-      const relation = parts[j];
-      const joinAlias = relation;
-      if (!joinedRelations.has(joinAlias)) {
-        qb.leftJoinAndSelect(`${currentAlias}.${relation}`, joinAlias);
-        joinedRelations.add(joinAlias);
+      // ✅ Avoid duplicate joins
+      if (
+        !qb.expressionMap.joinAttributes.some(
+          (j) => j.alias.name === relationAlias,
+        )
+      ) {
+        qb.leftJoinAndSelect(`${alias}.${relationAlias}`, relationAlias);
+        joinedAliases.add(relationAlias);
       }
-      currentAlias = joinAlias;
+
+      columnAlias = `${relationAlias}.${column}`;
+    } else {
+      columnAlias = `${alias}.${filter.property}`;
     }
 
-    const field = parts[parts.length - 1];
-    const paramKey = `${field}_${i}`;
-
-    switch (f.rule) {
+    const paramKey = `value${idx}`;
+    switch (filter.rule) {
       case FilterRule.EQUALS:
-        qb.andWhere(`${currentAlias}.${field} = :${paramKey}`, {
-          [paramKey]: f.value,
+        qb.andWhere(`${columnAlias} = :${paramKey}`, {
+          [paramKey]: filter.value,
+        });
+        break;
+      case FilterRule.NOT_EQUALS:
+        qb.andWhere(`${columnAlias} != :${paramKey}`, {
+          [paramKey]: filter.value,
         });
         break;
       case FilterRule.LIKE:
-        qb.andWhere(`${currentAlias}.${field} LIKE :${paramKey}`, {
-          [paramKey]: `%${f.value}%`,
+        qb.andWhere(`${columnAlias} ILIKE :${paramKey}`, {
+          [paramKey]: `%${filter.value}%`,
+        });
+        break;
+      case FilterRule.NOT_LIKE:
+        qb.andWhere(`${columnAlias} NOT ILIKE :${paramKey}`, {
+          [paramKey]: `%${filter.value}%`,
         });
         break;
       case FilterRule.IN:
-        qb.andWhere(`${currentAlias}.${field} IN (:...${paramKey})`, {
-          [paramKey]: Array.isArray(f.value)
-            ? f.value
-            : String(f.value).split(','),
+        qb.andWhere(`${columnAlias} IN (:...${paramKey})`, {
+          [paramKey]: filter.value.split(','),
         });
         break;
-      // add other rules (gt, lt, etc.)
+      case FilterRule.NOT_IN:
+        qb.andWhere(`${columnAlias} NOT IN (:...${paramKey})`, {
+          [paramKey]: filter.value.split(','),
+        });
+        break;
+      case FilterRule.IS_NULL:
+        qb.andWhere(`${columnAlias} IS NULL`);
+        break;
+      case FilterRule.IS_NOT_NULL:
+        qb.andWhere(`${columnAlias} IS NOT NULL`);
+        break;
+      case FilterRule.GREATER_THAN:
+        qb.andWhere(`${columnAlias} > :${paramKey}`, {
+          [paramKey]: filter.value,
+        });
+        break;
+      case FilterRule.GREATER_THAN_OR_EQUALS:
+        qb.andWhere(`${columnAlias} >= :${paramKey}`, {
+          [paramKey]: filter.value,
+        });
+        break;
+      case FilterRule.LESS_THAN:
+        qb.andWhere(`${columnAlias} < :${paramKey}`, {
+          [paramKey]: filter.value,
+        });
+        break;
+      case FilterRule.LESS_THAN_OR_EQUALS:
+        qb.andWhere(`${columnAlias} <= :${paramKey}`, {
+          [paramKey]: filter.value,
+        });
+        break;
     }
   });
-
-  return qb;
 }
 
 export class BaseTypeOrmService<T> {
@@ -145,15 +186,19 @@ export class BaseTypeOrmService<T> {
 
     const qb: SelectQueryBuilder<T> = this.repository.createQueryBuilder(alias);
 
+    const joinedAliases = new Set<string>();
     const { relations } = this.repository.metadata;
     relations
       .filter((r) => r.isEager)
       .forEach((r) => {
-        qb.leftJoinAndSelect(`${alias}.${r.propertyName}`, r.propertyName);
+        if (!joinedAliases.has(r.propertyName)) {
+          qb.leftJoinAndSelect(`${alias}.${r.propertyName}`, r.propertyName);
+          joinedAliases.add(r.propertyName);
+        }
       });
 
     if (filters.length) {
-      applyFilters(qb, alias, filters);
+      applyFilters(qb, alias, filters, joinedAliases);
     }
 
     if (findOptions.sort) {

@@ -1,4 +1,10 @@
-import { Logger, OnModuleInit, UseFilters, UseGuards } from '@nestjs/common';
+import {
+  Logger,
+  OnModuleInit,
+  UseFilters,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
 import {
   ConnectedSocket,
   MessageBody,
@@ -22,6 +28,7 @@ import { Repository } from 'typeorm';
 import { NotificationStatusEnum } from '@app/shared/enums/notification.enum';
 import { SendMessageDto } from '@app/shared/dtos/chats/chat.dto';
 import { ChatService } from '../services/chat.service';
+import { I18nService } from 'nestjs-i18n';
 
 @WebSocketGateway({
   namespace: '/ws',
@@ -32,6 +39,7 @@ export class SocketGateway
   implements OnGatewayConnection, OnGatewayDisconnect, OnModuleInit
 {
   constructor(
+    private readonly i18nService: I18nService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly redisService: RedisService,
@@ -102,11 +110,10 @@ export class SocketGateway
           if (clientId) {
             this.server.to(clientId).emit('notification', {
               notificationId: payload.notificationId,
-              title: payload.title,
-              body: payload.body,
+              title: this.i18nService.t(`messages.${payload.title}`),
+              body: this.i18nService.t(`messages.${payload.body}`),
             });
           }
-
           if (payload.notificationId) {
             await this.notificationRepository.update(payload.notificationId, {
               status: NotificationStatusEnum.SENT,

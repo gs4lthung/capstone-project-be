@@ -44,7 +44,7 @@ export class AuthGuard implements CanActivate {
         default:
           throw new CustomRpcException(
             'Unsupported context type',
-            HttpStatus.BAD_REQUEST,
+            HttpStatus.INTERNAL_SERVER_ERROR,
             'Error in AuthGuard: Unsupported context type',
           );
       }

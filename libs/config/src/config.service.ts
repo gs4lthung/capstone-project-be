@@ -108,6 +108,14 @@ export interface Config {
     return_url?: string;
     cancel_url?: string;
   };
+  aws: {
+    s3: {
+      public_bucket: string;
+      region: string;
+      access_key_id: string;
+      secret_access_key: string;
+    };
+  };
 }
 
 export interface TcpServiceConfig {
@@ -296,6 +304,17 @@ export class ConfigService {
         ),
         return_url: this.nestConfigService.get('PAYOS_RETURN_URL', ''),
         cancel_url: this.nestConfigService.get('PAYOS_CANCEL_URL', ''),
+      },
+      aws: {
+        s3: {
+          public_bucket: this.nestConfigService.get('AWS_S3_PUBLIC_BUCKET', ''),
+          region: this.nestConfigService.get('AWS_S3_REGION', ''),
+          access_key_id: this.nestConfigService.get('AWS_S3_ACCESS_KEY_ID', ''),
+          secret_access_key: this.nestConfigService.get(
+            'AWS_S3_SECRET_ACCESS_KEY',
+            '',
+          ),
+        },
       },
     };
   }

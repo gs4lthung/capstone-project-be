@@ -135,6 +135,13 @@ export class FileUtils {
     });
   }
 
+  static deleteFile(filePath: string) {
+    if (!fs.existsSync(filePath)) {
+      throw new Error(`File not found: ${filePath}`);
+    }
+    fs.unlinkSync(filePath);
+  }
+
   static deleteFilesInFolder(folderPath: string) {
     if (!fs.existsSync(folderPath)) {
       throw new Error(`Folder not found: ${folderPath}`);
