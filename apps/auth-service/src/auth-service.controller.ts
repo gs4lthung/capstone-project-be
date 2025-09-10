@@ -4,6 +4,7 @@ import { MessagePattern } from '@nestjs/microservices';
 import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
 import { RegisterRequestDto } from '@app/shared/dtos/auth/register.dto';
 import {
+  CurrentUserResponseDto,
   LoginRequestDto,
   LoginResponseDto,
 } from '@app/shared/dtos/auth/login.dto';
@@ -20,6 +21,13 @@ export class AuthServiceController {
     data: LoginRequestDto,
   ): Promise<CustomApiResponse<LoginResponseDto>> {
     return this.authServiceService.login(data);
+  }
+
+  @MessagePattern({ cmd: AuthMsgPattern.GET_USER_PROFILE })
+  async getUserProfile(data: {
+    userId: number;
+  }): Promise<CustomApiResponse<CurrentUserResponseDto>> {
+    return this.authServiceService.getCurrentUser(data.userId);
   }
 
   @MessagePattern({ cmd: AuthMsgPattern.LOGIN_WITH_GOOGLE })

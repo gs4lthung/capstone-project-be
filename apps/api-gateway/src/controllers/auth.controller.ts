@@ -11,10 +11,16 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { ApiExcludeEndpoint, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiExcludeEndpoint,
+  ApiOperation,
+  ApiResponse,
+} from '@nestjs/swagger';
 import { RegisterRequestDto } from '@app/shared/dtos/auth/register.dto';
 import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
 import {
+  CurrentUserResponseDto,
   LoginRequestDto,
   LoginResponseDto,
 } from '@app/shared/dtos/auth/login.dto';
@@ -25,6 +31,7 @@ import { RefreshNewAccessTokenDto } from '@app/shared/dtos/auth/refresh-new-acce
 import { ResetPasswordDto } from '@app/shared/dtos/auth/reset-password.dto';
 import { AuthService } from '../services/auth.service';
 import { GoogleOAuthGuard } from '../guards/google-auth.guard';
+import { AuthGuard } from '../guards/auth.guard';
 import { I18nResponseInterceptor } from '../interceptors/i18-response.interceptor';
 
 @Controller('auth')
@@ -49,6 +56,26 @@ export class AuthController {
   ): Promise<CustomApiResponse<LoginResponseDto>> {
     const result = await this.authService.login(data);
     return result;
+  }
+
+  @Get('current-user')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    tags: ['Authentication'],
+    summary: 'Get Current User',
+    description: 'Retrieve the currently authenticated user information',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Current user information retrieved successfully',
+  })
+  async me(
+    @CurrentUser() user: any,
+  ): Promise<CustomApiResponse<CurrentUserResponseDto>> {
+    const res = await this.authService.getCurrentUser(user.id);
+    return res;
   }
 
   @Post('register')

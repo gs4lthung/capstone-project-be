@@ -31,6 +31,14 @@ export class AuthService {
     );
     return response;
   }
+  async getCurrentUser(userId: string) {
+    const pattern = { cmd: AuthMsgPattern.GET_USER_PROFILE };
+    const payload = { userId };
+    const response = await lastValueFrom(
+      this.authService.send<CustomApiResponse<any>>(pattern, payload),
+    );
+    return response;
+  }
 
   async loginWithGoogle(data: GoogleUserDto) {
     const pattern = { cmd: AuthMsgPattern.LOGIN_WITH_GOOGLE };
