@@ -15,7 +15,7 @@ import { MessageRead } from './entities/message-read.entity';
 import { Video } from './entities/video.entity';
 import { CoachProfile } from './entities/coach_profile.entity';
 import { CoachCredential } from './entities/coach_credential.entity';
-import { CoachPackage } from './entities/coach_packages';
+import { CoachPackage } from './entities/coach_packages.entity';
 
 @Module({
   imports: [

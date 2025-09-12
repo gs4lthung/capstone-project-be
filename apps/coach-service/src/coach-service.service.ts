@@ -1,5 +1,5 @@
 import { CoachCredential } from '@app/database/entities/coach_credential.entity';
-import { CoachPackage } from '@app/database/entities/coach_packages';
+import { CoachPackage } from '@app/database/entities/coach_packages.entity';
 import { CoachProfile } from '@app/database/entities/coach_profile.entity';
 import { Role } from '@app/database/entities/role.entity';
 import { User } from '@app/database/entities/user.entity';

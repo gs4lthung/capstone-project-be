@@ -11,7 +11,7 @@ import {
 import { User } from './user.entity';
 import { CoachVerificationStatus } from '@app/shared/enums/coach.enum';
 import { CoachCredential } from './coach_credential.entity';
-import { CoachPackage } from './coach_packages';
+import { CoachPackage } from './coach_packages.entity';
 
 @Entity('coach_profiles')
 export class CoachProfile {
