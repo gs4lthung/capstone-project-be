@@ -17,6 +17,7 @@ import { ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { RoleEnum } from '@app/shared/enums/role.enum';
 import { CheckRoles } from '@app/shared/decorators/check-roles.decorator';
 import { CreateUserDto } from '@app/shared/dtos/users/create-user.dto';
+import { UserListResponse } from '@app/shared/dtos/users/user.dto';
 import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { FileSizeLimitEnum } from '@app/shared/enums/file.enum';
@@ -43,23 +44,7 @@ export class UserController {
   async getAllUsers(
     @Query('page') page: string = '1',
     @Query('per_page') per_page: string = '10',
-  ): Promise<
-    CustomApiResponse<{
-      data: {
-        id: number;
-        fullName: string;
-        email: string;
-        profilePicture?: string;
-        createdAt: Date;
-        updatedAt: Date;
-        coachProfile?: any;
-      }[];
-      current_page: number;
-      last_page: number;
-      total: number;
-      per_page: number;
-    }>
-  > {
+  ): Promise<CustomApiResponse<UserListResponse>> {
     const pageNum = Math.max(1, parseInt(page) || 1);
     const perPageNum = Math.max(1, Math.min(100, parseInt(per_page) || 10));
 

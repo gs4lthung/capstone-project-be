@@ -16,7 +16,10 @@ import { BaseTypeOrmService } from '@app/shared/helpers/typeorm.helper';
 import { ClientProxy } from '@nestjs/microservices';
 import { SendNotification } from '@app/shared/interfaces/send-notification.interface';
 import * as fs from 'fs';
-import { PaginatedUserList } from '@app/shared/dtos/users/user.dto';
+import {
+  PaginatedUserList,
+  USER_LIST_SORTABLE_FIELDS,
+} from '@app/shared/dtos/users/user.dto';
 import { AwsService } from '@app/aws';
 
 @Injectable()
@@ -94,15 +97,8 @@ export class UserServiceService extends BaseTypeOrmService<User> {
     qb.take(findOptions.pagination.size);
 
     if (findOptions.sort) {
-      const allowedSortProperties = [
-        'id',
-        'fullName',
-        'email',
-        'createdAt',
-        'updatedAt',
-      ];
-      const sortProperty = allowedSortProperties.includes(
-        findOptions.sort.property,
+      const sortProperty = USER_LIST_SORTABLE_FIELDS.includes(
+        findOptions.sort.property as any,
       )
         ? findOptions.sort.property
         : 'id';
