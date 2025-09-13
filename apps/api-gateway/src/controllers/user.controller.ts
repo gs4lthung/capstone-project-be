@@ -41,8 +41,8 @@ export class UserController {
   @CheckRoles(RoleEnum.ADMIN)
   @UseGuards(AuthGuard, RoleGuard)
   async getAllUsers(
-    @Query('page') page: number = 1,
-    @Query('per_page') per_page: number = 10,
+    @Query('page') page: string = '1',
+    @Query('per_page') per_page: string = '10',
   ): Promise<
     CustomApiResponse<{
       data: {
@@ -60,11 +60,14 @@ export class UserController {
       per_page: number;
     }>
   > {
+    const pageNum = Math.max(1, parseInt(page) || 1);
+    const perPageNum = Math.max(1, Math.min(100, parseInt(per_page) || 10));
+
     const result = await this.userService.findAll({
       pagination: {
-        page,
-        size: per_page,
-        offset: (page - 1) * per_page,
+        page: pageNum,
+        size: perPageNum,
+        offset: (pageNum - 1) * perPageNum,
       },
     });
     return new CustomApiResponse(
@@ -72,10 +75,10 @@ export class UserController {
       'Users retrieved successfully',
       {
         data: result.items,
-        current_page: result.page,
-        last_page: Math.ceil(result.total / result.pageSize),
+        current_page: pageNum,
+        last_page: Math.ceil(result.total / perPageNum),
         total: result.total,
-        per_page: result.pageSize,
+        per_page: perPageNum,
       },
     );
   }

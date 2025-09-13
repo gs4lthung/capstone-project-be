@@ -94,10 +94,20 @@ export class UserServiceService extends BaseTypeOrmService<User> {
     qb.take(findOptions.pagination.size);
 
     if (findOptions.sort) {
-      qb.orderBy(
-        `user.${findOptions.sort.property}`,
-        findOptions.sort.direction,
-      );
+      const allowedSortProperties = [
+        'id',
+        'fullName',
+        'email',
+        'createdAt',
+        'updatedAt',
+      ];
+      const sortProperty = allowedSortProperties.includes(
+        findOptions.sort.property,
+      )
+        ? findOptions.sort.property
+        : 'id';
+
+      qb.orderBy(`user.${sortProperty}`, findOptions.sort.direction);
     }
 
     const [items, total] = await qb.getManyAndCount();

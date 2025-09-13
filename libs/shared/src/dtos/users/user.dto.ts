@@ -42,7 +42,19 @@ export class UserDto {
 }
 
 @ObjectType()
-export class UserListDto {
+export class UserListDto
+  implements
+    Pick<
+      UserDto,
+      | 'id'
+      | 'fullName'
+      | 'email'
+      | 'profilePicture'
+      | 'createdAt'
+      | 'updatedAt'
+      | 'coachProfile'
+    >
+{
   @Field(() => Number)
   id: number;
 
