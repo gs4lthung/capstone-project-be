@@ -2,11 +2,13 @@ import {
   Body,
   Controller,
   Delete,
+  Get,
   HttpCode,
   HttpStatus,
   Param,
   Post,
   Put,
+  Query,
   UploadedFile,
   UseGuards,
   UseInterceptors,
@@ -25,6 +27,59 @@ import { RoleGuard } from '../guards/role.guard';
 @Controller('users')
 export class UserController {
   constructor(private readonly userService: UserService) {}
+  @Get('')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiOperation({
+    tags: ['Users'],
+    summary: 'Get All Users',
+    description: 'Retrieve a list of all users',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+  })
+  @CheckRoles(RoleEnum.ADMIN)
+  @UseGuards(AuthGuard, RoleGuard)
+  async getAllUsers(
+    @Query('page') page: number = 1,
+    @Query('per_page') per_page: number = 10,
+  ): Promise<
+    CustomApiResponse<{
+      data: {
+        id: number;
+        fullName: string;
+        email: string;
+        profilePicture?: string;
+        createdAt: Date;
+        updatedAt: Date;
+        coachProfile?: any;
+      }[];
+      current_page: number;
+      last_page: number;
+      total: number;
+      per_page: number;
+    }>
+  > {
+    const result = await this.userService.findAll({
+      pagination: {
+        page,
+        size: per_page,
+        offset: (page - 1) * per_page,
+      },
+    });
+    return new CustomApiResponse(
+      HttpStatus.OK,
+      'Users retrieved successfully',
+      {
+        data: result.items,
+        current_page: result.page,
+        last_page: Math.ceil(result.total / result.pageSize),
+        total: result.total,
+        per_page: result.pageSize,
+      },
+    );
+  }
+
   @Post('')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({

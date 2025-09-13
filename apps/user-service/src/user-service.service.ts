@@ -16,7 +16,7 @@ import { BaseTypeOrmService } from '@app/shared/helpers/typeorm.helper';
 import { ClientProxy } from '@nestjs/microservices';
 import { SendNotification } from '@app/shared/interfaces/send-notification.interface';
 import * as fs from 'fs';
-import { PaginatedUser } from '@app/shared/dtos/users/user.dto';
+import { PaginatedUserList } from '@app/shared/dtos/users/user.dto';
 import { AwsService } from '@app/aws';
 
 @Injectable()
@@ -76,8 +76,38 @@ export class UserServiceService extends BaseTypeOrmService<User> {
     }
   }
 
-  async findAll(findOptions: FindOptions): Promise<PaginatedUser> {
-    return super.find(findOptions, 'user', PaginatedUser);
+  async findAll(findOptions: FindOptions): Promise<PaginatedUserList> {
+    const qb = this.userRepository.createQueryBuilder('user');
+
+    qb.select([
+      'user.id',
+      'user.fullName',
+      'user.email',
+      'user.profilePicture',
+      'user.createdAt',
+      'user.updatedAt',
+    ]);
+
+    qb.leftJoinAndSelect('user.coachProfile', 'coachProfile');
+
+    qb.skip(findOptions.pagination.offset);
+    qb.take(findOptions.pagination.size);
+
+    if (findOptions.sort) {
+      qb.orderBy(
+        `user.${findOptions.sort.property}`,
+        findOptions.sort.direction,
+      );
+    }
+
+    const [items, total] = await qb.getManyAndCount();
+
+    const result = new PaginatedUserList();
+    result.items = items;
+    result.page = findOptions.pagination.page;
+    result.pageSize = findOptions.pagination.size;
+    result.total = total;
+    return result;
   }
 
   async findOne(id: number): Promise<User> {

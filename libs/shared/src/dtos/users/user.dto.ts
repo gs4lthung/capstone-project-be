@@ -42,4 +42,31 @@ export class UserDto {
 }
 
 @ObjectType()
+export class UserListDto {
+  @Field(() => Number)
+  id: number;
+
+  @Field(() => String)
+  fullName: string;
+
+  @Field(() => String)
+  email: string;
+
+  @Field(() => String, { nullable: true })
+  profilePicture?: string;
+
+  @Field(() => GqlCustomDateTime)
+  createdAt: Date;
+
+  @Field(() => GqlCustomDateTime)
+  updatedAt: Date;
+
+  @Field(() => CoachProfileDto, { nullable: true })
+  coachProfile?: CoachProfileDto;
+}
+
+@ObjectType()
 export class PaginatedUser extends PaginatedResource(UserDto) {}
+
+@ObjectType()
+export class PaginatedUserList extends PaginatedResource(UserListDto) {}

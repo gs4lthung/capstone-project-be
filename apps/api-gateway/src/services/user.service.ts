@@ -9,7 +9,7 @@ import { REQUEST } from '@nestjs/core';
 import { CustomApiRequest } from '@app/shared/customs/custom-api-request';
 import { lastValueFrom } from 'rxjs';
 import { UserMsgPattern } from '@app/shared/msg_patterns/user.msg_pattern';
-import { PaginatedUser } from '@app/shared/dtos/users/user.dto';
+import { PaginatedUserList } from '@app/shared/dtos/users/user.dto';
 
 @Injectable({ scope: Scope.REQUEST })
 export class UserService {
@@ -27,11 +27,11 @@ export class UserService {
     return response;
   }
 
-  async findAll(findOptions: FindOptions): Promise<PaginatedUser> {
+  async findAll(findOptions: FindOptions): Promise<PaginatedUserList> {
     const pattern = { cmd: UserMsgPattern.FIND_ALL_USERS };
 
     const response = await lastValueFrom(
-      this.userService.send<PaginatedUser>(pattern, findOptions),
+      this.userService.send<PaginatedUserList>(pattern, findOptions),
     );
 
     return response;
