@@ -2,11 +2,13 @@ import {
   Body,
   Controller,
   Delete,
+  Get,
   HttpCode,
   HttpStatus,
   Param,
   Post,
   Put,
+  Query,
   UploadedFile,
   UseGuards,
   UseInterceptors,
@@ -15,6 +17,7 @@ import { ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { RoleEnum } from '@app/shared/enums/role.enum';
 import { CheckRoles } from '@app/shared/decorators/check-roles.decorator';
 import { CreateUserDto } from '@app/shared/dtos/users/create-user.dto';
+import { UserListResponse } from '@app/shared/dtos/users/user.dto';
 import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { FileSizeLimitEnum } from '@app/shared/enums/file.enum';
@@ -24,7 +27,58 @@ import { RoleGuard } from '../guards/role.guard';
 
 @Controller('users')
 export class UserController {
+  private static readonly MAX_PAGE_SIZE = 100;
+  private static readonly DEFAULT_PAGE_SIZE = 10;
+  private static readonly DEFAULT_PAGE = 1;
+
   constructor(private readonly userService: UserService) {}
+  @Get('')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiOperation({
+    tags: ['Users'],
+    summary: 'Get All Users',
+    description: 'Retrieve a list of all users',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+  })
+  @CheckRoles(RoleEnum.ADMIN)
+  @UseGuards(AuthGuard, RoleGuard)
+  async getAllUsers(
+    @Query('page') page: string = UserController.DEFAULT_PAGE.toString(),
+    @Query('per_page')
+    per_page: string = UserController.DEFAULT_PAGE_SIZE.toString(),
+  ): Promise<CustomApiResponse<UserListResponse>> {
+    const pageNum = Math.max(1, parseInt(page) || UserController.DEFAULT_PAGE);
+    const perPageNum = Math.max(
+      1,
+      Math.min(
+        UserController.MAX_PAGE_SIZE,
+        parseInt(per_page) || UserController.DEFAULT_PAGE_SIZE,
+      ),
+    );
+
+    const result = await this.userService.findAll({
+      pagination: {
+        page: pageNum,
+        size: perPageNum,
+        offset: (pageNum - 1) * perPageNum,
+      },
+    });
+    return new CustomApiResponse(
+      HttpStatus.OK,
+      'Users retrieved successfully',
+      {
+        data: result.items,
+        currentPage: pageNum,
+        lastPage: Math.ceil(result.total / perPageNum),
+        total: result.total,
+        perPage: perPageNum,
+      },
+    );
+  }
+
   @Post('')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
