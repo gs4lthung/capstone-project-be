@@ -65,8 +65,8 @@ export class PaginatedUser extends PaginatedResource(UserDto) {}
 export class PaginatedUserList extends PaginatedResource(UserListDto) {}
 export interface UserListResponse {
   data: UserListDto[];
-  current_page: number;
-  last_page: number;
+  currentPage: number;
+  lastPage: number;
   total: number;
-  per_page: number;
+  perPage: number;
 }

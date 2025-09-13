@@ -19,6 +19,7 @@ import * as fs from 'fs';
 import {
   PaginatedUserList,
   USER_LIST_SORTABLE_FIELDS,
+  UserListSortableField,
 } from '@app/shared/dtos/users/user.dto';
 import { AwsService } from '@app/aws';
 
@@ -98,9 +99,9 @@ export class UserServiceService extends BaseTypeOrmService<User> {
 
     if (findOptions.sort) {
       const sortProperty = USER_LIST_SORTABLE_FIELDS.includes(
-        findOptions.sort.property as any,
+        findOptions.sort.property as UserListSortableField,
       )
-        ? findOptions.sort.property
+        ? (findOptions.sort.property as UserListSortableField)
         : 'id';
 
       qb.orderBy(`user.${sortProperty}`, findOptions.sort.direction);

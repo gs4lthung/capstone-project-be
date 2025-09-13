@@ -27,6 +27,10 @@ import { RoleGuard } from '../guards/role.guard';
 
 @Controller('users')
 export class UserController {
+  private static readonly MAX_PAGE_SIZE = 100;
+  private static readonly DEFAULT_PAGE_SIZE = 10;
+  private static readonly DEFAULT_PAGE = 1;
+
   constructor(private readonly userService: UserService) {}
   @Get('')
   @HttpCode(HttpStatus.OK)
@@ -42,11 +46,18 @@ export class UserController {
   @CheckRoles(RoleEnum.ADMIN)
   @UseGuards(AuthGuard, RoleGuard)
   async getAllUsers(
-    @Query('page') page: string = '1',
-    @Query('per_page') per_page: string = '10',
+    @Query('page') page: string = UserController.DEFAULT_PAGE.toString(),
+    @Query('per_page')
+    per_page: string = UserController.DEFAULT_PAGE_SIZE.toString(),
   ): Promise<CustomApiResponse<UserListResponse>> {
-    const pageNum = Math.max(1, parseInt(page) || 1);
-    const perPageNum = Math.max(1, Math.min(100, parseInt(per_page) || 10));
+    const pageNum = Math.max(1, parseInt(page) || UserController.DEFAULT_PAGE);
+    const perPageNum = Math.max(
+      1,
+      Math.min(
+        UserController.MAX_PAGE_SIZE,
+        parseInt(per_page) || UserController.DEFAULT_PAGE_SIZE,
+      ),
+    );
 
     const result = await this.userService.findAll({
       pagination: {
@@ -60,10 +71,10 @@ export class UserController {
       'Users retrieved successfully',
       {
         data: result.items,
-        current_page: pageNum,
-        last_page: Math.ceil(result.total / perPageNum),
+        currentPage: pageNum,
+        lastPage: Math.ceil(result.total / perPageNum),
         total: result.total,
-        per_page: perPageNum,
+        perPage: perPageNum,
       },
     );
   }
