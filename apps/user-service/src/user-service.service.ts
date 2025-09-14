@@ -88,10 +88,11 @@ export class UserServiceService extends BaseTypeOrmService<User> {
       'user.fullName',
       'user.email',
       'user.profilePicture',
+      'role.name',
       'user.createdAt',
       'user.updatedAt',
     ]);
-
+    qb.leftJoinAndSelect('user.role', 'role');
     qb.leftJoinAndSelect('user.coachProfile', 'coachProfile');
 
     qb.skip(findOptions.pagination.offset);
