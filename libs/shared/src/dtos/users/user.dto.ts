@@ -41,5 +41,32 @@ export class UserDto {
   coachProfile?: CoachProfileDto;
 }
 
+// Define allowed sort properties as a constant
+export const USER_LIST_SORTABLE_FIELDS = [
+  'id',
+  'fullName',
+  'email',
+  'createdAt',
+  'updatedAt',
+] as const;
+
+export type UserListSortableField = (typeof USER_LIST_SORTABLE_FIELDS)[number];
+
+@ObjectType()
+export class UserListDto extends UserDto {
+  // Inherit all fields from UserDto
+  // Only override or exclude fields that should be different
+}
+
 @ObjectType()
 export class PaginatedUser extends PaginatedResource(UserDto) {}
+
+@ObjectType()
+export class PaginatedUserList extends PaginatedResource(UserListDto) {}
+export interface UserListResponse {
+  data: UserListDto[];
+  currentPage: number;
+  lastPage: number;
+  total: number;
+  perPage: number;
+}
