@@ -25,3 +25,23 @@ export enum PickleBallSkillEnum {
   RESET = 'RESET',
   BLOCK = 'BLOCK',
 }
+
+export enum PickleBallLearnerGoal {
+  HAVE_FUN = 'HAVE_FUN',
+  IMPROVE_SKILLS = 'IMPROVE_SKILLS',
+  COMPETE = 'COMPETE',
+}
+
+export enum PickleBallMonthlyMatches {
+  ONE_TO_TEN = 'ONE_TO_TEN',
+  ELEVEN_TO_TWENTY_FIVE = 'ELEVEN_TO_TWENTY_FIVE',
+  TWENTY_SIX_TO_FIFTY = 'TWENTY_SIX_TO_FIFTY',
+  FIFTY_PLUS = 'FIFTY_PLUS',
+}
+
+export enum PickleBallAssessMethod {
+  SELF_ASSESSMENT = 'SELF_ASSESSMENT',
+  COACH_ASSESSMENT = 'COACH_ASSESSMENT',
+  AI_ASSESSMENT = 'AI_ASSESSMENT',
+  QUIZ_ASSESSMENT = 'QUIZ_ASSESSMENT',
+}

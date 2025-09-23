@@ -12,15 +12,15 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { RoleEnum } from '@app/shared/enums/role.enum';
+import { UserRole } from '@app/shared/enums/user.enum';
 import { CheckRoles } from '@app/shared/decorators/check-roles.decorator';
-import { CreateUserDto } from '@app/shared/dtos/users/create-user.dto';
 import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { FileSizeLimitEnum } from '@app/shared/enums/file.enum';
 import { UserService } from '../services/user.service';
 import { AuthGuard } from '../guards/auth.guard';
 import { RoleGuard } from '../guards/role.guard';
+import { CreateUserDto } from '@app/shared/dtos/users/create-user.dto';
 
 @Controller('users')
 export class UserController {
@@ -36,7 +36,7 @@ export class UserController {
     status: HttpStatus.CREATED,
     description: 'User created successfully',
   })
-  @CheckRoles(RoleEnum.ADMIN)
+  @CheckRoles(UserRole.ADMIN)
   @UseGuards(AuthGuard, RoleGuard)
   async createUser(
     @Body() data: CreateUserDto,
@@ -81,7 +81,7 @@ export class UserController {
     status: HttpStatus.OK,
     description: 'User deleted successfully',
   })
-  @CheckRoles(RoleEnum.ADMIN)
+  @CheckRoles(UserRole.ADMIN)
   @UseGuards(AuthGuard, RoleGuard)
   async softDeleteUser(
     @Param('id') id: number,
@@ -100,7 +100,7 @@ export class UserController {
     status: HttpStatus.OK,
     description: 'User deleted successfully',
   })
-  @CheckRoles(RoleEnum.ADMIN)
+  @CheckRoles(UserRole.ADMIN)
   @UseGuards(AuthGuard, RoleGuard)
   async deleteUser(@Param('id') id: number): Promise<CustomApiResponse<void>> {
     return this.userService.delete(id);
@@ -117,7 +117,7 @@ export class UserController {
     status: HttpStatus.OK,
     description: 'User restored successfully',
   })
-  @CheckRoles(RoleEnum.ADMIN)
+  @CheckRoles(UserRole.ADMIN)
   @UseGuards(AuthGuard, RoleGuard)
   async restoreUser(@Param('id') id: number): Promise<CustomApiResponse<void>> {
     return this.userService.restore(id);

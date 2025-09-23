@@ -1,4 +1,3 @@
-import { FcmToken } from '@app/database/entities/fcmToken.entity';
 import { Notification } from '@app/database/entities/notification.entity';
 import { User } from '@app/database/entities/user.entity';
 import { RedisService } from '@app/redis';
@@ -12,7 +11,8 @@ import { HttpStatus, Injectable } from '@nestjs/common';
 import { RmqContext } from '@nestjs/microservices';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { RoleEnum } from '@app/shared/enums/role.enum';
+import { UserRole } from '@app/shared/enums/user.enum';
+import { FcmToken } from '@app/database/entities/fcm-token.entity';
 
 @Injectable()
 export class NotificationServiceService {
@@ -109,9 +109,11 @@ export class NotificationServiceService {
         return;
       }
     } catch (error) {
-      await this.notificationRepository.update(notification.id, {
-        status: NotificationStatusEnum.ERROR,
-      });
+      if (notification) {
+        await this.notificationRepository.update(notification.id, {
+          status: NotificationStatusEnum.ERROR,
+        });
+      }
       channel.noAck(ctx.getMessage(), false, false);
       throw ExceptionUtils.wrapAsRpcException(error);
     }
@@ -124,7 +126,7 @@ export class NotificationServiceService {
     const admins = await this.userRepository.find({
       where: {
         role: {
-          name: RoleEnum.ADMIN,
+          name: UserRole.ADMIN,
         },
       },
     });

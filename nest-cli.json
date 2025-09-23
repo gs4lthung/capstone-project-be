@@ -194,6 +194,24 @@
       "compilerOptions": {
         "tsConfigPath": "libs/aws/tsconfig.lib.json"
       }
+    },
+    "twilio": {
+      "type": "library",
+      "root": "libs/twilio",
+      "entryFile": "index",
+      "sourceRoot": "libs/twilio/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/twilio/tsconfig.lib.json"
+      }
+    },
+    "learner-service": {
+      "type": "application",
+      "root": "apps/learner-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/learner-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/learner-service/tsconfig.app.json"
+      }
     }
   }
 }

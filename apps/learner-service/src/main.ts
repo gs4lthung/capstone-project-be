@@ -1,22 +1,22 @@
 import { NestFactory } from '@nestjs/core';
+import { LearnerServiceModule } from './learner-service.module';
+import { CustomLogger } from '@app/shared/customs/custom-logger';
 import { ConfigService } from '@app/config';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
-import { CustomLogger } from '@app/shared/customs/custom-logger';
-import { ChatServiceModule } from './chat-service.module';
 
 async function bootstrap() {
   const logger = new CustomLogger({
-    prefix: 'CHAT',
+    prefix: 'LEARNER',
   });
 
-  const app = await NestFactory.create(ChatServiceModule, {
+  const app = await NestFactory.create(LearnerServiceModule, {
     logger,
   });
 
   const configService = app.get(ConfigService);
 
-  const host = configService.get('chat_service').host;
-  const port = configService.get('chat_service').port;
+  const host = configService.get('learner_service').host;
+  const port = configService.get('learner_service').port;
 
   app.connectMicroservice<MicroserviceOptions>({
     transport: Transport.TCP,
@@ -28,6 +28,6 @@ async function bootstrap() {
 
   await app.startAllMicroservices();
 
-  logger.verbose(`${ChatServiceModule.name} is running on ${host}:${port}`);
+  logger.verbose(`Learner Service is running on ${host}:${port}`);
 }
 bootstrap();

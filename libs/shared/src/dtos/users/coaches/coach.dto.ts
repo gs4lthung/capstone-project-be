@@ -1,10 +1,11 @@
-import { CoachCredentialStatus } from '@app/shared/enums/coach.enum';
+import { CoachVerificationStatus } from '@app/shared/enums/coach.enum';
 import { GqlCustomDateTime } from '@app/shared/graphql/scalars/gql-custom-datetime.scalar';
 import { Field, ObjectType } from '@nestjs/graphql';
 import { ApiProperty } from '@nestjs/swagger';
 import {
-  IsDate,
   IsEnum,
+  IsLatitude,
+  IsLongitude,
   IsNotEmpty,
   IsString,
   MaxLength,
@@ -56,9 +57,6 @@ export class CoachCredentialDto {
 
   @Field(() => String, { nullable: true })
   credentialUrl?: string;
-
-  @Field(() => String)
-  status: CoachCredentialStatus;
 
   @Field(() => GqlCustomDateTime)
   updatedAt: Date;
@@ -119,9 +117,17 @@ export class CreateCoachProfileDto {
   @IsNotEmpty()
   basePrice: number;
 
-  credentials: CreateCoachProfileCredentialDto[];
+  @IsNotEmpty()
+  location: string;
+
+  @IsLatitude()
+  latitude?: number;
+
+  @IsLongitude()
+  longitude?: number;
 }
-class CreateCoachProfileCredentialDto {
+
+export class CreateCoachProfileCredentialDto {
   @ApiProperty({
     example: 'Certified Personal Trainer',
     description: 'Title of the credential',
@@ -143,15 +149,14 @@ class CreateCoachProfileCredentialDto {
     example: '2022-05-20',
     description: 'Issue date of the credential',
   })
-  @IsDate()
   issueDate?: Date;
 
   @ApiProperty({
     example: '2024-05-20',
     description: 'Expiration date of the credential',
   })
-  @IsDate()
   expirationDate?: Date;
+
   @IsString()
   @MaxLength(255)
   credentialUrl?: string;
@@ -163,14 +168,16 @@ export class UpdateCoachProfileDto {
   bio: string;
   specialties: string;
   basePrice: number;
-  credentials: UpdateCoachProfileCredentialDto[];
+  location: string;
+  latitude?: number;
+  longitude?: number;
 
   constructor(partial: Partial<UpdateCoachProfileDto>) {
     Object.assign(this, partial);
   }
 }
 
-class UpdateCoachProfileCredentialDto {
+export class UpdateCoachProfileCredentialDto {
   id: number;
   title: string;
   issuedBy?: string;
@@ -187,25 +194,16 @@ export class VerifyCoachProfileDto {
   @IsNotEmpty()
   id: number;
 
-  credentials: VerifyCoachProfileCredentialDto[];
+  @IsEnum(CoachVerificationStatus)
+  status: CoachVerificationStatus;
+
+  @IsString()
+  adminNote?: string;
 
   constructor(partial: Partial<VerifyCoachProfileDto>) {
     Object.assign(this, partial);
   }
 }
-
-class VerifyCoachProfileCredentialDto {
-  @IsNotEmpty()
-  id: number;
-
-  @IsEnum(CoachCredentialStatus)
-  status: CoachCredentialStatus;
-
-  constructor(partial: Partial<VerifyCoachProfileCredentialDto>) {
-    Object.assign(this, partial);
-  }
-}
-
 export class CreateCoachPackageDto {
   @IsNotEmpty()
   @IsString()

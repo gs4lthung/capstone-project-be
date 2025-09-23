@@ -9,7 +9,7 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { CoachProfile } from './coach_profile.entity';
+import { CoachProfile } from './coach-profile.entity';
 
 @Entity('coach_packages')
 export class CoachPackage {

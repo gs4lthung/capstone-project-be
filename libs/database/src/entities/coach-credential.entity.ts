@@ -8,8 +8,7 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { CoachProfile } from './coach_profile.entity';
-import { CoachCredentialStatus } from '@app/shared/enums/coach.enum';
+import { CoachProfile } from './coach-profile.entity';
 
 @Entity('coach_credentials')
 export class CoachCredential {
@@ -25,15 +24,14 @@ export class CoachCredential {
   @Column({ type: 'date', nullable: true })
   issueDate: Date;
 
+  @Column({ type: 'date', nullable: true })
+  expirationDate: Date;
+
   @Column({ type: 'varchar', length: 255, nullable: true })
   credentialUrl: string;
 
-  @Column({
-    type: 'enum',
-    enum: CoachCredentialStatus,
-    default: CoachCredentialStatus.PENDING,
-  })
-  status: CoachCredentialStatus;
+  @Column({ type: 'text', nullable: true })
+  publicUrl: string;
 
   @ManyToOne(() => CoachProfile, (coachProfile) => coachProfile.credentials, {
     onDelete: 'CASCADE',

@@ -1,5 +1,4 @@
 import { Field, ObjectType } from '@nestjs/graphql';
-import { GqlCustomDateTime } from '@app/shared/graphql/scalars/gql-custom-datetime.scalar';
 
 @ObjectType()
 export class FcmTokenDto {
@@ -17,10 +16,4 @@ export class FcmTokenDto {
 
   @Field(() => String, { nullable: true })
   platform?: string;
-
-  @Field(() => GqlCustomDateTime)
-  createdAt: Date;
-
-  @Field(() => GqlCustomDateTime)
-  lastSeenAt: Date;
 }

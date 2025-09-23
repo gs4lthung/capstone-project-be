@@ -3,7 +3,9 @@ import { CoachServiceService } from './coach-service.service';
 import { MessagePattern } from '@nestjs/microservices';
 import {
   CreateCoachPackageDto,
+  CreateCoachProfileCredentialDto,
   CreateCoachProfileDto,
+  UpdateCoachProfileCredentialDto,
   UpdateCoachProfileDto,
   VerifyCoachProfileDto,
 } from '@app/shared/dtos/users/coaches/coach.dto';
@@ -43,6 +45,30 @@ export class CoachServiceController {
   }): Promise<CustomApiResponse<void>> {
     return this.coachServiceService.verifyCoachProfile(
       payload.adminId,
+      payload.data,
+    );
+  }
+
+  @MessagePattern({ cmd: CoachMsgPattern.CREATE_COACH_PROFILE_CREDENTIAL })
+  async createCoachProfileCredential(payload: {
+    userId: number;
+    data: CreateCoachProfileCredentialDto;
+    file: Express.Multer.File;
+  }): Promise<CustomApiResponse<void>> {
+    return this.coachServiceService.createCoachProfileCredential(
+      payload.userId,
+      payload.data,
+      payload.file,
+    );
+  }
+
+  @MessagePattern({ cmd: CoachMsgPattern.UPDATE_COACH_PROFILE_CREDENTIAL })
+  async updateCoachProfileCredential(payload: {
+    userId: number;
+    data: UpdateCoachProfileCredentialDto;
+  }): Promise<CustomApiResponse<void>> {
+    return this.coachServiceService.updateCoachProfileCredential(
+      payload.userId,
       payload.data,
     );
   }

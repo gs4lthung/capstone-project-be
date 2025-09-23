@@ -3,6 +3,7 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  Index,
   JoinColumn,
   ManyToOne,
   OneToMany,
@@ -12,14 +13,13 @@ import {
 } from 'typeorm';
 import { Error } from './error.entity';
 import { Role } from './role.entity';
-import { FcmToken } from './fcmToken.entity';
+import { FcmToken } from './fcm-token.entity';
 import { AuthProvider } from './auth-provider.entity';
 import { Notification } from './notification.entity';
 import { Order } from './order.entity';
-import { ChatMember } from './chat-members.entity';
-import { Message } from './message.entity';
 import { Video } from './video.entity';
-import { CoachProfile } from './coach_profile.entity';
+import { CoachProfile } from './coach-profile.entity';
+import { LearnerProfile } from './learner-profile.entity';
 
 @Entity('users')
 export class User {
@@ -30,6 +30,7 @@ export class User {
   fullName: string;
 
   @Column({ type: 'varchar', length: 100, unique: true, nullable: true })
+  @Index()
   email: string;
 
   @Column({ type: 'varchar', length: 255, select: false, nullable: true })
@@ -83,12 +84,6 @@ export class User {
   @OneToMany(() => Order, (order) => order.user)
   orders: Order[];
 
-  @OneToMany(() => ChatMember, (member) => member.user)
-  chatMembers: ChatMember[];
-
-  @OneToMany(() => Message, (message) => message.sender)
-  messages: Message[];
-
   @OneToMany(() => Video, (video) => video.user)
   videos: Video[];
 
@@ -97,4 +92,10 @@ export class User {
     eager: true,
   })
   coachProfile: CoachProfile;
+
+  @OneToOne(() => LearnerProfile, (learnerProfile) => learnerProfile.user, {
+    cascade: true,
+    eager: true,
+  })
+  learnerProfile: LearnerProfile;
 }

@@ -1,9 +1,9 @@
 import { Controller } from '@nestjs/common';
 import { VideoServiceService } from './video-service.service';
 import { MessagePattern } from '@nestjs/microservices';
-import { UploadVideoDto } from '@app/shared/dtos/videos/video.dto';
 import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
 import { VideoMsgPattern } from '@app/shared/msg_patterns/video.msg_pattern';
+import { UploadVideoDto } from '@app/shared/dtos/videos/video.dto';
 
 @Controller()
 export class VideoServiceController {

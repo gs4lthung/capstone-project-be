@@ -1,5 +1,4 @@
 import { User } from '@app/database/entities/user.entity';
-import { CreateUserDto } from '@app/shared/dtos/users/create-user.dto';
 import { CustomRpcException } from '@app/shared/customs/custom-rpc-exception';
 import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
 import { ExceptionUtils } from '@app/shared/utils/exception.util';
@@ -9,15 +8,16 @@ import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { ConfigService } from '@app/config';
 import { Role } from '@app/database/entities/role.entity';
-import { RoleEnum } from '@app/shared/enums/role.enum';
+import { UserRole } from '@app/shared/enums/user.enum';
 import { RedisService } from '@app/redis';
 import { FindOptions } from '@app/shared/interfaces/find-options.interface';
 import { BaseTypeOrmService } from '@app/shared/helpers/typeorm.helper';
 import { ClientProxy } from '@nestjs/microservices';
 import { SendNotification } from '@app/shared/interfaces/send-notification.interface';
 import * as fs from 'fs';
-import { PaginatedUser } from '@app/shared/dtos/users/user.dto';
 import { AwsService } from '@app/aws';
+import { CreateUserDto } from '@app/shared/dtos/users/create-user.dto';
+import { PaginatedUser } from '@app/shared/dtos/users/user.dto';
 
 @Injectable()
 export class UserServiceService extends BaseTypeOrmService<User> {
@@ -52,7 +52,7 @@ export class UserServiceService extends BaseTypeOrmService<User> {
       );
 
       const customerRole = await this.roleRepository.findOne({
-        where: { name: RoleEnum.CUSTOMER },
+        where: { name: UserRole.CUSTOMER },
       });
 
       const user = this.userRepository.create({
@@ -65,7 +65,7 @@ export class UserServiceService extends BaseTypeOrmService<User> {
 
       await this.userRepository.save(user);
 
-      await this.redisService.delByPattern('users');
+      await this.redisService.delByPattern('users*');
 
       return new CustomApiResponse<void>(
         HttpStatus.CREATED,

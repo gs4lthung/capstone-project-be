@@ -16,13 +16,11 @@ import { FilteringParams } from '@app/shared/decorators/filtering-params.decorat
 import { Filtering } from '@app/shared/interfaces/filtering.interface';
 import { FindOptions } from '@app/shared/interfaces/find-options.interface';
 import { CacheInterceptor } from '../interceptors/cache.interceptor';
-import { PaginatedUser, UserDto } from '@app/shared/dtos/users/user.dto';
-import { OrderDto } from '@app/shared/dtos/orders/order.dto';
-import { ChatDto } from '@app/shared/dtos/chats/chat.dto';
 import { UserService } from '../services/user.service';
 import { OrderService } from '../services/order.service';
-import { ChatService } from '../services/chat.service';
 import { PaginatedGqlArgs } from '@app/shared/graphql/paginated-gql-args';
+import { PaginatedUser, UserDto } from '@app/shared/dtos/users/user.dto';
+import { OrderDto } from '@app/shared/dtos/orders/order.dto';
 
 @Resolver(() => UserDto)
 @UseInterceptors(CacheInterceptor)
@@ -30,7 +28,6 @@ export class UserResolver {
   constructor(
     private readonly userService: UserService,
     private readonly orderService: OrderService,
-    private readonly chatService: ChatService,
   ) {}
 
   @Query(() => PaginatedUser, { name: 'users' })
@@ -62,10 +59,5 @@ export class UserResolver {
   @ResolveField(() => [OrderDto], { name: 'user_orders' })
   async findUserOrders(@Parent() user: UserDto): Promise<OrderDto[]> {
     return this.orderService.findUserOrders(user.id);
-  }
-
-  @ResolveField(() => [ChatDto], { name: 'user_chats' })
-  async findUserChats(@Parent() user: UserDto): Promise<ChatDto[]> {
-    return this.chatService.findUserChats(user.id);
   }
 }

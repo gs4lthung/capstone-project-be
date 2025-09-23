@@ -5,21 +5,27 @@ import {
   HttpStatus,
   Post,
   Put,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { CoachService } from '../services/coach.service';
 import { ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import {
   CreateCoachPackageDto,
+  CreateCoachProfileCredentialDto,
   CreateCoachProfileDto,
+  UpdateCoachProfileCredentialDto,
   UpdateCoachProfileDto,
   VerifyCoachProfileDto,
 } from '@app/shared/dtos/users/coaches/coach.dto';
 import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
 import { CheckRoles } from '@app/shared/decorators/check-roles.decorator';
 import { RoleGuard } from '../guards/role.guard';
-import { RoleEnum } from '@app/shared/enums/role.enum';
+import { UserRole } from '@app/shared/enums/user.enum';
 import { AuthGuard } from '../guards/auth.guard';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { FileSizeLimitEnum } from '@app/shared/enums/file.enum';
 
 @Controller('coaches')
 export class CoachController {
@@ -28,7 +34,7 @@ export class CoachController {
   @HttpCode(HttpStatus.CREATED)
   @ApiBearerAuth()
   @ApiOperation({
-    tags: ['Users'],
+    tags: ['Coaches'],
     summary: 'Create Coach Profile',
     description: 'Create a coach profile for the authenticated user',
   })
@@ -47,7 +53,7 @@ export class CoachController {
   @HttpCode(HttpStatus.OK)
   @ApiBearerAuth()
   @ApiOperation({
-    tags: ['Users'],
+    tags: ['Coaches'],
     summary: 'Update Coach Profile',
     description: 'Update the coach profile of the authenticated user',
   })
@@ -66,7 +72,7 @@ export class CoachController {
   @HttpCode(HttpStatus.OK)
   @ApiBearerAuth()
   @ApiOperation({
-    tags: ['Users'],
+    tags: ['Coaches'],
     summary: 'Verify Coach Profile',
     description: 'Verify a coach profile by admin',
   })
@@ -74,7 +80,7 @@ export class CoachController {
     status: HttpStatus.OK,
     description: 'Coach profile verified successfully',
   })
-  @CheckRoles(RoleEnum.ADMIN)
+  @CheckRoles(UserRole.ADMIN)
   @UseGuards(AuthGuard, RoleGuard)
   async verifyCoachProfile(
     @Body() data: VerifyCoachProfileDto,
@@ -82,11 +88,57 @@ export class CoachController {
     return this.coachService.verifyCoachProfile(data);
   }
 
+  @Post('profiles/credentials')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiBearerAuth()
+  @ApiOperation({
+    tags: ['Coaches'],
+    summary: 'Create Coach Profile Credential',
+    description: 'Create a credential for the authenticated coach user',
+  })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: 'Coach profile credential created successfully',
+  })
+  @UseGuards(AuthGuard)
+  @UseInterceptors(
+    FileInterceptor('credential_image', {
+      limits: {
+        fileSize: FileSizeLimitEnum.IMAGE,
+      },
+    }),
+  )
+  async createCoachProfileCredential(
+    @UploadedFile() file: Express.Multer.File,
+    @Body() data: CreateCoachProfileCredentialDto,
+  ): Promise<CustomApiResponse<void>> {
+    return this.coachService.createCoachProfileCredential(file, data);
+  }
+
+  @Put('profiles/credentials')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiOperation({
+    tags: ['Coaches'],
+    summary: 'Update Coach Profile Credential',
+    description: 'Update a credential for the authenticated coach user',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Coach profile credential updated successfully',
+  })
+  @UseGuards(AuthGuard)
+  async updateCoachProfileCredential(
+    @Body() data: UpdateCoachProfileCredentialDto,
+  ): Promise<CustomApiResponse<void>> {
+    return this.coachService.updateCoachProfileCredential(data);
+  }
+
   @Post('packages')
   @HttpCode(HttpStatus.CREATED)
   @ApiBearerAuth()
   @ApiOperation({
-    tags: ['Users'],
+    tags: ['Coaches'],
     summary: 'Create Coach Package',
     description: 'Create a coach package for the authenticated user',
   })

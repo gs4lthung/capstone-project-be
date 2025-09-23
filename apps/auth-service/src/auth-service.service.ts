@@ -14,7 +14,7 @@ import {
 } from '@app/shared/dtos/auth/login.dto';
 import { JwtService, TokenExpiredError } from '@nestjs/jwt';
 import { JwtPayloadDto } from '@app/shared/dtos/auth/jwt.payload.dto';
-import { RoleEnum } from '@app/shared/enums/role.enum';
+import { UserRole } from '@app/shared/enums/user.enum';
 import { Role } from '@app/database/entities/role.entity';
 import { ExceptionUtils } from '@app/shared/utils/exception.util';
 import { RedisService } from '@app/redis';
@@ -483,7 +483,7 @@ export class AuthServiceService {
     if (this.customerRoleId !== null) return this.customerRoleId;
 
     const role = await this.roleRepository.findOne({
-      where: { name: RoleEnum.CUSTOMER },
+      where: { name: UserRole.CUSTOMER },
     });
 
     if (!role) {

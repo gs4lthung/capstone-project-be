@@ -37,19 +37,13 @@ import { Role } from '@app/database/entities/role.entity';
 import { UserService } from './services/user.service';
 import { AuthService } from './services/auth.service';
 import { AuthProvider } from '@app/database/entities/auth-provider.entity';
-import { ChatService } from './services/chat.service';
-import { Chat } from '@app/database/entities/chat.entity';
-import { ChatMember } from '@app/database/entities/chat-members.entity';
-import { Message } from '@app/database/entities/message.entity';
-import { MessageRead } from '@app/database/entities/message-read.entity';
 import { UserController } from './controllers/user.controller';
 import { AuthController } from './controllers/auth.controller';
-import { ChatController } from './controllers/chat.controller';
 import { OrderController } from './controllers/order.controller';
 import { OrderService } from './services/order.service';
 import { Order } from '@app/database/entities/order.entity';
-import { CoachProfile } from '@app/database/entities/coach_profile.entity';
-import { CoachCredential } from '@app/database/entities/coach_credential.entity';
+import { CoachProfile } from '@app/database/entities/coach-profile.entity';
+import { CoachCredential } from '@app/database/entities/coach-credential.entity';
 import { Video } from '@app/database/entities/video.entity';
 import { CoachController } from './controllers/coach.controller';
 import { CoachService } from './services/coach.service';
@@ -57,19 +51,20 @@ import { AmqpConnectionManagerSocketOptions } from '@nestjs/microservices/extern
 import { CustomWebsocketI18nResolver } from './resolvers/ws.resolver';
 import { VideoController } from './controllers/video.controller';
 import { VideoService } from './services/video.service';
+import { LearnerController } from './controllers/learner.controller';
+import { LearnerService } from './services/learner.service';
 
 const tcp_services = [
   { name: 'AUTH_SERVICE' },
   { name: 'USER_SERVICE' },
   { name: 'ORDER_SERVICE' },
-  { name: 'CHAT_SERVICE' },
   { name: 'COACH_SERVICE' },
+  { name: 'LEARNER_SERVICE' },
 ];
 
 const rmb_services = [
   { name: 'PAYMENT_SERVICE', queue: 'payment_queue' },
   { name: 'NOTIFICATION_SERVICE', queue: 'notification_queue' },
-  { name: 'MESSAGE_SERVICE', queue: 'message_queue' },
   { name: 'MAIL_SERVICE', queue: 'mail_queue' },
   { name: 'VIDEO_SERVICE', queue: 'video_queue' },
 ];
@@ -97,10 +92,6 @@ const rmb_services = [
       Notification,
       Role,
       AuthProvider,
-      Chat,
-      ChatMember,
-      Message,
-      MessageRead,
       Order,
       CoachProfile,
       CoachCredential,
@@ -199,10 +190,10 @@ const rmb_services = [
     AppController,
     UserController,
     AuthController,
-    ChatController,
     OrderController,
     VideoController,
     CoachController,
+    LearnerController,
   ],
   providers: [
     AppService,
@@ -211,7 +202,7 @@ const rmb_services = [
     CoachService,
     VideoService,
     AuthService,
-    ChatService,
+    LearnerService,
     OrderService,
     SocketGateway,
     ConfigService,

@@ -1,6 +1,5 @@
 import { User } from '@app/database/entities/user.entity';
 import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
-import { CreateUserDto } from '@app/shared/dtos/users/create-user.dto';
 import { Inject, Injectable, Scope } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 
@@ -9,6 +8,7 @@ import { REQUEST } from '@nestjs/core';
 import { CustomApiRequest } from '@app/shared/customs/custom-api-request';
 import { lastValueFrom } from 'rxjs';
 import { UserMsgPattern } from '@app/shared/msg_patterns/user.msg_pattern';
+import { CreateUserDto } from '@app/shared/dtos/users/create-user.dto';
 import { PaginatedUser } from '@app/shared/dtos/users/user.dto';
 
 @Injectable({ scope: Scope.REQUEST })

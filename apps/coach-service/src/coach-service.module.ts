@@ -6,15 +6,17 @@ import { RedisModule } from '@app/redis';
 import { DatabaseModule } from '@app/database';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from '@app/database/entities/user.entity';
-import { CoachProfile } from '@app/database/entities/coach_profile.entity';
-import { CoachCredential } from '@app/database/entities/coach_credential.entity';
+import { CoachProfile } from '@app/database/entities/coach-profile.entity';
+import { CoachCredential } from '@app/database/entities/coach-credential.entity';
 import { ClientsModule, Transport } from '@nestjs/microservices';
-import { CoachPackage } from '@app/database/entities/coach_packages.entity';
+import { CoachPackage } from '@app/database/entities/coach-packages.entity';
 import { AmqpConnectionManagerSocketOptions } from '@nestjs/microservices/external/rmq-url.interface';
 import { Role } from '@app/database/entities/role.entity';
+import { AwsModule } from '@app/aws';
 
 @Module({
   imports: [
+    AwsModule,
     ConfigModule,
     RedisModule,
     DatabaseModule,

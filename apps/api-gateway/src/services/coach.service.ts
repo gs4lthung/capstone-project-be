@@ -2,7 +2,9 @@ import { CustomApiRequest } from '@app/shared/customs/custom-api-request';
 import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
 import {
   CreateCoachPackageDto,
+  CreateCoachProfileCredentialDto,
   CreateCoachProfileDto,
+  UpdateCoachProfileCredentialDto,
   UpdateCoachProfileDto,
   VerifyCoachProfileDto,
 } from '@app/shared/dtos/users/coaches/coach.dto';
@@ -40,6 +42,27 @@ export class CoachService {
   async verifyCoachProfile(data: VerifyCoachProfileDto) {
     const pattern = { cmd: CoachMsgPattern.VERIFY_COACH_PROFILE };
     const payload = { adminId: this.request.user.id, data };
+    const response = await lastValueFrom(
+      this.coachService.send<CustomApiResponse<void>>(pattern, payload),
+    );
+    return response;
+  }
+
+  async createCoachProfileCredential(
+    file: Express.Multer.File,
+    data: CreateCoachProfileCredentialDto,
+  ) {
+    const pattern = { cmd: CoachMsgPattern.CREATE_COACH_PROFILE_CREDENTIAL };
+    const payload = { userId: this.request.user.id, data, file };
+    const response = await lastValueFrom(
+      this.coachService.send<CustomApiResponse<void>>(pattern, payload),
+    );
+    return response;
+  }
+
+  async updateCoachProfileCredential(data: UpdateCoachProfileCredentialDto) {
+    const pattern = { cmd: CoachMsgPattern.UPDATE_COACH_PROFILE_CREDENTIAL };
+    const payload = { userId: this.request.user.id, data };
     const response = await lastValueFrom(
       this.coachService.send<CustomApiResponse<void>>(pattern, payload),
     );

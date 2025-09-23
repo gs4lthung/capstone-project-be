@@ -20,7 +20,6 @@ export class AppService {
     @Inject('PAYMENT_SERVICE')
     private readonly paymentService: ClientProxy,
     @Inject('ORDER_SERVICE') private readonly orderService: ClientProxy,
-    @Inject('CHAT_SERVICE') private readonly chatService: ClientProxy,
     @Inject('VIDEO_SERVICE') private readonly videoService: ClientProxy,
   ) {}
 

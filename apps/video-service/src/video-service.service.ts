@@ -4,9 +4,9 @@ import { HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as fs from 'fs';
-import { UploadVideoDto } from '@app/shared/dtos/videos/video.dto';
 import { AwsService } from '@app/aws';
 import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
+import { UploadVideoDto } from '@app/shared/dtos/videos/video.dto';
 @Injectable()
 export class VideoServiceService {
   constructor(

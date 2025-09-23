@@ -1,4 +1,4 @@
-import { RoleEnum } from '@app/shared/enums/role.enum';
+import { UserRole } from '@app/shared/enums/user.enum';
 import { AppDataSource } from '../data-source';
 import { Role } from '../entities/role.entity';
 
@@ -7,7 +7,7 @@ async function runSeed() {
 
   const roleRepo = AppDataSource.getRepository(Role);
 
-  const roles = RoleEnum;
+  const roles = UserRole;
 
   for (const role of Object.values(roles)) {
     await roleRepo.save(roleRepo.create({ name: role }));

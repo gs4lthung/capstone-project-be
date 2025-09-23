@@ -4,18 +4,16 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
 import { Error } from './entities/error.entity';
 import { AuthProvider } from './entities/auth-provider.entity';
-import { FcmToken } from './entities/fcmToken.entity';
+import { FcmToken } from './entities/fcm-token.entity';
 import { Notification } from './entities/notification.entity';
 import { Order } from './entities/order.entity';
 import { Role } from './entities/role.entity';
-import { Chat } from './entities/chat.entity';
-import { ChatMember } from './entities/chat-members.entity';
-import { Message } from './entities/message.entity';
-import { MessageRead } from './entities/message-read.entity';
 import { Video } from './entities/video.entity';
-import { CoachProfile } from './entities/coach_profile.entity';
-import { CoachCredential } from './entities/coach_credential.entity';
-import { CoachPackage } from './entities/coach_packages.entity';
+import { CoachProfile } from './entities/coach-profile.entity';
+import { CoachCredential } from './entities/coach-credential.entity';
+import { CoachPackage } from './entities/coach-packages.entity';
+import { LearnerProfile } from './entities/learner-profile.entity';
+import { SkillAssessment } from './entities/skill-assessments.entity';
 
 @Module({
   imports: [
@@ -37,14 +35,12 @@ import { CoachPackage } from './entities/coach_packages.entity';
           Notification,
           Order,
           Role,
-          Chat,
-          ChatMember,
-          Message,
-          MessageRead,
           Video,
           CoachProfile,
           CoachCredential,
           CoachPackage,
+          LearnerProfile,
+          SkillAssessment,
         ],
         logging: false,
         synchronize: configService.get('node_env') === 'dev',

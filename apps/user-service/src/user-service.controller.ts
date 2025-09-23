@@ -3,10 +3,10 @@ import { UserServiceService } from './user-service.service';
 import { MessagePattern } from '@nestjs/microservices';
 import { User } from '@app/database/entities/user.entity';
 import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
-import { CreateUserDto } from '@app/shared/dtos/users/create-user.dto';
 import { FindOptions } from '@app/shared/interfaces/find-options.interface';
 import { UserMsgPattern } from '@app/shared/msg_patterns/user.msg_pattern';
 import { PaginatedUser } from '@app/shared/dtos/users/user.dto';
+import { CreateUserDto } from '@app/shared/dtos/users/create-user.dto';
 
 @Controller()
 export class UserServiceController {
