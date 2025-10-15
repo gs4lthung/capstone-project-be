@@ -2,8 +2,6 @@ import { GqlCustomDateTime } from '@app/shared/graphql/scalars/gql-custom-dateti
 import { Field, ObjectType } from '@nestjs/graphql';
 import { RoleDto } from '../roles/role.dto';
 import { PaginatedResource } from '@app/shared/graphql/paginated-resource';
-import { CoachProfileDto } from './coaches/coach.dto';
-import { FcmTokenDto } from '../fcm-tokens/fcm-token.dto';
 
 @ObjectType()
 export class UserDto {
@@ -33,12 +31,6 @@ export class UserDto {
 
   @Field(() => RoleDto, { nullable: true })
   role: RoleDto;
-
-  @Field(() => [FcmTokenDto], { nullable: true })
-  fcmTokens: FcmTokenDto[];
-
-  @Field(() => CoachProfileDto, { nullable: true })
-  coachProfile?: CoachProfileDto;
 }
 
 @ObjectType()

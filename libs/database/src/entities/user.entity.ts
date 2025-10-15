@@ -7,19 +7,13 @@ import {
   JoinColumn,
   ManyToOne,
   OneToMany,
-  OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { Error } from './error.entity';
 import { Role } from './role.entity';
-import { FcmToken } from './fcm-token.entity';
 import { AuthProvider } from './auth-provider.entity';
 import { Notification } from './notification.entity';
-import { Order } from './order.entity';
-import { Video } from './video.entity';
-import { CoachProfile } from './coach-profile.entity';
-import { LearnerProfile } from './learner-profile.entity';
 
 @Entity('users')
 export class User {
@@ -72,30 +66,6 @@ export class User {
   @JoinColumn({ name: 'roleId' })
   role: Role;
 
-  @OneToMany(() => FcmToken, (fcmToken) => fcmToken.user, {
-    cascade: true,
-    eager: true,
-  })
-  fcmTokens: FcmToken[];
-
   @OneToMany(() => Notification, (notification) => notification.user)
   notifications: Notification[];
-
-  @OneToMany(() => Order, (order) => order.user)
-  orders: Order[];
-
-  @OneToMany(() => Video, (video) => video.user)
-  videos: Video[];
-
-  @OneToOne(() => CoachProfile, (coachProfile) => coachProfile.user, {
-    cascade: true,
-    eager: true,
-  })
-  coachProfile: CoachProfile;
-
-  @OneToOne(() => LearnerProfile, (learnerProfile) => learnerProfile.user, {
-    cascade: true,
-    eager: true,
-  })
-  learnerProfile: LearnerProfile;
 }

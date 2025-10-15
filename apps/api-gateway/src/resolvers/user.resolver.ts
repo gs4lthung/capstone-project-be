@@ -1,11 +1,4 @@
-import {
-  Args,
-  Int,
-  Parent,
-  Query,
-  ResolveField,
-  Resolver,
-} from '@nestjs/graphql';
+import { Args, Int, Query, Resolver } from '@nestjs/graphql';
 import { UseGuards, UseInterceptors } from '@nestjs/common';
 import { AuthGuard } from '../guards/auth.guard';
 import { PaginationParams } from '@app/shared/decorators/pagination-params.decorator';
@@ -17,18 +10,13 @@ import { Filtering } from '@app/shared/interfaces/filtering.interface';
 import { FindOptions } from '@app/shared/interfaces/find-options.interface';
 import { CacheInterceptor } from '../interceptors/cache.interceptor';
 import { UserService } from '../services/user.service';
-import { OrderService } from '../services/order.service';
 import { PaginatedGqlArgs } from '@app/shared/graphql/paginated-gql-args';
 import { PaginatedUser, UserDto } from '@app/shared/dtos/users/user.dto';
-import { OrderDto } from '@app/shared/dtos/orders/order.dto';
 
 @Resolver(() => UserDto)
 @UseInterceptors(CacheInterceptor)
 export class UserResolver {
-  constructor(
-    private readonly userService: UserService,
-    private readonly orderService: OrderService,
-  ) {}
+  constructor(private readonly userService: UserService) {}
 
   @Query(() => PaginatedUser, { name: 'users' })
   @UseGuards(AuthGuard)
@@ -54,10 +42,5 @@ export class UserResolver {
   ): Promise<UserDto> {
     const user = this.userService.findOne(id);
     return user;
-  }
-
-  @ResolveField(() => [OrderDto], { name: 'user_orders' })
-  async findUserOrders(@Parent() user: UserDto): Promise<OrderDto[]> {
-    return this.orderService.findUserOrders(user.id);
   }
 }

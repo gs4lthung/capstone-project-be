@@ -39,20 +39,11 @@ import { AuthService } from './services/auth.service';
 import { AuthProvider } from '@app/database/entities/auth-provider.entity';
 import { UserController } from './controllers/user.controller';
 import { AuthController } from './controllers/auth.controller';
-import { OrderController } from './controllers/order.controller';
-import { OrderService } from './services/order.service';
-import { Order } from '@app/database/entities/order.entity';
-import { CoachProfile } from '@app/database/entities/coach-profile.entity';
-import { CoachCredential } from '@app/database/entities/coach-credential.entity';
-import { Video } from '@app/database/entities/video.entity';
-import { CoachController } from './controllers/coach.controller';
-import { CoachService } from './services/coach.service';
 import { AmqpConnectionManagerSocketOptions } from '@nestjs/microservices/external/rmq-url.interface';
 import { CustomWebsocketI18nResolver } from './resolvers/ws.resolver';
-import { VideoController } from './controllers/video.controller';
-import { VideoService } from './services/video.service';
-import { LearnerController } from './controllers/learner.controller';
-import { LearnerService } from './services/learner.service';
+import { AwsModule } from '@app/aws';
+import { MailerModule } from '@nestjs-modules/mailer';
+import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
 
 const tcp_services = [
   { name: 'AUTH_SERVICE' },
@@ -86,17 +77,35 @@ const rmb_services = [
     ScheduleModule.forRoot(),
     DatabaseModule,
     RedisModule,
-    TypeOrmModule.forFeature([
-      Error,
-      User,
-      Notification,
-      Role,
-      AuthProvider,
-      Order,
-      CoachProfile,
-      CoachCredential,
-      Video,
-    ]),
+    AwsModule,
+    MailerModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: async (configService: ConfigService) => ({
+        transport: {
+          host: configService.get('mail').host,
+          port: configService.get('mail').port,
+          secure: configService.get('mail').secure,
+          auth: {
+            user: configService.get('mail').user,
+            pass: configService.get('mail').pass,
+          },
+        },
+        defaults: {
+          from: `"No Reply" <Hello>`,
+        },
+        template: {
+          dir: __dirname + '/src/mail-templates',
+          adapter: new HandlebarsAdapter(undefined, {
+            inlineCssEnabled: true,
+          }),
+          options: {
+            strict: true,
+          },
+        },
+      }),
+    }),
+    TypeOrmModule.forFeature([Error, User, Notification, Role, AuthProvider]),
     ErrorModule,
     I18nModule.forRoot({
       fallbackLanguage: 'en',
@@ -186,24 +195,12 @@ const rmb_services = [
       }),
     }),
   ],
-  controllers: [
-    AppController,
-    UserController,
-    AuthController,
-    OrderController,
-    VideoController,
-    CoachController,
-    LearnerController,
-  ],
+  controllers: [AppController, UserController, AuthController],
   providers: [
     AppService,
     UserService,
     UserResolver,
-    CoachService,
-    VideoService,
     AuthService,
-    LearnerService,
-    OrderService,
     SocketGateway,
     ConfigService,
     JwtService,

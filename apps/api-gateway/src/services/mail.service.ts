@@ -3,7 +3,7 @@ import { MailerService } from '@nestjs-modules/mailer';
 import { Injectable } from '@nestjs/common';
 
 @Injectable()
-export class MailServiceService {
+export class MailService {
   constructor(private readonly mailService: MailerService) {}
   async sendMail(data: MailSendDto): Promise<void> {
     await this.mailService.sendMail({

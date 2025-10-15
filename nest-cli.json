@@ -26,24 +26,6 @@
         ]
       }
     },
-    "auth-service": {
-      "type": "application",
-      "root": "apps/auth-service",
-      "entryFile": "main",
-      "sourceRoot": "apps/auth-service/src",
-      "compilerOptions": {
-        "tsConfigPath": "apps/auth-service/tsconfig.app.json"
-      }
-    },
-    "user-service": {
-      "type": "application",
-      "root": "apps/user-service",
-      "entryFile": "main",
-      "sourceRoot": "apps/user-service/src",
-      "compilerOptions": {
-        "tsConfigPath": "apps/user-service/tsconfig.app.json"
-      }
-    },
     "config": {
       "type": "library",
       "root": "libs/config",
@@ -71,15 +53,6 @@
         "tsConfigPath": "libs/shared/tsconfig.lib.json"
       }
     },
-    "notification-service": {
-      "type": "application",
-      "root": "apps/notification-service",
-      "entryFile": "main",
-      "sourceRoot": "apps/notification-service/src",
-      "compilerOptions": {
-        "tsConfigPath": "apps/notification-service/tsconfig.app.json"
-      }
-    },
     "firebase": {
       "type": "library",
       "root": "libs/firebase",
@@ -96,22 +69,6 @@
       "sourceRoot": "libs/redis/src",
       "compilerOptions": {
         "tsConfigPath": "libs/redis/tsconfig.lib.json"
-      }
-    },
-    "mail-service": {
-      "type": "application",
-      "root": "apps/mail-service",
-      "entryFile": "main",
-      "sourceRoot": "apps/mail-service/src",
-      "compilerOptions": {
-        "tsConfigPath": "apps/mail-service/tsconfig.app.json",
-        "assets": [
-          {
-            "include": "templates/**/*.hbs",
-            "outDir": "dist/apps/mail-service/src"
-          }
-        ],
-        "watchAssets": true
       }
     },
     "cloudinary": {
@@ -141,24 +98,6 @@
         "tsConfigPath": "libs/payos/tsconfig.lib.json"
       }
     },
-    "order-service": {
-      "type": "application",
-      "root": "apps/order-service",
-      "entryFile": "main",
-      "sourceRoot": "apps/order-service/src",
-      "compilerOptions": {
-        "tsConfigPath": "apps/order-service/tsconfig.app.json"
-      }
-    },
-    "chat-service": {
-      "type": "application",
-      "root": "apps/chat-service",
-      "entryFile": "main",
-      "sourceRoot": "apps/chat-service/src",
-      "compilerOptions": {
-        "tsConfigPath": "apps/chat-service/tsconfig.app.json"
-      }
-    },
     "ffmpeg": {
       "type": "library",
       "root": "libs/ffmpeg",
@@ -166,24 +105,6 @@
       "sourceRoot": "libs/ffmpeg/src",
       "compilerOptions": {
         "tsConfigPath": "libs/ffmpeg/tsconfig.lib.json"
-      }
-    },
-    "video-service": {
-      "type": "application",
-      "root": "apps/video-service",
-      "entryFile": "main",
-      "sourceRoot": "apps/video-service/src",
-      "compilerOptions": {
-        "tsConfigPath": "apps/video-service/tsconfig.app.json"
-      }
-    },
-    "coach-service": {
-      "type": "application",
-      "root": "apps/coach-service",
-      "entryFile": "main",
-      "sourceRoot": "apps/coach-service/src",
-      "compilerOptions": {
-        "tsConfigPath": "apps/coach-service/tsconfig.app.json"
       }
     },
     "aws": {
@@ -202,15 +123,6 @@
       "sourceRoot": "libs/twilio/src",
       "compilerOptions": {
         "tsConfigPath": "libs/twilio/tsconfig.lib.json"
-      }
-    },
-    "learner-service": {
-      "type": "application",
-      "root": "apps/learner-service",
-      "entryFile": "main",
-      "sourceRoot": "apps/learner-service/src",
-      "compilerOptions": {
-        "tsConfigPath": "apps/learner-service/tsconfig.app.json"
       }
     }
   }
