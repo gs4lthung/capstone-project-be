@@ -1,0 +1,16 @@
+export enum RequestType {
+  COURSE_APPROVAL = 'COURSE_APPROVAL',
+  COACH_VERIFICATION = 'COACH_VERIFICATION',
+  CONTENT_APPROVAL = 'CONTENT_APPROVAL',
+}
+
+export enum RequestStatus {
+  PENDING = 'PENDING',
+  APPROVED = 'APPROVED',
+  REJECTED = 'REJECTED',
+}
+
+export enum RequestActionType {
+  APPROVED = 'APPROVED',
+  REJECTED = 'REJECTED',
+}

@@ -1,0 +1,20 @@
+export enum CourseLearningFormat {
+  INDIVIDUAL = 'INDIVIDUAL',
+  GROUP = 'GROUP',
+}
+
+export enum CourseStatus {
+  PENDING_APPROVAL = 'PENDING_APPROVAL',
+  APPROVED = 'APPROVED',
+  REJECTED = 'REJECTED',
+  CANCELLED = 'CANCELLED',
+  COMPLETED = 'COMPLETED',
+  FULL = 'FULL',
+  READY_OPENED = 'READY_OPENED',
+}
+
+export enum CourseCredentialType {
+  CERTIFICATE = 'CERTIFICATE',
+  PRIZE = 'PRIZE',
+  ACHIEVEMENT = 'ACHIEVEMENT',
+}

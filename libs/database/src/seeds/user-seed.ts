@@ -6,7 +6,7 @@ import * as bcrypt from 'bcrypt';
 import { AuthProvider } from '../entities/auth-provider.entity';
 import { AuthProviderEnum } from '@app/shared/enums/auth.enum';
 import { CoachVerificationStatus } from '@app/shared/enums/coach.enum';
-import { PickleBallLevelEnum } from '@app/shared/enums/pickleball.enum';
+import { PickleBallLevelEnum } from '@app/shared/enums/learning-content.enum';
 async function runSeed() {
   await AppDataSource.initialize();
 

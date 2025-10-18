@@ -6,6 +6,45 @@ import { Error } from './entities/error.entity';
 import { AuthProvider } from './entities/auth-provider.entity';
 import { Notification } from './entities/notification.entity';
 import { Role } from './entities/role.entity';
+import { Achievement } from './entities/achievement.entity';
+import { AchievementProgress } from './entities/achievement-progress.entity';
+import { Admin } from './entities/admin.entity';
+import { AiVideoComparisonResult } from './entities/ai-video-comparison-result.entity';
+import { Attendance } from './entities/attendance.entity';
+import { Coach } from './entities/coach.entity';
+import { Configuration } from './entities/configuration.entity';
+import { Course } from './entities/course.entity';
+import { Credential } from './entities/credential.entity';
+import { Drill } from './entities/drill.entity';
+import { Enrollment } from './entities/enrollment.entity';
+import { EventCountAchievement } from './entities/event-count-achievement.entity';
+import { Feedback } from './entities/feedback.entity';
+import { Learner } from './entities/learner.entity';
+import { LearnerAchievement } from './entities/learner-achievement.entity';
+import { LearnerAnswer } from './entities/learner-answer.entity';
+import { LearnerProgress } from './entities/learner-progress.entity';
+import { LearnerSkillAssessment } from './entities/learner-skill-assessment.entity';
+import { LearnerVideo } from './entities/learner-video.entity';
+import { LearningContent } from './entities/learning-content.entity';
+import { Note } from './entities/note.entity';
+import { Payment } from './entities/payment.entity';
+import { PropertyCheckAchievement } from './entities/property-check-achievement.entity';
+import { Quiz } from './entities/quiz.entity';
+import { Question } from './entities/question.entity';
+import { QuestionOption } from './entities/question-option.entity';
+import { QuizAttempt } from './entities/quiz_attempt.entity';
+import { Request } from './entities/request.entity';
+import { RequestAction } from './entities/request-action.entity';
+import { Schedule } from './entities/schedule.entity';
+import { Session } from './entities/session.entity';
+import { SessionEarning } from './entities/session-earning.entity';
+import { SessionLearningContent } from './entities/session-learning-content.entity';
+import { SkillAssessmentTemplate } from './entities/skill-assessment-template.entity';
+import { StreakAchievement } from './entities/streak-achievement.entity';
+import { Wallet } from './entities/wallet.entity';
+import { Video } from './entities/video.entity';
+import { WalletTransaction } from './entities/wallet-transaction.entity';
+import { WithdrawalRequest } from './entities/withdrawal-request.entity';
 
 @Module({
   imports: [
@@ -19,7 +58,52 @@ import { Role } from './entities/role.entity';
         username: configService.get('database').username,
         password: configService.get('database').password,
         database: configService.get('database').database,
-        entities: [User, Error, AuthProvider, Notification, Role],
+        entities: [
+          Achievement,
+          AchievementProgress,
+          Admin,
+          AiVideoComparisonResult,
+          Attendance,
+          AuthProvider,
+          Coach,
+          Configuration,
+          Course,
+          Credential,
+          Drill,
+          Enrollment,
+          Error,
+          EventCountAchievement,
+          Feedback,
+          Learner,
+          LearnerAchievement,
+          LearnerAnswer,
+          LearnerProgress,
+          LearnerSkillAssessment,
+          LearnerVideo,
+          LearningContent,
+          Note,
+          Notification,
+          Payment,
+          PropertyCheckAchievement,
+          Quiz,
+          Question,
+          QuestionOption,
+          QuizAttempt,
+          Request,
+          RequestAction,
+          Role,
+          Schedule,
+          Session,
+          SessionEarning,
+          SessionLearningContent,
+          SkillAssessmentTemplate,
+          StreakAchievement,
+          User,
+          Video,
+          WalletTransaction,
+          WithdrawalRequest,
+          Wallet,
+        ],
         logging: false,
         synchronize: configService.get('node_env') === 'dev',
         ssl:
