@@ -1,5 +1,11 @@
 import { PickleballLevel } from '@app/shared/enums/pickleball.enum';
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  ManyToOne,
+  OneToMany,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { Enrollment } from './enrollment.entity';
 import { Feedback } from './feedback.entity';
 import { Note } from './note.entity';
@@ -10,6 +16,8 @@ import { AchievementProgress } from './achievement-progress.entity';
 import { LearnerAchievement } from './learner-achievement.entity';
 import { LearnerVideo } from './learner-video.entity';
 import { LearnerSkillAssessment } from './learner-skill-assessment.entity';
+import { IsEnum } from 'class-validator';
+import { User } from './user.entity';
 
 @Entity('learners')
 export class Learner {
@@ -22,6 +30,7 @@ export class Learner {
     enum: PickleballLevel,
     default: PickleballLevel.BEGINNER,
   })
+  @IsEnum(PickleballLevel)
   skillLevel: PickleballLevel;
 
   @Column({
@@ -30,6 +39,7 @@ export class Learner {
     enum: PickleballLevel,
     default: PickleballLevel.BEGINNER,
   })
+  @IsEnum(PickleballLevel)
   learningGoal: PickleballLevel;
 
   @OneToMany(() => Enrollment, (enrollment) => enrollment.learner)
@@ -70,4 +80,9 @@ export class Learner {
     (learnerSkillAssessment) => learnerSkillAssessment.learner,
   )
   learnerSkillAssessments: LearnerSkillAssessment[];
+
+  @ManyToOne(() => User, (user) => user.learner, {
+    onDelete: 'CASCADE',
+  })
+  user: User;
 }

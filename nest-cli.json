@@ -16,14 +16,7 @@
       "entryFile": "main",
       "sourceRoot": "apps/api-gateway/src",
       "compilerOptions": {
-        "tsConfigPath": "apps/api-gateway/tsconfig.app.json",
-        "assets": [
-          {
-            "include": "i18n/**/*.json",
-            "outDir": "dist/apps/api-gateway/src",
-            "watchAssets": true
-          }
-        ]
+        "tsConfigPath": "apps/api-gateway/tsconfig.app.json"
       }
     },
     "config": {
@@ -78,15 +71,6 @@
       "sourceRoot": "libs/cloudinary/src",
       "compilerOptions": {
         "tsConfigPath": "libs/cloudinary/tsconfig.lib.json"
-      }
-    },
-    "payment-service": {
-      "type": "application",
-      "root": "apps/payment-service",
-      "entryFile": "main",
-      "sourceRoot": "apps/payment-service/src",
-      "compilerOptions": {
-        "tsConfigPath": "apps/payment-service/tsconfig.app.json"
       }
     },
     "payos": {

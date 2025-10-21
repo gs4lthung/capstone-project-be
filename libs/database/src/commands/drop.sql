@@ -1,6 +1,6 @@
 DROP TABLE IF EXISTS admins,
 achievements,
-achievement_processes,
+achievement_proccesses,
 ai_video_comparison_results,
 attendances,
 auth_providers,

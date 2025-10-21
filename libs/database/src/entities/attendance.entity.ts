@@ -1,4 +1,10 @@
-import { Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  CreateDateColumn,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { Learner } from './learner.entity';
 import { Session } from './session.entity';
 
@@ -6,6 +12,9 @@ import { Session } from './session.entity';
 export class Attendance {
   @PrimaryGeneratedColumn()
   id: number;
+
+  @CreateDateColumn({ name: 'created_at' })
+  createdAt: Date;
 
   @ManyToOne(() => Learner, (learner) => learner.attendances, {
     onDelete: 'CASCADE',

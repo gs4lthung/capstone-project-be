@@ -36,6 +36,7 @@ export class WalletTransaction {
 
   @ManyToOne(() => Session, (session) => session.transactions, {
     onDelete: 'CASCADE',
+    nullable: true,
   })
   @JoinColumn({ name: 'session_id' })
   session: Session;
@@ -45,6 +46,7 @@ export class WalletTransaction {
     (withdrawalRequest) => withdrawalRequest.walletTransactions,
     {
       onDelete: 'CASCADE',
+      nullable: true,
     },
   )
   @JoinColumn({ name: 'withdrawal_request_id' })

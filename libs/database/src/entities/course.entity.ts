@@ -74,7 +74,7 @@ export class Course {
   @Min(1)
   maxParticipants: number;
 
-  @Column({ name: 'price_per_participant', type: 'int', default: 0 })
+  @Column({ name: 'price_per_participant', type: 'bigint', default: 0 })
   @IsInt()
   @Min(0)
   pricePerParticipant: number;
@@ -96,12 +96,14 @@ export class Course {
   @DeleteDateColumn({ name: 'deleted_at' })
   deletedAt?: Date;
 
-  @ManyToOne(() => Coach, (coach) => coach.courses, { onDelete: 'SET NULL' })
+  @ManyToOne(() => Coach, (coach) => coach.courses, {
+    onDelete: 'SET NULL',
+    eager: true,
+  })
   @JoinColumn({ name: 'created_by' })
   createdBy: Coach;
 
   @OneToMany(() => Session, (session) => session.course, {
-    eager: true,
     cascade: ['insert'],
   })
   sessions: Session[];

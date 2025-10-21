@@ -1,7 +1,6 @@
 import { User } from '@app/database/entities/user.entity';
 import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
 import { HttpStatus, Inject, Injectable, Scope } from '@nestjs/common';
-import { ClientProxy } from '@nestjs/microservices';
 
 import { FindOptions } from '@app/shared/interfaces/find-options.interface';
 import { REQUEST } from '@nestjs/core';
@@ -9,7 +8,6 @@ import { CustomApiRequest } from '@app/shared/customs/custom-api-request';
 import { CreateUserDto } from '@app/shared/dtos/users/create-user.dto';
 import { PaginatedUser } from '@app/shared/dtos/users/user.dto';
 import { ConfigService } from '@app/config';
-import { RedisService } from '@app/redis/redis.service';
 import { AwsService } from '@app/aws';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Role } from '@app/database/entities/role.entity';
@@ -20,18 +18,14 @@ import * as bcrypt from 'bcrypt';
 import { CustomRpcException } from '@app/shared/customs/custom-rpc-exception';
 import { ExceptionUtils } from '@app/shared/utils/exception.util';
 import * as fs from 'fs';
-import { SendNotification } from '@app/shared/interfaces/send-notification.interface';
 @Injectable({ scope: Scope.REQUEST })
 export class UserService extends BaseTypeOrmService<User> {
   constructor(
     @Inject(REQUEST) private readonly request: CustomApiRequest,
     private readonly configService: ConfigService,
-    private readonly redisService: RedisService,
     private readonly awsService: AwsService,
     @InjectRepository(User) private readonly userRepository: Repository<User>,
     @InjectRepository(Role) private readonly roleRepository: Repository<Role>,
-    @Inject('NOTIFICATION_SERVICE')
-    private readonly notificationService: ClientProxy,
   ) {
     super(userRepository);
   }
@@ -67,8 +61,6 @@ export class UserService extends BaseTypeOrmService<User> {
       });
 
       await this.userRepository.save(user);
-
-      await this.redisService.delByPattern('users*');
 
       return new CustomApiResponse<void>(
         HttpStatus.CREATED,
@@ -128,16 +120,6 @@ export class UserService extends BaseTypeOrmService<User> {
       await this.userRepository.update(this.request.user.id, {
         profilePicture: res.url,
       });
-
-      await this.redisService.del(`user:${this.request.user.id}:`);
-      await this.redisService.delByPattern('users*');
-
-      this.notificationService.emit<SendNotification>('send_notification', {
-        userId: this.request.user.id,
-        title: 'Profile Picture Updated',
-        body: 'Your profile picture has been updated successfully.',
-      });
-
       return new CustomApiResponse<void>(
         HttpStatus.OK,
         'USER.UPDATE_USER_AVATAR_SUCCESS',
@@ -158,8 +140,6 @@ export class UserService extends BaseTypeOrmService<User> {
       }
 
       await this.userRepository.softDelete(id);
-
-      await this.redisService.delByPattern('users');
 
       return new CustomApiResponse<void>(
         HttpStatus.OK,
@@ -182,8 +162,6 @@ export class UserService extends BaseTypeOrmService<User> {
 
       await this.userRepository.delete(id);
 
-      await this.redisService.delByPattern('users');
-
       return new CustomApiResponse<void>(
         HttpStatus.OK,
         'USER.DELETE_USER_SUCCESS',
@@ -205,8 +183,6 @@ export class UserService extends BaseTypeOrmService<User> {
       }
 
       await this.userRepository.restore(id);
-
-      await this.redisService.delByPattern('users');
 
       return new CustomApiResponse<void>(
         HttpStatus.OK,

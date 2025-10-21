@@ -10,6 +10,7 @@ import {
 import { Coach } from './coach.entity';
 import { Session } from './session.entity';
 import { Learner } from './learner.entity';
+import { IsString } from 'class-validator';
 
 @Entity('notes')
 export class Note {
@@ -17,6 +18,7 @@ export class Note {
   id: number;
 
   @Column({ type: 'text' })
+  @IsString()
   content: string;
 
   @CreateDateColumn({ name: 'created_at' })

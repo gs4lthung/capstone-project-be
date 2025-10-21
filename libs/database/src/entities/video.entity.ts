@@ -1,14 +1,7 @@
 import { CoachVideoStatus } from '@app/shared/enums/coach.enum';
-import {
-  Column,
-  Entity,
-  JoinColumn,
-  OneToMany,
-  OneToOne,
-  PrimaryGeneratedColumn,
-} from 'typeorm';
-import { LearningContent } from './learning-content.entity';
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { AiVideoComparisonResult } from './ai-video-comparison-result.entity';
+import { SessionVideo } from './session-video.entity';
 
 @Entity('videos')
 export class Video {
@@ -27,6 +20,15 @@ export class Video {
   @Column({ type: 'int' })
   duration: number;
 
+  @Column({ name: 'drill_name', type: 'varchar', length: 50, nullable: true })
+  drillName: string;
+
+  @Column({ name: 'drill_description', type: 'text', nullable: true })
+  drillDescription?: string;
+
+  @Column({ name: 'drill_practice_sets', type: 'text', nullable: true })
+  drillPracticeSets?: string;
+
   @Column({ name: 'public_url', type: 'text' })
   publicUrl: string;
 
@@ -40,13 +42,15 @@ export class Video {
   })
   status: CoachVideoStatus;
 
-  @OneToOne(() => LearningContent, (learningContent) => learningContent.video)
-  @JoinColumn({ name: 'learning_content_id' })
-  learningContent: LearningContent;
-
   @OneToMany(
     () => AiVideoComparisonResult,
     (aiVideoComparisonResult) => aiVideoComparisonResult.coachVideo,
   )
   aiVideoComparisonResults: AiVideoComparisonResult[];
+
+  @OneToMany(() => SessionVideo, (sessionVideo) => sessionVideo.video, {
+    cascade: ['insert'],
+    nullable: true,
+  })
+  sessionVideos: SessionVideo[];
 }

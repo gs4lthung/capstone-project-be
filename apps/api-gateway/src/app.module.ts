@@ -3,11 +3,6 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ConfigModule, ConfigService } from '@app/config';
 import { DatabaseModule } from '@app/database';
-import {
-  ClientsModule,
-  ClientsProviderAsyncOptions,
-  Transport,
-} from '@nestjs/microservices';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { SocketGateway } from './socket/socket.gateway';
 import { ErrorModule } from './filters/filter.module';
@@ -19,16 +14,7 @@ import { Error } from '@app/database/entities/error.entity';
 import { User } from '@app/database/entities/user.entity';
 import { GoogleStrategy } from './strategies/google.strategy';
 import { ServeStaticModule } from '@nestjs/serve-static';
-import {
-  AcceptLanguageResolver,
-  GraphQLWebsocketResolver,
-  HeaderResolver,
-  I18nJsonLoader,
-  I18nModule,
-  QueryResolver,
-} from 'nestjs-i18n';
 import { ScheduleModule } from '@nestjs/schedule';
-import { RedisModule } from '@app/redis';
 import { Notification } from '@app/database/entities/notification.entity';
 import { UserResolver } from './resolvers/user.resolver';
 import { MulterModule } from '@nestjs/platform-express';
@@ -39,26 +25,10 @@ import { AuthService } from './services/auth.service';
 import { AuthProvider } from '@app/database/entities/auth-provider.entity';
 import { UserController } from './controllers/user.controller';
 import { AuthController } from './controllers/auth.controller';
-import { AmqpConnectionManagerSocketOptions } from '@nestjs/microservices/external/rmq-url.interface';
-import { CustomWebsocketI18nResolver } from './resolvers/ws.resolver';
 import { AwsModule } from '@app/aws';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
-
-const tcp_services = [
-  { name: 'AUTH_SERVICE' },
-  { name: 'USER_SERVICE' },
-  { name: 'ORDER_SERVICE' },
-  { name: 'COACH_SERVICE' },
-  { name: 'LEARNER_SERVICE' },
-];
-
-const rmb_services = [
-  { name: 'PAYMENT_SERVICE', queue: 'payment_queue' },
-  { name: 'NOTIFICATION_SERVICE', queue: 'notification_queue' },
-  { name: 'MAIL_SERVICE', queue: 'mail_queue' },
-  { name: 'VIDEO_SERVICE', queue: 'video_queue' },
-];
+import { MailService } from './services/mail.service';
 
 @Module({
   imports: [
@@ -76,7 +46,6 @@ const rmb_services = [
     }),
     ScheduleModule.forRoot(),
     DatabaseModule,
-    RedisModule,
     AwsModule,
     MailerModule.forRootAsync({
       imports: [ConfigModule],
@@ -107,20 +76,6 @@ const rmb_services = [
     }),
     TypeOrmModule.forFeature([Error, User, Notification, Role, AuthProvider]),
     ErrorModule,
-    I18nModule.forRoot({
-      fallbackLanguage: 'en',
-      loaderOptions: {
-        path: __dirname + '/src/i18n',
-      },
-      loader: I18nJsonLoader,
-      resolvers: [
-        GraphQLWebsocketResolver,
-        CustomWebsocketI18nResolver,
-        { use: QueryResolver, options: ['lang'] },
-        AcceptLanguageResolver,
-        new HeaderResolver(['x-lang']),
-      ],
-    }),
     GraphQLModule.forRootAsync<ApolloDriverConfig>({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -139,49 +94,6 @@ const rmb_services = [
         fieldResolverEnhancers: ['interceptors', 'guards', 'filters'],
       }),
     }),
-    ClientsModule.registerAsync([
-      ...tcp_services.map(
-        ({ name }) =>
-          (console.log(`Setting up TCP client for ${name}`),
-          {
-            imports: [ConfigModule],
-            inject: [ConfigService],
-            name: name,
-            useFactory: async (configService: ConfigService) => ({
-              transport: Transport.TCP,
-              options: {
-                host: configService.getByServiceName(name.toLowerCase()).host,
-                port: configService.getByServiceName(name.toLowerCase()).port,
-              },
-            }),
-          }) as ClientsProviderAsyncOptions,
-      ),
-      ...rmb_services.map(
-        ({ name, queue }) =>
-          (console.log(`Setting up RMQ client for ${name} on ${queue}`),
-          {
-            imports: [ConfigModule],
-            inject: [ConfigService],
-            name: name,
-            useFactory: async (configService: ConfigService) => ({
-              transport: Transport.RMQ,
-              options: {
-                urls: [
-                  `amqp://${configService.get('rabbitmq').username}:${configService.get('rabbitmq').password}@${configService.get('rabbitmq').host}:${configService.get('rabbitmq').port}/${configService.get('rabbitmq').username}`,
-                ],
-                queue: queue,
-                queueOptions: {
-                  durable: true,
-                },
-                socketOptions: {
-                  reconnectTimeInSeconds: 5,
-                  heartbeatIntervalInSeconds: 5,
-                } as AmqpConnectionManagerSocketOptions,
-              },
-            }),
-          }) as ClientsProviderAsyncOptions,
-      ),
-    ]),
     ThrottlerModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -205,6 +117,7 @@ const rmb_services = [
     ConfigService,
     JwtService,
     GoogleStrategy,
+    MailService,
   ],
 })
 export class AppModule {}

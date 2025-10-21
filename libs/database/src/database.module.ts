@@ -15,7 +15,6 @@ import { Coach } from './entities/coach.entity';
 import { Configuration } from './entities/configuration.entity';
 import { Course } from './entities/course.entity';
 import { Credential } from './entities/credential.entity';
-import { Drill } from './entities/drill.entity';
 import { Enrollment } from './entities/enrollment.entity';
 import { EventCountAchievement } from './entities/event-count-achievement.entity';
 import { Feedback } from './entities/feedback.entity';
@@ -25,7 +24,6 @@ import { LearnerAnswer } from './entities/learner-answer.entity';
 import { LearnerProgress } from './entities/learner-progress.entity';
 import { LearnerSkillAssessment } from './entities/learner-skill-assessment.entity';
 import { LearnerVideo } from './entities/learner-video.entity';
-import { LearningContent } from './entities/learning-content.entity';
 import { Note } from './entities/note.entity';
 import { Payment } from './entities/payment.entity';
 import { PropertyCheckAchievement } from './entities/property-check-achievement.entity';
@@ -38,13 +36,15 @@ import { RequestAction } from './entities/request-action.entity';
 import { Schedule } from './entities/schedule.entity';
 import { Session } from './entities/session.entity';
 import { SessionEarning } from './entities/session-earning.entity';
-import { SessionLearningContent } from './entities/session-learning-content.entity';
 import { SkillAssessmentTemplate } from './entities/skill-assessment-template.entity';
 import { StreakAchievement } from './entities/streak-achievement.entity';
 import { Wallet } from './entities/wallet.entity';
 import { Video } from './entities/video.entity';
 import { WalletTransaction } from './entities/wallet-transaction.entity';
 import { WithdrawalRequest } from './entities/withdrawal-request.entity';
+import { SessionQuiz } from './entities/session-quiz.entity';
+import { SessionVideo } from './entities/session-video.entity';
+import { VideoConferencePresenceLog } from './entities/video-conference-presence-log.entity';
 
 @Module({
   imports: [
@@ -69,7 +69,6 @@ import { WithdrawalRequest } from './entities/withdrawal-request.entity';
           Configuration,
           Course,
           Credential,
-          Drill,
           Enrollment,
           Error,
           EventCountAchievement,
@@ -80,7 +79,6 @@ import { WithdrawalRequest } from './entities/withdrawal-request.entity';
           LearnerProgress,
           LearnerSkillAssessment,
           LearnerVideo,
-          LearningContent,
           Note,
           Notification,
           Payment,
@@ -94,8 +92,9 @@ import { WithdrawalRequest } from './entities/withdrawal-request.entity';
           Role,
           Schedule,
           Session,
+          SessionQuiz,
+          SessionVideo,
           SessionEarning,
-          SessionLearningContent,
           SkillAssessmentTemplate,
           StreakAchievement,
           User,
@@ -103,6 +102,7 @@ import { WithdrawalRequest } from './entities/withdrawal-request.entity';
           WalletTransaction,
           WithdrawalRequest,
           Wallet,
+          VideoConferencePresenceLog,
         ],
         logging: false,
         synchronize: configService.get('node_env') === 'dev',

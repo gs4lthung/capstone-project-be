@@ -15,11 +15,12 @@ import {
 import { Course } from './course.entity';
 import { Note } from './note.entity';
 import { Attendance } from './attendance.entity';
-import { SessionLearningContent } from './session-learning-content.entity';
 import { QuizAttempt } from './quiz_attempt.entity';
 import { WalletTransaction } from './wallet-transaction.entity';
 import { SessionEarning } from './session-earning.entity';
 import { LearnerVideo } from './learner-video.entity';
+import { SessionQuiz } from './session-quiz.entity';
+import { SessionVideo } from './session-video.entity';
 
 @Entity('sessions')
 @Check(`start_time < end_time`)
@@ -96,9 +97,6 @@ export class Session {
   @OneToMany(() => Attendance, (attendance) => attendance.session)
   attendances: Attendance[];
 
-  @OneToMany(() => SessionLearningContent, (slc) => slc.session)
-  sessionLearningContents: SessionLearningContent[];
-
   @OneToMany(() => QuizAttempt, (quizAttempt) => quizAttempt.session)
   quizAttempts: QuizAttempt[];
 
@@ -110,4 +108,14 @@ export class Session {
 
   @OneToMany(() => LearnerVideo, (learnerVideo) => learnerVideo.session)
   learnerVideos: LearnerVideo[];
+
+  @OneToMany(() => SessionVideo, (sessionVideo) => sessionVideo.session, {
+    nullable: true,
+  })
+  sessionVideos: SessionVideo[];
+
+  @OneToMany(() => SessionQuiz, (sessionQuiz) => sessionQuiz.session, {
+    nullable: true,
+  })
+  sessionQuizzes: SessionQuiz[];
 }

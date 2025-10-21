@@ -17,7 +17,6 @@ import { AuthProvider } from './auth-provider.entity';
 import { Notification } from './notification.entity';
 import { Coach } from './coach.entity';
 import { Admin } from './admin.entity';
-import { LearningContent } from './learning-content.entity';
 import { Request } from './request.entity';
 import {
   IsEmail,
@@ -30,6 +29,7 @@ import {
 } from 'class-validator';
 import { VideoConferencePresenceLog } from './video-conference-presence-log.entity';
 import { Wallet } from './wallet.entity';
+import { Learner } from './learner.entity';
 
 @Entity('users')
 export class User {
@@ -111,17 +111,14 @@ export class User {
   @Index()
   role: Role;
 
-  @OneToMany(() => Coach, (coach) => coach.user, { cascade: true })
+  @OneToMany(() => Coach, (coach) => coach.user, { cascade: ['insert'] })
   coach: Coach[];
 
-  @OneToMany(() => Admin, (admin) => admin.id, { cascade: true })
+  @OneToMany(() => Admin, (admin) => admin.id, { cascade: ['insert'] })
   admin: Admin[];
 
-  @OneToMany(
-    () => LearningContent,
-    (learningContent) => learningContent.createdBy,
-  )
-  learningContents: LearningContent[];
+  @OneToMany(() => Learner, (learner) => learner.user, { cascade: ['insert'] })
+  learner: Learner[];
 
   @OneToMany(() => Request, (request) => request.createdBy)
   requests: Request[];

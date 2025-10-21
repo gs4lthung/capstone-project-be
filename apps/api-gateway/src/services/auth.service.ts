@@ -2,7 +2,6 @@ import { ConfigService } from '@app/config';
 import { AuthProvider } from '@app/database/entities/auth-provider.entity';
 import { Role } from '@app/database/entities/role.entity';
 import { User } from '@app/database/entities/user.entity';
-import { RedisService } from '@app/redis';
 import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
 import { CustomRpcException } from '@app/shared/customs/custom-rpc-exception';
 import { GoogleUserDto } from '@app/shared/dtos/auth/google-user.dto';
@@ -14,9 +13,13 @@ import {
 } from '@app/shared/dtos/auth/login.dto';
 import { RegisterRequestDto } from '@app/shared/dtos/auth/register.dto';
 import { ResetPasswordDto } from '@app/shared/dtos/auth/reset-password.dto';
-import { HttpStatus, Inject, Injectable, Scope } from '@nestjs/common';
+import {
+  HttpStatus,
+  Injectable,
+  Scope,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService, TokenExpiredError } from '@nestjs/jwt';
-import { ClientProxy } from '@nestjs/microservices';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
@@ -24,6 +27,7 @@ import { ExceptionUtils } from '@app/shared/utils/exception.util';
 import { AuthProviderEnum } from '@app/shared/enums/auth.enum';
 import { MailSendDto } from '@app/shared/dtos/mails/mail-send.dto';
 import { UserRole } from '@app/shared/enums/user.enum';
+import { MailService } from './mail.service';
 
 @Injectable({ scope: Scope.REQUEST })
 export class AuthService {
@@ -34,77 +38,61 @@ export class AuthService {
     @InjectRepository(Role) private readonly roleRepository: Repository<Role>,
     @InjectRepository(AuthProvider)
     private readonly authProviderRepository: Repository<AuthProvider>,
-    @Inject('MAIL_SERVICE')
-    private readonly mailService: ClientProxy,
+    private readonly mailService: MailService,
     private readonly configService: ConfigService,
     private readonly jwtService: JwtService,
-    private readonly redisService: RedisService,
   ) {}
 
   //#region Login
   async login(
     data: LoginRequestDto,
   ): Promise<CustomApiResponse<LoginResponseDto>> {
-    try {
-      const user = await this.userRepository.findOne({
-        where: { email: data.email },
-        withDeleted: false,
-        select: ['id', 'fullName', 'email', 'password'],
-      });
-      if (!user)
-        throw new CustomRpcException(
-          'AUTH.INVALID_EMAIL_OR_PASSWORD',
-          HttpStatus.UNAUTHORIZED,
-        );
+    const user = await this.userRepository.findOne({
+      where: { email: data.email },
+      withDeleted: false,
+      select: ['id', 'fullName', 'email', 'password'],
+    });
+    if (!user) throw new UnauthorizedException('Không tìm thấy tài khoản');
 
-      const isPasswordValid = await bcrypt.compare(
-        data.password,
-        user.password,
-      );
-      if (!isPasswordValid)
-        throw new CustomRpcException(
-          'AUTH.INVALID_EMAIL_OR_PASSWORD',
-          HttpStatus.UNAUTHORIZED,
-        );
+    const isPasswordValid = await bcrypt.compare(data.password, user.password);
+    if (!isPasswordValid)
+      throw new UnauthorizedException('Mật khẩu không chính xác');
 
-      const payload: JwtPayloadDto = {
-        id: user.id,
-      };
+    const payload: JwtPayloadDto = {
+      id: user.id,
+    };
 
-      const accessToken = await this.jwtService.signAsync(payload, {
-        secret: this.configService.get('jwt').access_token.secret,
-        expiresIn: this.configService.get('jwt').access_token.expiration,
-      });
+    const accessToken = await this.jwtService.signAsync(payload, {
+      secret: this.configService.get('jwt').access_token.secret,
+      expiresIn: this.configService.get('jwt').access_token.expiration,
+    });
 
-      const refreshToken = await this.jwtService.signAsync(payload, {
-        secret: this.configService.get('jwt').refresh_token.secret,
-        expiresIn: this.configService.get('jwt').refresh_token.expiration,
-      });
+    const refreshToken = await this.jwtService.signAsync(payload, {
+      secret: this.configService.get('jwt').refresh_token.secret,
+      expiresIn: this.configService.get('jwt').refresh_token.expiration,
+    });
 
-      const refreshTokenHash = await bcrypt.hash(
-        refreshToken,
-        this.configService.get('password_salt_rounds'),
-      );
-      user.refreshToken = refreshTokenHash;
-      await this.userRepository.save(user);
+    const refreshTokenHash = await bcrypt.hash(
+      refreshToken,
+      this.configService.get('password_salt_rounds'),
+    );
+    user.refreshToken = refreshTokenHash;
+    await this.userRepository.save(user);
 
-      return new CustomApiResponse<LoginResponseDto>(
-        HttpStatus.OK,
-        'AUTH.LOGIN_SUCCESS',
-        {
-          accessToken: accessToken,
-          refreshToken: refreshToken,
-          user: {
-            id: user.id,
-            fullName: user.fullName,
-            email: user.email,
-            role: user.role,
-          },
+    return new CustomApiResponse<LoginResponseDto>(
+      HttpStatus.OK,
+      'AUTH.LOGIN_SUCCESS',
+      {
+        accessToken: accessToken,
+        refreshToken: refreshToken,
+        user: {
+          id: user.id,
+          fullName: user.fullName,
+          email: user.email,
+          role: user.role,
         },
-      );
-    } catch (error) {
-      throw ExceptionUtils.wrapAsRpcException(error);
-    }
+      },
+    );
   }
 
   async getCurrentUser(
@@ -223,8 +211,6 @@ export class AuthService {
           id: savedUser.id,
         };
 
-        await this.redisService.del('users');
-
         return `${this.configService.get('front_end').url}/login?accessToken=${await this.jwtService.signAsync(payload)}`;
       }
 
@@ -299,8 +285,6 @@ export class AuthService {
       newUser.emailVerificationToken = emailVerificationToken;
 
       await this.userRepository.save(newUser);
-
-      await this.redisService.del('users');
 
       await this.sendVerificationEmail(newUser.email, emailVerificationToken);
 
@@ -382,7 +366,7 @@ export class AuthService {
     email: string,
     emailVerificationToken: string,
   ): Promise<void> {
-    this.mailService.emit({ cmd: 'send_mail' }, {
+    this.mailService.sendMail({
       to: email,
       subject: 'Email Verification',
       text: 'Please verify your email address',
@@ -425,7 +409,7 @@ export class AuthService {
       user.resetPasswordToken = resetPasswordToken;
       await this.userRepository.save(user);
 
-      this.mailService.emit({ cmd: 'send_mail' }, {
+      this.mailService.sendMail({
         to: user.email,
         subject: 'Reset Password',
         text: 'Please reset your password',

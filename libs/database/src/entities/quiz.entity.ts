@@ -1,14 +1,7 @@
 import { PickleballLevel } from '@app/shared/enums/pickleball.enum';
-import {
-  Column,
-  Entity,
-  JoinColumn,
-  OneToMany,
-  OneToOne,
-  PrimaryGeneratedColumn,
-} from 'typeorm';
-import { LearningContent } from './learning-content.entity';
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { Question } from './question.entity';
+import { SessionQuiz } from './session-quiz.entity';
 
 @Entity('quizzes')
 export class Quiz {
@@ -31,16 +24,16 @@ export class Quiz {
   @Column({ name: 'total_questions', type: 'int' })
   totalQuestions: number;
 
-  @OneToOne(() => LearningContent, (learningContent) => learningContent.quiz, {
-    onDelete: 'CASCADE',
-  })
-  @JoinColumn({ name: 'learning_content_id' })
-  learningContent: LearningContent;
-
   @OneToMany(() => Question, (question) => question.id, {
     eager: true,
     cascade: ['insert'],
     nullable: true,
   })
   questions: Question[];
+
+  @OneToMany(() => SessionQuiz, (sessionQuiz) => sessionQuiz.quiz, {
+    cascade: ['insert'],
+    nullable: true,
+  })
+  sessionQuizzes: SessionQuiz[];
 }

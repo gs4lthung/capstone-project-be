@@ -12,6 +12,7 @@ import { Learner } from './learner.entity';
 import { LearnerVideo } from './learner-video.entity';
 import { SkillAssessmentTemplate } from './skill-assessment-template.entity';
 import { AiVideoComparisonResult } from './ai-video-comparison-result.entity';
+import { IsEnum } from 'class-validator';
 
 @Entity('learner_skill_assessments')
 export class LearnerSkillAssessment {
@@ -23,6 +24,7 @@ export class LearnerSkillAssessment {
     enum: LearnerSkillAssessmentStatus,
     default: LearnerSkillAssessmentStatus.IN_PROGRESS,
   })
+  @IsEnum(LearnerSkillAssessmentStatus)
   status: LearnerSkillAssessmentStatus;
 
   @CreateDateColumn({ name: 'created_at' })

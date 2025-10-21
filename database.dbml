@@ -89,12 +89,6 @@ Enum "learners_skill_level_enum" {
   "ADVANCED"
 }
 
-Enum "learning_contents_type_enum" {
-  "QUIZ"
-  "DRILL"
-  "VIDEO"
-}
-
 Enum "notifications_status_enum" {
   "PENDING"
   "SENT"
@@ -272,29 +266,81 @@ Table "feedbacks" {
   "comment" text [not null]
   "rating" int4 [not null]
   "created_at" timestamp [not null, default: `now()`]
+  "deleted_at" timestamp
   "learner_id" int4
   "course_id" int4
 }
 
 Table "attendances" {
   "id" int4 [pk, not null, increment]
+  "created_at" timestamp [not null, default: `now()`]
   "learner_id" int4
   "session_id" int4
 }
 
-Table "drills" {
-  "id" int4 [pk, not null, increment]
-  "name" varchar(50) [not null]
-  "description" text
-  "practice_sets" text
-  "learning_content_id" int4 [unique]
-}
-
-Table "session_learning_contents" {
+Table "session_quizzes" {
   "id" int4 [pk, not null, increment]
   "created_at" timestamp [not null, default: `now()`]
-  "learning_content_id" int4
+  "sessionId" int4
+  "quizId" int4
+}
+
+Table "quizzes" {
+  "id" int4 [pk, not null, increment]
+  "title" varchar(50) [not null]
+  "description" text
+  "level" quizzes_level_enum [not null, default: 'BEGINNER']
+  "total_questions" int4 [not null]
+}
+
+Table "question_options" {
+  "id" int4 [pk, not null, increment]
+  "content" text [not null]
+  "is_correct" bool [not null, default: false]
+  "question_id" int4
+}
+
+Table "questions" {
+  "id" int4 [pk, not null, increment]
+  "title" varchar(100) [not null]
+  "explanation" text
+  "quiz_id" int4
+}
+
+Table "learner_answers" {
+  "id" int4 [pk, not null, increment]
+  "is_correct" bool [not null]
+  "created_at" timestamp [not null, default: `now()`]
+  "question_id" int4
+  "quiz_attempt_id" int4
+  "question_option_id" int4
+}
+
+Table "quiz_attempts" {
+  "id" int4 [pk, not null, increment]
+  "attempt_number" int4 [not null]
+  "score" int4 [not null]
+  "created_at" timestamp [not null, default: `now()`]
+  "attempted_by" int4
   "session_id" int4
+}
+
+Table "learner_progresses" {
+  "id" int4 [pk, not null, increment]
+  "sessions_completed" int4 [not null]
+  "total_sessions" int4 [not null]
+  "avg_quiz_score" int4 [not null]
+  "status" learner_progresses_status_enum [not null, default: 'IN_PROGRESS']
+  "updated_at" timestamp [not null, default: `now()`]
+  "learner_id" int4
+  "course_id" int4
+}
+
+Table "learner_achievements" {
+  "id" int4 [pk, not null, increment]
+  "earned_at" timestamp [not null, default: `now()`]
+  "achievement_id" int4
+  "learner_id" int4
 }
 
 Table "requests" {
@@ -329,50 +375,31 @@ Table "configurations" {
   "updated_by" int4
 }
 
-Table "admins" {
+Table "session_videos" {
   "id" int4 [pk, not null, increment]
-  "user_id" int4
-
-  Indexes {
-    user_id [type: btree, name: "IDX_2b901dd818a2a6486994d915a6"]
-  }
+  "created_at" timestamp [not null, default: `now()`]
+  "sessionId" int4
+  "videoId" int4
 }
 
-Table "skill_assessment_templates" {
+Table "videos" {
   "id" int4 [pk, not null, increment]
-  "name" varchar(100) [not null]
+  "title" varchar(50) [not null]
   "description" text
-  "status" skill_assessment_templates_status_enum [not null, default: 'DRAFT']
-  "created_at" timestamp [not null, default: `now()`]
-  "updated_at" timestamp [not null, default: `now()`]
-  "created_by" int4
-}
-
-Table "learner_skill_assessments" {
-  "id" int4 [pk, not null, increment]
-  "status" learner_skill_assessments_status_enum [not null, default: 'IN_PROGRESS']
-  "created_at" timestamp [not null, default: `now()`]
-  "learner_id" int4
-  "learner_video_id" int4
-  "skill_assessment_template_id" int4
-}
-
-Table "learner_videos" {
-  "id" int4 [pk, not null, increment]
   "tags" text
   "duration" int4 [not null]
+  "drill_name" varchar(50)
+  "drill_description" text
+  "drill_practice_sets" text
   "public_url" text [not null]
   "thumbnail_url" text
-  "status" learner_videos_status_enum [not null, default: 'UPLOADING']
-  "created_at" timestamp [not null, default: `now()`]
-  "learner_id" int4
-  "session_id" int4
+  "status" videos_status_enum [not null, default: 'UPLOADING']
 }
 
 Table "ai_video_comparison_results" {
   "id" int4 [pk, not null, increment]
-  "summary" text [not null]
-  "learner_score" int4 [not null]
+  "summary" text
+  "learner_score" int4
   "keyDifferents" jsonb
   "details" jsonb
   "recommendationDrills" jsonb
@@ -387,82 +414,44 @@ Table "ai_video_comparison_results" {
   }
 }
 
-Table "videos" {
+Table "learner_videos" {
   "id" int4 [pk, not null, increment]
-  "title" varchar(50) [not null]
-  "description" text
   "tags" text
   "duration" int4 [not null]
   "public_url" text [not null]
   "thumbnail_url" text
-  "status" videos_status_enum [not null, default: 'UPLOADING']
-  "learning_content_id" int4 [unique]
-}
-
-Table "learning_contents" {
-  "id" int4 [pk, not null, increment]
-  "type" learning_contents_type_enum [not null]
+  "status" learner_videos_status_enum [not null, default: 'UPLOADING']
   "created_at" timestamp [not null, default: `now()`]
-  "created_by" int4
-}
-
-Table "quizzes" {
-  "id" int4 [pk, not null, increment]
-  "title" varchar(50) [not null]
-  "description" text
-  "level" quizzes_level_enum [not null, default: 'BEGINNER']
-  "total_questions" int4 [not null]
-  "learning_content_id" int4 [unique]
-}
-
-Table "question_options" {
-  "id" int4 [pk, not null, increment]
-  "content" text [not null]
-  "is_correct" bool [not null, default: false]
-  "question_id" int4
-}
-
-Table "questions" {
-  "id" int4 [pk, not null, increment]
-  "title" varchar(50) [not null]
-  "explanation" text
-  "quiz_id" int4
-}
-
-Table "learner_answers" {
-  "id" int4 [pk, not null, increment]
-  "selected_option_id" int4 [not null]
-  "is_correct" bool [not null]
-  "created_at" timestamp [not null, default: `now()`]
-  "question_id" int4
-  "quiz_attempt_id" int4
-}
-
-Table "quiz_attempts" {
-  "id" int4 [pk, not null, increment]
-  "attempt_number" int4 [not null]
-  "score" int4 [not null]
-  "created_at" timestamp [not null, default: `now()`]
-  "attempted_by" int4
+  "learner_id" int4
   "session_id" int4
 }
 
-Table "learner_progresses" {
+Table "learner_skill_assessments" {
   "id" int4 [pk, not null, increment]
-  "sessions_completed" int4 [not null]
-  "total_sessions" int4 [not null]
-  "avg_quiz_score" int4 [not null]
-  "status" learner_progresses_status_enum [not null, default: 'IN_PROGRESS']
-  "updated_at" timestamp [not null, default: `now()`]
+  "status" learner_skill_assessments_status_enum [not null, default: 'IN_PROGRESS']
+  "created_at" timestamp [not null, default: `now()`]
   "learner_id" int4
-  "course_id" int4
+  "learner_video_id" int4
+  "skill_assessment_template_id" int4
 }
 
-Table "learner_achievements" {
+Table "skill_assessment_templates" {
   "id" int4 [pk, not null, increment]
-  "earned_at" timestamp [not null, default: `now()`]
-  "achievement_id" int4
-  "learner_id" int4
+  "name" varchar(100) [not null]
+  "description" text
+  "status" skill_assessment_templates_status_enum [not null, default: 'DRAFT']
+  "created_at" timestamp [not null, default: `now()`]
+  "updated_at" timestamp [not null, default: `now()`]
+  "created_by" int4
+}
+
+Table "admins" {
+  "id" int4 [pk, not null, increment]
+  "user_id" int4
+
+  Indexes {
+    user_id [type: btree, name: "IDX_2b901dd818a2a6486994d915a6"]
+  }
 }
 
 Table "achievements" {
@@ -481,6 +470,7 @@ Table "achievements" {
   "target_value" text
   "target_count" int4
   "type" achievements_type_enum [not null]
+  "created_by" int4
 
   Indexes {
     type [type: btree, name: "IDX_6261fe3636483beee9db8fd370"]
@@ -565,7 +555,7 @@ Table "courses" {
   "learning_format" courses_learning_format_enum [not null, default: 'INDIVIDUAL']
   "min_participants" int4 [not null, default: 1]
   "max_participants" int4 [not null, default: 10]
-  "price_per_participant" int4 [not null, default: 0]
+  "price_per_participant" int8 [not null, default: '0']
   "start_date" date [not null]
   "end_date" date [not null]
   "created_at" timestamp [not null, default: `now()`]
@@ -576,7 +566,7 @@ Table "courses" {
 
 Table "credentials" {
   "id" int4 [pk, not null, increment]
-  "name" varchar(100) [not null]
+  "name" varchar(255) [not null]
   "description" text
   "type" credentials_type_enum [not null]
   "public_url" text
@@ -661,6 +651,8 @@ Ref "FK_7bbff2ff7709c4bfe2ec171cb08":"achievements"."id" < "achievement_progress
 
 Ref "FK_c2fc185f624f51f38eba8bd597a":"learners"."id" < "achievement_progresses"."learner_id"
 
+Ref "FK_f013825ee12ed3dbe4503bd8b68":"admins"."id" < "achievements"."created_by"
+
 Ref "FK_2b901dd818a2a6486994d915a68":"users"."id" < "admins"."user_id" [delete: cascade]
 
 Ref "FK_389da34ca9a2e80edb0967bcca5":"learner_skill_assessments"."id" < "ai_video_comparison_results"."learnerSkillAssessmentId"
@@ -677,15 +669,13 @@ Ref "FK_262996fd08ab5a69e85b53d0055":"users"."id" < "auth_providers"."user_id" [
 
 Ref "FK_bd9923ac72efde2d5895e118fa8":"users"."id" < "coaches"."user_id" [delete: cascade]
 
-Ref "FK_06000e3d345edfed86dde6d4b28":"admins"."id" < "configurations"."created_by" [delete: set null]
+Ref "FK_06000e3d345edfed86dde6d4b28":"admins"."id" < "configurations"."created_by"
 
-Ref "FK_5e0eaa5b677fd4a19ce7b213738":"admins"."id" < "configurations"."updated_by" [delete: set null]
+Ref "FK_5e0eaa5b677fd4a19ce7b213738":"admins"."id" < "configurations"."updated_by"
 
 Ref "FK_16fcd8ab8bc042688984d5b3934":"coaches"."id" < "courses"."created_by" [delete: set null]
 
 Ref "FK_8cbbe3785bbd0c6af75acac1bfe":"coaches"."id" < "credentials"."coach_id" [delete: cascade]
-
-Ref "FK_bba1cfff1e4aca8d9cc5849f2d1":"learning_contents"."id" < "drills"."learning_content_id" [delete: cascade]
 
 Ref "FK_b79d0bf01779fdf9cfb6b092af3":"courses"."id" < "enrollments"."course_id" [delete: cascade]
 
@@ -697,13 +687,15 @@ Ref "FK_59d22a35d77e039d2220f4e88e3":"learners"."id" < "feedbacks"."learner_id"
 
 Ref "FK_b46afcad144f370d8a4c55ea498":"courses"."id" < "feedbacks"."course_id"
 
-Ref "FK_a77d3e9606c8288f6bc5a148132":"achievements"."id" < "learner_achievements"."achievement_id"
+Ref "FK_a77d3e9606c8288f6bc5a148132":"achievements"."id" < "learner_achievements"."achievement_id" [delete: cascade]
 
 Ref "FK_e35597ec9a05a27497edcf0b9ad":"learners"."id" < "learner_achievements"."learner_id"
 
-Ref "FK_a88a71b4134638af1e0b211db36":"quiz_attempts"."id" < "learner_answers"."quiz_attempt_id"
+Ref "FK_57238eb2290f2081def653b4ac1":"question_options"."id" < "learner_answers"."question_option_id" [delete: cascade]
 
-Ref "FK_b93f29c3adfa47910e5cbc741b6":"questions"."id" < "learner_answers"."question_id"
+Ref "FK_a88a71b4134638af1e0b211db36":"quiz_attempts"."id" < "learner_answers"."quiz_attempt_id" [delete: cascade]
+
+Ref "FK_b93f29c3adfa47910e5cbc741b6":"questions"."id" < "learner_answers"."question_id" [delete: cascade]
 
 Ref "FK_b21b5f43200685ef0309fc36a5e":"courses"."id" < "learner_progresses"."course_id" [delete: cascade]
 
@@ -718,8 +710,6 @@ Ref "FK_f32b867871e50a7438f20d78fea":"skill_assessment_templates"."id" < "learne
 Ref "FK_37fb5e426810144dcbbbc4ab2b2":"sessions"."id" < "learner_videos"."session_id"
 
 Ref "FK_f561a1e96dbe1f4842583a70a4c":"learners"."id" < "learner_videos"."learner_id"
-
-Ref "FK_9ac9c03cb400a0255760554a1ea":"users"."id" < "learning_contents"."created_by" [delete: cascade]
 
 Ref "FK_42ee00f899fcb9fdf80ca055081":"learners"."id" < "notes"."learner_id" [delete: cascade]
 
@@ -739,8 +729,6 @@ Ref "FK_3c151c1db4d493cee059d94aeb8":"learners"."id" < "quiz_attempts"."attempte
 
 Ref "FK_d244675816bf64833d8ecd67830":"sessions"."id" < "quiz_attempts"."session_id"
 
-Ref "FK_ba53f55b25299d24f0a2d72d59f":"learning_contents"."id" < "quizzes"."learning_content_id" [delete: cascade]
-
 Ref "FK_28fe00d6aca3eb711eae98f8cc6":"admins"."id" < "request_actions"."handled_by" [delete: cascade]
 
 Ref "FK_8c6c5b31c8d9f2571c99dd4550b":"requests"."id" < "request_actions"."request_id" [delete: cascade]
@@ -751,9 +739,13 @@ Ref "FK_b1e10ac4dc72412af1c3f4d736d":"courses"."id" < "schedules"."course_id" [d
 
 Ref "FK_d0660e6799fc1ee26ffd3c3c381":"sessions"."id" < "session_earnings"."session_id" [delete: cascade]
 
-Ref "FK_891dacd53cf4352f72d20359252":"sessions"."id" < "session_learning_contents"."session_id" [delete: cascade]
+Ref "FK_3852caaaab79dc1007c2a6156c7":"quizzes"."id" < "session_quizzes"."quizId" [delete: cascade]
 
-Ref "FK_ef0a814f2152bf3175f3ba82519":"learning_contents"."id" < "session_learning_contents"."learning_content_id" [delete: cascade]
+Ref "FK_ed58d18f1bf5f98d77ec8d3493c":"sessions"."id" < "session_quizzes"."sessionId" [delete: cascade]
+
+Ref "FK_8c596e6f41192da2605d6abf2c5":"videos"."id" < "session_videos"."videoId" [delete: cascade]
+
+Ref "FK_b3666bc6d714b5c52017264b14b":"sessions"."id" < "session_videos"."sessionId" [delete: cascade]
 
 Ref "FK_b8cfc5397ec5c262e83f2bf5fbe":"courses"."id" < "sessions"."course_id" [delete: cascade]
 
@@ -762,8 +754,6 @@ Ref "FK_21414b56511886e8a4c060145ff":"admins"."id" < "skill_assessment_templates
 Ref "FK_a2cecd1a3531c0b041e29ba46e1":"roles"."id" < "users"."role_id"
 
 Ref "FK_724e21ec4efa4582794e1ddc835":"users"."id" < "video_conference_presence_logs"."user_id"
-
-Ref "FK_089ce47d9da2c3057ee35002919":"learning_contents"."id" < "videos"."learning_content_id"
 
 Ref "FK_5c9c1f45c2ecec8d6cc8b8691e3":"sessions"."id" < "wallet_transactions"."session_id" [delete: cascade]
 

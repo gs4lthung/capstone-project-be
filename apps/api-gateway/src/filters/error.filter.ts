@@ -17,9 +17,7 @@ import { GraphQLError } from 'graphql';
 import { ContextUtils } from '@app/shared/utils/context.util';
 import { ProtocolEnum } from '@app/shared/enums/protocol.enum';
 import { User } from '@app/database/entities/user.entity';
-import { I18nService } from 'nestjs-i18n';
 import { CustomRpcException } from '@app/shared/customs/custom-rpc-exception';
-import { RedisService } from '@app/redis';
 
 @Catch()
 export class ErrorLoggingFilter implements ExceptionFilter {
@@ -28,8 +26,6 @@ export class ErrorLoggingFilter implements ExceptionFilter {
     private readonly configService: ConfigService,
     @InjectRepository(Error)
     private readonly errorRepository: Repository<Error>,
-    private readonly i18nService: I18nService,
-    private readonly redisService: RedisService,
   ) {}
 
   async catch(exception: CustomRpcException, host: ArgumentsHost) {
@@ -102,28 +98,6 @@ export class ErrorLoggingFilter implements ExceptionFilter {
       );
     }
 
-    // Store not found resource to Redis cache
-    if (
-      statusCode === HttpStatus.NOT_FOUND &&
-      stack &&
-      contextType === ProtocolEnum.GRAPHQL
-    ) {
-      const cacheKey = stack.split(':')[0];
-      const id = stack.split(':')[1];
-
-      await this.redisService.set(
-        `${cacheKey}:${id}`,
-        '__NULL__',
-        this.configService.get('cache').negative_ttl,
-      );
-    }
-
-    // Translate error message
-    const i18nErrorMessage =
-      this.i18nService.t(`errors.${responseMessage}`, {
-        lang: request.query?.lang || 'en',
-      }) || responseMessage;
-
     // Extract user information if available
     const user = request.user as User;
     let userId: number | null = null;
@@ -156,20 +130,20 @@ export class ErrorLoggingFilter implements ExceptionFilter {
       case ProtocolEnum.HTTP:
         response.status(statusCode).json({
           statusCode: statusCode,
-          message: i18nErrorMessage,
+          message: responseMessage,
           timestamp: new Date().toISOString(),
           path: request.url,
         });
         break;
       case ProtocolEnum.GRAPHQL:
-        throw new GraphQLError(i18nErrorMessage, {
+        throw new GraphQLError(responseMessage, {
           extensions: {
             code: statusCode,
           },
         });
       case ProtocolEnum.WS:
         response.emit('exception', {
-          message: i18nErrorMessage,
+          message: responseMessage,
           code: statusCode,
         });
         break;

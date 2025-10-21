@@ -12,13 +12,10 @@ import { ErrorLoggingFilter } from '../filters/error.filter';
 import { AuthGuard } from '../guards/auth.guard';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@app/config';
-import { RedisService } from '@app/redis';
-import { SendNotification } from '@app/shared/interfaces/send-notification.interface';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Notification } from '@app/database/entities/notification.entity';
 import { Repository } from 'typeorm';
 import { NotificationStatusEnum } from '@app/shared/enums/notification.enum';
-import { I18nService } from 'nestjs-i18n';
 import { JwtPayloadDto } from '@app/shared/dtos/auth/jwt.payload.dto';
 
 @WebSocketGateway({
@@ -30,10 +27,8 @@ export class SocketGateway
   implements OnGatewayConnection, OnGatewayDisconnect, OnModuleInit
 {
   constructor(
-    private readonly i18nService: I18nService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
-    private readonly redisService: RedisService,
     @InjectRepository(Notification)
     private readonly notificationRepository: Repository<Notification>,
   ) {}
@@ -56,12 +51,6 @@ export class SocketGateway
         secret: this.configService.get('jwt').access_token.secret,
       });
 
-      await this.redisService.setOnlineUser(
-        payload.id,
-        client.id,
-        this.configService.get('cache').ttl,
-      );
-
       (client as any).userId = payload.id;
     } catch {
       client.disconnect();
@@ -71,7 +60,6 @@ export class SocketGateway
   async handleDisconnect(client: Socket) {
     const userId = (client as any).userId;
     if (userId) {
-      await this.redisService.delOnlineUser(userId);
     }
   }
 
@@ -79,47 +67,10 @@ export class SocketGateway
   handleHeartbeat(client: Socket): void {
     const userId = (client as any).userId;
     if (userId) {
-      this.redisService.refreshOnlineUserTTL(
-        userId,
-        client.id,
-        this.configService.get('cache').ttl,
-      );
     }
   }
 
-  handleNotificationEvent() {
-    this.redisService.subscribe(
-      'notifications',
-      async (message: SendNotification) => {
-        const payload = message;
-        try {
-          const clientId = await this.redisService.getOnlineUser(
-            payload.userId,
-          );
-
-          if (clientId) {
-            this.server.to(clientId).emit('notification', {
-              notificationId: payload.notificationId,
-              title: this.i18nService.t(`messages.${payload.title}`),
-              body: this.i18nService.t(`messages.${payload.body}`),
-            });
-          }
-          if (payload.notificationId) {
-            await this.notificationRepository.update(payload.notificationId, {
-              status: NotificationStatusEnum.SENT,
-            });
-          }
-        } catch (error) {
-          if (payload.notificationId) {
-            await this.notificationRepository.update(payload.notificationId, {
-              status: NotificationStatusEnum.ERROR,
-            });
-          }
-          console.error('Error parsing notification message:', error);
-        }
-      },
-    );
-  }
+  handleNotificationEvent() {}
 
   @SubscribeMessage('notification:delivered')
   async handleNotificationDelivered(

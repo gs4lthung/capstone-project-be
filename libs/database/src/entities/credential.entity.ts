@@ -10,22 +10,39 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { Coach } from './coach.entity';
+import {
+  IsEnum,
+  IsOptional,
+  IsString,
+  IsUrl,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
 
 @Entity('credentials')
 export class Credential {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'varchar', length: 100 })
+  @Column({ type: 'varchar', length: 255 })
+  @IsString()
+  @MinLength(2)
+  @MaxLength(255)
   name: string;
 
   @Column({ type: 'text', nullable: true })
+  @IsOptional()
+  @IsString()
+  @MinLength(2)
   description?: string;
 
   @Column({ type: 'enum', enum: CourseCredentialType })
+  @IsEnum(CourseCredentialType)
   type: CourseCredentialType;
 
   @Column({ name: 'public_url', type: 'text', nullable: true })
+  @IsOptional()
+  @IsUrl()
   publicUrl?: string;
 
   @Column({ name: 'issued_at', type: 'date', nullable: true })

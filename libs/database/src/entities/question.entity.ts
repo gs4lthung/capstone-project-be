@@ -9,13 +9,17 @@ import {
 import { Quiz } from './quiz.entity';
 import { QuestionOption } from './question-option.entity';
 import { LearnerAnswer } from './learner-answer.entity';
+import { IsString, MaxLength, MinLength } from 'class-validator';
 
 @Entity('questions')
 export class Question {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'varchar', length: 50 })
+  @Column({ type: 'varchar', length: 100 })
+  @IsString()
+  @MinLength(2)
+  @MaxLength(100)
   title: string;
 
   @Column({ type: 'text', nullable: true })

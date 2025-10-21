@@ -12,6 +12,14 @@ import { Learner } from './learner.entity';
 import { Session } from './session.entity';
 import { AiVideoComparisonResult } from './ai-video-comparison-result.entity';
 import { LearnerSkillAssessment } from './learner-skill-assessment.entity';
+import {
+  ArrayNotEmpty,
+  IsEnum,
+  IsInt,
+  IsOptional,
+  IsString,
+  IsUrl,
+} from 'class-validator';
 
 @Entity('learner_videos')
 export class LearnerVideo {
@@ -19,15 +27,22 @@ export class LearnerVideo {
   id: number;
 
   @Column({ type: 'text', nullable: true })
+  @IsOptional()
+  @ArrayNotEmpty()
+  @IsString({ each: true })
   tags?: string[];
 
   @Column({ type: 'int' })
+  @IsInt()
   duration: number;
 
   @Column({ name: 'public_url', type: 'text' })
+  @IsUrl()
   publicUrl: string;
 
   @Column({ name: 'thumbnail_url', type: 'text', nullable: true })
+  @IsOptional()
+  @IsUrl()
   thumbnailUrl?: string;
 
   @Column({
@@ -35,6 +50,7 @@ export class LearnerVideo {
     enum: LearnerVideoStatus,
     default: LearnerVideoStatus.UPLOADING,
   })
+  @IsEnum(LearnerVideoStatus)
   status: LearnerVideoStatus;
 
   @CreateDateColumn({ name: 'created_at' })

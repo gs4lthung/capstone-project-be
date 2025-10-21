@@ -9,7 +9,6 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { RequestStatus, RequestType } from '@app/shared/enums/request.enum';
-import { LearningContent } from './learning-content.entity';
 import { RequestAction } from './request-action.entity';
 import { User } from './user.entity';
 
@@ -32,7 +31,7 @@ export class Request {
   status: RequestStatus;
 
   @Column({ type: 'jsonb', nullable: true })
-  metadata: RequestMetadata;
+  metadata: any;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
@@ -50,5 +49,3 @@ export class Request {
   })
   actions: RequestAction[];
 }
-
-export type RequestMetadata = LearningContent;

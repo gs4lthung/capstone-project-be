@@ -19,6 +19,7 @@ export class LearnerAchievement {
   @ManyToOne(
     () => Achievement,
     (achievement) => achievement.learnerAchievements,
+    { onDelete: 'CASCADE' },
   )
   @JoinColumn({ name: 'achievement_id' })
   achievement: Achievement;

@@ -12,6 +12,7 @@ import {
 import { Course } from './course.entity';
 import { Learner } from './learner.entity';
 import { Payment } from './payment.entity';
+import { IsEnum } from 'class-validator';
 
 @Entity('enrollments')
 export class Enrollment {
@@ -23,6 +24,7 @@ export class Enrollment {
     enum: EnrollmentStatus,
     default: EnrollmentStatus.PENDING_GROUP,
   })
+  @IsEnum(EnrollmentStatus)
   status: EnrollmentStatus;
 
   @CreateDateColumn({ name: 'enrolled_at' })
@@ -32,12 +34,14 @@ export class Enrollment {
   updatedAt: Date;
 
   @ManyToOne(() => Course, (course) => course.enrollments, {
+    eager: true,
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'course_id' })
   course: Course;
 
   @ManyToOne(() => Learner, (learner) => learner.enrollments, {
+    eager: true,
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'learner_id' })

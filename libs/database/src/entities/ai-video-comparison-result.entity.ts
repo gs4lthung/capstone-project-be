@@ -96,16 +96,18 @@ export class AiVideoComparisonResult {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'text' })
+  @Column({ type: 'text', nullable: true })
+  @IsOptional()
   @IsString()
   @IsNotEmpty()
-  summary: string;
+  summary?: string;
 
-  @Column({ name: 'learner_score', type: 'int' })
+  @Column({ name: 'learner_score', type: 'int', nullable: true })
+  @IsOptional()
   @IsInt()
   @Min(0)
   @Max(100)
-  learnerScore: number;
+  learnerScore?: number;
 
   @Column({ type: 'jsonb', nullable: true })
   @IsOptional()
@@ -147,6 +149,7 @@ export class AiVideoComparisonResult {
   @ManyToOne(
     () => LearnerSkillAssessment,
     (learnerSkillAssessment) => learnerSkillAssessment.aiVideoComparisonResults,
+    { nullable: true },
   )
   learnerSkillAssessment: LearnerSkillAssessment;
 }

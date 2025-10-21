@@ -37,15 +37,11 @@ export class Configuration {
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 
-  @ManyToOne(() => Admin, (admin) => admin.createdConfigurations, {
-    onDelete: 'SET NULL',
-  })
+  @ManyToOne(() => Admin, (admin) => admin.createdConfigurations)
   @JoinColumn({ name: 'created_by' })
   created_by: Admin;
 
-  @ManyToOne(() => Admin, (admin) => admin.updatedConfigurations, {
-    onDelete: 'SET NULL',
-  })
+  @ManyToOne(() => Admin, (admin) => admin.updatedConfigurations)
   @JoinColumn({ name: 'updated_by' })
   updated_by: Admin;
 }
