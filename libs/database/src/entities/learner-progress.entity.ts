@@ -8,9 +8,9 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { Learner } from './learner.entity';
 import { Course } from './course.entity';
 import { IsEnum, IsInt } from 'class-validator';
+import { User } from './user.entity';
 
 @Entity('learner_progresses')
 @Check(`sessions_completed <= total_sessions`)
@@ -40,11 +40,11 @@ export class LearnerProgress {
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 
-  @ManyToOne(() => Learner, (learner) => learner.learnerProgresses, {
+  @ManyToOne(() => User, (user) => user.learnerProgresses, {
     onDelete: 'CASCADE',
   })
-  @JoinColumn({ name: 'learner_id' })
-  learner: Learner;
+  @JoinColumn({ name: 'user_id' })
+  user: User;
 
   @ManyToOne(() => Course, (course) => course.learnerProgresses, {
     onDelete: 'CASCADE',

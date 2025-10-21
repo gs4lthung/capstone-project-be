@@ -18,7 +18,7 @@ import {
   MaxLength,
   MinLength,
 } from 'class-validator';
-import { Admin } from './admin.entity';
+import { User } from './user.entity';
 
 enum AchievementType {
   EVENT_COUNT = 'EVENT_COUNT',
@@ -64,7 +64,7 @@ export class Achievement {
   @OneToMany(() => LearnerAchievement, (achievement) => achievement.achievement)
   learnerAchievements: LearnerAchievement[];
 
-  @ManyToOne(() => Admin, (admin) => admin.createdAchievements)
+  @ManyToOne(() => User, (user) => user.achievements)
   @JoinColumn({ name: 'created_by' })
-  createdBy: Admin;
+  createdBy: User;
 }

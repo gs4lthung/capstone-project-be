@@ -8,8 +8,8 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { Achievement } from './achievement.entity';
-import { Learner } from './learner.entity';
 import { IsInt, Max, Min } from 'class-validator';
+import { User } from './user.entity';
 
 @Entity('achievement_progresses')
 export class AchievementProgress {
@@ -33,8 +33,8 @@ export class AchievementProgress {
   @Index()
   achievement: Achievement;
 
-  @ManyToOne(() => Learner, (learner) => learner.achievementProgresses)
-  @JoinColumn({ name: 'learner_id' })
+  @ManyToOne(() => User, (user) => user.achievementProgresses)
+  @JoinColumn({ name: 'user_id' })
   @Index()
-  learner: Learner;
+  user: User;
 }

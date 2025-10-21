@@ -6,7 +6,7 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Achievement } from './achievement.entity';
-import { Learner } from './learner.entity';
+import { User } from './user.entity';
 
 @Entity('learner_achievements')
 export class LearnerAchievement {
@@ -24,7 +24,7 @@ export class LearnerAchievement {
   @JoinColumn({ name: 'achievement_id' })
   achievement: Achievement;
 
-  @ManyToOne(() => Learner, (learner) => learner.achievements)
-  @JoinColumn({ name: 'learner_id' })
-  learner: Learner;
+  @ManyToOne(() => User, (user) => user.achievements)
+  @JoinColumn({ name: 'user_id' })
+  user: User;
 }

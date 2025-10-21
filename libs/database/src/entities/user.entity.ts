@@ -16,7 +16,6 @@ import { Role } from './role.entity';
 import { AuthProvider } from './auth-provider.entity';
 import { Notification } from './notification.entity';
 import { Coach } from './coach.entity';
-import { Admin } from './admin.entity';
 import { Request } from './request.entity';
 import {
   IsEmail,
@@ -30,6 +29,20 @@ import {
 import { VideoConferencePresenceLog } from './video-conference-presence-log.entity';
 import { Wallet } from './wallet.entity';
 import { Learner } from './learner.entity';
+import { Course } from './course.entity';
+import { Note } from './note.entity';
+import { AchievementProgress } from './achievement-progress.entity';
+import { Achievement } from './achievement.entity';
+import { SkillAssessmentTemplate } from './skill-assessment-template.entity';
+import { Configuration } from './configuration.entity';
+import { RequestAction } from './request-action.entity';
+import { LearnerVideo } from './learner-video.entity';
+import { LearnerSkillAssessment } from './learner-skill-assessment.entity';
+import { LearnerProgress } from './learner-progress.entity';
+import { QuizAttempt } from './quiz_attempt.entity';
+import { Enrollment } from './enrollment.entity';
+import { Feedback } from './feedback.entity';
+import { Attendance } from './attendance.entity';
 
 @Entity('users')
 export class User {
@@ -102,7 +115,7 @@ export class User {
   errors: Error[];
 
   @OneToMany(() => AuthProvider, (authProvider) => authProvider.user, {
-    cascade: true,
+    cascade: ['insert'],
   })
   authProviders: AuthProvider[];
 
@@ -113,9 +126,6 @@ export class User {
 
   @OneToMany(() => Coach, (coach) => coach.user, { cascade: ['insert'] })
   coach: Coach[];
-
-  @OneToMany(() => Admin, (admin) => admin.id, { cascade: ['insert'] })
-  admin: Admin[];
 
   @OneToMany(() => Learner, (learner) => learner.user, { cascade: ['insert'] })
   learner: Learner[];
@@ -131,4 +141,61 @@ export class User {
 
   @OneToOne(() => Wallet, (wallet) => wallet.user)
   wallet: Wallet;
+
+  @OneToMany(() => Course, (course) => course.createdBy)
+  courses: Course[];
+
+  @OneToMany(() => Note, (note) => note.createdBy)
+  noteTaken: Note[];
+
+  @OneToMany(
+    () => AchievementProgress,
+    (achievementProgress) => achievementProgress.user,
+  )
+  achievementProgresses: AchievementProgress[];
+
+  @OneToMany(() => Achievement, (achievement) => achievement.createdBy)
+  achievements: Achievement[];
+
+  @OneToMany(
+    () => SkillAssessmentTemplate,
+    (skillAssessmentTemplate) => skillAssessmentTemplate.createdBy,
+  )
+  skillAssessmentTemplates: SkillAssessmentTemplate[];
+
+  @OneToMany(() => Configuration, (configuration) => configuration.createdBy)
+  createdConfigurations: Configuration[];
+
+  @OneToMany(() => Configuration, (configuration) => configuration.updatedBy)
+  updatedConfigurations: Configuration[];
+
+  @OneToMany(() => RequestAction, (requestAction) => requestAction.handledBy)
+  requestActions: RequestAction[];
+
+  @OneToMany(() => LearnerVideo, (learnerVideo) => learnerVideo.user)
+  learnerVideos: LearnerVideo[];
+
+  @OneToMany(
+    () => LearnerSkillAssessment,
+    (learnerSkillAssessment) => learnerSkillAssessment.user,
+  )
+  learnerSkillAssessments: LearnerSkillAssessment[];
+
+  @OneToMany(() => LearnerProgress, (learnerProgress) => learnerProgress.user)
+  learnerProgresses: LearnerProgress[];
+
+  @OneToMany(() => QuizAttempt, (quizAttempt) => quizAttempt.attemptedBy)
+  quizAttempts: QuizAttempt[];
+
+  @OneToMany(() => Enrollment, (enrollment) => enrollment.user)
+  enrollments: Enrollment[];
+
+  @OneToMany(() => Feedback, (feedback) => feedback.user)
+  feedbacks: Feedback[];
+
+  @OneToMany(() => Note, (note) => note.receivedBy)
+  noteBeingTaken: Note[];
+
+  @OneToMany(() => Attendance, (attendance) => attendance.user)
+  attendances: Attendance[];
 }

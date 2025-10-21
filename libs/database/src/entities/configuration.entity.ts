@@ -7,7 +7,7 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { Admin } from './admin.entity';
+import { User } from './user.entity';
 
 @Entity('configurations')
 export class Configuration {
@@ -37,11 +37,11 @@ export class Configuration {
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 
-  @ManyToOne(() => Admin, (admin) => admin.createdConfigurations)
+  @ManyToOne(() => User, (user) => user.createdConfigurations)
   @JoinColumn({ name: 'created_by' })
-  created_by: Admin;
+  createdBy: User;
 
-  @ManyToOne(() => Admin, (admin) => admin.updatedConfigurations)
+  @ManyToOne(() => User, (user) => user.updatedConfigurations)
   @JoinColumn({ name: 'updated_by' })
-  updated_by: Admin;
+  updatedBy: User;
 }

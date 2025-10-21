@@ -9,8 +9,8 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { Admin } from './admin.entity';
 import { LearnerSkillAssessment } from './learner-skill-assessment.entity';
+import { User } from './user.entity';
 
 @Entity('skill_assessment_templates')
 export class SkillAssessmentTemplate {
@@ -36,11 +36,11 @@ export class SkillAssessmentTemplate {
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 
-  @ManyToOne(() => Admin, (admin) => admin.createdSkillAssessmentTemplates, {
+  @ManyToOne(() => User, (user) => user.skillAssessmentTemplates, {
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'created_by' })
-  createdBy: Admin;
+  createdBy: User;
 
   @OneToMany(
     () => LearnerSkillAssessment,

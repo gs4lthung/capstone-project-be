@@ -7,9 +7,9 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { Learner } from './learner.entity';
 import { Session } from './session.entity';
 import { LearnerAnswer } from './learner-answer.entity';
+import { User } from './user.entity';
 
 @Entity('quiz_attempts')
 export class QuizAttempt {
@@ -25,9 +25,9 @@ export class QuizAttempt {
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
-  @ManyToOne(() => Learner, (learner) => learner.quizAttempts)
+  @ManyToOne(() => User, (user) => user.quizAttempts)
   @JoinColumn({ name: 'attempted_by' })
-  attemptedBy: Learner;
+  attemptedBy: User;
 
   @ManyToOne(() => Session, (session) => session.quizAttempts)
   @JoinColumn({ name: 'session_id' })

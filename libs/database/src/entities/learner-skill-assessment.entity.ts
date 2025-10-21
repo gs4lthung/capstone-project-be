@@ -8,11 +8,11 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { Learner } from './learner.entity';
 import { LearnerVideo } from './learner-video.entity';
 import { SkillAssessmentTemplate } from './skill-assessment-template.entity';
 import { AiVideoComparisonResult } from './ai-video-comparison-result.entity';
 import { IsEnum } from 'class-validator';
+import { User } from './user.entity';
 
 @Entity('learner_skill_assessments')
 export class LearnerSkillAssessment {
@@ -30,9 +30,9 @@ export class LearnerSkillAssessment {
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
-  @ManyToOne(() => Learner, (learner) => learner.learnerSkillAssessments)
-  @JoinColumn({ name: 'learner_id' })
-  learner: Learner;
+  @ManyToOne(() => User, (user) => user.learnerSkillAssessments)
+  @JoinColumn({ name: 'user_id' })
+  user: User;
 
   @ManyToOne(
     () => LearnerVideo,

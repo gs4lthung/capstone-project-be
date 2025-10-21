@@ -8,7 +8,6 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { Learner } from './learner.entity';
 import { Session } from './session.entity';
 import { AiVideoComparisonResult } from './ai-video-comparison-result.entity';
 import { LearnerSkillAssessment } from './learner-skill-assessment.entity';
@@ -20,6 +19,7 @@ import {
   IsString,
   IsUrl,
 } from 'class-validator';
+import { User } from './user.entity';
 
 @Entity('learner_videos')
 export class LearnerVideo {
@@ -56,9 +56,9 @@ export class LearnerVideo {
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
-  @ManyToOne(() => Learner, (learner) => learner.learnerVideos)
-  @JoinColumn({ name: 'learner_id' })
-  learner: Learner;
+  @ManyToOne(() => User, (user) => user.learnerVideos)
+  @JoinColumn({ name: 'user_id' })
+  user: User;
 
   @ManyToOne(() => Session, (session) => session.learnerVideos)
   @JoinColumn({ name: 'session_id' })

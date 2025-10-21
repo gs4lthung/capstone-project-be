@@ -10,6 +10,7 @@ import {
 } from 'typeorm';
 import { Learner } from './learner.entity';
 import { Course } from './course.entity';
+import { User } from './user.entity';
 
 @Entity('feedbacks')
 export class Feedback {
@@ -32,9 +33,9 @@ export class Feedback {
   @DeleteDateColumn({ name: 'deleted_at' })
   deletedAt?: Date;
 
-  @ManyToOne(() => Learner, (learner) => learner.feedbacks, { eager: true })
-  @JoinColumn({ name: 'learner_id' })
-  learner: Learner;
+  @ManyToOne(() => User, (user) => user.feedbacks, { eager: true })
+  @JoinColumn({ name: 'user_id' })
+  user: User;
 
   @ManyToOne(() => Course, (course) => course.feedbacks)
   @JoinColumn({ name: 'course_id' })

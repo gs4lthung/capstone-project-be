@@ -7,10 +7,9 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { Coach } from './coach.entity';
 import { Session } from './session.entity';
-import { Learner } from './learner.entity';
 import { IsString } from 'class-validator';
+import { User } from './user.entity';
 
 @Entity('notes')
 export class Note {
@@ -27,15 +26,15 @@ export class Note {
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 
-  @ManyToOne(() => Coach, (coach) => coach.notes, { onDelete: 'CASCADE' })
+  @ManyToOne(() => User, (user) => user.noteTaken, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'created_by' })
-  createdBy: Coach;
+  createdBy: User;
 
   @ManyToOne(() => Session, (session) => session.notes, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'session_id' })
   session: Session;
 
-  @ManyToOne(() => Learner, (learner) => learner.notes, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'learner_id' })
-  learner: Learner;
+  @ManyToOne(() => User, (user) => user.noteBeingTaken, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'received_by' })
+  receivedBy: User;
 }

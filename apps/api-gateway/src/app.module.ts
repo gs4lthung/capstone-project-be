@@ -29,6 +29,17 @@ import { AwsModule } from '@app/aws';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
 import { MailService } from './services/mail.service';
+import { Course } from '@app/database/entities/course.entity';
+import { Schedule } from '@app/database/entities/schedule.entity';
+import { Request } from '@app/database/entities/request.entity';
+import { RequestService } from './services/request.service';
+import { RequestController } from './controllers/request.controller';
+import { RequestAction } from '@app/database/entities/request-action.entity';
+import { Session } from '@app/database/entities/session.entity';
+import { SessionService } from './services/session.service';
+import { RequestResolver } from './resolvers/request.resolver';
+import { CourseResolver } from './resolvers/course.resolver';
+import { CourseService } from './services/course.service';
 
 @Module({
   imports: [
@@ -74,7 +85,18 @@ import { MailService } from './services/mail.service';
         },
       }),
     }),
-    TypeOrmModule.forFeature([Error, User, Notification, Role, AuthProvider]),
+    TypeOrmModule.forFeature([
+      Error,
+      User,
+      Notification,
+      Role,
+      AuthProvider,
+      Course,
+      Schedule,
+      Request,
+      RequestAction,
+      Session,
+    ]),
     ErrorModule,
     GraphQLModule.forRootAsync<ApolloDriverConfig>({
       imports: [ConfigModule],
@@ -107,17 +129,27 @@ import { MailService } from './services/mail.service';
       }),
     }),
   ],
-  controllers: [AppController, UserController, AuthController],
+  controllers: [
+    AppController,
+    UserController,
+    AuthController,
+    RequestController,
+  ],
   providers: [
     AppService,
     UserService,
     UserResolver,
+    RequestResolver,
+    CourseResolver,
+    CourseService,
     AuthService,
     SocketGateway,
     ConfigService,
     JwtService,
     GoogleStrategy,
+    RequestService,
     MailService,
+    SessionService,
   ],
 })
 export class AppModule {}

@@ -21,6 +21,14 @@ import { SessionEarning } from './session-earning.entity';
 import { LearnerVideo } from './learner-video.entity';
 import { SessionQuiz } from './session-quiz.entity';
 import { SessionVideo } from './session-video.entity';
+import {
+  IsDate,
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  MaxLength,
+} from 'class-validator';
 
 @Entity('sessions')
 @Check(`start_time < end_time`)
@@ -28,16 +36,25 @@ export class Session {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'varchar', length: 100 })
-  name: string;
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(100)
+  name?: string;
 
   @Column({ type: 'text', nullable: true })
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
   description?: string;
 
   @Column({ name: 'session_number', type: 'int' })
+  @IsInt()
   sessionNumber: number;
 
   @Column({ name: 'schedule_date', type: 'date' })
+  @IsDate()
   scheduleDate: Date;
 
   @Column({ name: 'start_time', type: 'time' })

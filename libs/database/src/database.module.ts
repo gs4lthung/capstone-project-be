@@ -8,7 +8,6 @@ import { Notification } from './entities/notification.entity';
 import { Role } from './entities/role.entity';
 import { Achievement } from './entities/achievement.entity';
 import { AchievementProgress } from './entities/achievement-progress.entity';
-import { Admin } from './entities/admin.entity';
 import { AiVideoComparisonResult } from './entities/ai-video-comparison-result.entity';
 import { Attendance } from './entities/attendance.entity';
 import { Coach } from './entities/coach.entity';
@@ -61,7 +60,6 @@ import { VideoConferencePresenceLog } from './entities/video-conference-presence
         entities: [
           Achievement,
           AchievementProgress,
-          Admin,
           AiVideoComparisonResult,
           Attendance,
           AuthProvider,

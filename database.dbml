@@ -234,6 +234,72 @@ Table "notifications" {
   "user_id" int4 [not null]
 }
 
+Table "credentials" {
+  "id" int4 [pk, not null, increment]
+  "name" varchar(255) [not null]
+  "description" text
+  "type" credentials_type_enum [not null]
+  "public_url" text
+  "issued_at" date
+  "expires_at" date
+  "created_at" timestamp [not null, default: `now()`]
+  "updated_at" timestamp [not null, default: `now()`]
+  "deleted_at" timestamp
+  "coach_id" int4
+}
+
+Table "coaches" {
+  "id" int4 [pk, not null, increment]
+  "bio" text [not null]
+  "specialties" text
+  "teaching_methods" text
+  "year_of_experience" int4 [not null]
+  "verification_status" coaches_verification_status_enum [not null, default: 'PENDING']
+  "created_at" timestamp [not null, default: `now()`]
+  "updated_at" timestamp [not null, default: `now()`]
+  "deleted_at" timestamp
+  "user_id" int4
+
+  Indexes {
+    user_id [type: btree, name: "IDX_bd9923ac72efde2d5895e118fa"]
+  }
+}
+
+Table "request_actions" {
+  "id" int4 [pk, not null, increment]
+  "type" request_actions_type_enum [not null]
+  "comment" text
+  "created_at" timestamp [not null, default: `now()`]
+  "handled_by" int4
+  "request_id" int4
+}
+
+Table "requests" {
+  "id" int4 [pk, not null, increment]
+  "description" text [not null]
+  "type" requests_type_enum [not null, default: 'COURSE_APPROVAL']
+  "status" requests_status_enum [not null, default: 'PENDING']
+  "metadata" jsonb
+  "created_at" timestamp [not null, default: `now()`]
+  "updated_at" timestamp [not null, default: `now()`]
+  "created_by" int4
+}
+
+Table "video_conference_presence_logs" {
+  "id" int4 [pk, not null, increment]
+  "channel_name" varchar(100) [not null]
+  "event_type" video_conference_presence_logs_event_type_enum [not null]
+  "timestamp" timestamp [not null, default: `now()`]
+  "user_id" int4
+}
+
+Table "learners" {
+  "id" int4 [pk, not null, increment]
+  "skill_level" learners_skill_level_enum [not null, default: 'BEGINNER']
+  "learning_goal" learners_learning_goal_enum [not null, default: 'BEGINNER']
+  "userId" int4
+}
+
 Table "schedules" {
   "id" int4 [pk, not null, increment]
   "day_of_week" schedules_day_of_week_enum [not null]
@@ -242,39 +308,20 @@ Table "schedules" {
   "course_id" int4
 }
 
-Table "payments" {
+Table "notes" {
   "id" int4 [pk, not null, increment]
-  "amount" int8 [not null]
-  "coach_earning_total" int8 [not null]
-  "status" payments_status_enum [not null, default: 'PENDING']
-  "external_transaction_id" text
+  "content" text [not null]
   "created_at" timestamp [not null, default: `now()`]
-  "enrollment_id" int4
-}
-
-Table "enrollments" {
-  "id" int4 [pk, not null, increment]
-  "status" enrollments_status_enum [not null, default: 'PENDING_GROUP']
-  "enrolled_at" timestamp [not null, default: `now()`]
   "updated_at" timestamp [not null, default: `now()`]
-  "course_id" int4
-  "learner_id" int4
-}
-
-Table "feedbacks" {
-  "id" int4 [pk, not null, increment]
-  "comment" text [not null]
-  "rating" int4 [not null]
-  "created_at" timestamp [not null, default: `now()`]
-  "deleted_at" timestamp
-  "learner_id" int4
-  "course_id" int4
+  "created_by" int4
+  "session_id" int4
+  "received_by" int4
 }
 
 Table "attendances" {
   "id" int4 [pk, not null, increment]
   "created_at" timestamp [not null, default: `now()`]
-  "learner_id" int4
+  "user_id" int4
   "session_id" int4
 }
 
@@ -325,54 +372,25 @@ Table "quiz_attempts" {
   "session_id" int4
 }
 
-Table "learner_progresses" {
+Table "wallet_transactions" {
   "id" int4 [pk, not null, increment]
-  "sessions_completed" int4 [not null]
-  "total_sessions" int4 [not null]
-  "avg_quiz_score" int4 [not null]
-  "status" learner_progresses_status_enum [not null, default: 'IN_PROGRESS']
-  "updated_at" timestamp [not null, default: `now()`]
-  "learner_id" int4
-  "course_id" int4
-}
-
-Table "learner_achievements" {
-  "id" int4 [pk, not null, increment]
-  "earned_at" timestamp [not null, default: `now()`]
-  "achievement_id" int4
-  "learner_id" int4
-}
-
-Table "requests" {
-  "id" int4 [pk, not null, increment]
-  "description" text [not null]
-  "type" requests_type_enum [not null, default: 'COURSE_APPROVAL']
-  "status" requests_status_enum [not null, default: 'PENDING']
-  "metadata" jsonb
-  "created_at" timestamp [not null, default: `now()`]
-  "updated_at" timestamp [not null, default: `now()`]
-  "created_by" int4
-}
-
-Table "request_actions" {
-  "id" int4 [pk, not null, increment]
-  "type" request_actions_type_enum [not null]
-  "comment" text
-  "created_at" timestamp [not null, default: `now()`]
-  "handled_by" int4
-  "request_id" int4
-}
-
-Table "configurations" {
-  "id" int4 [pk, not null, increment]
-  "key" varchar(25) [unique, not null]
-  "value" varchar(255) [not null]
+  "amount" int4 [not null]
   "description" text
-  "data_type" configurations_data_type_enum [not null, default: 'string']
+  "type" wallet_transactions_type_enum [not null]
   "created_at" timestamp [not null, default: `now()`]
-  "updated_at" timestamp [not null, default: `now()`]
-  "created_by" int4
-  "updated_by" int4
+  "wallet_id" int4
+  "session_id" int4
+  "withdrawal_request_id" int4
+}
+
+Table "session_earnings" {
+  "id" int4 [pk, not null, increment]
+  "session_price" int8 [not null]
+  "coach_earning_total" int8 [not null]
+  "status" session_earnings_status_enum [not null, default: 'PENDING']
+  "created_at" timestamp [not null, default: `now()`]
+  "paid_at" date
+  "session_id" int4
 }
 
 Table "session_videos" {
@@ -394,6 +412,25 @@ Table "videos" {
   "public_url" text [not null]
   "thumbnail_url" text
   "status" videos_status_enum [not null, default: 'UPLOADING']
+}
+
+Table "skill_assessment_templates" {
+  "id" int4 [pk, not null, increment]
+  "name" varchar(100) [not null]
+  "description" text
+  "status" skill_assessment_templates_status_enum [not null, default: 'DRAFT']
+  "created_at" timestamp [not null, default: `now()`]
+  "updated_at" timestamp [not null, default: `now()`]
+  "created_by" int4
+}
+
+Table "learner_skill_assessments" {
+  "id" int4 [pk, not null, increment]
+  "status" learner_skill_assessments_status_enum [not null, default: 'IN_PROGRESS']
+  "created_at" timestamp [not null, default: `now()`]
+  "user_id" int4
+  "learner_video_id" int4
+  "skill_assessment_template_id" int4
 }
 
 Table "ai_video_comparison_results" {
@@ -422,36 +459,92 @@ Table "learner_videos" {
   "thumbnail_url" text
   "status" learner_videos_status_enum [not null, default: 'UPLOADING']
   "created_at" timestamp [not null, default: `now()`]
-  "learner_id" int4
+  "user_id" int4
   "session_id" int4
 }
 
-Table "learner_skill_assessments" {
+Table "sessions" {
   "id" int4 [pk, not null, increment]
-  "status" learner_skill_assessments_status_enum [not null, default: 'IN_PROGRESS']
+  "name" varchar(100)
+  "description" text
+  "session_number" int4 [not null]
+  "schedule_date" date [not null]
+  "start_time" time [not null]
+  "end_time" time [not null]
+  "duration_in_minutes" int4 [not null]
+  "video_conference_channel_name" varchar(100)
+  "video_conference_link" text
+  "status" sessions_status_enum [not null, default: 'SCHEDULED']
   "created_at" timestamp [not null, default: `now()`]
-  "learner_id" int4
-  "learner_video_id" int4
-  "skill_assessment_template_id" int4
+  "updated_at" timestamp [not null, default: `now()`]
+  "deletedAt" timestamp
+  "completed_at" date
+  "coach_payment_status" sessions_coach_payment_status_enum [not null, default: 'PENDING']
+  "course_id" int4
 }
 
-Table "skill_assessment_templates" {
+Table "payments" {
+  "id" int4 [pk, not null, increment]
+  "amount" int8 [not null]
+  "coach_earning_total" int8 [not null]
+  "status" payments_status_enum [not null, default: 'PENDING']
+  "external_transaction_id" text
+  "created_at" timestamp [not null, default: `now()`]
+  "enrollment_id" int4
+}
+
+Table "enrollments" {
+  "id" int4 [pk, not null, increment]
+  "status" enrollments_status_enum [not null, default: 'PENDING_GROUP']
+  "enrolled_at" timestamp [not null, default: `now()`]
+  "updated_at" timestamp [not null, default: `now()`]
+  "course_id" int4
+  "learner_id" int4
+}
+
+Table "feedbacks" {
+  "id" int4 [pk, not null, increment]
+  "comment" text [not null]
+  "rating" int4 [not null]
+  "created_at" timestamp [not null, default: `now()`]
+  "deleted_at" timestamp
+  "user_id" int4
+  "course_id" int4
+}
+
+Table "learner_progresses" {
+  "id" int4 [pk, not null, increment]
+  "sessions_completed" int4 [not null]
+  "total_sessions" int4 [not null]
+  "avg_quiz_score" int4 [not null]
+  "status" learner_progresses_status_enum [not null, default: 'IN_PROGRESS']
+  "updated_at" timestamp [not null, default: `now()`]
+  "user_id" int4
+  "course_id" int4
+}
+
+Table "courses" {
   "id" int4 [pk, not null, increment]
   "name" varchar(100) [not null]
   "description" text
-  "status" skill_assessment_templates_status_enum [not null, default: 'DRAFT']
+  "level" courses_level_enum [not null, default: 'BEGINNER']
+  "learning_format" courses_learning_format_enum [not null, default: 'INDIVIDUAL']
+  "min_participants" int4 [not null, default: 1]
+  "max_participants" int4 [not null, default: 10]
+  "price_per_participant" int8 [not null, default: '0']
+  "start_date" date [not null]
+  "end_date" date [not null]
   "created_at" timestamp [not null, default: `now()`]
   "updated_at" timestamp [not null, default: `now()`]
+  "deleted_at" timestamp
   "created_by" int4
 }
 
-Table "admins" {
+Table "learner_achievements" {
   "id" int4 [pk, not null, increment]
+  "earned_at" timestamp [not null, default: `now()`]
+  "achievement_id" int4
   "user_id" int4
-
-  Indexes {
-    user_id [type: btree, name: "IDX_2b901dd818a2a6486994d915a6"]
-  }
 }
 
 Table "achievements" {
@@ -482,125 +575,24 @@ Table "achievement_progresses" {
   "current_progress" int4 [not null]
   "updated_at" timestamp [not null, default: `now()`]
   "achievement_id" int4
-  "learner_id" int4
+  "user_id" int4
 
   Indexes {
+    user_id [type: btree, name: "IDX_5c049bcfd1bdc064529502cea6"]
     achievement_id [type: btree, name: "IDX_7bbff2ff7709c4bfe2ec171cb0"]
-    learner_id [type: btree, name: "IDX_c2fc185f624f51f38eba8bd597"]
   }
 }
 
-Table "learners" {
+Table "configurations" {
   "id" int4 [pk, not null, increment]
-  "skill_level" learners_skill_level_enum [not null, default: 'BEGINNER']
-  "learning_goal" learners_learning_goal_enum [not null, default: 'BEGINNER']
-}
-
-Table "notes" {
-  "id" int4 [pk, not null, increment]
-  "content" text [not null]
+  "key" varchar(25) [unique, not null]
+  "value" varchar(255) [not null]
+  "description" text
+  "data_type" configurations_data_type_enum [not null, default: 'string']
   "created_at" timestamp [not null, default: `now()`]
   "updated_at" timestamp [not null, default: `now()`]
   "created_by" int4
-  "session_id" int4
-  "learner_id" int4
-}
-
-Table "wallet_transactions" {
-  "id" int4 [pk, not null, increment]
-  "amount" int4 [not null]
-  "description" text
-  "type" wallet_transactions_type_enum [not null]
-  "created_at" timestamp [not null, default: `now()`]
-  "wallet_id" int4
-  "session_id" int4
-  "withdrawal_request_id" int4
-}
-
-Table "session_earnings" {
-  "id" int4 [pk, not null, increment]
-  "session_price" int8 [not null]
-  "coach_earning_total" int8 [not null]
-  "status" session_earnings_status_enum [not null, default: 'PENDING']
-  "created_at" timestamp [not null, default: `now()`]
-  "paid_at" date
-  "session_id" int4
-}
-
-Table "sessions" {
-  "id" int4 [pk, not null, increment]
-  "name" varchar(100) [not null]
-  "description" text
-  "session_number" int4 [not null]
-  "schedule_date" date [not null]
-  "start_time" time [not null]
-  "end_time" time [not null]
-  "duration_in_minutes" int4 [not null]
-  "video_conference_channel_name" varchar(100)
-  "video_conference_link" text
-  "status" sessions_status_enum [not null, default: 'SCHEDULED']
-  "created_at" timestamp [not null, default: `now()`]
-  "updated_at" timestamp [not null, default: `now()`]
-  "deletedAt" timestamp
-  "completed_at" date
-  "coach_payment_status" sessions_coach_payment_status_enum [not null, default: 'PENDING']
-  "course_id" int4
-}
-
-Table "courses" {
-  "id" int4 [pk, not null, increment]
-  "name" varchar(100) [not null]
-  "description" text
-  "level" courses_level_enum [not null, default: 'BEGINNER']
-  "learning_format" courses_learning_format_enum [not null, default: 'INDIVIDUAL']
-  "min_participants" int4 [not null, default: 1]
-  "max_participants" int4 [not null, default: 10]
-  "price_per_participant" int8 [not null, default: '0']
-  "start_date" date [not null]
-  "end_date" date [not null]
-  "created_at" timestamp [not null, default: `now()`]
-  "updated_at" timestamp [not null, default: `now()`]
-  "deleted_at" timestamp
-  "created_by" int4
-}
-
-Table "credentials" {
-  "id" int4 [pk, not null, increment]
-  "name" varchar(255) [not null]
-  "description" text
-  "type" credentials_type_enum [not null]
-  "public_url" text
-  "issued_at" date
-  "expires_at" date
-  "created_at" timestamp [not null, default: `now()`]
-  "updated_at" timestamp [not null, default: `now()`]
-  "deleted_at" timestamp
-  "coach_id" int4
-}
-
-Table "coaches" {
-  "id" int4 [pk, not null, increment]
-  "bio" text [not null]
-  "specialties" text
-  "teaching_methods" text
-  "year_of_experience" int4 [not null]
-  "verification_status" coaches_verification_status_enum [not null, default: 'PENDING']
-  "created_at" timestamp [not null, default: `now()`]
-  "updated_at" timestamp [not null, default: `now()`]
-  "deleted_at" timestamp
-  "user_id" int4
-
-  Indexes {
-    user_id [type: btree, name: "IDX_bd9923ac72efde2d5895e118fa"]
-  }
-}
-
-Table "video_conference_presence_logs" {
-  "id" int4 [pk, not null, increment]
-  "channel_name" varchar(100) [not null]
-  "event_type" video_conference_presence_logs_event_type_enum [not null]
-  "timestamp" timestamp [not null, default: `now()`]
-  "user_id" int4
+  "updated_by" int4
 }
 
 Table "users" {
@@ -647,13 +639,11 @@ Table "withdrawal_requests" {
   "wallet_id" int4
 }
 
+Ref "FK_5c049bcfd1bdc064529502cea6b":"users"."id" < "achievement_progresses"."user_id"
+
 Ref "FK_7bbff2ff7709c4bfe2ec171cb08":"achievements"."id" < "achievement_progresses"."achievement_id"
 
-Ref "FK_c2fc185f624f51f38eba8bd597a":"learners"."id" < "achievement_progresses"."learner_id"
-
-Ref "FK_f013825ee12ed3dbe4503bd8b68":"admins"."id" < "achievements"."created_by"
-
-Ref "FK_2b901dd818a2a6486994d915a68":"users"."id" < "admins"."user_id" [delete: cascade]
+Ref "FK_f013825ee12ed3dbe4503bd8b68":"users"."id" < "achievements"."created_by"
 
 Ref "FK_389da34ca9a2e80edb0967bcca5":"learner_skill_assessments"."id" < "ai_video_comparison_results"."learnerSkillAssessmentId"
 
@@ -661,35 +651,35 @@ Ref "FK_8f9dd918b2f5f9b0f701e9f3a58":"videos"."id" < "ai_video_comparison_result
 
 Ref "FK_ce6caf58efab20a6485b1e465e2":"learner_videos"."id" < "ai_video_comparison_results"."learner_video_id"
 
-Ref "FK_ccb4752e27a2927234e1f3dc960":"sessions"."id" < "attendances"."session_id" [delete: cascade]
+Ref "FK_aa902e05aeb5fde7c1dd4ced2b7":"users"."id" < "attendances"."user_id" [delete: cascade]
 
-Ref "FK_cec2e7f5e857d1f1b26ce9e145f":"learners"."id" < "attendances"."learner_id" [delete: cascade]
+Ref "FK_ccb4752e27a2927234e1f3dc960":"sessions"."id" < "attendances"."session_id" [delete: cascade]
 
 Ref "FK_262996fd08ab5a69e85b53d0055":"users"."id" < "auth_providers"."user_id" [delete: cascade]
 
 Ref "FK_bd9923ac72efde2d5895e118fa8":"users"."id" < "coaches"."user_id" [delete: cascade]
 
-Ref "FK_06000e3d345edfed86dde6d4b28":"admins"."id" < "configurations"."created_by"
+Ref "FK_06000e3d345edfed86dde6d4b28":"users"."id" < "configurations"."created_by"
 
-Ref "FK_5e0eaa5b677fd4a19ce7b213738":"admins"."id" < "configurations"."updated_by"
+Ref "FK_5e0eaa5b677fd4a19ce7b213738":"users"."id" < "configurations"."updated_by"
 
-Ref "FK_16fcd8ab8bc042688984d5b3934":"coaches"."id" < "courses"."created_by" [delete: set null]
+Ref "FK_16fcd8ab8bc042688984d5b3934":"users"."id" < "courses"."created_by" [delete: set null]
 
 Ref "FK_8cbbe3785bbd0c6af75acac1bfe":"coaches"."id" < "credentials"."coach_id" [delete: cascade]
 
 Ref "FK_b79d0bf01779fdf9cfb6b092af3":"courses"."id" < "enrollments"."course_id" [delete: cascade]
 
-Ref "FK_bb53c1a95eb92bf25d7c632058e":"learners"."id" < "enrollments"."learner_id" [delete: cascade]
+Ref "FK_bb53c1a95eb92bf25d7c632058e":"users"."id" < "enrollments"."learner_id" [delete: cascade]
 
 Ref "FK_9ebca22261064ed68a1c894017e":"users"."id" < "errors"."user_id"
 
-Ref "FK_59d22a35d77e039d2220f4e88e3":"learners"."id" < "feedbacks"."learner_id"
+Ref "FK_4334f6be2d7d841a9d5205a100e":"users"."id" < "feedbacks"."user_id"
 
 Ref "FK_b46afcad144f370d8a4c55ea498":"courses"."id" < "feedbacks"."course_id"
 
 Ref "FK_a77d3e9606c8288f6bc5a148132":"achievements"."id" < "learner_achievements"."achievement_id" [delete: cascade]
 
-Ref "FK_e35597ec9a05a27497edcf0b9ad":"learners"."id" < "learner_achievements"."learner_id"
+Ref "FK_df9cac0ea1f4f223ad48efdb119":"users"."id" < "learner_achievements"."user_id"
 
 Ref "FK_57238eb2290f2081def653b4ac1":"question_options"."id" < "learner_answers"."question_option_id" [delete: cascade]
 
@@ -697,25 +687,27 @@ Ref "FK_a88a71b4134638af1e0b211db36":"quiz_attempts"."id" < "learner_answers"."q
 
 Ref "FK_b93f29c3adfa47910e5cbc741b6":"questions"."id" < "learner_answers"."question_id" [delete: cascade]
 
+Ref "FK_47edc74266d1ccf71687a8b5d96":"users"."id" < "learner_progresses"."user_id" [delete: cascade]
+
 Ref "FK_b21b5f43200685ef0309fc36a5e":"courses"."id" < "learner_progresses"."course_id" [delete: cascade]
 
-Ref "FK_ca931aba35d905f2e7c927219d7":"learners"."id" < "learner_progresses"."learner_id" [delete: cascade]
+Ref "FK_1d0347da71a1f23a2f175ea1c3d":"users"."id" < "learner_skill_assessments"."user_id"
 
 Ref "FK_23e21adfb8cd11c843e42b4a7e1":"learner_videos"."id" < "learner_skill_assessments"."learner_video_id"
-
-Ref "FK_882f8d8be2ad107b866d071e4d9":"learners"."id" < "learner_skill_assessments"."learner_id"
 
 Ref "FK_f32b867871e50a7438f20d78fea":"skill_assessment_templates"."id" < "learner_skill_assessments"."skill_assessment_template_id"
 
 Ref "FK_37fb5e426810144dcbbbc4ab2b2":"sessions"."id" < "learner_videos"."session_id"
 
-Ref "FK_f561a1e96dbe1f4842583a70a4c":"learners"."id" < "learner_videos"."learner_id"
+Ref "FK_cf04457186a977ccc49446bec52":"users"."id" < "learner_videos"."user_id"
 
-Ref "FK_42ee00f899fcb9fdf80ca055081":"learners"."id" < "notes"."learner_id" [delete: cascade]
+Ref "FK_28e1f470fea3f1c5196c2e4464f":"users"."id" < "learners"."userId" [delete: cascade]
 
 Ref "FK_61f3e1f13a15b883ae34a9e28c9":"sessions"."id" < "notes"."session_id" [delete: cascade]
 
-Ref "FK_b86c5f2b5de1e7a3d2a428cfb55":"coaches"."id" < "notes"."created_by" [delete: cascade]
+Ref "FK_b86c5f2b5de1e7a3d2a428cfb55":"users"."id" < "notes"."created_by" [delete: cascade]
+
+Ref "FK_f7857b0d8f027e0a2eb094e381e":"users"."id" < "notes"."received_by" [delete: cascade]
 
 Ref "FK_9a8a82462cab47c73d25f49261f":"users"."id" < "notifications"."user_id"
 
@@ -725,11 +717,11 @@ Ref "FK_f0b7aaabd3f88e700daf0fe681c":"questions"."id" < "question_options"."ques
 
 Ref "FK_46b3c125e02f7242662e4ccb307":"quizzes"."id" < "questions"."quiz_id" [delete: cascade]
 
-Ref "FK_3c151c1db4d493cee059d94aeb8":"learners"."id" < "quiz_attempts"."attempted_by"
+Ref "FK_3c151c1db4d493cee059d94aeb8":"users"."id" < "quiz_attempts"."attempted_by"
 
 Ref "FK_d244675816bf64833d8ecd67830":"sessions"."id" < "quiz_attempts"."session_id"
 
-Ref "FK_28fe00d6aca3eb711eae98f8cc6":"admins"."id" < "request_actions"."handled_by" [delete: cascade]
+Ref "FK_28fe00d6aca3eb711eae98f8cc6":"users"."id" < "request_actions"."handled_by" [delete: cascade]
 
 Ref "FK_8c6c5b31c8d9f2571c99dd4550b":"requests"."id" < "request_actions"."request_id" [delete: cascade]
 
@@ -749,7 +741,7 @@ Ref "FK_b3666bc6d714b5c52017264b14b":"sessions"."id" < "session_videos"."session
 
 Ref "FK_b8cfc5397ec5c262e83f2bf5fbe":"courses"."id" < "sessions"."course_id" [delete: cascade]
 
-Ref "FK_21414b56511886e8a4c060145ff":"admins"."id" < "skill_assessment_templates"."created_by" [delete: cascade]
+Ref "FK_21414b56511886e8a4c060145ff":"users"."id" < "skill_assessment_templates"."created_by" [delete: cascade]
 
 Ref "FK_a2cecd1a3531c0b041e29ba46e1":"roles"."id" < "users"."role_id"
 

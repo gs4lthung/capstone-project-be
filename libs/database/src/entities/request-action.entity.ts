@@ -7,8 +7,8 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { Admin } from './admin.entity';
 import { Request } from './request.entity';
+import { User } from './user.entity';
 
 @Entity('request_actions')
 export class RequestAction {
@@ -24,11 +24,11 @@ export class RequestAction {
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
-  @ManyToOne(() => Admin, (admin) => admin.requestActions, {
+  @ManyToOne(() => User, (user) => user.requestActions, {
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'handled_by' })
-  handledBy: Admin;
+  handledBy: User;
 
   @ManyToOne(() => Request, (request) => request.actions, {
     onDelete: 'CASCADE',

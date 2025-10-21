@@ -10,9 +10,9 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { Course } from './course.entity';
-import { Learner } from './learner.entity';
 import { Payment } from './payment.entity';
 import { IsEnum } from 'class-validator';
+import { User } from './user.entity';
 
 @Entity('enrollments')
 export class Enrollment {
@@ -40,12 +40,12 @@ export class Enrollment {
   @JoinColumn({ name: 'course_id' })
   course: Course;
 
-  @ManyToOne(() => Learner, (learner) => learner.enrollments, {
+  @ManyToOne(() => User, (user) => user.enrollments, {
     eager: true,
     onDelete: 'CASCADE',
   })
-  @JoinColumn({ name: 'learner_id' })
-  learner: Learner;
+  @JoinColumn({ name: 'user_id' })
+  user: User;
 
   @OneToMany(() => Payment, (payment) => payment.enrollment)
   payments: Payment[];

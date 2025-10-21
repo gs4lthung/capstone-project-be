@@ -13,7 +13,6 @@ import { PaginatedGqlArgs } from '@app/shared/graphql/paginated-gql-args';
 import { PaginatedUser, UserDto } from '@app/shared/dtos/users/user.dto';
 
 @Resolver(() => UserDto)
-// @UseInterceptors(CacheInterceptor)
 export class UserResolver {
   constructor(private readonly userService: UserService) {}
 
