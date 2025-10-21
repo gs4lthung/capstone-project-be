@@ -29,6 +29,7 @@ import {
   IsString,
   MaxLength,
 } from 'class-validator';
+import { Report } from './report.entity';
 
 @Entity('sessions')
 @Check(`start_time < end_time`)
@@ -135,4 +136,9 @@ export class Session {
     nullable: true,
   })
   sessionQuizzes: SessionQuiz[];
+
+  @OneToMany(() => Report, (report) => report.session, {
+    eager: true,
+  })
+  reports: Report[];
 }

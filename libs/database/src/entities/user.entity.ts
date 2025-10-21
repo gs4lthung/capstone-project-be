@@ -43,6 +43,7 @@ import { QuizAttempt } from './quiz_attempt.entity';
 import { Enrollment } from './enrollment.entity';
 import { Feedback } from './feedback.entity';
 import { Attendance } from './attendance.entity';
+import { Report } from './report.entity';
 
 @Entity('users')
 export class User {
@@ -198,4 +199,7 @@ export class User {
 
   @OneToMany(() => Attendance, (attendance) => attendance.user)
   attendances: Attendance[];
+
+  @OneToMany(() => Report, (report) => report.createdBy)
+  reports: Report[];
 }
