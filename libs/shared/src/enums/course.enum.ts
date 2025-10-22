@@ -11,6 +11,7 @@ export enum CourseStatus {
   COMPLETED = 'COMPLETED',
   FULL = 'FULL',
   READY_OPENED = 'READY_OPENED',
+  ON_GOING = 'ON_GOING',
 }
 
 export enum CourseCredentialType {

@@ -44,6 +44,8 @@ import { Enrollment } from './enrollment.entity';
 import { Feedback } from './feedback.entity';
 import { Attendance } from './attendance.entity';
 import { Report } from './report.entity';
+import { Quiz } from './quiz.entity';
+import { Video } from './video.entity';
 
 @Entity('users')
 export class User {
@@ -191,7 +193,7 @@ export class User {
   @OneToMany(() => Enrollment, (enrollment) => enrollment.user)
   enrollments: Enrollment[];
 
-  @OneToMany(() => Feedback, (feedback) => feedback.user)
+  @OneToMany(() => Feedback, (feedback) => feedback.createdBy)
   feedbacks: Feedback[];
 
   @OneToMany(() => Note, (note) => note.receivedBy)
@@ -202,4 +204,10 @@ export class User {
 
   @OneToMany(() => Report, (report) => report.createdBy)
   reports: Report[];
+
+  @OneToMany(() => Quiz, (quiz) => quiz.createdBy)
+  quizzes: Quiz[];
+
+  @OneToMany(() => Video, (video) => video.uploadedBy)
+  videos: Video[];
 }

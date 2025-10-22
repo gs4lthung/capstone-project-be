@@ -8,7 +8,6 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { LearnerVideo } from './learner-video.entity';
-import { Video } from './video.entity';
 
 import { LearnerSkillAssessment } from './learner-skill-assessment.entity';
 import {
@@ -26,6 +25,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import { SessionVideo } from './session-video.entity';
 
 enum AiVideoComparisonDetailsType {
   PREPARATION = 'PREPARATION',
@@ -141,10 +141,10 @@ export class AiVideoComparisonResult {
   @Index()
   learnerVideo: LearnerVideo;
 
-  @ManyToOne(() => Video, (video) => video.aiVideoComparisonResults)
-  @JoinColumn({ name: 'video_id' })
+  @ManyToOne(() => SessionVideo, (video) => video.aiVideoComparisonResults)
+  @JoinColumn({ name: 'session_video_id' })
   @Index()
-  coachVideo: Video;
+  session: SessionVideo;
 
   @ManyToOne(
     () => LearnerSkillAssessment,

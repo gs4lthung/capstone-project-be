@@ -8,7 +8,6 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { Learner } from './learner.entity';
 import { Course } from './course.entity';
 import { User } from './user.entity';
 
@@ -35,7 +34,7 @@ export class Feedback {
 
   @ManyToOne(() => User, (user) => user.feedbacks, { eager: true })
   @JoinColumn({ name: 'user_id' })
-  user: User;
+  createdBy: User;
 
   @ManyToOne(() => Course, (course) => course.feedbacks)
   @JoinColumn({ name: 'course_id' })

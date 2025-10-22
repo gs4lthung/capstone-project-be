@@ -2,10 +2,12 @@ import {
   CreateDateColumn,
   Entity,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Session } from './session.entity';
 import { Video } from './video.entity';
+import { AiVideoComparisonResult } from './ai-video-comparison-result.entity';
 
 @Entity('session_videos')
 export class SessionVideo {
@@ -24,4 +26,7 @@ export class SessionVideo {
     onDelete: 'CASCADE',
   })
   video: Video;
+
+  @OneToMany(() => AiVideoComparisonResult, (result) => result.session)
+  aiVideoComparisonResults: AiVideoComparisonResult[];
 }

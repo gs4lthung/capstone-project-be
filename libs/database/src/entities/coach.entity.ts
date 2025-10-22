@@ -47,7 +47,7 @@ export class Coach {
     name: 'verification_status',
     type: 'enum',
     enum: CoachVerificationStatus,
-    default: CoachVerificationStatus.PENDING,
+    default: CoachVerificationStatus.UNVERIFIED,
   })
   verificationStatus: CoachVerificationStatus;
 

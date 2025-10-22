@@ -6,7 +6,8 @@ export enum CoachVideoStatus {
 }
 
 export enum CoachVerificationStatus {
+  UNVERIFIED = 'UNVERIFIED',
   PENDING = 'PENDING',
-  APPROVED = 'APPROVED',
   REJECTED = 'REJECTED',
+  VERIFIED = 'VERIFIED',
 }

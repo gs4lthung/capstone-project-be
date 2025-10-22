@@ -3,7 +3,6 @@ import { Role } from '../entities/role.entity';
 import { User } from '../entities/user.entity';
 import { Learner } from '../entities/learner.entity';
 import { Coach } from '../entities/coach.entity';
-import { Admin } from '../entities/admin.entity';
 import { Wallet } from '../entities/wallet.entity';
 import { AuthProvider } from '../entities/auth-provider.entity';
 import { PickleballLevel } from '../../../shared/src/enums/pickleball.enum';
@@ -15,7 +14,6 @@ export const userSeed = async (dataSource: DataSource) => {
   const roleRepository = dataSource.getRepository(Role);
   const learnerRepository = dataSource.getRepository(Learner);
   const coachRepository = dataSource.getRepository(Coach);
-  const adminRepository = dataSource.getRepository(Admin);
   const walletRepository = dataSource.getRepository(Wallet);
   const authProviderRepository = dataSource.getRepository(AuthProvider);
 
@@ -108,10 +106,10 @@ export const userSeed = async (dataSource: DataSource) => {
 
     // Create role-specific profiles
     if (savedUser.role.name === 'ADMIN') {
-      const admin = adminRepository.create({
-        user: savedUser,
+      const admin = userRepository.create({
+        ...savedUser,
       });
-      await adminRepository.save(admin);
+      await userRepository.save(admin);
     } else if (savedUser.role.name === 'COACH') {
       const coach = coachRepository.create({
         user: savedUser,

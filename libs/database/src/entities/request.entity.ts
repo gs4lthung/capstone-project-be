@@ -16,6 +16,12 @@ import { IsEnum, IsString } from 'class-validator';
 import { GqlCustomDateTime } from '@app/shared/graphql/scalars/gql-custom-datetime.scalar';
 import { JSONScalar } from '@app/shared/graphql/scalars/json.scalar';
 
+interface RequestMetadata {
+  type: 'course' | 'quiz' | 'coach' | 'video';
+  id: number;
+  details: any;
+}
+
 @ObjectType()
 @Entity('requests')
 export class Request {
@@ -32,7 +38,6 @@ export class Request {
   @Column({
     type: 'enum',
     enum: RequestType,
-    default: RequestType.COURSE_APPROVAL,
   })
   @IsEnum(RequestType)
   type: RequestType;
@@ -44,7 +49,7 @@ export class Request {
 
   @Field(() => JSONScalar, { nullable: true })
   @Column({ type: 'jsonb', nullable: true })
-  metadata: any;
+  metadata: RequestMetadata;
 
   @Field(() => GqlCustomDateTime)
   @CreateDateColumn({ name: 'created_at' })

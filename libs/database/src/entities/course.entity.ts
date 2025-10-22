@@ -1,4 +1,7 @@
-import { CourseLearningFormat } from '@app/shared/enums/course.enum';
+import {
+  CourseLearningFormat,
+  CourseStatus,
+} from '@app/shared/enums/course.enum';
 import { PickleballLevel } from '@app/shared/enums/pickleball.enum';
 import {
   IsDate,
@@ -74,6 +77,16 @@ export class Course {
   })
   @IsEnum(CourseLearningFormat)
   learningFormat: CourseLearningFormat;
+
+  @Field(() => String)
+  @Column({
+    name: 'status',
+    type: 'enum',
+    enum: CourseStatus,
+    default: CourseStatus.PENDING_APPROVAL,
+  })
+  @IsEnum(CourseStatus)
+  status: CourseStatus;
 
   @Field(() => Number)
   @Column({ name: 'min_participants', type: 'int', default: 1 })

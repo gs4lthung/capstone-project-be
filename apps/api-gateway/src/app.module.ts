@@ -40,6 +40,7 @@ import { SessionService } from './services/session.service';
 import { RequestResolver } from './resolvers/request.resolver';
 import { CourseResolver } from './resolvers/course.resolver';
 import { CourseService } from './services/course.service';
+import { Report } from '@app/database/entities/report.entity';
 
 @Module({
   imports: [
@@ -96,6 +97,7 @@ import { CourseService } from './services/course.service';
       Request,
       RequestAction,
       Session,
+      Report,
     ]),
     ErrorModule,
     GraphQLModule.forRootAsync<ApolloDriverConfig>({

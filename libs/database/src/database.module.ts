@@ -44,6 +44,7 @@ import { WithdrawalRequest } from './entities/withdrawal-request.entity';
 import { SessionQuiz } from './entities/session-quiz.entity';
 import { SessionVideo } from './entities/session-video.entity';
 import { VideoConferencePresenceLog } from './entities/video-conference-presence-log.entity';
+import { Report } from './entities/report.entity';
 
 @Module({
   imports: [
@@ -92,6 +93,7 @@ import { VideoConferencePresenceLog } from './entities/video-conference-presence
           Session,
           SessionQuiz,
           SessionVideo,
+          Report,
           SessionEarning,
           SkillAssessmentTemplate,
           StreakAchievement,

@@ -1,7 +1,14 @@
 import { PickleballLevel } from '@app/shared/enums/pickleball.enum';
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  ManyToOne,
+  OneToMany,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { Question } from './question.entity';
 import { SessionQuiz } from './session-quiz.entity';
+import { User } from './user.entity';
 
 @Entity('quizzes')
 export class Quiz {
@@ -36,4 +43,8 @@ export class Quiz {
     nullable: true,
   })
   sessionQuizzes: SessionQuiz[];
+  @ManyToOne(() => User, (user) => user.quizzes, {
+    eager: true,
+  })
+  createdBy: User;
 }

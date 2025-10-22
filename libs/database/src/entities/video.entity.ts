@@ -1,7 +1,13 @@
 import { CoachVideoStatus } from '@app/shared/enums/coach.enum';
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
-import { AiVideoComparisonResult } from './ai-video-comparison-result.entity';
+import {
+  Column,
+  Entity,
+  ManyToOne,
+  OneToMany,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { SessionVideo } from './session-video.entity';
+import { User } from './user.entity';
 
 @Entity('videos')
 export class Video {
@@ -42,15 +48,14 @@ export class Video {
   })
   status: CoachVideoStatus;
 
-  @OneToMany(
-    () => AiVideoComparisonResult,
-    (aiVideoComparisonResult) => aiVideoComparisonResult.coachVideo,
-  )
-  aiVideoComparisonResults: AiVideoComparisonResult[];
-
   @OneToMany(() => SessionVideo, (sessionVideo) => sessionVideo.video, {
     cascade: ['insert'],
     nullable: true,
   })
   sessionVideos: SessionVideo[];
+
+  @ManyToOne(() => User, (user) => user.videos, {
+    eager: true,
+  })
+  uploadedBy: User;
 }
