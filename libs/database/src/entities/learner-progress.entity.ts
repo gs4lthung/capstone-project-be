@@ -26,6 +26,9 @@ export class LearnerProgress {
   @IsInt()
   totalSessions: number;
 
+  @Column({ name: 'avg_ai_analysis_score', type: 'int' })
+  avgAiAnalysisScore: number;
+
   @Column({ name: 'avg_quiz_score', type: 'int' })
   avgQuizScore: number;
 

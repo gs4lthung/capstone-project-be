@@ -14,6 +14,9 @@ export class Payment {
   @PrimaryGeneratedColumn()
   id: number;
 
+  @Column({ name: 'bank_code', type: 'varchar', length: 50 })
+  bankCode: string;
+
   @Column({ type: 'bigint' })
   amount: number;
 

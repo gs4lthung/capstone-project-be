@@ -6,7 +6,6 @@ export enum SessionStatus {
 
 export enum SessionEarningStatus {
   PENDING = 'PENDING',
-  CALCULATED = 'CALCULATED',
   PAID = 'PAID',
   FAILED = 'FAILED',
 }

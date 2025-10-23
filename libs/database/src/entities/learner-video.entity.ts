@@ -10,7 +10,6 @@ import {
 } from 'typeorm';
 import { Session } from './session.entity';
 import { AiVideoComparisonResult } from './ai-video-comparison-result.entity';
-import { LearnerSkillAssessment } from './learner-skill-assessment.entity';
 import {
   ArrayNotEmpty,
   IsEnum,
@@ -69,10 +68,4 @@ export class LearnerVideo {
     (aiVideoComparisonResult) => aiVideoComparisonResult.learnerVideo,
   )
   aiVideoComparisonResults: AiVideoComparisonResult[];
-
-  @OneToMany(
-    () => LearnerSkillAssessment,
-    (learnerSkillAssessment) => learnerSkillAssessment.learnerVideo,
-  )
-  learnerSkillAssessments: LearnerSkillAssessment[];
 }

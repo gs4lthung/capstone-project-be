@@ -3,7 +3,6 @@ export enum PaymentStatus {
   COMPLETED = 'COMPLETED',
   CANCELLED = 'CANCELLED',
   FAILED = 'FAILED',
-  ERROR = 'ERROR',
 }
 
 export enum WalletTransactionType {

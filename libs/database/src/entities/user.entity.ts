@@ -33,17 +33,14 @@ import { Course } from './course.entity';
 import { Note } from './note.entity';
 import { AchievementProgress } from './achievement-progress.entity';
 import { Achievement } from './achievement.entity';
-import { SkillAssessmentTemplate } from './skill-assessment-template.entity';
 import { Configuration } from './configuration.entity';
 import { RequestAction } from './request-action.entity';
 import { LearnerVideo } from './learner-video.entity';
-import { LearnerSkillAssessment } from './learner-skill-assessment.entity';
 import { LearnerProgress } from './learner-progress.entity';
 import { QuizAttempt } from './quiz_attempt.entity';
 import { Enrollment } from './enrollment.entity';
 import { Feedback } from './feedback.entity';
 import { Attendance } from './attendance.entity';
-import { Report } from './report.entity';
 import { Quiz } from './quiz.entity';
 import { Video } from './video.entity';
 
@@ -160,12 +157,6 @@ export class User {
   @OneToMany(() => Achievement, (achievement) => achievement.createdBy)
   achievements: Achievement[];
 
-  @OneToMany(
-    () => SkillAssessmentTemplate,
-    (skillAssessmentTemplate) => skillAssessmentTemplate.createdBy,
-  )
-  skillAssessmentTemplates: SkillAssessmentTemplate[];
-
   @OneToMany(() => Configuration, (configuration) => configuration.createdBy)
   createdConfigurations: Configuration[];
 
@@ -177,12 +168,6 @@ export class User {
 
   @OneToMany(() => LearnerVideo, (learnerVideo) => learnerVideo.user)
   learnerVideos: LearnerVideo[];
-
-  @OneToMany(
-    () => LearnerSkillAssessment,
-    (learnerSkillAssessment) => learnerSkillAssessment.user,
-  )
-  learnerSkillAssessments: LearnerSkillAssessment[];
 
   @OneToMany(() => LearnerProgress, (learnerProgress) => learnerProgress.user)
   learnerProgresses: LearnerProgress[];
@@ -201,9 +186,6 @@ export class User {
 
   @OneToMany(() => Attendance, (attendance) => attendance.user)
   attendances: Attendance[];
-
-  @OneToMany(() => Report, (report) => report.createdBy)
-  reports: Report[];
 
   @OneToMany(() => Quiz, (quiz) => quiz.createdBy)
   quizzes: Quiz[];

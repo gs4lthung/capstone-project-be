@@ -9,7 +9,6 @@ import {
 } from 'typeorm';
 import { LearnerVideo } from './learner-video.entity';
 
-import { LearnerSkillAssessment } from './learner-skill-assessment.entity';
 import {
   ArrayNotEmpty,
   IsArray,
@@ -145,11 +144,4 @@ export class AiVideoComparisonResult {
   @JoinColumn({ name: 'session_video_id' })
   @Index()
   session: SessionVideo;
-
-  @ManyToOne(
-    () => LearnerSkillAssessment,
-    (learnerSkillAssessment) => learnerSkillAssessment.aiVideoComparisonResults,
-    { nullable: true },
-  )
-  learnerSkillAssessment: LearnerSkillAssessment;
 }
