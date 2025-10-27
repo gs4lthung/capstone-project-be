@@ -1,77 +1,34 @@
+version: '3.8'
+
 services:
   api-gateway:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      args:
-        SERVICE: api-gateway
-    environment:
-      - service_var=api-gateway
-    env_file:
-      - .env
+    build: .
     ports:
-      - '${API_GATEWAY_PORT}:${API_GATEWAY_PORT}'
-  auth-service:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      args:
-        SERVICE: auth-service
+      - "3000:3000"
     environment:
-      - service_var=auth-service
-    env_file:
-      - .env
+      - NODE_ENV=production
+      - DATABASE_HOST=postgres
+      - DATABASE_PORT=5432
+      - DATABASE_USERNAME=postgres
+      - DATABASE_PASSWORD=password
+      - DATABASE_DATABASE=capstone_db
+    depends_on:
+      - postgres
+    volumes:
+      - ./uploads:/usr/src/app/uploads
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=capstone_db
     ports:
-      - '${AUTH_SERVICE_PORT}:${AUTH_SERVICE_PORT}'
-  # user-service:
-  #   build:
-  #     context: .
-  #     dockerfile: Dockerfile
-  #     args:
-  #       SERVICE: user-service
-  #   environment:
-  #     - service_var=user-service
-  #   env_file:
-  #     - .env.production
-  #   ports:
-  #     - '${USER_SERVICE_PORT}:${USER_SERVICE_PORT}'
-  # notification-service:
-  #   build:
-  #     context: .
-  #     dockerfile: Dockerfile
-  #     args:
-  #       SERVICE: notification-service
-  #   environment:
-  #     - service_var=notification-service
-  #   env_file:
-  #     - .env.production
-  # mail-service:
-  #   build:
-  #     context: .
-  #     dockerfile: Dockerfile
-  #     args:
-  #       SERVICE: mail-service
-  #   environment:
-  #     - service_var=mail-service
-  #   env_file:
-  #     - .env.production
-  # payment-service:
-  #   build:
-  #     context: .
-  #     dockerfile: Dockerfile
-  #     args:
-  #       SERVICE: payment-service
-  #   environment:
-  #     - service_var=payment-service
-  #   env_file:
-  #     - .env.production
-  # order-service:
-  #   build:
-  #     context: .
-  #     dockerfile: Dockerfile
-  #     args:
-  #       SERVICE: order-service
-  #   environment:
-  #     - service_var=order-service
-  #   env_file:
-  #     - .env.production
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

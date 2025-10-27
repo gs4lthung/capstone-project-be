@@ -73,7 +73,7 @@ export class Course {
     name: 'learning_format',
     type: 'enum',
     enum: CourseLearningFormat,
-    default: CourseLearningFormat.INDIVIDUAL,
+    default: CourseLearningFormat.GROUP,
   })
   @IsEnum(CourseLearningFormat)
   learningFormat: CourseLearningFormat;
@@ -147,7 +147,9 @@ export class Course {
   })
   schedules: Schedule[];
 
-  @OneToMany(() => Enrollment, (enrollment) => enrollment.course)
+  @OneToMany(() => Enrollment, (enrollment) => enrollment.course, {
+    cascade: ['update'],
+  })
   enrollments: Enrollment[];
 
   @OneToMany(() => Feedback, (feedback) => feedback.course)

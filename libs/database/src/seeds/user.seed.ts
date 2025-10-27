@@ -115,7 +115,7 @@ export const userSeed = async (dataSource: DataSource) => {
         user: savedUser,
         bio: 'Huấn luyện viên pickleball chuyên nghiệp với nhiều năm kinh nghiệm',
         yearOfExperience: Math.floor(Math.random() * 10) + 3,
-        verificationStatus: CoachVerificationStatus.APPROVED,
+        verificationStatus: CoachVerificationStatus.VERIFIED,
         specialties: [
           'Kỹ thuật cơ bản',
           'Chiến thuật thi đấu',

@@ -21,7 +21,6 @@ import { Learner } from './entities/learner.entity';
 import { LearnerAchievement } from './entities/learner-achievement.entity';
 import { LearnerAnswer } from './entities/learner-answer.entity';
 import { LearnerProgress } from './entities/learner-progress.entity';
-import { LearnerSkillAssessment } from './entities/learner-skill-assessment.entity';
 import { LearnerVideo } from './entities/learner-video.entity';
 import { Note } from './entities/note.entity';
 import { Payment } from './entities/payment.entity';
@@ -35,7 +34,6 @@ import { RequestAction } from './entities/request-action.entity';
 import { Schedule } from './entities/schedule.entity';
 import { Session } from './entities/session.entity';
 import { SessionEarning } from './entities/session-earning.entity';
-import { SkillAssessmentTemplate } from './entities/skill-assessment-template.entity';
 import { StreakAchievement } from './entities/streak-achievement.entity';
 import { Wallet } from './entities/wallet.entity';
 import { Video } from './entities/video.entity';
@@ -44,7 +42,6 @@ import { WithdrawalRequest } from './entities/withdrawal-request.entity';
 import { SessionQuiz } from './entities/session-quiz.entity';
 import { SessionVideo } from './entities/session-video.entity';
 import { VideoConferencePresenceLog } from './entities/video-conference-presence-log.entity';
-import { Report } from './entities/report.entity';
 
 @Module({
   imports: [
@@ -76,7 +73,6 @@ import { Report } from './entities/report.entity';
           LearnerAchievement,
           LearnerAnswer,
           LearnerProgress,
-          LearnerSkillAssessment,
           LearnerVideo,
           Note,
           Notification,
@@ -93,9 +89,7 @@ import { Report } from './entities/report.entity';
           Session,
           SessionQuiz,
           SessionVideo,
-          Report,
           SessionEarning,
-          SkillAssessmentTemplate,
           StreakAchievement,
           User,
           Video,

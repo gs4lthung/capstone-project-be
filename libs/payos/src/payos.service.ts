@@ -1,30 +1,22 @@
 import { ConfigService } from '@app/config';
-import { Order } from '@app/database/entities/order.entity';
-import { CreatePaymentLinkRequestDto } from '@app/shared/dtos/payments/create-payment-link.dto';
-import { PaymentStatusEnum } from '@app/shared/enums/payment.enum';
-import { CustomRpcException } from '@app/shared/customs/custom-rpc-exception';
+import { CreatePaymentLinkRequestDto } from '@app/shared/dtos/payments/payment.dto';
 import { CryptoUtils } from '@app/shared/utils/crypto.util';
 import { DateTimeUtils } from '@app/shared/utils/datetime.util';
 import { ExceptionUtils } from '@app/shared/utils/exception.util';
-import { HttpStatus, Injectable, Logger } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
+import { Injectable, Logger } from '@nestjs/common';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 import PayOS = require('@payos/node');
 import {
   CheckoutResponseDataType,
   PaymentLinkDataType,
 } from '@payos/node/lib/type';
-import { Repository } from 'typeorm';
 @Injectable()
 export class PayosService {
   private logger = new Logger(PayosService.name);
   private returnUrl: string;
   private cancelUrl: string;
   private payOS: PayOS;
-  constructor(
-    private configService: ConfigService,
-    @InjectRepository(Order) private orderRepository: Repository<Order>,
-  ) {
+  constructor(private configService: ConfigService) {
     this.payOS = new PayOS(
       this.configService.get('payos').client_id,
       this.configService.get('payos').api_key,
@@ -37,14 +29,7 @@ export class PayosService {
   async createPaymentLink(
     data: CreatePaymentLinkRequestDto,
   ): Promise<CheckoutResponseDataType> {
-    const orderId = data.orderId;
     try {
-      if (!data.orderCode || !data.expiredAt || !data.orderId)
-        throw new CustomRpcException(
-          'Missing required fields',
-          HttpStatus.INTERNAL_SERVER_ERROR,
-        );
-
       const expiredAtAsUnixTimestamp = DateTimeUtils.convertDateToUnixTimestamp(
         data.expiredAt as Date,
       );
@@ -64,17 +49,14 @@ export class PayosService {
         cancelUrl: this.cancelUrl,
         signature: signature,
       };
-      delete payosData.orderId;
 
       const response = await this.payOS.createPaymentLink({
         ...payosData,
       });
+      this.logger.log('PayOS response:', response);
       return response;
     } catch (error) {
       this.logger.error(error);
-      await this.orderRepository.update(orderId, {
-        status: PaymentStatusEnum.ERROR,
-      });
       throw ExceptionUtils.wrapAsRpcException(error);
     }
   }
@@ -84,6 +66,14 @@ export class PayosService {
   ): Promise<PaymentLinkDataType> {
     try {
       return await this.payOS.getPaymentLinkInformation(orderCode);
+    } catch (error) {
+      throw ExceptionUtils.wrapAsRpcException(error);
+    }
+  }
+
+  async confirmWebhook(url: string): Promise<void> {
+    try {
+      await this.payOS.confirmWebhook(url);
     } catch (error) {
       throw ExceptionUtils.wrapAsRpcException(error);
     }

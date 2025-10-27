@@ -47,6 +47,8 @@ export class Enrollment {
   @JoinColumn({ name: 'user_id' })
   user: User;
 
-  @OneToMany(() => Payment, (payment) => payment.enrollment)
+  @OneToMany(() => Payment, (payment) => payment.enrollment, {
+    eager: true,
+  })
   payments: Payment[];
 }

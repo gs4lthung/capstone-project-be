@@ -16,7 +16,7 @@ import { IsEnum, IsString } from 'class-validator';
 import { GqlCustomDateTime } from '@app/shared/graphql/scalars/gql-custom-datetime.scalar';
 import { JSONScalar } from '@app/shared/graphql/scalars/json.scalar';
 
-interface RequestMetadata {
+export interface RequestMetadata {
   type: 'course' | 'quiz' | 'coach' | 'video';
   id: number;
   details: any;

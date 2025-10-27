@@ -26,6 +26,9 @@ export class Feedback {
   @Max(5)
   rating: number;
 
+  @Column({ type: 'boolean', default: false })
+  isAnonymous: boolean;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 

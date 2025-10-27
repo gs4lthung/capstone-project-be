@@ -40,7 +40,12 @@ import { SessionService } from './services/session.service';
 import { RequestResolver } from './resolvers/request.resolver';
 import { CourseResolver } from './resolvers/course.resolver';
 import { CourseService } from './services/course.service';
-import { Report } from '@app/database/entities/report.entity';
+import { CourseController } from './controllers/course.controller';
+import { Enrollment } from '@app/database/entities/enrollment.entity';
+import { CronService } from './services/cron.service';
+import { PayosModule } from '@app/payos';
+import { Payment } from '@app/database/entities/payment.entity';
+import { PayosController } from './controllers/payos.controller';
 
 @Module({
   imports: [
@@ -59,6 +64,7 @@ import { Report } from '@app/database/entities/report.entity';
     ScheduleModule.forRoot(),
     DatabaseModule,
     AwsModule,
+    PayosModule,
     MailerModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -93,11 +99,12 @@ import { Report } from '@app/database/entities/report.entity';
       Role,
       AuthProvider,
       Course,
+      Enrollment,
       Schedule,
       Request,
       RequestAction,
       Session,
-      Report,
+      Payment,
     ]),
     ErrorModule,
     GraphQLModule.forRootAsync<ApolloDriverConfig>({
@@ -135,7 +142,9 @@ import { Report } from '@app/database/entities/report.entity';
     AppController,
     UserController,
     AuthController,
+    PayosController,
     RequestController,
+    CourseController,
   ],
   providers: [
     AppService,
@@ -152,6 +161,7 @@ import { Report } from '@app/database/entities/report.entity';
     RequestService,
     MailService,
     SessionService,
+    CronService,
   ],
 })
 export class AppModule {}
