@@ -46,6 +46,10 @@ import { CronService } from './services/cron.service';
 import { PayosModule } from '@app/payos';
 import { Payment } from '@app/database/entities/payment.entity';
 import { PayosController } from './controllers/payos.controller';
+import { Coach } from '@app/database/entities/coach.entity';
+import { Credential } from '@app/database/entities/credential.entity';
+import { CoachController } from './controllers/coach.controller';
+import { CoachService } from './services/coach.service';
 
 @Module({
   imports: [
@@ -105,6 +109,8 @@ import { PayosController } from './controllers/payos.controller';
       RequestAction,
       Session,
       Payment,
+      Coach,
+      Credential,
     ]),
     ErrorModule,
     GraphQLModule.forRootAsync<ApolloDriverConfig>({
@@ -145,6 +151,7 @@ import { PayosController } from './controllers/payos.controller';
     PayosController,
     RequestController,
     CourseController,
+    CoachController,
   ],
   providers: [
     AppService,
@@ -153,6 +160,7 @@ import { PayosController } from './controllers/payos.controller';
     RequestResolver,
     CourseResolver,
     CourseService,
+    CoachService,
     AuthService,
     SocketGateway,
     ConfigService,
