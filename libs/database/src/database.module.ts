@@ -42,6 +42,8 @@ import { WithdrawalRequest } from './entities/withdrawal-request.entity';
 import { SessionQuiz } from './entities/session-quiz.entity';
 import { SessionVideo } from './entities/session-video.entity';
 import { VideoConferencePresenceLog } from './entities/video-conference-presence-log.entity';
+import { Province } from './entities/province.entity';
+import { District } from './entities/district.entity';
 
 @Module({
   imports: [
@@ -97,6 +99,8 @@ import { VideoConferencePresenceLog } from './entities/video-conference-presence
           WithdrawalRequest,
           Wallet,
           VideoConferencePresenceLog,
+          Province,
+          District,
         ],
         logging: false,
         synchronize: configService.get('node_env') === 'dev',

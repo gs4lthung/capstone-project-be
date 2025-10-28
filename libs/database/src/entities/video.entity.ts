@@ -4,10 +4,12 @@ import {
   Entity,
   ManyToOne,
   OneToMany,
+  OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { SessionVideo } from './session-video.entity';
 import { User } from './user.entity';
+import { Lesson } from './lesson.entity';
+import { AiVideoComparisonResult } from './ai-video-comparison-result.entity';
 
 @Entity('videos')
 export class Video {
@@ -48,14 +50,17 @@ export class Video {
   })
   status: CoachVideoStatus;
 
-  @OneToMany(() => SessionVideo, (sessionVideo) => sessionVideo.video, {
-    cascade: ['insert'],
-    nullable: true,
-  })
-  sessionVideos: SessionVideo[];
-
   @ManyToOne(() => User, (user) => user.videos, {
     eager: true,
   })
   uploadedBy: User;
+
+  @OneToOne(() => Lesson, (lesson) => lesson.video)
+  lesson: Lesson;
+
+  @OneToMany(
+    () => AiVideoComparisonResult,
+    (aiVideoComparisonResult) => aiVideoComparisonResult.video,
+  )
+  aiVideoComparisonResults: AiVideoComparisonResult[];
 }

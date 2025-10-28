@@ -4,11 +4,12 @@ import {
   Entity,
   ManyToOne,
   OneToMany,
+  OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Question } from './question.entity';
-import { SessionQuiz } from './session-quiz.entity';
 import { User } from './user.entity';
+import { Lesson } from './lesson.entity';
 
 @Entity('quizzes')
 export class Quiz {
@@ -38,13 +39,11 @@ export class Quiz {
   })
   questions: Question[];
 
-  @OneToMany(() => SessionQuiz, (sessionQuiz) => sessionQuiz.quiz, {
-    cascade: ['insert'],
-    nullable: true,
-  })
-  sessionQuizzes: SessionQuiz[];
   @ManyToOne(() => User, (user) => user.quizzes, {
     eager: true,
   })
   createdBy: User;
+
+  @OneToOne(() => Lesson, (lesson) => lesson.quiz)
+  lesson: Lesson;
 }

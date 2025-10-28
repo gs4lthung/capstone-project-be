@@ -6,6 +6,8 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Course } from './course.entity';
+import { ScheduleDayOfWeek } from '@app/shared/enums/schedule.enum';
+import { IsEnum } from 'class-validator';
 
 @Entity('schedules')
 export class Schedule {
@@ -15,16 +17,9 @@ export class Schedule {
   @Column({
     name: 'day_of_week',
     type: 'enum',
-    enum: [
-      'Monday',
-      'Tuesday',
-      'Wednesday',
-      'Thursday',
-      'Friday',
-      'Saturday',
-      'Sunday',
-    ],
+    enum: ScheduleDayOfWeek,
   })
+  @IsEnum(ScheduleDayOfWeek)
   dayOfWeek: string;
 
   @Column({ name: 'start_time', type: 'time' })

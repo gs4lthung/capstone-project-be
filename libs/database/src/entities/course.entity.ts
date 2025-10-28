@@ -34,6 +34,9 @@ import { Field, ObjectType } from '@nestjs/graphql';
 import { GqlCustomDateTime } from '@app/shared/graphql/scalars/gql-custom-datetime.scalar';
 import { User } from './user.entity';
 import { UserDto } from '@app/shared/dtos/users/user.dto';
+import { District } from './district.entity';
+import { Province } from './province.entity';
+import { Subject } from './subject.entity';
 
 @ObjectType()
 @Entity('courses')
@@ -48,6 +51,7 @@ export class Course {
 
   @Field(() => String)
   @Column({ type: 'varchar', length: 100 })
+  @IsNotEmpty()
   @IsString()
   @MaxLength(100)
   name: string;
@@ -106,6 +110,11 @@ export class Course {
   @Min(0)
   pricePerParticipant: number;
 
+  @Column({ name: 'total_sessions', type: 'int', default: 0 })
+  @IsInt()
+  @Min(0)
+  totalSessions: number;
+
   @Field(() => GqlCustomDateTime)
   @Column({ name: 'start_date', type: 'date' })
   @IsDate()
@@ -136,6 +145,10 @@ export class Course {
   @JoinColumn({ name: 'created_by' })
   createdBy: User;
 
+  @ManyToOne(() => Subject, (subject) => subject.courses)
+  @JoinColumn({ name: 'subject_id' })
+  subject: Subject;
+
   @OneToMany(() => Session, (session) => session.course, {
     cascade: ['insert'],
   })
@@ -157,4 +170,23 @@ export class Course {
 
   @OneToMany(() => LearnerProgress, (learnerProgress) => learnerProgress.course)
   learnerProgresses: LearnerProgress[];
+
+  @Column({ name: 'address', type: 'text' })
+  @IsNotEmpty()
+  @IsString()
+  address: string;
+
+  @ManyToOne(() => Province, (province) => province.courses, {
+    eager: true,
+    cascade: ['insert'],
+  })
+  @JoinColumn({ name: 'province_id' })
+  province: Province;
+
+  @ManyToOne(() => District, (district) => district.courses, {
+    eager: true,
+    cascade: ['insert'],
+  })
+  @JoinColumn({ name: 'district_id' })
+  district: District;
 }

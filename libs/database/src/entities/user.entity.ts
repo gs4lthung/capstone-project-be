@@ -43,6 +43,7 @@ import { Feedback } from './feedback.entity';
 import { Attendance } from './attendance.entity';
 import { Quiz } from './quiz.entity';
 import { Video } from './video.entity';
+import { Subject } from './subject.entity';
 
 @Entity('users')
 export class User {
@@ -192,4 +193,7 @@ export class User {
 
   @OneToMany(() => Video, (video) => video.uploadedBy)
   videos: Video[];
+
+  @OneToMany(() => Subject, (subject) => subject.createdBy)
+  subjects: Subject[];
 }
