@@ -1,14 +1,12 @@
-import { PickleBallLevelEnum } from '@app/shared/enums/pickleball.enum';
+import { CoachVideoStatus } from '@app/shared/enums/coach.enum';
 import {
   Column,
-  CreateDateColumn,
-  DeleteDateColumn,
   Entity,
-  JoinColumn,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
-  UpdateDateColumn,
 } from 'typeorm';
+import { SessionVideo } from './session-video.entity';
 import { User } from './user.entity';
 
 @Entity('videos')
@@ -19,35 +17,45 @@ export class Video {
   @Column({ type: 'varchar', length: 50 })
   title: string;
 
-  @Column({ type: 'varchar', length: 255 })
-  description: string;
+  @Column({ type: 'text', nullable: true })
+  description?: string;
 
-  @Column('text', { array: true })
-  tags: string[];
+  @Column({ type: 'text', nullable: true })
+  tags?: string[];
+
+  @Column({ type: 'int' })
+  duration: number;
+
+  @Column({ name: 'drill_name', type: 'varchar', length: 50, nullable: true })
+  drillName: string;
+
+  @Column({ name: 'drill_description', type: 'text', nullable: true })
+  drillDescription?: string;
+
+  @Column({ name: 'drill_practice_sets', type: 'text', nullable: true })
+  drillPracticeSets?: string;
+
+  @Column({ name: 'public_url', type: 'text' })
+  publicUrl: string;
+
+  @Column({ name: 'thumbnail_url', type: 'text', nullable: true })
+  thumbnailUrl?: string;
 
   @Column({
     type: 'enum',
-    enum: PickleBallLevelEnum,
-    default: PickleBallLevelEnum.BEGINNER_1_0,
+    enum: CoachVideoStatus,
+    default: CoachVideoStatus.UPLOADING,
   })
-  level?: PickleBallLevelEnum;
+  status: CoachVideoStatus;
 
-  @Column({ type: 'varchar', length: 255 })
-  publicUrl: string;
+  @OneToMany(() => SessionVideo, (sessionVideo) => sessionVideo.video, {
+    cascade: ['insert'],
+    nullable: true,
+  })
+  sessionVideos: SessionVideo[];
 
-  @Column({ type: 'varchar', length: 255 })
-  thumbnailUrl: string;
-
-  @CreateDateColumn()
-  createdAt: Date;
-
-  @UpdateDateColumn()
-  updatedAt: Date;
-
-  @DeleteDateColumn()
-  deletedAt: Date;
-
-  @ManyToOne(() => User, (user) => user.videos, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'userId' })
-  user: User;
+  @ManyToOne(() => User, (user) => user.videos, {
+    eager: true,
+  })
+  uploadedBy: User;
 }

@@ -3,6 +3,7 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  Index,
   JoinColumn,
   ManyToOne,
   OneToMany,
@@ -12,89 +13,183 @@ import {
 } from 'typeorm';
 import { Error } from './error.entity';
 import { Role } from './role.entity';
-import { FcmToken } from './fcmToken.entity';
 import { AuthProvider } from './auth-provider.entity';
 import { Notification } from './notification.entity';
-import { Order } from './order.entity';
-import { ChatMember } from './chat-members.entity';
-import { Message } from './message.entity';
+import { Coach } from './coach.entity';
+import { Request } from './request.entity';
+import {
+  IsEmail,
+  IsOptional,
+  IsPhoneNumber,
+  IsString,
+  IsUrl,
+  Max,
+  Min,
+} from 'class-validator';
+import { VideoConferencePresenceLog } from './video-conference-presence-log.entity';
+import { Wallet } from './wallet.entity';
+import { Learner } from './learner.entity';
+import { Course } from './course.entity';
+import { Note } from './note.entity';
+import { AchievementProgress } from './achievement-progress.entity';
+import { Achievement } from './achievement.entity';
+import { Configuration } from './configuration.entity';
+import { RequestAction } from './request-action.entity';
+import { LearnerVideo } from './learner-video.entity';
+import { LearnerProgress } from './learner-progress.entity';
+import { QuizAttempt } from './quiz_attempt.entity';
+import { Enrollment } from './enrollment.entity';
+import { Feedback } from './feedback.entity';
+import { Attendance } from './attendance.entity';
+import { Quiz } from './quiz.entity';
 import { Video } from './video.entity';
-import { CoachProfile } from './coach_profile.entity';
 
 @Entity('users')
 export class User {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'varchar', length: 50 })
+  @Column({ name: 'full_name', type: 'varchar', length: 50 })
+  @IsString()
+  @Min(2)
+  @Max(50)
   fullName: string;
 
-  @Column({ type: 'varchar', length: 100, unique: true, nullable: true })
+  @Column({ type: 'varchar', length: 50, unique: true, nullable: true })
+  @Index({ unique: true })
+  @IsEmail()
   email: string;
 
+  @Column({ name: 'phone_number', type: 'varchar', length: 25, nullable: true })
+  @IsOptional()
+  @IsPhoneNumber('VN')
+  phoneNumber?: string;
+
   @Column({ type: 'varchar', length: 255, select: false, nullable: true })
-  password: string;
+  @IsOptional()
+  @IsString()
+  password?: string;
 
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  refreshToken?: string;
-
-  @Column({ type: 'varchar', length: 200, nullable: true })
+  @Column({ name: 'profile_picture', type: 'text', nullable: true })
+  @IsOptional()
+  @IsUrl()
   profilePicture?: string;
 
-  @Column({ type: 'boolean', default: false })
+  @Column({ name: 'refresh_token', type: 'text', nullable: true })
+  refreshToken?: string;
+
+  @Column({ name: 'is_email_verified', type: 'boolean', default: false })
+  @Index()
   isEmailVerified: boolean;
 
-  @Column({ type: 'varchar', length: 255, nullable: true })
+  @Column({
+    name: 'email_verification_token',
+    type: 'varchar',
+    length: 255,
+    nullable: true,
+  })
   emailVerificationToken?: string;
 
-  @Column({ type: 'varchar', length: 255, nullable: true })
+  @Column({
+    name: 'reset_password_token',
+    type: 'varchar',
+    length: 255,
+    nullable: true,
+  })
   resetPasswordToken?: string;
 
-  @CreateDateColumn()
+  @Column({ name: 'is_active', type: 'boolean', default: false })
+  @Index()
+  isActive: boolean;
+
+  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 
-  @DeleteDateColumn()
+  @DeleteDateColumn({ name: 'deleted_at' })
   deletedAt: Date;
 
   @OneToMany(() => Error, (error) => error.user)
   errors: Error[];
 
   @OneToMany(() => AuthProvider, (authProvider) => authProvider.user, {
-    cascade: true,
+    cascade: ['insert'],
   })
   authProviders: AuthProvider[];
 
   @ManyToOne(() => Role, (role) => role.users, { nullable: true, eager: true })
-  @JoinColumn({ name: 'roleId' })
+  @JoinColumn({ name: 'role_id' })
+  @Index()
   role: Role;
 
-  @OneToMany(() => FcmToken, (fcmToken) => fcmToken.user, {
-    cascade: true,
-    eager: true,
-  })
-  fcmTokens: FcmToken[];
+  @OneToMany(() => Coach, (coach) => coach.user, { cascade: ['insert'] })
+  coach: Coach[];
+
+  @OneToMany(() => Learner, (learner) => learner.user, { cascade: ['insert'] })
+  learner: Learner[];
+
+  @OneToMany(() => Request, (request) => request.createdBy)
+  requests: Request[];
 
   @OneToMany(() => Notification, (notification) => notification.user)
   notifications: Notification[];
 
-  @OneToMany(() => Order, (order) => order.user)
-  orders: Order[];
+  @OneToMany(() => VideoConferencePresenceLog, (log) => log.user)
+  videoConferencePresenceLogs: VideoConferencePresenceLog[];
 
-  @OneToMany(() => ChatMember, (member) => member.user)
-  chatMembers: ChatMember[];
+  @OneToOne(() => Wallet, (wallet) => wallet.user)
+  wallet: Wallet;
 
-  @OneToMany(() => Message, (message) => message.sender)
-  messages: Message[];
+  @OneToMany(() => Course, (course) => course.createdBy)
+  courses: Course[];
 
-  @OneToMany(() => Video, (video) => video.user)
+  @OneToMany(() => Note, (note) => note.createdBy)
+  noteTaken: Note[];
+
+  @OneToMany(
+    () => AchievementProgress,
+    (achievementProgress) => achievementProgress.user,
+  )
+  achievementProgresses: AchievementProgress[];
+
+  @OneToMany(() => Achievement, (achievement) => achievement.createdBy)
+  achievements: Achievement[];
+
+  @OneToMany(() => Configuration, (configuration) => configuration.createdBy)
+  createdConfigurations: Configuration[];
+
+  @OneToMany(() => Configuration, (configuration) => configuration.updatedBy)
+  updatedConfigurations: Configuration[];
+
+  @OneToMany(() => RequestAction, (requestAction) => requestAction.handledBy)
+  requestActions: RequestAction[];
+
+  @OneToMany(() => LearnerVideo, (learnerVideo) => learnerVideo.user)
+  learnerVideos: LearnerVideo[];
+
+  @OneToMany(() => LearnerProgress, (learnerProgress) => learnerProgress.user)
+  learnerProgresses: LearnerProgress[];
+
+  @OneToMany(() => QuizAttempt, (quizAttempt) => quizAttempt.attemptedBy)
+  quizAttempts: QuizAttempt[];
+
+  @OneToMany(() => Enrollment, (enrollment) => enrollment.user)
+  enrollments: Enrollment[];
+
+  @OneToMany(() => Feedback, (feedback) => feedback.createdBy)
+  feedbacks: Feedback[];
+
+  @OneToMany(() => Note, (note) => note.receivedBy)
+  noteBeingTaken: Note[];
+
+  @OneToMany(() => Attendance, (attendance) => attendance.user)
+  attendances: Attendance[];
+
+  @OneToMany(() => Quiz, (quiz) => quiz.createdBy)
+  quizzes: Quiz[];
+
+  @OneToMany(() => Video, (video) => video.uploadedBy)
   videos: Video[];
-
-  @OneToOne(() => CoachProfile, (coachProfile) => coachProfile.user, {
-    cascade: true,
-    eager: true,
-  })
-  coachProfile: CoachProfile;
 }

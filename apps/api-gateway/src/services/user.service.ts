@@ -1,89 +1,195 @@
 import { User } from '@app/database/entities/user.entity';
 import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
-import { CreateUserDto } from '@app/shared/dtos/users/create-user.dto';
-import { Inject, Injectable, Scope } from '@nestjs/common';
-import { ClientProxy } from '@nestjs/microservices';
+import { HttpStatus, Inject, Injectable, Scope } from '@nestjs/common';
 
 import { FindOptions } from '@app/shared/interfaces/find-options.interface';
 import { REQUEST } from '@nestjs/core';
 import { CustomApiRequest } from '@app/shared/customs/custom-api-request';
-import { lastValueFrom } from 'rxjs';
-import { UserMsgPattern } from '@app/shared/msg_patterns/user.msg_pattern';
-import { PaginatedUserList } from '@app/shared/dtos/users/user.dto';
-
+import { CreateUserDto } from '@app/shared/dtos/users/create-user.dto';
+import { PaginatedUser } from '@app/shared/dtos/users/user.dto';
+import { ConfigService } from '@app/config';
+import { AwsService } from '@app/aws';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Role } from '@app/database/entities/role.entity';
+import { Repository } from 'typeorm';
+import { BaseTypeOrmService } from '@app/shared/helpers/typeorm.helper';
+import { UserRole } from '@app/shared/enums/user.enum';
+import * as bcrypt from 'bcrypt';
+import { CustomRpcException } from '@app/shared/customs/custom-rpc-exception';
+import { ExceptionUtils } from '@app/shared/utils/exception.util';
+import * as fs from 'fs';
 @Injectable({ scope: Scope.REQUEST })
-export class UserService {
+export class UserService extends BaseTypeOrmService<User> {
   constructor(
     @Inject(REQUEST) private readonly request: CustomApiRequest,
-    @Inject('USER_SERVICE') private readonly userService: ClientProxy,
-  ) {}
-  async create(data: CreateUserDto) {
-    const pattern = { cmd: UserMsgPattern.CREATE_USER };
-    const payload = data;
-
-    const response = await lastValueFrom(
-      this.userService.send<CustomApiResponse<void>>(pattern, payload),
-    );
-    return response;
+    private readonly configService: ConfigService,
+    private readonly awsService: AwsService,
+    @InjectRepository(User) private readonly userRepository: Repository<User>,
+    @InjectRepository(Role) private readonly roleRepository: Repository<Role>,
+  ) {
+    super(userRepository);
   }
 
-  async findAll(findOptions: FindOptions): Promise<PaginatedUserList> {
-    const pattern = { cmd: UserMsgPattern.FIND_ALL_USERS };
+  async create(data: CreateUserDto): Promise<CustomApiResponse<void>> {
+    try {
+      const isUserExists = await this.userRepository.findOne({
+        where: { email: data.email },
+      });
 
-    const response = await lastValueFrom(
-      this.userService.send<PaginatedUserList>(pattern, findOptions),
-    );
+      if (isUserExists) {
+        throw new CustomRpcException(
+          'USER.ALREADY_EXISTS',
+          HttpStatus.CONFLICT,
+        );
+      }
 
-    return response;
+      const passwordHashed = await bcrypt.hash(
+        data.password,
+        this.configService.get('password_salt_rounds'),
+      );
+
+      const customerRole = await this.roleRepository.findOne({
+        where: { name: UserRole.CUSTOMER },
+      });
+
+      const user = this.userRepository.create({
+        fullName: data.fullName,
+        email: data.email,
+        password: passwordHashed,
+        role: data.role ? data.role : customerRole,
+        isEmailVerified: true,
+      });
+
+      await this.userRepository.save(user);
+
+      return new CustomApiResponse<void>(
+        HttpStatus.CREATED,
+        'USER.CREATE_USER_SUCCESS',
+      );
+    } catch (error) {
+      throw ExceptionUtils.wrapAsRpcException(error);
+    }
+  }
+
+  async findAll(findOptions: FindOptions): Promise<PaginatedUser> {
+    return super.find(findOptions, 'user', PaginatedUser);
   }
 
   async findOne(id: number): Promise<User> {
-    const pattern = { cmd: UserMsgPattern.FIND_USER_BY_ID };
-    const payload = id;
+    try {
+      const user = await this.userRepository.findOne({
+        where: { id: id },
+        withDeleted: false,
+      });
 
-    const response = await lastValueFrom(
-      this.userService.send<User>(pattern, payload),
-    );
-    return response;
+      if (!user)
+        throw new CustomRpcException(
+          'NOT_FOUND',
+          HttpStatus.NOT_FOUND,
+          `user:${id}`,
+        );
+
+      return user;
+    } catch (error) {
+      throw ExceptionUtils.wrapAsRpcException(error);
+    }
   }
 
-  async updateMyAvatar(file: Express.Multer.File) {
-    const pattern = { cmd: UserMsgPattern.UPDATE_MY_AVATAR };
-    const payload = { id: this.request.user.id, file };
+  async updateMyAvatar(
+    file: Express.Multer.File,
+  ): Promise<CustomApiResponse<void>> {
+    try {
+      const user = await this.userRepository.findOne({
+        where: { id: this.request.user.id as User['id'] },
+        withDeleted: false,
+      });
+      if (!user)
+        throw new CustomRpcException(
+          'INTERNAL_SERVER_ERROR',
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
 
-    const response = await lastValueFrom(
-      this.userService.send<CustomApiResponse<void>>(pattern, payload),
-    );
-    return response;
+      const fileBuffer = fs.readFileSync(`${file.path}`);
+      const res = await this.awsService.uploadFileToPublicBucket({
+        file: {
+          ...file,
+          buffer: fileBuffer,
+        },
+      });
+
+      await this.userRepository.update(this.request.user.id, {
+        profilePicture: res.url,
+      });
+      return new CustomApiResponse<void>(
+        HttpStatus.OK,
+        'USER.UPDATE_USER_AVATAR_SUCCESS',
+      );
+    } catch (error) {
+      throw ExceptionUtils.wrapAsRpcException(error);
+    }
   }
 
-  async softDelete(id: number) {
-    const pattern = { cmd: UserMsgPattern.SOFT_DELETE_USER };
-    const payload = id;
+  async softDelete(id: number): Promise<CustomApiResponse<void>> {
+    try {
+      const isUserExists = await this.userRepository.findOne({
+        where: { id: id },
+      });
 
-    const response = await lastValueFrom(
-      this.userService.send<CustomApiResponse<void>>(pattern, payload),
-    );
-    return response;
+      if (!isUserExists) {
+        throw new CustomRpcException('USER.NOT_FOUND', HttpStatus.NOT_FOUND);
+      }
+
+      await this.userRepository.softDelete(id);
+
+      return new CustomApiResponse<void>(
+        HttpStatus.OK,
+        'USER.DELETE_USER_SUCCESS',
+      );
+    } catch (error) {
+      throw ExceptionUtils.wrapAsRpcException(error);
+    }
   }
 
-  async delete(id: number) {
-    const pattern = { cmd: UserMsgPattern.DELETE_USER };
-    const payload = id;
+  async delete(id: number): Promise<CustomApiResponse<void>> {
+    try {
+      const isUserExists = await this.userRepository.findOne({
+        where: { id: id },
+      });
 
-    const response = await lastValueFrom(
-      this.userService.send<CustomApiResponse<void>>(pattern, payload),
-    );
-    return response;
+      if (!isUserExists) {
+        throw new CustomRpcException('USER.NOT_FOUND', HttpStatus.NOT_FOUND);
+      }
+
+      await this.userRepository.delete(id);
+
+      return new CustomApiResponse<void>(
+        HttpStatus.OK,
+        'USER.DELETE_USER_SUCCESS',
+      );
+    } catch (error) {
+      throw ExceptionUtils.wrapAsRpcException(error);
+    }
   }
 
-  async restore(id: number) {
-    const pattern = { cmd: UserMsgPattern.RESTORE_USER };
-    const payload = id;
+  async restore(id: number): Promise<CustomApiResponse<void>> {
+    try {
+      const isUserExists = await this.userRepository.findOne({
+        where: { id: id },
+        withDeleted: true,
+      });
 
-    const response = await lastValueFrom(
-      this.userService.send<CustomApiResponse<void>>(pattern, payload),
-    );
-    return response;
+      if (!isUserExists) {
+        throw new CustomRpcException('USER.NOT_FOUND', HttpStatus.NOT_FOUND);
+      }
+
+      await this.userRepository.restore(id);
+
+      return new CustomApiResponse<void>(
+        HttpStatus.OK,
+        'USER.RESTORE_USER_SUCCESS',
+      );
+    } catch (error) {
+      throw ExceptionUtils.wrapAsRpcException(error);
+    }
   }
 }

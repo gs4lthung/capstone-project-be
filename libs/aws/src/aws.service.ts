@@ -1,8 +1,8 @@
 import { ConfigService } from '@app/config';
-import { UploadFileDto } from '@app/shared/dtos/files/file.dto';
 import { Injectable } from '@nestjs/common';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { FileUtils } from '@app/shared/utils/file.util';
+import { UploadFileDto } from '@app/shared/dtos/files/file.dto';
 
 @Injectable()
 export class AwsService {

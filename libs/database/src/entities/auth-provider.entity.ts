@@ -1,6 +1,7 @@
 import { AuthProviderEnum } from '@app/shared/enums/auth.enum';
 import {
   Column,
+  CreateDateColumn,
   Entity,
   JoinColumn,
   ManyToOne,
@@ -16,13 +17,13 @@ export class AuthProvider {
   @Column({ type: 'enum', enum: AuthProviderEnum })
   provider: AuthProviderEnum;
 
-  @Column({ type: 'varchar', length: 100, unique: true })
+  @Column({ name: 'provider_id', type: 'varchar', length: 100, unique: true })
   providerId: string;
 
   @ManyToOne(() => User, (user) => user.authProviders, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'userId' })
+  @JoinColumn({ name: 'user_id' })
   user: User;
 
-  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 }

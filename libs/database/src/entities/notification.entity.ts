@@ -28,9 +28,9 @@ export class Notification {
   status: NotificationStatusEnum;
 
   @ManyToOne(() => User, (user) => user, { nullable: false })
-  @JoinColumn({ name: 'userId' })
+  @JoinColumn({ name: 'user_id' })
   user: User;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 }

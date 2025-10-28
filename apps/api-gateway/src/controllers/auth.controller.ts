@@ -9,7 +9,6 @@ import {
   Req,
   Res,
   UseGuards,
-  UseInterceptors,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -17,25 +16,23 @@ import {
   ApiOperation,
   ApiResponse,
 } from '@nestjs/swagger';
-import { RegisterRequestDto } from '@app/shared/dtos/auth/register.dto';
 import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
+import { Response } from 'express';
+import { CurrentUser } from '@app/shared/decorators/current-user.decorator';
+import { GoogleUserDto } from '@app/shared/dtos/auth/google-user.dto';
+import { AuthService } from '../services/auth.service';
+import { GoogleOAuthGuard } from '../guards/google-auth.guard';
+import { AuthGuard } from '../guards/auth.guard';
+import { RegisterRequestDto } from '@app/shared/dtos/auth/register.dto';
+import { RefreshNewAccessTokenDto } from '@app/shared/dtos/auth/refresh-new-access-token.dto';
+import { ResetPasswordDto } from '@app/shared/dtos/auth/reset-password.dto';
 import {
   CurrentUserResponseDto,
   LoginRequestDto,
   LoginResponseDto,
 } from '@app/shared/dtos/auth/login.dto';
-import { Response } from 'express';
-import { CurrentUser } from '@app/shared/decorators/current-user.decorator';
-import { GoogleUserDto } from '@app/shared/dtos/auth/google-user.dto';
-import { RefreshNewAccessTokenDto } from '@app/shared/dtos/auth/refresh-new-access-token.dto';
-import { ResetPasswordDto } from '@app/shared/dtos/auth/reset-password.dto';
-import { AuthService } from '../services/auth.service';
-import { GoogleOAuthGuard } from '../guards/google-auth.guard';
-import { AuthGuard } from '../guards/auth.guard';
-import { I18nResponseInterceptor } from '../interceptors/i18-response.interceptor';
 
 @Controller('auth')
-@UseInterceptors(I18nResponseInterceptor)
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 

@@ -1,9 +1,7 @@
 import { GqlCustomDateTime } from '@app/shared/graphql/scalars/gql-custom-datetime.scalar';
 import { Field, ObjectType } from '@nestjs/graphql';
 import { RoleDto } from '../roles/role.dto';
-import { FcmTokenDto } from '../fcm_tokens/fcm-token.dto';
 import { PaginatedResource } from '@app/shared/graphql/paginated-resource';
-import { CoachProfileDto } from './coaches/coach.dto';
 
 @ObjectType()
 export class UserDto {
@@ -33,40 +31,7 @@ export class UserDto {
 
   @Field(() => RoleDto, { nullable: true })
   role: RoleDto;
-
-  @Field(() => [FcmTokenDto], { nullable: true })
-  fcmTokens: FcmTokenDto[];
-
-  @Field(() => CoachProfileDto, { nullable: true })
-  coachProfile?: CoachProfileDto;
-}
-
-// Define allowed sort properties as a constant
-export const USER_LIST_SORTABLE_FIELDS = [
-  'id',
-  'fullName',
-  'email',
-  'createdAt',
-  'updatedAt',
-] as const;
-
-export type UserListSortableField = (typeof USER_LIST_SORTABLE_FIELDS)[number];
-
-@ObjectType()
-export class UserListDto extends UserDto {
-  // Inherit all fields from UserDto
-  // Only override or exclude fields that should be different
 }
 
 @ObjectType()
 export class PaginatedUser extends PaginatedResource(UserDto) {}
-
-@ObjectType()
-export class PaginatedUserList extends PaginatedResource(UserListDto) {}
-export interface UserListResponse {
-  data: UserListDto[];
-  currentPage: number;
-  lastPage: number;
-  total: number;
-  perPage: number;
-}

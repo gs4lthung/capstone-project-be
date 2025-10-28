@@ -1,0 +1,6 @@
+export enum VideoConferenceEventType {
+  USER_JOIN = 'USER_JOIN',
+  USER_LEAVE = 'USER_LEAVE',
+  CHANNEL_START = 'CHANNEL_START',
+  CHANNEL_END = 'CHANNEL_END',
+}

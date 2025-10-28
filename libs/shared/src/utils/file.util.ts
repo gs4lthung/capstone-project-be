@@ -58,11 +58,8 @@ export class FileUtils {
         case 'video_thumbnail':
           destination = `uploads/users/${customReq.user.id}/videos/thumbnails`;
           break;
-        case 'chat_image':
-          destination = `uploads/chats/${customReq.body.chatId}/images`;
-          break;
-        case 'chat_video':
-          destination = `uploads/chats/${customReq.body.chatId}/videos`;
+        case 'credential_image':
+          destination = `uploads/users/${customReq.user.id}/credentials`;
           break;
       }
 
@@ -92,11 +89,8 @@ export class FileUtils {
         case 'video_thumbnail':
           fileName = `video_thumbnail_${baseName}${extension}`;
           break;
-        case 'chat_image':
-          fileName = `chat_image_${baseName}${extension}`;
-          break;
-        case 'chat_video':
-          fileName = `chat_video_${baseName}${extension}`;
+        case 'credential_image':
+          fileName = `credential_image_${baseName}${extension}`;
           break;
       }
 

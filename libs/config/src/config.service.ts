@@ -17,6 +17,7 @@ export interface Config {
   order_service: TcpServiceConfig;
   chat_service: TcpServiceConfig;
   coach_service: TcpServiceConfig;
+  learner_service?: TcpServiceConfig;
   database: {
     host: string;
     port: number;
@@ -116,6 +117,10 @@ export interface Config {
       secret_access_key: string;
     };
   };
+  twilio: {
+    accountSid: string;
+    authToken: string;
+  };
 }
 
 export interface TcpServiceConfig {
@@ -163,6 +168,10 @@ export class ConfigService {
       coach_service: {
         host: this.nestConfigService.get('COACH_SERVICE_HOST', 'localhost'),
         port: this.nestConfigService.get('COACH_SERVICE_PORT', 8391),
+      },
+      learner_service: {
+        host: this.nestConfigService.get('LEARNER_SERVICE_HOST', 'localhost'),
+        port: this.nestConfigService.get('LEARNER_SERVICE_PORT', 8392),
       },
       database: {
         host: this.nestConfigService.get('DB_HOST', 'localhost'),
@@ -315,6 +324,10 @@ export class ConfigService {
             '',
           ),
         },
+      },
+      twilio: {
+        accountSid: this.nestConfigService.get('TWILIO_ACCOUNT_SID', ''),
+        authToken: this.nestConfigService.get('TWILIO_AUTH_TOKEN', ''),
       },
     };
   }

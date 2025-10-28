@@ -3,11 +3,6 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ConfigModule, ConfigService } from '@app/config';
 import { DatabaseModule } from '@app/database';
-import {
-  ClientsModule,
-  ClientsProviderAsyncOptions,
-  Transport,
-} from '@nestjs/microservices';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { SocketGateway } from './socket/socket.gateway';
 import { ErrorModule } from './filters/filter.module';
@@ -19,16 +14,7 @@ import { Error } from '@app/database/entities/error.entity';
 import { User } from '@app/database/entities/user.entity';
 import { GoogleStrategy } from './strategies/google.strategy';
 import { ServeStaticModule } from '@nestjs/serve-static';
-import {
-  AcceptLanguageResolver,
-  GraphQLWebsocketResolver,
-  HeaderResolver,
-  I18nJsonLoader,
-  I18nModule,
-  QueryResolver,
-} from 'nestjs-i18n';
 import { ScheduleModule } from '@nestjs/schedule';
-import { RedisModule } from '@app/redis';
 import { Notification } from '@app/database/entities/notification.entity';
 import { UserResolver } from './resolvers/user.resolver';
 import { MulterModule } from '@nestjs/platform-express';
@@ -37,42 +23,29 @@ import { Role } from '@app/database/entities/role.entity';
 import { UserService } from './services/user.service';
 import { AuthService } from './services/auth.service';
 import { AuthProvider } from '@app/database/entities/auth-provider.entity';
-import { ChatService } from './services/chat.service';
-import { Chat } from '@app/database/entities/chat.entity';
-import { ChatMember } from '@app/database/entities/chat-members.entity';
-import { Message } from '@app/database/entities/message.entity';
-import { MessageRead } from '@app/database/entities/message-read.entity';
 import { UserController } from './controllers/user.controller';
 import { AuthController } from './controllers/auth.controller';
-import { ChatController } from './controllers/chat.controller';
-import { OrderController } from './controllers/order.controller';
-import { OrderService } from './services/order.service';
-import { Order } from '@app/database/entities/order.entity';
-import { CoachProfile } from '@app/database/entities/coach_profile.entity';
-import { CoachCredential } from '@app/database/entities/coach_credential.entity';
-import { Video } from '@app/database/entities/video.entity';
-import { CoachController } from './controllers/coach.controller';
-import { CoachService } from './services/coach.service';
-import { AmqpConnectionManagerSocketOptions } from '@nestjs/microservices/external/rmq-url.interface';
-import { CustomWebsocketI18nResolver } from './resolvers/ws.resolver';
-import { VideoController } from './controllers/video.controller';
-import { VideoService } from './services/video.service';
-
-const tcp_services = [
-  { name: 'AUTH_SERVICE' },
-  { name: 'USER_SERVICE' },
-  { name: 'ORDER_SERVICE' },
-  { name: 'CHAT_SERVICE' },
-  { name: 'COACH_SERVICE' },
-];
-
-const rmb_services = [
-  { name: 'PAYMENT_SERVICE', queue: 'payment_queue' },
-  { name: 'NOTIFICATION_SERVICE', queue: 'notification_queue' },
-  { name: 'MESSAGE_SERVICE', queue: 'message_queue' },
-  { name: 'MAIL_SERVICE', queue: 'mail_queue' },
-  { name: 'VIDEO_SERVICE', queue: 'video_queue' },
-];
+import { AwsModule } from '@app/aws';
+import { MailerModule } from '@nestjs-modules/mailer';
+import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
+import { MailService } from './services/mail.service';
+import { Course } from '@app/database/entities/course.entity';
+import { Schedule } from '@app/database/entities/schedule.entity';
+import { Request } from '@app/database/entities/request.entity';
+import { RequestService } from './services/request.service';
+import { RequestController } from './controllers/request.controller';
+import { RequestAction } from '@app/database/entities/request-action.entity';
+import { Session } from '@app/database/entities/session.entity';
+import { SessionService } from './services/session.service';
+import { RequestResolver } from './resolvers/request.resolver';
+import { CourseResolver } from './resolvers/course.resolver';
+import { CourseService } from './services/course.service';
+import { CourseController } from './controllers/course.controller';
+import { Enrollment } from '@app/database/entities/enrollment.entity';
+import { CronService } from './services/cron.service';
+import { PayosModule } from '@app/payos';
+import { Payment } from '@app/database/entities/payment.entity';
+import { PayosController } from './controllers/payos.controller';
 
 @Module({
   imports: [
@@ -90,37 +63,50 @@ const rmb_services = [
     }),
     ScheduleModule.forRoot(),
     DatabaseModule,
-    RedisModule,
+    AwsModule,
+    PayosModule,
+    MailerModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: async (configService: ConfigService) => ({
+        transport: {
+          host: configService.get('mail').host,
+          port: configService.get('mail').port,
+          secure: configService.get('mail').secure,
+          auth: {
+            user: configService.get('mail').user,
+            pass: configService.get('mail').pass,
+          },
+        },
+        defaults: {
+          from: `"No Reply" <Hello>`,
+        },
+        template: {
+          dir: __dirname + '/src/mail-templates',
+          adapter: new HandlebarsAdapter(undefined, {
+            inlineCssEnabled: true,
+          }),
+          options: {
+            strict: true,
+          },
+        },
+      }),
+    }),
     TypeOrmModule.forFeature([
       Error,
       User,
       Notification,
       Role,
       AuthProvider,
-      Chat,
-      ChatMember,
-      Message,
-      MessageRead,
-      Order,
-      CoachProfile,
-      CoachCredential,
-      Video,
+      Course,
+      Enrollment,
+      Schedule,
+      Request,
+      RequestAction,
+      Session,
+      Payment,
     ]),
     ErrorModule,
-    I18nModule.forRoot({
-      fallbackLanguage: 'en',
-      loaderOptions: {
-        path: __dirname + '/src/i18n',
-      },
-      loader: I18nJsonLoader,
-      resolvers: [
-        GraphQLWebsocketResolver,
-        CustomWebsocketI18nResolver,
-        { use: QueryResolver, options: ['lang'] },
-        AcceptLanguageResolver,
-        new HeaderResolver(['x-lang']),
-      ],
-    }),
     GraphQLModule.forRootAsync<ApolloDriverConfig>({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -139,49 +125,6 @@ const rmb_services = [
         fieldResolverEnhancers: ['interceptors', 'guards', 'filters'],
       }),
     }),
-    ClientsModule.registerAsync([
-      ...tcp_services.map(
-        ({ name }) =>
-          (console.log(`Setting up TCP client for ${name}`),
-          {
-            imports: [ConfigModule],
-            inject: [ConfigService],
-            name: name,
-            useFactory: async (configService: ConfigService) => ({
-              transport: Transport.TCP,
-              options: {
-                host: configService.getByServiceName(name.toLowerCase()).host,
-                port: configService.getByServiceName(name.toLowerCase()).port,
-              },
-            }),
-          }) as ClientsProviderAsyncOptions,
-      ),
-      ...rmb_services.map(
-        ({ name, queue }) =>
-          (console.log(`Setting up RMQ client for ${name} on ${queue}`),
-          {
-            imports: [ConfigModule],
-            inject: [ConfigService],
-            name: name,
-            useFactory: async (configService: ConfigService) => ({
-              transport: Transport.RMQ,
-              options: {
-                urls: [
-                  `amqp://${configService.get('rabbitmq').username}:${configService.get('rabbitmq').password}@${configService.get('rabbitmq').host}:${configService.get('rabbitmq').port}/${configService.get('rabbitmq').username}`,
-                ],
-                queue: queue,
-                queueOptions: {
-                  durable: true,
-                },
-                socketOptions: {
-                  reconnectTimeInSeconds: 5,
-                  heartbeatIntervalInSeconds: 5,
-                } as AmqpConnectionManagerSocketOptions,
-              },
-            }),
-          }) as ClientsProviderAsyncOptions,
-      ),
-    ]),
     ThrottlerModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -199,24 +142,26 @@ const rmb_services = [
     AppController,
     UserController,
     AuthController,
-    ChatController,
-    OrderController,
-    VideoController,
-    CoachController,
+    PayosController,
+    RequestController,
+    CourseController,
   ],
   providers: [
     AppService,
     UserService,
     UserResolver,
-    CoachService,
-    VideoService,
+    RequestResolver,
+    CourseResolver,
+    CourseService,
     AuthService,
-    ChatService,
-    OrderService,
     SocketGateway,
     ConfigService,
     JwtService,
     GoogleStrategy,
+    RequestService,
+    MailService,
+    SessionService,
+    CronService,
   ],
 })
 export class AppModule {}
