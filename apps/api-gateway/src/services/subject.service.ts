@@ -4,10 +4,12 @@ import { CustomApiRequest } from '@app/shared/customs/custom-api-request';
 import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
 import {
   CreateSubjectDto,
+  PaginatedSubject,
   UpdateSubjectDto,
 } from '@app/shared/dtos/subjects/subject.dto';
 import { SubjectStatus } from '@app/shared/enums/subject.enum';
 import { BaseTypeOrmService } from '@app/shared/helpers/typeorm.helper';
+import { FindOptions } from '@app/shared/interfaces/find-options.interface';
 import {
   BadRequestException,
   HttpStatus,
@@ -27,6 +29,10 @@ export class SubjectService extends BaseTypeOrmService<Subject> {
     private readonly subjectRepository: Repository<Subject>,
   ) {
     super(subjectRepository);
+  }
+
+  async findAll(findOptions: FindOptions): Promise<PaginatedSubject> {
+    return super.find(findOptions, 'subject', PaginatedSubject);
   }
 
   async create(data: CreateSubjectDto): Promise<CustomApiResponse<void>> {

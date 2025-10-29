@@ -53,6 +53,7 @@ import { Lesson } from '@app/database/entities/lesson.entity';
 import { LessonService } from './services/lesson.service';
 import { LessonController } from './controllers/lesson.controllet';
 import { FfmpegModule } from '@app/ffmpeg';
+import { SubjectResolver } from './resolvers/subject.resolver';
 
 @Module({
   imports: [
@@ -176,6 +177,7 @@ import { FfmpegModule } from '@app/ffmpeg';
     CronService,
     SubjectService,
     LessonService,
+    SubjectResolver,
   ],
 })
 export class AppModule {}
