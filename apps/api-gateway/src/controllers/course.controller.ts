@@ -22,7 +22,8 @@ import { WebhookType } from '@payos/node/lib/type';
 @Controller('courses')
 export class CourseController {
   constructor(private readonly courseService: CourseService) {}
-  @Post()
+
+  @Post('subjects/:id')
   @HttpCode(HttpStatus.CREATED)
   @ApiBearerAuth()
   @ApiOperation({
@@ -36,8 +37,11 @@ export class CourseController {
   })
   @CheckRoles(UserRole.COACH)
   @UseGuards(AuthGuard, RoleGuard)
-  async createCourse(@Body() data: CreateCourseRequestDto) {
-    return this.courseService.createCourseCreationRequest(data);
+  async createCourse(
+    @Param('id') subjectId: number,
+    @Body() data: CreateCourseRequestDto,
+  ) {
+    return this.courseService.createCourseCreationRequest(subjectId, data);
   }
 
   @Patch('requests/:id/approve')

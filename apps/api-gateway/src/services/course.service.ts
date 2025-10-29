@@ -44,6 +44,7 @@ import { CryptoUtils } from '@app/shared/utils/crypto.util';
 import { Payment } from '@app/database/entities/payment.entity';
 import { PaymentStatus } from '@app/shared/enums/payment.enum';
 import { Schedule } from '@app/database/entities/schedule.entity';
+import { Subject } from '@app/database/entities/subject.entity';
 
 @Injectable({ scope: Scope.REQUEST })
 export class CourseService extends BaseTypeOrmService<Course> {
@@ -63,6 +64,8 @@ export class CourseService extends BaseTypeOrmService<Course> {
     private readonly enrollmentRepository: Repository<Enrollment>,
     @InjectRepository(Payment)
     private readonly paymentRepository: Repository<Payment>,
+    @InjectRepository(Subject)
+    private readonly subjectRepository: Repository<Subject>,
     private readonly configService: ConfigService,
     @Inject(forwardRef(() => SessionService))
     private readonly sessionService: SessionService,
@@ -76,17 +79,33 @@ export class CourseService extends BaseTypeOrmService<Course> {
   }
 
   async createCourseCreationRequest(
+    subjectId: number,
     data: CreateCourseRequestDto,
   ): Promise<CustomApiResponse<void>> {
+    const subject = await this.subjectRepository.findOne({
+      where: { id: subjectId },
+      withDeleted: false,
+    });
+    if (!subject) throw new BadRequestException('Không tìm thấy chủ đề');
+
     const newCourse = this.courseRepository.create({
       ...data,
+      name:
+        subject.name +
+        ` -  Khóa ${subject.courses ? subject.courses.length + 1 : 1}`,
+      description: subject.description ? subject.description || '' : '',
+      order: subject.courses ? subject.courses.length + 1 : 1,
+      level: subject.level,
+      subject: subject,
       createdBy: this.request.user as User,
-    } as Course);
+    } as unknown as Course);
 
     const savedCourse = await this.courseRepository.save(newCourse);
 
     const newCourseCreationRequest = this.requestRepository.create({
-      description: `Tạo khóa học: ${data.name}`,
+      description: `Tạo khóa học: ${subject.name} - Khóa ${
+        subject.courses ? subject.courses.length + 1 : 1
+      }`,
       type: RequestType.COURSE_APPROVAL,
       metadata: {
         type: 'course',
@@ -132,7 +151,7 @@ export class CourseService extends BaseTypeOrmService<Course> {
         request.metadata.details.schedules,
       );
 
-      const sessions = this.sessionService.generateSessionsFromSchedules(
+      const sessions = await this.sessionService.generateSessionsFromSchedules(
         course,
         request.metadata.details.schedules,
       );

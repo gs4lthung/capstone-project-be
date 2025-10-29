@@ -1,16 +1,14 @@
-// src/courses/dto/create-course.dto.ts
 import { CourseLearningFormat } from '@app/shared/enums/course.enum';
-import { PickleballLevel } from '@app/shared/enums/pickleball.enum';
 import {
   IsDate,
   IsEnum,
   IsInt,
-  IsNotEmpty,
   IsOptional,
-  IsString,
   Min,
   ArrayNotEmpty,
   ValidateNested,
+  IsNotEmpty,
+  IsString,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { PartialType } from '@nestjs/mapped-types';
@@ -59,31 +57,6 @@ class CreateScheduleDto {
 
 export class CreateCourseRequestDto {
   @ApiProperty({
-    description: 'The name of the course',
-    example: 'Pickleball Fundamentals',
-  })
-  @IsString()
-  @IsNotEmpty()
-  name: string;
-
-  @ApiProperty({
-    description: 'The description of the course',
-    example: 'Learn the basics of Pickleball',
-  })
-  @IsOptional()
-  @IsString()
-  @IsNotEmpty()
-  description?: string;
-
-  @ApiProperty({
-    description: 'The level of the course',
-    enum: PickleballLevel,
-    example: PickleballLevel.BEGINNER,
-  })
-  @IsEnum(PickleballLevel)
-  level: PickleballLevel;
-
-  @ApiProperty({
     description: 'The learning format of the course',
     enum: CourseLearningFormat,
     example: CourseLearningFormat.GROUP,
@@ -116,12 +89,42 @@ export class CreateCourseRequestDto {
   pricePerParticipant: number;
 
   @ApiProperty({
+    description: 'The total number of sessions',
+    example: 10,
+  })
+  @IsInt()
+  @Min(0)
+  totalSessions: number;
+
+  @ApiProperty({
     description: 'The start date of the course',
     example: '2024-01-15',
   })
   @IsDate()
   @Type(() => Date)
   startDate: Date;
+
+  @ApiProperty({
+    description: 'The address where the course will take place',
+    example: '123 Main St, City, Country',
+  })
+  @IsNotEmpty()
+  @IsString()
+  address: string;
+
+  @ApiProperty({
+    description: 'The province ID where the course will take place',
+    example: 1,
+  })
+  @IsInt()
+  province: number;
+
+  @ApiProperty({
+    description: 'The district ID where the course will take place',
+    example: 1,
+  })
+  @IsInt()
+  district: number;
 
   @ApiProperty({
     description: 'The schedules of the course',
