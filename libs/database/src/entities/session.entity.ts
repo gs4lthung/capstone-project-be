@@ -19,8 +19,6 @@ import { QuizAttempt } from './quiz_attempt.entity';
 import { WalletTransaction } from './wallet-transaction.entity';
 import { SessionEarning } from './session-earning.entity';
 import { LearnerVideo } from './learner-video.entity';
-import { SessionQuiz } from './session-quiz.entity';
-import { SessionVideo } from './session-video.entity';
 import {
   IsDate,
   IsInt,
@@ -29,6 +27,7 @@ import {
   IsString,
   MaxLength,
 } from 'class-validator';
+import { Lesson } from './lesson.entity';
 
 @Entity('sessions')
 @Check(`start_time < end_time`)
@@ -50,6 +49,7 @@ export class Session {
   description?: string;
 
   @Column({ name: 'session_number', type: 'int' })
+  @IsNotEmpty()
   @IsInt()
   sessionNumber: number;
 
@@ -62,9 +62,6 @@ export class Session {
 
   @Column({ name: 'end_time', type: 'time' })
   endTime: string;
-
-  @Column({ name: 'duration_in_minutes', type: 'int' })
-  durationInMinutes: number;
 
   @Column({
     name: 'video_conference_channel_name',
@@ -126,13 +123,7 @@ export class Session {
   @OneToMany(() => LearnerVideo, (learnerVideo) => learnerVideo.session)
   learnerVideos: LearnerVideo[];
 
-  @OneToMany(() => SessionVideo, (sessionVideo) => sessionVideo.session, {
-    nullable: true,
-  })
-  sessionVideos: SessionVideo[];
-
-  @OneToMany(() => SessionQuiz, (sessionQuiz) => sessionQuiz.session, {
-    nullable: true,
-  })
-  sessionQuizzes: SessionQuiz[];
+  @ManyToOne(() => Lesson, (lesson) => lesson.sessions)
+  @JoinColumn({ name: 'lesson_id' })
+  lesson: Lesson;
 }

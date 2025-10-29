@@ -1,4 +1,5 @@
 import {
+  Column,
   CreateDateColumn,
   Entity,
   JoinColumn,
@@ -7,11 +8,21 @@ import {
 } from 'typeorm';
 import { Session } from './session.entity';
 import { User } from './user.entity';
+import { AttendanceStatus } from '@app/shared/enums/attendance.enum';
+import { IsEnum } from 'class-validator';
 
 @Entity('attendances')
 export class Attendance {
   @PrimaryGeneratedColumn()
   id: number;
+
+  @Column({
+    type: 'enum',
+    enum: AttendanceStatus,
+    default: AttendanceStatus.PRESENT,
+  })
+  @IsEnum(AttendanceStatus)
+  status: AttendanceStatus;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;

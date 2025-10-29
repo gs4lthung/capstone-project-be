@@ -24,7 +24,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { SessionVideo } from './session-video.entity';
+import { Video } from './video.entity';
 
 enum AiVideoComparisonDetailsType {
   PREPARATION = 'PREPARATION',
@@ -140,8 +140,7 @@ export class AiVideoComparisonResult {
   @Index()
   learnerVideo: LearnerVideo;
 
-  @ManyToOne(() => SessionVideo, (video) => video.aiVideoComparisonResults)
-  @JoinColumn({ name: 'session_video_id' })
-  @Index()
-  session: SessionVideo;
+  @ManyToOne(() => Video, (video) => video.aiVideoComparisonResults)
+  @JoinColumn({ name: 'video_id' })
+  video: Video;
 }

@@ -43,6 +43,7 @@ import { PayosService } from '@app/payos';
 import { CryptoUtils } from '@app/shared/utils/crypto.util';
 import { Payment } from '@app/database/entities/payment.entity';
 import { PaymentStatus } from '@app/shared/enums/payment.enum';
+import { Schedule } from '@app/database/entities/schedule.entity';
 
 @Injectable({ scope: Scope.REQUEST })
 export class CourseService extends BaseTypeOrmService<Course> {
@@ -80,7 +81,7 @@ export class CourseService extends BaseTypeOrmService<Course> {
     const newCourse = this.courseRepository.create({
       ...data,
       createdBy: this.request.user as User,
-    } as Course);
+    } as unknown as Course);
 
     const savedCourse = await this.courseRepository.save(newCourse);
 
@@ -125,6 +126,12 @@ export class CourseService extends BaseTypeOrmService<Course> {
       request.metadata.details.schedules &&
       request.metadata.details.schedules.length > 0
     ) {
+      course.endDate = this.calculateCourseEndDate(
+        course.startDate,
+        course.totalSessions,
+        request.metadata.details.schedules,
+      );
+
       const sessions = this.sessionService.generateSessionsFromSchedules(
         course,
         request.metadata.details.schedules,
@@ -252,5 +259,49 @@ export class CourseService extends BaseTypeOrmService<Course> {
       'PAYMENT.CREATE_SUCCESS',
       payment,
     );
+  }
+
+  calculateCourseEndDate(
+    startDate: Date,
+    totalSessions: number,
+    schedules: Schedule[],
+  ): Date {
+    if (!schedules || schedules.length === 0) {
+      throw new BadRequestException(
+        'Schedules are required to calculate end date',
+      );
+    }
+
+    if (totalSessions <= 0) {
+      throw new BadRequestException('Total sessions must be greater than 0');
+    }
+
+    const dayMap: { [key: string]: number } = {
+      Sunday: 0,
+      Monday: 1,
+      Tuesday: 2,
+      Wednesday: 3,
+      Thursday: 4,
+      Friday: 5,
+      Saturday: 6,
+    };
+
+    const scheduleDays = schedules.map(
+      (schedule) => dayMap[schedule.dayOfWeek],
+    );
+    const currentDate = new Date(startDate);
+    let sessionsCount = 0;
+
+    while (sessionsCount < totalSessions) {
+      if (scheduleDays.includes(currentDate.getDay())) {
+        sessionsCount++;
+        if (sessionsCount === totalSessions) {
+          break;
+        }
+      }
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+
+    return new Date(currentDate);
   }
 }

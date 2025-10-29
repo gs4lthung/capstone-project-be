@@ -53,7 +53,7 @@ export class FileUtils {
           destination = `uploads/users/${customReq.user.id}/avatar`;
           break;
         case 'video':
-          destination = `uploads/users/${customReq.user.id}/videos`;
+          destination = `uploads/videos`;
           break;
         case 'video_thumbnail':
           destination = `uploads/users/${customReq.user.id}/videos/thumbnails`;

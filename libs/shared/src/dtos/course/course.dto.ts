@@ -124,14 +124,6 @@ export class CreateCourseRequestDto {
   startDate: Date;
 
   @ApiProperty({
-    description: 'The end date of the course',
-    example: '2024-02-15',
-  })
-  @IsDate()
-  @Type(() => Date)
-  endDate: Date;
-
-  @ApiProperty({
     description: 'The schedules of the course',
     example: [
       {

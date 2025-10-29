@@ -46,6 +46,14 @@ import { CronService } from './services/cron.service';
 import { PayosModule } from '@app/payos';
 import { Payment } from '@app/database/entities/payment.entity';
 import { PayosController } from './controllers/payos.controller';
+import { SubjectService } from './services/subject.service';
+import { SubjectController } from './controllers/subject.controller';
+import { Subject } from '@app/database/entities/subject.entity';
+import { Lesson } from '@app/database/entities/lesson.entity';
+import { LessonService } from './services/lesson.service';
+import { LessonController } from './controllers/lesson.controller';
+import { FfmpegModule } from '@app/ffmpeg';
+import { SubjectResolver } from './resolvers/subject.resolver';
 import { Coach } from '@app/database/entities/coach.entity';
 import { Credential } from '@app/database/entities/credential.entity';
 import { CoachController } from './controllers/coach.controller';
@@ -68,6 +76,7 @@ import { CoachService } from './services/coach.service';
     ScheduleModule.forRoot(),
     DatabaseModule,
     AwsModule,
+    FfmpegModule,
     PayosModule,
     MailerModule.forRootAsync({
       imports: [ConfigModule],
@@ -108,7 +117,9 @@ import { CoachService } from './services/coach.service';
       Request,
       RequestAction,
       Session,
+      Subject,
       Payment,
+      Lesson,
       Coach,
       Credential,
     ]),
@@ -151,6 +162,8 @@ import { CoachService } from './services/coach.service';
     PayosController,
     RequestController,
     CourseController,
+    LessonController,
+    SubjectController,
     CoachController,
   ],
   providers: [
@@ -170,6 +183,9 @@ import { CoachService } from './services/coach.service';
     MailService,
     SessionService,
     CronService,
+    SubjectService,
+    LessonService,
+    SubjectResolver,
   ],
 })
 export class AppModule {}

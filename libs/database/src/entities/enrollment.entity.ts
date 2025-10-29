@@ -19,6 +19,9 @@ export class Enrollment {
   @PrimaryGeneratedColumn()
   id: number;
 
+  @Column({ type: 'bigint' })
+  paymentAmount: number;
+
   @Column({
     type: 'enum',
     enum: EnrollmentStatus,

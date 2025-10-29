@@ -95,7 +95,7 @@ export class FfmpegService {
     });
   }
 
-  async createVideoThumbnailFromTsFile(filePath: string, outputDes: string) {
+  async createVideoThumbnail(filePath: string, outputDes: string) {
     if (!fs.existsSync(filePath)) {
       this.logger.error(`File not found: ${filePath}`);
       return new Error(`File not found: ${filePath}`);
@@ -105,7 +105,7 @@ export class FfmpegService {
       fs.mkdirSync(outputDes, { recursive: true });
     }
 
-    const outputFileName = `${path.basename(filePath, '.ts')}-thumbnail.png`;
+    const outputFileName = `${path.basename(filePath, '.mp4')}-thumbnail.png`;
     const outputPath = path.join(outputDes, outputFileName);
 
     await new Promise((resolve, reject) => {
@@ -148,7 +148,7 @@ export class FfmpegService {
     return outputPath;
   }
 
-  async getTsFileDuration(filePath: string): Promise<number> {
+  async getVideoFileDuration(filePath: string): Promise<number> {
     return new Promise((resolve, reject) => {
       const ffprobe = spawn('ffprobe', [
         '-v',
@@ -163,12 +163,24 @@ export class FfmpegService {
       let output = '';
 
       ffprobe.stdout.on('data', (data) => {
-        output += data;
+        output += data.toString();
       });
 
       ffprobe.on('close', (code) => {
-        if (code === 0) resolve(parseFloat(output));
-        else reject(new Error(`Failed to get duration for ${filePath}`));
+        if (code === 0) {
+          const duration = parseInt(output.trim());
+          if (!isNaN(duration)) {
+            resolve(Math.round(duration));
+          } else {
+            reject(new Error(`Failed to parse duration from: ${output}`));
+          }
+        } else {
+          reject(new Error(`FFprobe exited with code ${code} for ${filePath}`));
+        }
+      });
+
+      ffprobe.on('error', (error) => {
+        reject(new Error(`FFprobe error: ${error.message}`));
       });
     });
   }
@@ -186,7 +198,7 @@ export class FfmpegService {
 
     for (const file of files) {
       const filePath = path.join(folderPath, file);
-      const duration = await this.getTsFileDuration(filePath);
+      const duration = await this.getVideoFileDuration(filePath);
       fileDurations.push({ file: file, duration: duration });
       totalDurations += duration;
     }

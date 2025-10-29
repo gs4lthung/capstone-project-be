@@ -73,4 +73,18 @@ export class CoachService {
       await this.userRepository.update(coach.user.id, { isActive: true });
     }
   }
+
+  async rejectCoach(coachId: number, reason?: string): Promise<void> {
+    const coach = await this.coachRepository.findOne({
+      where: { id: coachId },
+    });
+    if (!coach) throw new NotFoundException('Coach not found');
+
+    await this.coachRepository.update(coachId, {
+      verificationStatus: CoachVerificationStatus.REJECTED,
+      verificationReason: reason,
+    });
+
+    return;
+  }
 }

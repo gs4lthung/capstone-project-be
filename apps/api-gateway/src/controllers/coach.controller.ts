@@ -20,6 +20,7 @@ import { CurrentUser } from '@app/shared/decorators/current-user.decorator';
 import { User } from '@app/database/entities/user.entity';
 import { RegisterCoachDto } from '@app/shared/dtos/coaches/register-coach.dto';
 import { Coach } from '@app/database/entities/coach.entity';
+import { RejectCoachDto } from '@app/shared/dtos/coaches/reject-coach.dto';
 
 @ApiTags('Coaches')
 @Controller('coaches')
@@ -50,5 +51,18 @@ export class CoachController {
   @ApiResponse({ status: HttpStatus.OK, description: 'Coach verified' })
   async verify(@Param('id') id: number): Promise<void> {
     return this.coachService.verifyCoach(Number(id));
+  }
+
+  @Put(':id/reject')
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Reject coach profile (admin)' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Coach rejected' })
+  async reject(
+    @Param('id') id: number,
+    @Body() body: RejectCoachDto,
+  ): Promise<void> {
+    return this.coachService.rejectCoach(Number(id), body?.reason);
   }
 }
