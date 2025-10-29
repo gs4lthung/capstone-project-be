@@ -11,6 +11,7 @@ import {
   DeleteDateColumn,
   Entity,
   JoinColumn,
+  ManyToOne,
   OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
@@ -19,6 +20,7 @@ import {
 import { Session } from './session.entity';
 import { Video } from './video.entity';
 import { Quiz } from './quiz.entity';
+import { Subject } from './subject.entity';
 
 @Entity('lessons')
 export class Lesson {
@@ -43,7 +45,9 @@ export class Lesson {
   lessonNumber: number;
 
   @Column({ name: 'duration', type: 'int' })
-  duration: number;
+  @IsOptional()
+  @IsInt()
+  duration?: number;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
@@ -70,4 +74,10 @@ export class Lesson {
   })
   @JoinColumn({ name: 'quiz_id' })
   quiz: Quiz;
+
+  @ManyToOne(() => Subject, (subject) => subject.lessons, {
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn({ name: 'subject_id' })
+  subject: Subject;
 }

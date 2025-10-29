@@ -46,6 +46,13 @@ import { CronService } from './services/cron.service';
 import { PayosModule } from '@app/payos';
 import { Payment } from '@app/database/entities/payment.entity';
 import { PayosController } from './controllers/payos.controller';
+import { SubjectService } from './services/subject.service';
+import { SubjectController } from './controllers/subject.controllet';
+import { Subject } from '@app/database/entities/subject.entity';
+import { Lesson } from '@app/database/entities/lesson.entity';
+import { LessonService } from './services/lesson.service';
+import { LessonController } from './controllers/lesson.controllet';
+import { FfmpegModule } from '@app/ffmpeg';
 
 @Module({
   imports: [
@@ -64,6 +71,7 @@ import { PayosController } from './controllers/payos.controller';
     ScheduleModule.forRoot(),
     DatabaseModule,
     AwsModule,
+    FfmpegModule,
     PayosModule,
     MailerModule.forRootAsync({
       imports: [ConfigModule],
@@ -104,7 +112,9 @@ import { PayosController } from './controllers/payos.controller';
       Request,
       RequestAction,
       Session,
+      Subject,
       Payment,
+      Lesson,
     ]),
     ErrorModule,
     GraphQLModule.forRootAsync<ApolloDriverConfig>({
@@ -145,6 +155,8 @@ import { PayosController } from './controllers/payos.controller';
     PayosController,
     RequestController,
     CourseController,
+    LessonController,
+    SubjectController,
   ],
   providers: [
     AppService,
@@ -162,6 +174,8 @@ import { PayosController } from './controllers/payos.controller';
     MailService,
     SessionService,
     CronService,
+    SubjectService,
+    LessonService,
   ],
 })
 export class AppModule {}

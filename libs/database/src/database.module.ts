@@ -39,11 +39,11 @@ import { Wallet } from './entities/wallet.entity';
 import { Video } from './entities/video.entity';
 import { WalletTransaction } from './entities/wallet-transaction.entity';
 import { WithdrawalRequest } from './entities/withdrawal-request.entity';
-import { SessionQuiz } from './entities/session-quiz.entity';
-import { SessionVideo } from './entities/session-video.entity';
 import { VideoConferencePresenceLog } from './entities/video-conference-presence-log.entity';
 import { Province } from './entities/province.entity';
 import { District } from './entities/district.entity';
+import { Subject } from './entities/subject.entity';
+import { Lesson } from './entities/lesson.entity';
 
 @Module({
   imports: [
@@ -89,8 +89,6 @@ import { District } from './entities/district.entity';
           Role,
           Schedule,
           Session,
-          SessionQuiz,
-          SessionVideo,
           SessionEarning,
           StreakAchievement,
           User,
@@ -101,6 +99,8 @@ import { District } from './entities/district.entity';
           VideoConferencePresenceLog,
           Province,
           District,
+          Subject,
+          Lesson,
         ],
         logging: false,
         synchronize: configService.get('node_env') === 'dev',

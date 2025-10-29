@@ -2,7 +2,6 @@ import {
   CourseLearningFormat,
   CourseStatus,
 } from '@app/shared/enums/course.enum';
-import { PickleballLevel } from '@app/shared/enums/pickleball.enum';
 import {
   IsDate,
   IsEnum,
@@ -49,6 +48,11 @@ export class Course {
   @PrimaryGeneratedColumn()
   id: number;
 
+  @Column({ type: 'int' })
+  @IsInt()
+  @Min(1)
+  order: number;
+
   @Field(() => String)
   @Column({ type: 'varchar', length: 100 })
   @IsNotEmpty()
@@ -62,15 +66,6 @@ export class Course {
   @IsString()
   @IsNotEmpty()
   description?: string;
-
-  @Field(() => String)
-  @Column({
-    type: 'enum',
-    enum: PickleballLevel,
-    default: PickleballLevel.BEGINNER,
-  })
-  @IsEnum(PickleballLevel)
-  level: PickleballLevel;
 
   @Field(() => String)
   @Column({

@@ -1,4 +1,10 @@
-import { IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
+import {
+  IsEnum,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  MaxLength,
+} from 'class-validator';
 import {
   Column,
   CreateDateColumn,
@@ -11,6 +17,9 @@ import {
 } from 'typeorm';
 import { User } from './user.entity';
 import { Course } from './course.entity';
+import { PickleballLevel } from '@app/shared/enums/pickleball.enum';
+import { SubjectStatus } from '@app/shared/enums/subject.enum';
+import { Lesson } from './lesson.entity';
 
 @Entity('subjects')
 export class Subject {
@@ -29,6 +38,22 @@ export class Subject {
   @IsNotEmpty()
   description?: string;
 
+  @Column({
+    type: 'enum',
+    enum: PickleballLevel,
+    default: PickleballLevel.BEGINNER,
+  })
+  @IsEnum(PickleballLevel)
+  level: PickleballLevel;
+
+  @Column({
+    type: 'enum',
+    enum: SubjectStatus,
+    default: SubjectStatus.DRAFT,
+  })
+  @IsEnum(SubjectStatus)
+  status: SubjectStatus;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
@@ -46,4 +71,7 @@ export class Subject {
 
   @OneToMany(() => Course, (course) => course.subject)
   courses: Course[];
+
+  @OneToMany(() => Lesson, (lesson) => lesson.subject)
+  lessons: Lesson[];
 }

@@ -34,7 +34,6 @@ export class Question {
   @OneToMany(() => QuestionOption, (option) => option.question, {
     eager: true,
     cascade: ['insert'],
-    nullable: true,
   })
   options: QuestionOption[];
 

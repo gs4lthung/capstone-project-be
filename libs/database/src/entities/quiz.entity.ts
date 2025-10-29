@@ -1,4 +1,3 @@
-import { PickleballLevel } from '@app/shared/enums/pickleball.enum';
 import {
   Column,
   Entity,
@@ -22,20 +21,12 @@ export class Quiz {
   @Column({ type: 'text', nullable: true })
   description?: string;
 
-  @Column({
-    type: 'enum',
-    enum: PickleballLevel,
-    default: PickleballLevel.BEGINNER,
-  })
-  level: PickleballLevel;
-
   @Column({ name: 'total_questions', type: 'int' })
   totalQuestions: number;
 
-  @OneToMany(() => Question, (question) => question.id, {
+  @OneToMany(() => Question, (question) => question.quiz, {
     eager: true,
     cascade: ['insert'],
-    nullable: true,
   })
   questions: Question[];
 

@@ -37,8 +37,8 @@ export class Video {
   @Column({ name: 'drill_practice_sets', type: 'text', nullable: true })
   drillPracticeSets?: string;
 
-  @Column({ name: 'public_url', type: 'text' })
-  publicUrl: string;
+  @Column({ name: 'public_url', type: 'text', nullable: true })
+  publicUrl?: string;
 
   @Column({ name: 'thumbnail_url', type: 'text', nullable: true })
   thumbnailUrl?: string;
