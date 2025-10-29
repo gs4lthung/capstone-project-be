@@ -1,7 +1,7 @@
 ############################################
 # Build stage
 ############################################
-FROM node:18-alpine AS builder
+FROM node:20-alpine AS builder
 WORKDIR /usr/src/app
 
 # Install build-time dependencies (dev + prod)
@@ -16,7 +16,7 @@ RUN npm run build
 ############################################
 # Production stage
 ############################################
-FROM node:18-alpine AS runner
+FROM node:20-alpine AS runner
 WORKDIR /usr/src/app
 
 # Only install production dependencies

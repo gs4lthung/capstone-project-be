@@ -7,6 +7,7 @@ import {
   Patch,
   Post,
   UseGuards,
+  Logger,
 } from '@nestjs/common';
 import { CourseService } from '../services/course.service';
 import { ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
@@ -16,11 +17,13 @@ import { AuthGuard } from '../guards/auth.guard';
 import { RoleGuard } from '../guards/role.guard';
 import { CreateCourseRequestDto } from '@app/shared/dtos/course/course.dto';
 import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
+// Business logic moved to CourseService.handlePaymentWebhook
 import { Payment } from '@app/database/entities/payment.entity';
 import { WebhookType } from '@payos/node/lib/type';
 
 @Controller('courses')
 export class CourseController {
+  private readonly logger = new Logger(CourseController.name);
   constructor(private readonly courseService: CourseService) {}
 
   @Post('subjects/:id')
@@ -117,6 +120,6 @@ export class CourseController {
     description: 'Payment webhook received successfully',
   })
   async receivePaymentWebhook(@Body('payment') payment: WebhookType) {
-    return true;
+    return this.courseService.handlePaymentWebhook(payment as any);
   }
 }

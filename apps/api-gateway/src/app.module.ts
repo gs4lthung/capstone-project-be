@@ -47,7 +47,7 @@ import { PayosModule } from '@app/payos';
 import { Payment } from '@app/database/entities/payment.entity';
 import { PayosController } from './controllers/payos.controller';
 import { SubjectService } from './services/subject.service';
-import { SubjectController } from './controllers/subject.controllet';
+import { SubjectController } from './controllers/subject.controller';
 import { Subject } from '@app/database/entities/subject.entity';
 import { Lesson } from '@app/database/entities/lesson.entity';
 import { LessonService } from './services/lesson.service';
