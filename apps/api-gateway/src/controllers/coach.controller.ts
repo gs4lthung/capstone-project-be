@@ -13,6 +13,7 @@ import {
   ApiOperation,
   ApiResponse,
   ApiTags,
+  ApiBody,
 } from '@nestjs/swagger';
 import { CoachService } from '../services/coach.service';
 import { AuthGuard } from '../guards/auth.guard';
@@ -53,8 +54,20 @@ export class CoachController {
   @ApiOperation({ summary: 'Verify coach profile (admin)' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Coach verified' })
   @CheckRoles(UserRole.ADMIN)
-  async verify(@Param('id') id: number): Promise<void> {
-    return this.coachService.verifyCoach(Number(id));
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        approvedSubjectIds: { type: 'array', items: { type: 'number' } },
+      },
+      required: ['approvedSubjectIds'],
+    },
+  })
+  async verify(
+    @Param('id') id: number,
+    @Body('approvedSubjectIds') approvedSubjectIds: number[],
+  ): Promise<void> {
+    return this.coachService.verifyCoach(Number(id), approvedSubjectIds);
   }
 
   @Put(':id/reject')

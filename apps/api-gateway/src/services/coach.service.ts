@@ -4,12 +4,14 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, In } from 'typeorm';
 import { Coach } from '@app/database/entities/coach.entity';
 import { User } from '@app/database/entities/user.entity';
 import { Credential } from '@app/database/entities/credential.entity';
 import { CoachVerificationStatus } from '@app/shared/enums/coach.enum';
 import { RegisterCoachDto } from '@app/shared/dtos/coaches/register-coach.dto';
+import { Subject } from '@app/database/entities/subject.entity';
+import { SubjectStatus } from '@app/shared/enums/subject.enum';
 
 @Injectable()
 export class CoachService {
@@ -19,6 +21,8 @@ export class CoachService {
     @InjectRepository(User) private readonly userRepository: Repository<User>,
     @InjectRepository(Credential)
     private readonly credentialRepository: Repository<Credential>,
+    @InjectRepository(Subject)
+    private readonly subjectRepository: Repository<Subject>,
   ) {}
 
   async registerCoach(userId: number, data: RegisterCoachDto): Promise<Coach> {
@@ -29,6 +33,21 @@ export class CoachService {
       where: { user: { id: userId } },
     });
     if (existed) throw new BadRequestException('Coach profile already exists');
+
+    // VALIDATE ONLY subjects with status=PUBLISH may be selected
+    if (data.subjectIds?.length) {
+      const numValid = await this.userRepository.manager.count(Subject, {
+        where: {
+          id: In(data.subjectIds),
+          status: SubjectStatus.PUBLISHED,
+        },
+      });
+      if (numValid !== data.subjectIds.length) {
+        throw new BadRequestException(
+          'Chỉ được chọn subject có trạng thái publish!',
+        );
+      }
+    }
 
     const coach = this.coachRepository.create({
       bio: data.bio,
@@ -58,12 +77,23 @@ export class CoachService {
     return savedCoach;
   }
 
-  async verifyCoach(coachId: number): Promise<void> {
+  async verifyCoach(
+    coachId: number,
+    approvedSubjectIds?: number[],
+  ): Promise<void> {
     const coach = await this.coachRepository.findOne({
       where: { id: coachId },
       relations: ['user'],
     });
     if (!coach) throw new NotFoundException('Coach not found');
+
+    // Gán quyền sở hữu subject cho coach nếu có truyền approvedSubjectIds
+    if (approvedSubjectIds && approvedSubjectIds.length > 0) {
+      await this.subjectRepository.update(
+        { id: In(approvedSubjectIds) },
+        { createdBy: coach.user },
+      );
+    }
 
     await this.coachRepository.update(coachId, {
       verificationStatus: CoachVerificationStatus.VERIFIED,
