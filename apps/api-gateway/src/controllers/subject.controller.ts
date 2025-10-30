@@ -11,12 +11,14 @@ import {
 } from '@nestjs/common';
 import { SubjectService } from '../services/subject.service';
 import { ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { CreateSubjectDto } from '@app/shared/dtos/subjects/subject.dto';
+import {
+  CreateSubjectDto,
+  UpdateSubjectDto,
+} from '@app/shared/dtos/subjects/subject.dto';
 import { AuthGuard } from '../guards/auth.guard';
 import { RoleGuard } from '../guards/role.guard';
 import { CheckRoles } from '@app/shared/decorators/check-roles.decorator';
 import { UserRole } from '@app/shared/enums/user.enum';
-import { UpdateCourseDto } from '@app/shared/dtos/course/course.dto';
 import { PaginatedSubject } from '@app/shared/dtos/subjects/subject.dto';
 import { FindOptions } from '@app/shared/interfaces/find-options.interface';
 import { PaginationParams } from '@app/shared/decorators/pagination-params.decorator';
@@ -87,7 +89,7 @@ export class SubjectController {
     status: HttpStatus.OK,
     description: 'Subject updated successfully',
   })
-  async updateSubject(@Body() data: UpdateCourseDto, @Param('id') id: number) {
+  async updateSubject(@Body() data: UpdateSubjectDto, @Param('id') id: number) {
     return this.subjectService.update(id, data);
   }
 }

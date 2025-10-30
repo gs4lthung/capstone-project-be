@@ -45,7 +45,6 @@ import { Enrollment } from '@app/database/entities/enrollment.entity';
 import { CronService } from './services/cron.service';
 import { PayosModule } from '@app/payos';
 import { Payment } from '@app/database/entities/payment.entity';
-import { PayosController } from './controllers/payos.controller';
 import { SubjectService } from './services/subject.service';
 import { SubjectController } from './controllers/subject.controller';
 import { Subject } from '@app/database/entities/subject.entity';
@@ -54,6 +53,8 @@ import { LessonService } from './services/lesson.service';
 import { LessonController } from './controllers/lesson.controller';
 import { FfmpegModule } from '@app/ffmpeg';
 import { SubjectResolver } from './resolvers/subject.resolver';
+import { PaymentService } from './services/payment.service';
+import { PaymentController } from './controllers/payment.controller';
 import { Coach } from '@app/database/entities/coach.entity';
 import { Credential } from '@app/database/entities/credential.entity';
 import { CoachController } from './controllers/coach.controller';
@@ -159,11 +160,11 @@ import { CoachService } from './services/coach.service';
     AppController,
     UserController,
     AuthController,
-    PayosController,
     RequestController,
     CourseController,
     LessonController,
     SubjectController,
+    PaymentController,
     CoachController,
   ],
   providers: [
@@ -186,6 +187,7 @@ import { CoachService } from './services/coach.service';
     SubjectService,
     LessonService,
     SubjectResolver,
+    PaymentService,
   ],
 })
 export class AppModule {}

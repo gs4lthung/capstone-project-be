@@ -1,4 +1,3 @@
-import { ConfigService } from '@app/config';
 import { Course } from '@app/database/entities/course.entity';
 import { CustomApiRequest } from '@app/shared/customs/custom-api-request';
 import {
@@ -13,7 +12,6 @@ import {
   HttpStatus,
   Inject,
   Injectable,
-  Logger,
   Scope,
 } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
@@ -33,22 +31,15 @@ import {
   Request,
   RequestMetadata,
 } from '@app/database/entities/request.entity';
-import {
-  CourseLearningFormat,
-  CourseStatus,
-} from '@app/shared/enums/course.enum';
+import { CourseStatus } from '@app/shared/enums/course.enum';
 import { Enrollment } from '@app/database/entities/enrollment.entity';
-import { EnrollmentStatus } from '@app/shared/enums/enrollment.enum';
-import { PayosService } from '@app/payos';
-import { CryptoUtils } from '@app/shared/utils/crypto.util';
-import { Payment } from '@app/database/entities/payment.entity';
-import { PaymentStatus } from '@app/shared/enums/payment.enum';
+import {} from '@app/shared/enums/enrollment.enum';
 import { Schedule } from '@app/database/entities/schedule.entity';
+import { Subject } from '@app/database/entities/subject.entity';
+import { SubjectStatus } from '@app/shared/enums/subject.enum';
 
 @Injectable({ scope: Scope.REQUEST })
 export class CourseService extends BaseTypeOrmService<Course> {
-  private readonly logger = new Logger(CourseService.name);
-
   constructor(
     @Inject(REQUEST) private readonly request: CustomApiRequest,
     @InjectRepository(Course)
@@ -61,12 +52,10 @@ export class CourseService extends BaseTypeOrmService<Course> {
     private readonly sessionRepository: Repository<Session>,
     @InjectRepository(Enrollment)
     private readonly enrollmentRepository: Repository<Enrollment>,
-    @InjectRepository(Payment)
-    private readonly paymentRepository: Repository<Payment>,
-    private readonly configService: ConfigService,
+    @InjectRepository(Subject)
+    private readonly subjectRepository: Repository<Subject>,
     @Inject(forwardRef(() => SessionService))
     private readonly sessionService: SessionService,
-    private readonly payosService: PayosService,
   ) {
     super(courseRepository);
   }
@@ -76,17 +65,34 @@ export class CourseService extends BaseTypeOrmService<Course> {
   }
 
   async createCourseCreationRequest(
+    subjectId: number,
     data: CreateCourseRequestDto,
   ): Promise<CustomApiResponse<void>> {
+    const subject = await this.subjectRepository.findOne({
+      where: { id: subjectId, status: SubjectStatus.PUBLISHED },
+      withDeleted: false,
+    });
+    if (!subject) throw new BadRequestException('Không tìm thấy chủ đề');
+
     const newCourse = this.courseRepository.create({
       ...data,
+      name:
+        subject.name +
+        ` -  Khóa ${subject.courses ? subject.courses.length + 1 : 1}`,
+      description: subject.description ? subject.description || '' : '',
+      order: subject.courses ? subject.courses.length + 1 : 1,
+      totalSessions: subject.lessons ? subject.lessons.length : 0,
+      level: subject.level,
+      subject: subject,
       createdBy: this.request.user as User,
     } as unknown as Course);
 
     const savedCourse = await this.courseRepository.save(newCourse);
 
     const newCourseCreationRequest = this.requestRepository.create({
-      description: `Tạo khóa học: ${data.name}`,
+      description: `Tạo khóa học: ${subject.name} - Khóa ${
+        subject.courses ? subject.courses.length + 1 : 1
+      }`,
       type: RequestType.COURSE_APPROVAL,
       metadata: {
         type: 'course',
@@ -132,7 +138,7 @@ export class CourseService extends BaseTypeOrmService<Course> {
         request.metadata.details.schedules,
       );
 
-      const sessions = this.sessionService.generateSessionsFromSchedules(
+      const sessions = await this.sessionService.generateSessionsFromSchedules(
         course,
         request.metadata.details.schedules,
       );
@@ -156,108 +162,6 @@ export class CourseService extends BaseTypeOrmService<Course> {
     return new CustomApiResponse<void>(
       HttpStatus.CREATED,
       'COURSE.CREATE_SUCCESS',
-    );
-  }
-
-  async enrollCourse(id: number): Promise<CustomApiResponse<void>> {
-    const course = await this.courseRepository.findOne({
-      where: { id: id },
-      withDeleted: false,
-      relations: ['enrollments', 'createdBy'],
-    });
-    if (!course) throw new BadRequestException('Không tìm thấy khóa học');
-
-    switch (course.status) {
-      case CourseStatus.CANCELLED:
-        throw new BadRequestException('Khóa học đã bị hủy');
-      case CourseStatus.COMPLETED:
-        throw new BadRequestException('Khóa học đã hoàn thành');
-      case CourseStatus.FULL:
-        throw new BadRequestException('Khóa học đã đủ người');
-      case CourseStatus.PENDING_APPROVAL:
-        throw new BadRequestException('Khóa học chưa được duyệt');
-      case CourseStatus.REJECTED:
-        throw new BadRequestException('Khóa học không tìm thấy');
-      case CourseStatus.ON_GOING:
-        throw new BadRequestException('Khóa học đang diễn ra');
-    }
-
-    const enrollment = course.enrollments.find(
-      (enrollment) => enrollment.user.id === this.request.user.id,
-    );
-    if (enrollment)
-      throw new BadRequestException('Bạn đã đăng ký khóa học này');
-
-    if (course.learningFormat === CourseLearningFormat.GROUP) {
-      if (
-        course.enrollments.length + 1 >= course.minParticipants &&
-        course.enrollments.length + 1 < course.maxParticipants
-      ) {
-        course.status = CourseStatus.READY_OPENED;
-      } else if (course.enrollments.length + 1 >= course.maxParticipants) {
-        course.status = CourseStatus.FULL;
-      }
-    } else if (course.learningFormat === CourseLearningFormat.INDIVIDUAL) {
-      course.status = CourseStatus.FULL;
-    }
-
-    await this.courseRepository.save(course);
-
-    const newEnrollment = this.enrollmentRepository.create({
-      user: { id: this.request.user.id } as User,
-      course: course as Course,
-      status:
-        course.learningFormat === CourseLearningFormat.GROUP
-          ? EnrollmentStatus.PENDING_GROUP
-          : EnrollmentStatus.CONFIRMED,
-    });
-    await this.enrollmentRepository.save(newEnrollment);
-
-    return new CustomApiResponse<void>(
-      HttpStatus.CREATED,
-      'COURSE.ENROLL_SUCCESS',
-    );
-  }
-
-  async createCoursePaymentLink(
-    id: number,
-  ): Promise<CustomApiResponse<Payment>> {
-    const course = await this.courseRepository.findOne({
-      where: { id: id },
-      withDeleted: false,
-      relations: ['enrollments', 'createdBy'],
-    });
-    if (!course) throw new BadRequestException('Không tìm thấy khóa học');
-
-    const enrollment = course.enrollments.find(
-      (enrollment) => enrollment.user.id === this.request.user.id,
-    );
-    if (!enrollment) throw new BadRequestException('Bạn chưa đăng ký khóa học');
-
-    const payosResponse = await this.payosService.createPaymentLink({
-      orderCode: CryptoUtils.generateRandomNumber(10000, 99999),
-      amount: parseInt(course.pricePerParticipant.toString()),
-      description: 'Thanh toán khóa học',
-      expiredAt: new Date(Date.now() + 1000 * 60 * 60 * 24),
-    });
-    const payment = this.paymentRepository.create({
-      amount: payosResponse.amount,
-      description: payosResponse.description,
-      orderCode: payosResponse.orderCode,
-      paymentLinkId: payosResponse.paymentLinkId,
-      checkoutUrl: payosResponse.checkoutUrl,
-      qrCode: payosResponse.qrCode,
-      status: PaymentStatus.PENDING,
-      enrollment: enrollment,
-    });
-    await this.paymentRepository.save(payment);
-
-    delete payment.enrollment;
-
-    return new CustomApiResponse<Payment>(
-      HttpStatus.CREATED,
-      'PAYMENT.CREATE_SUCCESS',
-      payment,
     );
   }
 

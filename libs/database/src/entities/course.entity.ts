@@ -36,6 +36,7 @@ import { UserDto } from '@app/shared/dtos/users/user.dto';
 import { District } from './district.entity';
 import { Province } from './province.entity';
 import { Subject } from './subject.entity';
+import { PickleballLevel } from '@app/shared/enums/pickleball.enum';
 
 @ObjectType()
 @Entity('courses')
@@ -66,6 +67,15 @@ export class Course {
   @IsString()
   @IsNotEmpty()
   description?: string;
+
+  @Field(() => String)
+  @Column({
+    type: 'enum',
+    enum: PickleballLevel,
+    default: PickleballLevel.BEGINNER,
+  })
+  @IsEnum(PickleballLevel)
+  level: PickleballLevel;
 
   @Field(() => String)
   @Column({
@@ -105,6 +115,12 @@ export class Course {
   @Min(0)
   pricePerParticipant: number;
 
+  @Field(() => Number)
+  @Column({ name: 'current_participants', type: 'int', default: 0 })
+  @IsInt()
+  @Min(0)
+  currentParticipants: number;
+
   @Column({ name: 'total_sessions', type: 'int', default: 0 })
   @IsInt()
   @Min(0)
@@ -115,10 +131,10 @@ export class Course {
   @IsDate()
   startDate: Date;
 
-  @Field(() => GqlCustomDateTime)
-  @Column({ name: 'end_date', type: 'date' })
+  @Field(() => GqlCustomDateTime, { nullable: true })
+  @Column({ name: 'end_date', type: 'date', nullable: true })
   @IsDate()
-  endDate: Date;
+  endDate?: Date;
 
   @Field(() => GqlCustomDateTime)
   @CreateDateColumn({ name: 'created_at' })
@@ -140,7 +156,9 @@ export class Course {
   @JoinColumn({ name: 'created_by' })
   createdBy: User;
 
-  @ManyToOne(() => Subject, (subject) => subject.courses)
+  @ManyToOne(() => Subject, (subject) => subject.courses, {
+    eager: true,
+  })
   @JoinColumn({ name: 'subject_id' })
   subject: Subject;
 
@@ -173,14 +191,12 @@ export class Course {
 
   @ManyToOne(() => Province, (province) => province.courses, {
     eager: true,
-    cascade: ['insert'],
   })
   @JoinColumn({ name: 'province_id' })
   province: Province;
 
   @ManyToOne(() => District, (district) => district.courses, {
     eager: true,
-    cascade: ['insert'],
   })
   @JoinColumn({ name: 'district_id' })
   district: District;

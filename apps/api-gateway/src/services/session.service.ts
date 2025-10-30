@@ -1,10 +1,16 @@
 import { Course } from '@app/database/entities/course.entity';
 import { Schedule } from '@app/database/entities/schedule.entity';
 import { Session } from '@app/database/entities/session.entity';
+import { Subject } from '@app/database/entities/subject.entity';
 import { CustomApiRequest } from '@app/shared/customs/custom-api-request';
 import { SessionStatus } from '@app/shared/enums/session.enum';
 import { BaseTypeOrmService } from '@app/shared/helpers/typeorm.helper';
-import { Inject, Injectable, Scope } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  InternalServerErrorException,
+  Scope,
+} from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -15,13 +21,23 @@ export class SessionService extends BaseTypeOrmService<Session> {
     @Inject(REQUEST) private readonly request: CustomApiRequest,
     @InjectRepository(Session)
     private readonly sessionRepository: Repository<Session>,
+    @InjectRepository(Subject)
+    private readonly subjectRepository: Repository<Subject>,
+    @InjectRepository(Course)
+    private readonly courseRepository: Repository<Course>,
   ) {
     super(sessionRepository);
   }
-  generateSessionsFromSchedules(
+  async generateSessionsFromSchedules(
     course: Course,
     schedules: Schedule[],
-  ): Session[] {
+  ): Promise<Session[]> {
+    const subject = await this.subjectRepository.findOne({
+      where: { id: course.subject.id },
+      withDeleted: false,
+    });
+    if (!subject) throw new InternalServerErrorException('Lỗi server');
+
     const sessions: Session[] = [];
     let sessionNumber = 1;
 
@@ -43,20 +59,28 @@ export class SessionService extends BaseTypeOrmService<Session> {
         const scheduleDay = dayMap[schedule.dayOfWeek];
 
         if (currentDate.getDay() === scheduleDay) {
-          const scheduleStartTime = this.timeStringToMinutes(
-            schedule.startTime,
-          );
-          const scheduleEndTime = this.timeStringToMinutes(schedule.endTime);
-          const duration = scheduleEndTime - scheduleStartTime;
-
           const session = this.sessionRepository.create({
+            name: `${
+              subject.lessons.find(
+                (lesson) => lesson.lessonNumber === sessionNumber,
+              )?.name || 'Chưa có tên bài học'
+            }`,
+            description: `${
+              subject.lessons.find(
+                (lesson) => lesson.lessonNumber === sessionNumber,
+              )?.description || ''
+            }`,
             sessionNumber: sessionNumber,
             scheduleDate: new Date(currentDate),
             startTime: schedule.startTime,
             endTime: schedule.endTime,
-            durationInMinutes: duration,
             status: SessionStatus.SCHEDULED,
             course: course,
+            lesson: subject
+              ? subject.lessons.find(
+                  (lesson) => lesson.lessonNumber === sessionNumber,
+                )
+              : null,
           });
           sessions.push(session);
           sessionNumber++;
