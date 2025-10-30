@@ -25,7 +25,7 @@ export class Enrollment {
   @Column({
     type: 'enum',
     enum: EnrollmentStatus,
-    default: EnrollmentStatus.PENDING_GROUP,
+    default: EnrollmentStatus.UNPAID,
   })
   @IsEnum(EnrollmentStatus)
   status: EnrollmentStatus;

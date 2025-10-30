@@ -55,15 +55,29 @@ export class PaymentService {
     const hasLearnerEnrolled = course.enrollments.find(
       (enrollment) => enrollment.user.id === this.request.user.id,
     );
-    if (hasLearnerEnrolled)
-      throw new BadRequestException('Bạn đã đăng ký khóa học này');
 
-    const newEnrollment = this.enrollmentRepository.create({
-      user: { id: this.request.user.id } as User,
-      course: course as Course,
-      status: EnrollmentStatus.UNPAID,
-    });
-    await this.enrollmentRepository.save(newEnrollment);
+    let enrollment: Enrollment, newEnrollment: Enrollment;
+    if (hasLearnerEnrolled) {
+      enrollment = await this.enrollmentRepository.findOne({
+        where: {
+          user: { id: this.request.user.id } as User,
+          course: { id: course.id } as Course,
+        },
+        withDeleted: false,
+      });
+      if (enrollment.status !== EnrollmentStatus.CANCELLED) {
+        throw new BadRequestException('Bạn đã đăng ký khóa học này rồi');
+      }
+      enrollment.status = EnrollmentStatus.UNPAID;
+      await this.enrollmentRepository.save(enrollment);
+    } else {
+      newEnrollment = this.enrollmentRepository.create({
+        user: { id: this.request.user.id } as User,
+        course: course as Course,
+        status: EnrollmentStatus.UNPAID,
+      });
+      await this.enrollmentRepository.save(newEnrollment);
+    }
 
     const payosResponse = await this.payosService.createPaymentLink({
       orderCode: CryptoUtils.generateRandomNumber(10000, 99999),
@@ -79,7 +93,7 @@ export class PaymentService {
       checkoutUrl: payosResponse.checkoutUrl,
       qrCode: payosResponse.qrCode,
       status: PaymentStatus.PENDING,
-      enrollment: newEnrollment,
+      enrollment: enrollment ? enrollment : newEnrollment,
     });
     await this.paymentRepository.save(payment);
 
@@ -158,5 +172,21 @@ export class PaymentService {
     await this.paymentRepository.save(payment);
 
     await this.courseRepository.save(course);
+  }
+
+  async handlePaymentCancel(data: CheckoutResponseDataType): Promise<void> {
+    if (data.status !== 'CANCELLED') {
+      return;
+    }
+
+    const payment = await this.paymentRepository.findOne({
+      where: { orderCode: data.orderCode },
+      relations: ['enrollment'],
+    });
+    if (!payment) {
+      return;
+    }
+    payment.status = PaymentStatus.CANCELLED;
+    await this.paymentRepository.save(payment);
   }
 }

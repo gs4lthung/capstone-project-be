@@ -58,4 +58,21 @@ export class PaymentController {
       cancel,
     });
   }
+
+  @Get('course/cancel')
+  async handlePaymentCancel(
+    @Query('id') id: CheckoutResponseDataType['id'],
+    @Query('code') code: CheckoutResponseDataType['code'],
+    @Query('orderCode') orderCode: CheckoutResponseDataType['orderCode'],
+    @Query('status') status: CheckoutResponseDataType['status'],
+    @Query('cancel') cancel: CheckoutResponseDataType['cancel'],
+  ): Promise<void> {
+    return this.paymentService.handlePaymentCancel({
+      id,
+      code,
+      orderCode,
+      status,
+      cancel,
+    });
+  }
 }

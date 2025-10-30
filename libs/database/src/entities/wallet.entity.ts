@@ -3,6 +3,7 @@ import {
   CreateDateColumn,
   Entity,
   JoinColumn,
+  ManyToOne,
   OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
@@ -11,16 +12,28 @@ import {
 import { User } from './user.entity';
 import { WalletTransaction } from './wallet-transaction.entity';
 import { WithdrawalRequest } from './withdrawal-request.entity';
+import { Bank } from './bank.entity';
+import { IsNotEmpty, IsString } from 'class-validator';
 
 @Entity('wallets')
 export class Wallet {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ name: 'current_balance', type: 'bigint' })
+  @Column({
+    name: 'bank_account_number',
+    type: 'varchar',
+    length: 50,
+    nullable: true,
+  })
+  @IsNotEmpty()
+  @IsString()
+  bankAccountNumber: string;
+
+  @Column({ name: 'current_balance', type: 'bigint', default: 0 })
   currentBalance: number;
 
-  @Column({ name: 'total_income', type: 'bigint' })
+  @Column({ name: 'total_income', type: 'bigint', default: 0 })
   totalIncome: number;
 
   @CreateDateColumn({ name: 'created_at' })
@@ -41,4 +54,8 @@ export class Wallet {
     (withdrawalRequest) => withdrawalRequest.wallet,
   )
   withdrawalRequests: WithdrawalRequest[];
+
+  @ManyToOne(() => Bank, (bank) => bank.wallets, { eager: true })
+  @JoinColumn({ name: 'bank_id' })
+  bank: Bank;
 }

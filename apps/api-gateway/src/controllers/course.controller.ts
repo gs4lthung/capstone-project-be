@@ -27,7 +27,7 @@ export class CourseController {
   @HttpCode(HttpStatus.CREATED)
   @ApiBearerAuth()
   @ApiOperation({
-    tags: ['Requests'],
+    tags: ['Courses'],
     summary: 'Create a new course creation request',
     description: 'Create a new course creation request with given data',
   })
@@ -48,7 +48,7 @@ export class CourseController {
   @HttpCode(HttpStatus.OK)
   @ApiBearerAuth()
   @ApiOperation({
-    tags: ['Requests'],
+    tags: ['Courses'],
     summary: 'Approve a course creation request',
     description: 'Approve a course creation request with given ID',
   })
@@ -62,5 +62,21 @@ export class CourseController {
     @Param('id') id: number,
   ): Promise<CustomApiResponse<void>> {
     return this.courseService.approveCourseCreationRequest(id);
+  }
+
+  @Patch(':id/learners/cancel')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiOperation({
+    tags: ['Courses'],
+    summary: 'Cancel learner enrollment in a course',
+    description:
+      'Allows a learner to cancel their enrollment in a specific course',
+  })
+  @UseGuards(AuthGuard)
+  async cancelLearnerEnrollment(
+    @Param('id') courseId: number,
+  ): Promise<CustomApiResponse<void>> {
+    return this.courseService.learnerCancelCourse(courseId);
   }
 }

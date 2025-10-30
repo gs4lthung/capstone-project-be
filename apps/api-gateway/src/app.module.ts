@@ -55,6 +55,10 @@ import { FfmpegModule } from '@app/ffmpeg';
 import { SubjectResolver } from './resolvers/subject.resolver';
 import { PaymentService } from './services/payment.service';
 import { PaymentController } from './controllers/payment.controller';
+import { Wallet } from '@app/database/entities/wallet.entity';
+import { Bank } from '@app/database/entities/bank.entity';
+import { WalletController } from './controllers/wallet.controller';
+import { WalletService } from './services/wallet.service';
 
 @Module({
   imports: [
@@ -117,6 +121,8 @@ import { PaymentController } from './controllers/payment.controller';
       Subject,
       Payment,
       Lesson,
+      Wallet,
+      Bank,
     ]),
     ErrorModule,
     GraphQLModule.forRootAsync<ApolloDriverConfig>({
@@ -159,6 +165,7 @@ import { PaymentController } from './controllers/payment.controller';
     LessonController,
     SubjectController,
     PaymentController,
+    WalletController,
   ],
   providers: [
     AppService,
@@ -179,6 +186,7 @@ import { PaymentController } from './controllers/payment.controller';
     SubjectService,
     LessonService,
     SubjectResolver,
+    WalletService,
     PaymentService,
   ],
 })
