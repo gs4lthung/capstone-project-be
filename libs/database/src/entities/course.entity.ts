@@ -115,6 +115,12 @@ export class Course {
   @Min(0)
   pricePerParticipant: number;
 
+  @Field(() => Number)
+  @Column({ name: 'current_participants', type: 'int', default: 0 })
+  @IsInt()
+  @Min(0)
+  currentParticipants: number;
+
   @Column({ name: 'total_sessions', type: 'int', default: 0 })
   @IsInt()
   @Min(0)

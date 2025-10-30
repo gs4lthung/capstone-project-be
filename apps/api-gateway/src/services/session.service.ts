@@ -60,6 +60,16 @@ export class SessionService extends BaseTypeOrmService<Session> {
 
         if (currentDate.getDay() === scheduleDay) {
           const session = this.sessionRepository.create({
+            name: `${
+              subject.lessons.find(
+                (lesson) => lesson.lessonNumber === sessionNumber,
+              )?.name || 'Chưa có tên bài học'
+            }`,
+            description: `${
+              subject.lessons.find(
+                (lesson) => lesson.lessonNumber === sessionNumber,
+              )?.description || ''
+            }`,
             sessionNumber: sessionNumber,
             scheduleDate: new Date(currentDate),
             startTime: schedule.startTime,

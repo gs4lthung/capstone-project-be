@@ -89,14 +89,6 @@ export class CreateCourseRequestDto {
   pricePerParticipant: number;
 
   @ApiProperty({
-    description: 'The total number of sessions',
-    example: 10,
-  })
-  @IsInt()
-  @Min(0)
-  totalSessions: number;
-
-  @ApiProperty({
     description: 'The start date of the course',
     example: '2024-01-15',
   })

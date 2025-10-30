@@ -77,6 +77,12 @@
       ],
       "@app/twilio/*": [
         "libs/twilio/src/*"
+      ],
+      "@app/paypal": [
+        "libs/paypal/src"
+      ],
+      "@app/paypal/*": [
+        "libs/paypal/src/*"
       ]
     }
   }

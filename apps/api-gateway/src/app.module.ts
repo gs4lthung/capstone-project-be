@@ -45,7 +45,6 @@ import { Enrollment } from '@app/database/entities/enrollment.entity';
 import { CronService } from './services/cron.service';
 import { PayosModule } from '@app/payos';
 import { Payment } from '@app/database/entities/payment.entity';
-import { PayosController } from './controllers/payos.controller';
 import { SubjectService } from './services/subject.service';
 import { SubjectController } from './controllers/subject.controller';
 import { Subject } from '@app/database/entities/subject.entity';
@@ -54,6 +53,8 @@ import { LessonService } from './services/lesson.service';
 import { LessonController } from './controllers/lesson.controllet';
 import { FfmpegModule } from '@app/ffmpeg';
 import { SubjectResolver } from './resolvers/subject.resolver';
+import { PaymentService } from './services/payment.service';
+import { PaymentController } from './controllers/payment.controller';
 
 @Module({
   imports: [
@@ -153,11 +154,11 @@ import { SubjectResolver } from './resolvers/subject.resolver';
     AppController,
     UserController,
     AuthController,
-    PayosController,
     RequestController,
     CourseController,
     LessonController,
     SubjectController,
+    PaymentController,
   ],
   providers: [
     AppService,
@@ -178,6 +179,7 @@ import { SubjectResolver } from './resolvers/subject.resolver';
     SubjectService,
     LessonService,
     SubjectResolver,
+    PaymentService,
   ],
 })
 export class AppModule {}

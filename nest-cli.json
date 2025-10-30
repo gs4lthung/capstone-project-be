@@ -108,6 +108,15 @@
       "compilerOptions": {
         "tsConfigPath": "libs/twilio/tsconfig.lib.json"
       }
+    },
+    "paypal": {
+      "type": "library",
+      "root": "libs/paypal",
+      "entryFile": "index",
+      "sourceRoot": "libs/paypal/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/paypal/tsconfig.lib.json"
+      }
     }
   }
 }

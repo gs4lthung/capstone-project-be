@@ -98,6 +98,7 @@
     "@types/node": "^20.3.1",
     "@types/nodemailer": "^6.4.17",
     "@types/passport-google-oauth20": "^2.0.16",
+    "@types/paypal-rest-sdk": "^1.7.9",
     "@types/streamifier": "^0.1.2",
     "@types/supertest": "^6.0.0",
     "@typescript-eslint/eslint-plugin": "^8.0.0",
@@ -147,7 +148,8 @@
       "^@app/payos(|/.*)$": "<rootDir>/libs/payos/src/$1",
       "^@app/ffmpeg(|/.*)$": "<rootDir>/libs/ffmpeg/src/$1",
       "^@app/aws(|/.*)$": "<rootDir>/libs/aws/src/$1",
-      "^@app/twilio(|/.*)$": "<rootDir>/libs/twilio/src/$1"
+      "^@app/twilio(|/.*)$": "<rootDir>/libs/twilio/src/$1",
+      "^@app/paypal(|/.*)$": "<rootDir>/libs/paypal/src/$1"
     }
   }
 }
