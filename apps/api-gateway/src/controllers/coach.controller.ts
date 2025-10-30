@@ -21,6 +21,8 @@ import { User } from '@app/database/entities/user.entity';
 import { RegisterCoachDto } from '@app/shared/dtos/coaches/register-coach.dto';
 import { Coach } from '@app/database/entities/coach.entity';
 import { RejectCoachDto } from '@app/shared/dtos/coaches/reject-coach.dto';
+import { UserRole } from '@app/shared/enums/user.enum';
+import { CheckRoles } from '@app/shared/decorators/check-roles.decorator';
 
 @ApiTags('Coaches')
 @Controller('coaches')
@@ -36,6 +38,7 @@ export class CoachController {
     status: HttpStatus.CREATED,
     description: 'Coach profile created',
   })
+  @CheckRoles(UserRole.LEARNER)
   async register(
     @CurrentUser('local') user: User,
     @Body() data: RegisterCoachDto,
@@ -49,6 +52,7 @@ export class CoachController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Verify coach profile (admin)' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Coach verified' })
+  @CheckRoles(UserRole.ADMIN)
   async verify(@Param('id') id: number): Promise<void> {
     return this.coachService.verifyCoach(Number(id));
   }
@@ -59,6 +63,7 @@ export class CoachController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Reject coach profile (admin)' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Coach rejected' })
+  @CheckRoles(UserRole.ADMIN)
   async reject(
     @Param('id') id: number,
     @Body() body: RejectCoachDto,

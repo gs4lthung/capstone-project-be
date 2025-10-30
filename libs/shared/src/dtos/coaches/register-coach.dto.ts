@@ -71,6 +71,12 @@ export class RegisterCoachDto {
   @Max(80)
   yearOfExperience: number;
 
+  @ApiProperty({ type: [Number], example: [1, 2, 3], required: true })
+  @IsArray()
+  @IsInt({ each: true })
+  @IsNotEmpty({ each: true })
+  subjectIds: number[];
+
   @ApiProperty({ type: [RegisterCoachCredentialDto], required: false })
   @IsOptional()
   @IsArray()

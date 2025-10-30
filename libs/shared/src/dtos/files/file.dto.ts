@@ -15,3 +15,10 @@ export class UploadFileDto {
     Object.assign(this, partial);
   }
 }
+
+export class UploadLearnerVideoDto {
+  lessonId: number;
+  sessionId?: number;
+  duration: number;
+  tags?: string[];
+}
