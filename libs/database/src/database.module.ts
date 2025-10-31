@@ -44,6 +44,7 @@ import { Province } from './entities/province.entity';
 import { District } from './entities/district.entity';
 import { Subject } from './entities/subject.entity';
 import { Lesson } from './entities/lesson.entity';
+import { Bank } from './entities/bank.entity';
 
 @Module({
   imports: [
@@ -101,6 +102,7 @@ import { Lesson } from './entities/lesson.entity';
           District,
           Subject,
           Lesson,
+          Bank,
         ],
         logging: false,
         synchronize: configService.get('node_env') === 'dev',

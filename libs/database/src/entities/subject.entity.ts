@@ -22,7 +22,7 @@ import { SubjectStatus } from '@app/shared/enums/subject.enum';
 import { Lesson } from './lesson.entity';
 import { Field, ObjectType } from '@nestjs/graphql';
 import { GqlCustomDateTime } from '@app/shared/graphql/scalars/gql-custom-datetime.scalar';
-import { UserDto } from '@app/shared/dtos/users/user.dto';
+import { PaginatedResource } from '@app/shared/graphql/paginated-resource';
 
 @ObjectType()
 @Entity('subjects')
@@ -75,7 +75,7 @@ export class Subject {
   @DeleteDateColumn({ name: 'deleted_at' })
   deletedAt?: Date;
 
-  @Field(() => UserDto, { nullable: true })
+  @Field(() => User, { nullable: true })
   @ManyToOne(() => User, (user) => user.subjects, {
     onDelete: 'SET NULL',
     eager: true,
@@ -89,3 +89,6 @@ export class Subject {
   @OneToMany(() => Lesson, (lesson) => lesson.subject, { eager: true })
   lessons: Lesson[];
 }
+
+@ObjectType()
+export class PaginatedSubject extends PaginatedResource(Subject) {}

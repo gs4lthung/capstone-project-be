@@ -1,10 +1,11 @@
 import { Course } from '@app/database/entities/course.entity';
 import { Schedule } from '@app/database/entities/schedule.entity';
-import { Session } from '@app/database/entities/session.entity';
+import { Session, PaginatedSession } from '@app/database/entities/session.entity';
 import { Subject } from '@app/database/entities/subject.entity';
 import { CustomApiRequest } from '@app/shared/customs/custom-api-request';
 import { SessionStatus } from '@app/shared/enums/session.enum';
 import { BaseTypeOrmService } from '@app/shared/helpers/typeorm.helper';
+import { FindOptions } from '@app/shared/interfaces/find-options.interface';
 import {
   Inject,
   Injectable,
@@ -27,6 +28,22 @@ export class SessionService extends BaseTypeOrmService<Session> {
     private readonly courseRepository: Repository<Course>,
   ) {
     super(sessionRepository);
+  }
+
+  async findAll(findOptions: FindOptions): Promise<PaginatedSession> {
+    return super.find(findOptions, 'session', PaginatedSession);
+  }
+
+  async findOne(id: number): Promise<Session> {
+    const session = await this.sessionRepository.findOne({
+      where: { id: id },
+      withDeleted: false,
+      relations: ['course', 'lesson', 'attendances', 'notes'],
+    });
+
+    if (!session) throw new Error('Session not found');
+
+    return session;
   }
   async generateSessionsFromSchedules(
     course: Course,

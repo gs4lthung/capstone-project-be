@@ -8,40 +8,37 @@ import { Sorting } from '@app/shared/interfaces/sorting.interface';
 import { FilteringParams } from '@app/shared/decorators/filtering-params.decorator';
 import { Filtering } from '@app/shared/interfaces/filtering.interface';
 import { FindOptions } from '@app/shared/interfaces/find-options.interface';
-import { RequestService } from '../services/request.service';
+import { WalletService } from '../services/wallet.service';
 import { PaginatedGqlArgs } from '@app/shared/graphql/paginated-gql-args';
-import {
-  PaginatedRequest,
-  Request,
-} from '@app/database/entities/request.entity';
+import { PaginatedWallet, Wallet } from '@app/database/entities/wallet.entity';
 
-@Resolver(() => Request)
-export class RequestResolver {
-  constructor(private readonly requestService: RequestService) {}
+@Resolver(() => Wallet)
+export class WalletResolver {
+  constructor(private readonly walletService: WalletService) {}
 
-  @Query(() => PaginatedRequest, { name: 'requests' })
+  @Query(() => PaginatedWallet, { name: 'wallets' })
   @UseGuards(AuthGuard)
-  async findRequests(
+  async findWallets(
     @Args() args: PaginatedGqlArgs,
     @PaginationParams()
     pagination: Pagination,
     @SortingParams() sort: Sorting,
     @FilteringParams() filter: Filtering,
-  ): Promise<PaginatedRequest> {
-    const requests = await this.requestService.findAll({
+  ): Promise<PaginatedWallet> {
+    const wallets = await this.walletService.findAll({
       pagination,
       sort,
       filter,
     } as FindOptions);
-    return requests;
+    return wallets;
   }
 
-  @Query(() => Request, { name: 'request' })
+  @Query(() => Wallet, { name: 'wallet' })
   @UseGuards(AuthGuard)
-  async findRequestById(
+  async findWalletById(
     @Args('id', { type: () => Int }) id: number,
-  ): Promise<Request> {
-    const request = this.requestService.findOne(id);
-    return request;
+  ): Promise<Wallet> {
+    const wallet = this.walletService.findOne(id);
+    return wallet;
   }
 }

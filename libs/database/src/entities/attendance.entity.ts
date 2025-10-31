@@ -6,13 +6,18 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+import { Field, ObjectType } from '@nestjs/graphql';
+import { GqlCustomDateTime } from '@app/shared/graphql/scalars/gql-custom-datetime.scalar';
 import { Session } from './session.entity';
 import { User } from './user.entity';
 import { AttendanceStatus } from '@app/shared/enums/attendance.enum';
 import { IsEnum } from 'class-validator';
+import { PaginatedResource } from '@app/shared/graphql/paginated-resource';
 
+@ObjectType()
 @Entity('attendances')
 export class Attendance {
+  @Field(() => Number)
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -24,6 +29,7 @@ export class Attendance {
   @IsEnum(AttendanceStatus)
   status: AttendanceStatus;
 
+  @Field(() => GqlCustomDateTime)
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
@@ -39,3 +45,6 @@ export class Attendance {
   @JoinColumn({ name: 'session_id' })
   session: Session;
 }
+
+@ObjectType()
+export class PaginatedAttendance extends PaginatedResource(Attendance) {}

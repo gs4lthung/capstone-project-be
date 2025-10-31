@@ -8,40 +8,40 @@ import { Sorting } from '@app/shared/interfaces/sorting.interface';
 import { FilteringParams } from '@app/shared/decorators/filtering-params.decorator';
 import { Filtering } from '@app/shared/interfaces/filtering.interface';
 import { FindOptions } from '@app/shared/interfaces/find-options.interface';
-import { RequestService } from '../services/request.service';
+import { EnrollmentService } from '../services/enrollment.service';
 import { PaginatedGqlArgs } from '@app/shared/graphql/paginated-gql-args';
 import {
-  PaginatedRequest,
-  Request,
-} from '@app/database/entities/request.entity';
+  PaginatedEnrollment,
+  Enrollment,
+} from '@app/database/entities/enrollment.entity';
 
-@Resolver(() => Request)
-export class RequestResolver {
-  constructor(private readonly requestService: RequestService) {}
+@Resolver(() => Enrollment)
+export class EnrollmentResolver {
+  constructor(private readonly enrollmentService: EnrollmentService) {}
 
-  @Query(() => PaginatedRequest, { name: 'requests' })
+  @Query(() => PaginatedEnrollment, { name: 'enrollments' })
   @UseGuards(AuthGuard)
-  async findRequests(
+  async findEnrollments(
     @Args() args: PaginatedGqlArgs,
     @PaginationParams()
     pagination: Pagination,
     @SortingParams() sort: Sorting,
     @FilteringParams() filter: Filtering,
-  ): Promise<PaginatedRequest> {
-    const requests = await this.requestService.findAll({
+  ): Promise<PaginatedEnrollment> {
+    const enrollments = await this.enrollmentService.findAll({
       pagination,
       sort,
       filter,
     } as FindOptions);
-    return requests;
+    return enrollments;
   }
 
-  @Query(() => Request, { name: 'request' })
+  @Query(() => Enrollment, { name: 'enrollment' })
   @UseGuards(AuthGuard)
-  async findRequestById(
+  async findEnrollmentById(
     @Args('id', { type: () => Int }) id: number,
-  ): Promise<Request> {
-    const request = this.requestService.findOne(id);
-    return request;
+  ): Promise<Enrollment> {
+    const enrollment = this.enrollmentService.findOne(id);
+    return enrollment;
   }
 }

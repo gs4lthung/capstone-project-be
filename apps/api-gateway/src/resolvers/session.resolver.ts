@@ -8,40 +8,40 @@ import { Sorting } from '@app/shared/interfaces/sorting.interface';
 import { FilteringParams } from '@app/shared/decorators/filtering-params.decorator';
 import { Filtering } from '@app/shared/interfaces/filtering.interface';
 import { FindOptions } from '@app/shared/interfaces/find-options.interface';
-import { RequestService } from '../services/request.service';
+import { SessionService } from '../services/session.service';
 import { PaginatedGqlArgs } from '@app/shared/graphql/paginated-gql-args';
 import {
-  PaginatedRequest,
-  Request,
-} from '@app/database/entities/request.entity';
+  PaginatedSession,
+  Session,
+} from '@app/database/entities/session.entity';
 
-@Resolver(() => Request)
-export class RequestResolver {
-  constructor(private readonly requestService: RequestService) {}
+@Resolver(() => Session)
+export class SessionResolver {
+  constructor(private readonly sessionService: SessionService) {}
 
-  @Query(() => PaginatedRequest, { name: 'requests' })
+  @Query(() => PaginatedSession, { name: 'sessions' })
   @UseGuards(AuthGuard)
-  async findRequests(
+  async findSessions(
     @Args() args: PaginatedGqlArgs,
     @PaginationParams()
     pagination: Pagination,
     @SortingParams() sort: Sorting,
     @FilteringParams() filter: Filtering,
-  ): Promise<PaginatedRequest> {
-    const requests = await this.requestService.findAll({
+  ): Promise<PaginatedSession> {
+    const sessions = await this.sessionService.findAll({
       pagination,
       sort,
       filter,
     } as FindOptions);
-    return requests;
+    return sessions;
   }
 
-  @Query(() => Request, { name: 'request' })
+  @Query(() => Session, { name: 'session' })
   @UseGuards(AuthGuard)
-  async findRequestById(
+  async findSessionById(
     @Args('id', { type: () => Int }) id: number,
-  ): Promise<Request> {
-    const request = this.requestService.findOne(id);
-    return request;
+  ): Promise<Session> {
+    const session = this.sessionService.findOne(id);
+    return session;
   }
 }
