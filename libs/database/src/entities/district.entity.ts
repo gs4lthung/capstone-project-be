@@ -9,6 +9,7 @@ import { Province } from './province.entity';
 import { Course } from './course.entity';
 import { Learner } from './learner.entity';
 import { Field, ObjectType } from '@nestjs/graphql';
+import { PaginatedResource } from '@app/shared/graphql/paginated-resource';
 
 @ObjectType()
 @Entity('districts')
@@ -30,3 +31,6 @@ export class District {
   @OneToMany(() => Learner, (learner) => learner.district)
   learners: Learner[];
 }
+
+@ObjectType()
+export class PaginatedDistrict extends PaginatedResource(District) {}

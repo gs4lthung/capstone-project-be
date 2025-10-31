@@ -1,7 +1,9 @@
-import { Request } from '@app/database/entities/request.entity';
+import {
+  PaginatedRequest,
+  Request,
+} from '@app/database/entities/request.entity';
 import { Args, Query, Resolver } from '@nestjs/graphql';
 import { RequestService } from '../services/request.service';
-import { PaginatedRequest } from '@app/shared/dtos/requests/request.dto';
 import { UseGuards } from '@nestjs/common';
 import { PaginatedGqlArgs } from '@app/shared/graphql/paginated-gql-args';
 import { PaginationParams } from '@app/shared/decorators/pagination-params.decorator';

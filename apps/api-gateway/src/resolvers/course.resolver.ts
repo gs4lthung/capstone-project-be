@@ -1,7 +1,6 @@
-import { Course } from '@app/database/entities/course.entity';
+import { Course, PaginatedCourse } from '@app/database/entities/course.entity';
 import { Args, Query, Resolver } from '@nestjs/graphql';
 import { CourseService } from '../services/course.service';
-import { PaginatedCourse } from '@app/shared/dtos/course/course.dto';
 import { Filtering } from '@app/shared/interfaces/filtering.interface';
 import { FindOptions } from '@app/shared/interfaces/find-options.interface';
 import { FilteringParams } from '@app/shared/decorators/filtering-params.decorator';

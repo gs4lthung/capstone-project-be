@@ -15,6 +15,7 @@ import { Field, ObjectType } from '@nestjs/graphql';
 import { IsEnum, IsString } from 'class-validator';
 import { GqlCustomDateTime } from '@app/shared/graphql/scalars/gql-custom-datetime.scalar';
 import { JSONScalar } from '@app/shared/graphql/scalars/json.scalar';
+import { PaginatedResource } from '@app/shared/graphql/paginated-resource';
 
 export interface RequestMetadata {
   type: 'course' | 'quiz' | 'coach' | 'video';
@@ -71,3 +72,6 @@ export class Request {
   })
   actions: RequestAction[];
 }
+
+@ObjectType()
+export class PaginatedRequest extends PaginatedResource(Request) {}

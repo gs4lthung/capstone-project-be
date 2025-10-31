@@ -1,4 +1,7 @@
-import { Subject } from '@app/database/entities/subject.entity';
+import {
+  PaginatedSubject,
+  Subject,
+} from '@app/database/entities/subject.entity';
 import { Args, Query, Resolver } from '@nestjs/graphql';
 import { SubjectService } from '../services/subject.service';
 import { PaginatedGqlArgs } from '@app/shared/graphql/paginated-gql-args';
@@ -8,7 +11,6 @@ import { Sorting } from '@app/shared/interfaces/sorting.interface';
 import { SortingParams } from '@app/shared/decorators/sorting-params.decorator';
 import { FilteringParams } from '@app/shared/decorators/filtering-params.decorator';
 import { Filtering } from '@app/shared/interfaces/filtering.interface';
-import { PaginatedSubject } from '@app/shared/dtos/subjects/subject.dto';
 import { FindOptions } from '@app/shared/interfaces/find-options.interface';
 import { UseGuards } from '@nestjs/common';
 import { AuthGuard } from '../guards/auth.guard';

@@ -1,9 +1,6 @@
-import { Course } from '@app/database/entities/course.entity';
+import { Course, PaginatedCourse } from '@app/database/entities/course.entity';
 import { CustomApiRequest } from '@app/shared/customs/custom-api-request';
-import {
-  CreateCourseRequestDto,
-  PaginatedCourse,
-} from '@app/shared/dtos/course/course.dto';
+import { CreateCourseRequestDto } from '@app/shared/dtos/course/course.dto';
 import { BaseTypeOrmService } from '@app/shared/helpers/typeorm.helper';
 import { FindOptions } from '@app/shared/interfaces/find-options.interface';
 import {

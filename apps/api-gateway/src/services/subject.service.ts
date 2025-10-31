@@ -1,10 +1,12 @@
-import { Subject } from '@app/database/entities/subject.entity';
+import {
+  PaginatedSubject,
+  Subject,
+} from '@app/database/entities/subject.entity';
 import { User } from '@app/database/entities/user.entity';
 import { CustomApiRequest } from '@app/shared/customs/custom-api-request';
 import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
 import {
   CreateSubjectDto,
-  PaginatedSubject,
   UpdateSubjectDto,
 } from '@app/shared/dtos/subjects/subject.dto';
 import { SubjectStatus } from '@app/shared/enums/subject.enum';
