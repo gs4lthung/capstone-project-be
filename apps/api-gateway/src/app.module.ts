@@ -60,6 +60,11 @@ import { Bank } from '@app/database/entities/bank.entity';
 import { WalletController } from './controllers/wallet.controller';
 import { WalletService } from './services/wallet.service';
 import { Configuration } from '@app/database/entities/configuration.entity';
+import { SessionResolver } from './resolvers/session.resolver';
+import { WalletResolver } from './resolvers/wallet.resolver';
+import { PaymentResolver } from './resolvers/payment.resolver';
+import { EnrollmentService } from './services/enrollment.service';
+import { EnrollmentResolver } from './resolvers/enrollment.resolver';
 
 @Module({
   imports: [
@@ -184,12 +189,17 @@ import { Configuration } from '@app/database/entities/configuration.entity';
     RequestService,
     MailService,
     SessionService,
+    SessionResolver,
     CronService,
     SubjectService,
     LessonService,
     SubjectResolver,
     WalletService,
+    WalletResolver,
     PaymentService,
+    PaymentResolver,
+    EnrollmentService,
+    EnrollmentResolver,
   ],
 })
 export class AppModule {}

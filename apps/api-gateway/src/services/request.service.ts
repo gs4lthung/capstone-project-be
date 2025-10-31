@@ -37,4 +37,16 @@ export class RequestService extends BaseTypeOrmService<Request> {
   async findAll(findOptions: FindOptions): Promise<PaginatedRequest> {
     return super.find(findOptions, 'request', PaginatedRequest);
   }
+
+  async findOne(id: number): Promise<Request> {
+    const request = await this.requestRepository.findOne({
+      where: { id: id },
+      withDeleted: false,
+      relations: ['actions', 'createdBy'],
+    });
+
+    if (!request) throw new Error('Request not found');
+
+    return request;
+  }
 }

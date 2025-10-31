@@ -1,6 +1,6 @@
 import { Course } from '@app/database/entities/course.entity';
 import { Enrollment } from '@app/database/entities/enrollment.entity';
-import { Payment } from '@app/database/entities/payment.entity';
+import { Payment, PaginatedPayment } from '@app/database/entities/payment.entity';
 import { User } from '@app/database/entities/user.entity';
 import { PayosService } from '@app/payos';
 import { CustomApiRequest } from '@app/shared/customs/custom-api-request';
@@ -23,9 +23,11 @@ import {
 import { REQUEST } from '@nestjs/core';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { BaseTypeOrmService } from '@app/shared/helpers/typeorm.helper';
+import { FindOptions } from '@app/shared/interfaces/find-options.interface';
 
 @Injectable({ scope: Scope.REQUEST })
-export class PaymentService {
+export class PaymentService extends BaseTypeOrmService<Payment> {
   constructor(
     @Inject(REQUEST) private readonly request: CustomApiRequest,
     @InjectRepository(Payment)
@@ -35,7 +37,25 @@ export class PaymentService {
     @InjectRepository(Enrollment)
     private readonly enrollmentRepository: Repository<Enrollment>,
     private readonly payosService: PayosService,
-  ) {}
+  ) {
+    super(paymentRepository);
+  }
+
+  async findAll(findOptions: FindOptions): Promise<PaginatedPayment> {
+    return super.find(findOptions, 'payment', PaginatedPayment);
+  }
+
+  async findOne(id: number): Promise<Payment> {
+    const payment = await this.paymentRepository.findOne({
+      where: { id: id },
+      withDeleted: false,
+      relations: ['enrollment', 'enrollment.course', 'enrollment.user'],
+    });
+
+    if (!payment) throw new Error('Payment not found');
+
+    return payment;
+  }
 
   async createCoursePaymentLink(
     id: number,

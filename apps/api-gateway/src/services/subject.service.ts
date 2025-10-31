@@ -37,6 +37,18 @@ export class SubjectService extends BaseTypeOrmService<Subject> {
     return super.find(findOptions, 'subject', PaginatedSubject);
   }
 
+  async findOne(id: number): Promise<Subject> {
+    const subject = await this.subjectRepository.findOne({
+      where: { id: id },
+      withDeleted: false,
+      relations: ['courses', 'lessons'],
+    });
+
+    if (!subject) throw new Error('Subject not found');
+
+    return subject;
+  }
+
   async create(data: CreateSubjectDto): Promise<CustomApiResponse<void>> {
     const newSubject = this.subjectRepository.create({
       ...data,

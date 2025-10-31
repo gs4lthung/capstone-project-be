@@ -64,6 +64,18 @@ export class CourseService extends BaseTypeOrmService<Course> {
     return super.find(findOptions, 'course', PaginatedCourse);
   }
 
+  async findOne(id: number): Promise<Course> {
+    const course = await this.courseRepository.findOne({
+      where: { id: id },
+      withDeleted: false,
+      relations: ['subject', 'sessions', 'enrollments'],
+    });
+
+    if (!course) throw new Error('Course not found');
+
+    return course;
+  }
+
   async createCourseCreationRequest(
     subjectId: number,
     data: CreateCourseRequestDto,

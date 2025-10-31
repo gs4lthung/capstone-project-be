@@ -1,6 +1,6 @@
 import { Bank } from '@app/database/entities/bank.entity';
 import { User } from '@app/database/entities/user.entity';
-import { Wallet } from '@app/database/entities/wallet.entity';
+import { Wallet, PaginatedWallet } from '@app/database/entities/wallet.entity';
 import { CustomApiRequest } from '@app/shared/customs/custom-api-request';
 import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
 import { CreateWalletDto } from '@app/shared/dtos/wallets/wallet.dto';
@@ -8,16 +8,36 @@ import { HttpStatus, Inject, Injectable, Scope } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { BaseTypeOrmService } from '@app/shared/helpers/typeorm.helper';
+import { FindOptions } from '@app/shared/interfaces/find-options.interface';
 
 @Injectable({ scope: Scope.REQUEST })
-export class WalletService {
+export class WalletService extends BaseTypeOrmService<Wallet> {
   constructor(
     @Inject(REQUEST) private readonly request: CustomApiRequest,
     @InjectRepository(Wallet)
     private readonly walletRepository: Repository<Wallet>,
     @InjectRepository(Bank)
     private readonly bankRepository: Repository<Bank>,
-  ) {}
+  ) {
+    super(walletRepository);
+  }
+
+  async findAll(findOptions: FindOptions): Promise<PaginatedWallet> {
+    return super.find(findOptions, 'wallet', PaginatedWallet);
+  }
+
+  async findOne(id: number): Promise<Wallet> {
+    const wallet = await this.walletRepository.findOne({
+      where: { id: id },
+      withDeleted: false,
+      relations: ['user', 'bank', 'transactions'],
+    });
+
+    if (!wallet) throw new Error('Wallet not found');
+
+    return wallet;
+  }
 
   async createWallet(data: CreateWalletDto): Promise<CustomApiResponse<void>> {
     const bank = await this.bankRepository.findOne({
