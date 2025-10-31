@@ -2,7 +2,7 @@ import { ChildEntity, Column } from 'typeorm';
 import { Achievement } from './achievement.entity';
 import { IsInt, IsString, MaxLength, Min, MinLength } from 'class-validator';
 
-@ChildEntity()
+@ChildEntity('EVENT_COUNT')
 export class EventCountAchievement extends Achievement {
   @Column({ name: 'event_name', type: 'varchar', length: 100 })
   @IsString()

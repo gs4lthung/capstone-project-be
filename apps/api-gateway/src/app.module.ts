@@ -61,6 +61,21 @@ import { WalletController } from './controllers/wallet.controller';
 import { WalletService } from './services/wallet.service';
 import { Configuration } from '@app/database/entities/configuration.entity';
 
+// ============================================
+// ACHIEVEMENT IMPORTS
+// ============================================
+// Achievement Entities (6 entities)
+import { Achievement } from '@app/database/entities/achievement.entity';
+import { EventCountAchievement } from '@app/database/entities/event-count-achievement.entity';
+import { StreakAchievement } from '@app/database/entities/streak-achievement.entity';
+import { PropertyCheckAchievement } from '@app/database/entities/property-check-achievement.entity';
+import { AchievementProgress } from '@app/database/entities/achievement-progress.entity';
+import { LearnerAchievement } from '@app/database/entities/learner-achievement.entity';
+
+// Achievement Controller & Service
+import { AchievementController } from './controllers/achievement.controller';
+import { AchievementService } from './services/achievement.service';
+
 @Module({
   imports: [
     ConfigModule,
@@ -125,6 +140,13 @@ import { Configuration } from '@app/database/entities/configuration.entity';
       Wallet,
       Configuration,
       Bank,
+      // Achievement entities (6 entities)
+      Achievement,
+      EventCountAchievement,
+      StreakAchievement,
+      PropertyCheckAchievement,
+      AchievementProgress,
+      LearnerAchievement,
     ]),
     ErrorModule,
     GraphQLModule.forRootAsync<ApolloDriverConfig>({
@@ -168,6 +190,7 @@ import { Configuration } from '@app/database/entities/configuration.entity';
     SubjectController,
     PaymentController,
     WalletController,
+    AchievementController, // Achievement Management
   ],
   providers: [
     AppService,
@@ -190,6 +213,7 @@ import { Configuration } from '@app/database/entities/configuration.entity';
     SubjectResolver,
     WalletService,
     PaymentService,
+    AchievementService, // Achievement Service
   ],
 })
 export class AppModule {}
