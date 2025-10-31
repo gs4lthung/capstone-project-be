@@ -73,6 +73,10 @@ export class Session {
   @Column({ name: 'end_time', type: 'time' })
   endTime: string;
 
+  @Field(()=> Number)
+  @Column({ name: 'duration_in_minutes', type: 'int', nullable: true })
+  durationInMinutes?: number;
+
   @Field(() => String, { nullable: true })
   @Column({
     name: 'video_conference_channel_name',
