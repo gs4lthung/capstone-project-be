@@ -50,11 +50,15 @@ import { SubjectController } from './controllers/subject.controller';
 import { Subject } from '@app/database/entities/subject.entity';
 import { Lesson } from '@app/database/entities/lesson.entity';
 import { LessonService } from './services/lesson.service';
-import { LessonController } from './controllers/lesson.controllet';
+import { LessonController } from './controllers/lesson.controller';
 import { FfmpegModule } from '@app/ffmpeg';
 import { SubjectResolver } from './resolvers/subject.resolver';
 import { PaymentService } from './services/payment.service';
 import { PaymentController } from './controllers/payment.controller';
+import { Coach } from '@app/database/entities/coach.entity';
+import { Credential } from '@app/database/entities/credential.entity';
+import { CoachController } from './controllers/coach.controller';
+import { CoachService } from './services/coach.service';
 import { Wallet } from '@app/database/entities/wallet.entity';
 import { Bank } from '@app/database/entities/bank.entity';
 import { WalletController } from './controllers/wallet.controller';
@@ -132,6 +136,8 @@ import { SessionEarning } from '@app/database/entities/session-earning.entity';
       Subject,
       Payment,
       Lesson,
+      Coach,
+      Credential,
       Wallet,
       Configuration,
       Bank,
@@ -179,6 +185,7 @@ import { SessionEarning } from '@app/database/entities/session-earning.entity';
     LessonController,
     SubjectController,
     PaymentController,
+    CoachController,
     WalletController,
     ConfigurationController,
     SessionController,
@@ -190,6 +197,7 @@ import { SessionEarning } from '@app/database/entities/session-earning.entity';
     RequestResolver,
     CourseResolver,
     CourseService,
+    CoachService,
     AuthService,
     SocketGateway,
     ConfigService,

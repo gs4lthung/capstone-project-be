@@ -42,6 +42,10 @@ export class Coach {
   @Column({ name: 'year_of_experience', type: 'int' })
   yearOfExperience: number;
 
+  @Field(() => String, { nullable: true })
+  @Column({ name: 'reason', type: 'text', nullable: true })
+  verificationReason?: string;
+
   @Field(() => String)
   @Column({
     name: 'verification_status',
