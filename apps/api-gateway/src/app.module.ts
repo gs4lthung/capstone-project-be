@@ -59,6 +59,7 @@ import { Wallet } from '@app/database/entities/wallet.entity';
 import { Bank } from '@app/database/entities/bank.entity';
 import { WalletController } from './controllers/wallet.controller';
 import { WalletService } from './services/wallet.service';
+import { Configuration } from '@app/database/entities/configuration.entity';
 
 @Module({
   imports: [
@@ -122,6 +123,7 @@ import { WalletService } from './services/wallet.service';
       Payment,
       Lesson,
       Wallet,
+      Configuration,
       Bank,
     ]),
     ErrorModule,
