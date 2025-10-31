@@ -19,7 +19,6 @@ import { AuthGuard } from '../guards/auth.guard';
 import { RoleGuard } from '../guards/role.guard';
 import { CheckRoles } from '@app/shared/decorators/check-roles.decorator';
 import { UserRole } from '@app/shared/enums/user.enum';
-import { PaginatedSubject } from '@app/shared/dtos/subjects/subject.dto';
 import { FindOptions } from '@app/shared/interfaces/find-options.interface';
 import { PaginationParams } from '@app/shared/decorators/pagination-params.decorator';
 import { Pagination } from '@app/shared/interfaces/pagination.interface';
@@ -27,6 +26,7 @@ import { SortingParams } from '@app/shared/decorators/sorting-params.decorator';
 import { Sorting } from '@app/shared/interfaces/sorting.interface';
 import { FilteringParams } from '@app/shared/decorators/filtering-params.decorator';
 import { Filtering } from '@app/shared/interfaces/filtering.interface';
+import { PaginatedSubject } from '@app/database/entities/subject.entity';
 
 @Controller('subjects')
 export class SubjectController {
