@@ -3,7 +3,10 @@ import { User } from '@app/database/entities/user.entity';
 import { Wallet, PaginatedWallet } from '@app/database/entities/wallet.entity';
 import { CustomApiRequest } from '@app/shared/customs/custom-api-request';
 import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
-import { CreateWalletDto } from '@app/shared/dtos/wallets/wallet.dto';
+import {
+  CreateWalletDto,
+  UpdateWalletDto,
+} from '@app/shared/dtos/wallets/wallet.dto';
 import {
   HttpStatus,
   Inject,
@@ -45,7 +48,7 @@ export class WalletService extends BaseTypeOrmService<Wallet> {
     return wallet;
   }
 
-  async createWallet(data: CreateWalletDto): Promise<CustomApiResponse<void>> {
+  async create(data: CreateWalletDto): Promise<CustomApiResponse<void>> {
     const bank = await this.bankRepository.findOne({
       where: { id: data.bankId },
     });
@@ -57,6 +60,20 @@ export class WalletService extends BaseTypeOrmService<Wallet> {
     await this.walletRepository.save(newWallet);
 
     return new CustomApiResponse<void>(HttpStatus.CREATED, 'Tạo ví thành công');
+  }
+
+  async update(
+    id: number,
+    data: UpdateWalletDto,
+  ): Promise<CustomApiResponse<void>> {
+    const wallet = await this.walletRepository.findOne({
+      where: { id: id },
+      withDeleted: false,
+    });
+    if (!wallet) throw new InternalServerErrorException('Wallet not found');
+    await this.walletRepository.update(wallet.id, data);
+
+    return new CustomApiResponse<void>(HttpStatus.OK, 'Cập nhật ví thành công');
   }
 
   async handleWalletTopUp(userId: User['id'], amount: number): Promise<void> {

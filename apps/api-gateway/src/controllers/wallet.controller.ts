@@ -3,12 +3,17 @@ import {
   Controller,
   HttpCode,
   HttpStatus,
+  Param,
   Post,
+  Put,
   UseGuards,
 } from '@nestjs/common';
 import { WalletService } from '../services/wallet.service';
 import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
-import { CreateWalletDto } from '@app/shared/dtos/wallets/wallet.dto';
+import {
+  CreateWalletDto,
+  UpdateWalletDto,
+} from '@app/shared/dtos/wallets/wallet.dto';
 import { AuthGuard } from '../guards/auth.guard';
 
 @Controller('wallets')
@@ -24,7 +29,20 @@ export class WalletController {
     description: 'Create a new wallet for the authenticated user',
   })
   @UseGuards(AuthGuard)
-  async createWallet(@Body() data: CreateWalletDto) {
-    return this.walletService.createWallet(data);
+  async create(@Body() data: CreateWalletDto) {
+    return this.walletService.create(data);
+  }
+
+  @Put(':id')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiOperation({
+    tags: ['Wallets'],
+    summary: 'Update an existing wallet',
+    description: 'Update an existing wallet for the authenticated user',
+  })
+  @UseGuards(AuthGuard)
+  async update(@Param('id') id: number, @Body() data: UpdateWalletDto) {
+    return this.walletService.update(id, data);
   }
 }
