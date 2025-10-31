@@ -65,6 +65,11 @@ import { WalletResolver } from './resolvers/wallet.resolver';
 import { PaymentResolver } from './resolvers/payment.resolver';
 import { EnrollmentService } from './services/enrollment.service';
 import { EnrollmentResolver } from './resolvers/enrollment.resolver';
+import { Attendance } from '@app/database/entities/attendance.entity';
+import { ConfigurationController } from './controllers/configuration.controller';
+import { ConfigurationService } from './services/configuration.service';
+import { SessionController } from './controllers/session.controller';
+import { SessionEarning } from '@app/database/entities/session-earning.entity';
 
 @Module({
   imports: [
@@ -130,6 +135,8 @@ import { EnrollmentResolver } from './resolvers/enrollment.resolver';
       Wallet,
       Configuration,
       Bank,
+      Attendance,
+      SessionEarning,
     ]),
     ErrorModule,
     GraphQLModule.forRootAsync<ApolloDriverConfig>({
@@ -173,6 +180,8 @@ import { EnrollmentResolver } from './resolvers/enrollment.resolver';
     SubjectController,
     PaymentController,
     WalletController,
+    ConfigurationController,
+    SessionController,
   ],
   providers: [
     AppService,
@@ -200,6 +209,7 @@ import { EnrollmentResolver } from './resolvers/enrollment.resolver';
     PaymentResolver,
     EnrollmentService,
     EnrollmentResolver,
+    ConfigurationService,
   ],
 })
 export class AppModule {}

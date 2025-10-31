@@ -110,7 +110,13 @@ export class Course {
   maxParticipants: number;
 
   @Field(() => Number)
-  @Column({ name: 'price_per_participant', type: 'bigint', default: 0 })
+  @Column({
+    name: 'price_per_participant',
+    type: 'numeric',
+    precision: 15,
+    scale: 3,
+    default: 0,
+  })
   @IsInt()
   @Min(0)
   pricePerParticipant: number;
@@ -125,6 +131,17 @@ export class Course {
   @IsInt()
   @Min(0)
   totalSessions: number;
+
+  @Column({
+    name: 'total_earnings',
+    type: 'numeric',
+    precision: 15,
+    scale: 3,
+    default: 0,
+  })
+  @IsInt()
+  @Min(0)
+  totalEarnings: number;
 
   @Field(() => GqlCustomDateTime)
   @Column({ name: 'start_date', type: 'date' })
@@ -184,17 +201,20 @@ export class Course {
   @OneToMany(() => LearnerProgress, (learnerProgress) => learnerProgress.course)
   learnerProgresses: LearnerProgress[];
 
+  @Field(() => String)
   @Column({ name: 'address', type: 'text' })
   @IsNotEmpty()
   @IsString()
   address: string;
 
+  @Field(() => Province)
   @ManyToOne(() => Province, (province) => province.courses, {
     eager: true,
   })
   @JoinColumn({ name: 'province_id' })
   province: Province;
 
+  @Field(() => District)
   @ManyToOne(() => District, (district) => district.courses, {
     eager: true,
   })

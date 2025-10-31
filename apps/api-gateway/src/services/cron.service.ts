@@ -33,10 +33,13 @@ export class CronService {
     for (const course of courses) {
       if (new Date(course.startDate) === new Date()) {
         this.logger.log(`Start course ${course.id}`);
+        let courseTotalEarnings = 0;
         course.status = CourseStatus.ON_GOING;
         for (const enrollment of course.enrollments) {
           enrollment.status = EnrollmentStatus.LEARNING;
+          courseTotalEarnings += enrollment.paymentAmount;
         }
+        course.totalEarnings = courseTotalEarnings;
         await this.courseRepository.save(course);
       }
     }

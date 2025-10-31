@@ -21,10 +21,10 @@ export class Configuration {
   id: number;
 
   @Field(() => String)
-  @Column({ type: 'varchar', length: 25, unique: true })
+  @Column({ type: 'varchar', length: 100, unique: true })
   @IsNotEmpty()
   @IsString()
-  @MaxLength(25)
+  @MaxLength(100)
   key: string;
 
   @Field(() => String)

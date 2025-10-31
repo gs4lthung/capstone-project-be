@@ -115,7 +115,7 @@ export class FfmpegService {
         '-probesize',
         '100M',
         '-ss',
-        '00:00:05',
+        '00:00:01',
         '-i',
         filePath,
         '-vf',

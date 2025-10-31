@@ -21,7 +21,7 @@ export class WithdrawalRequest {
   id: number;
 
   @Field(() => Number)
-  @Column({ type: 'bigint' })
+  @Column({ type: 'numeric', precision: 15, scale: 3 })
   amount: number;
 
   @Field(() => String)
@@ -66,4 +66,6 @@ export class WithdrawalRequest {
 import { PaginatedResource } from '@app/shared/graphql/paginated-resource';
 
 @ObjectType()
-export class PaginatedWithdrawalRequest extends PaginatedResource(WithdrawalRequest) {}
+export class PaginatedWithdrawalRequest extends PaginatedResource(
+  WithdrawalRequest,
+) {}

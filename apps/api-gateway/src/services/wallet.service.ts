@@ -4,7 +4,13 @@ import { Wallet, PaginatedWallet } from '@app/database/entities/wallet.entity';
 import { CustomApiRequest } from '@app/shared/customs/custom-api-request';
 import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
 import { CreateWalletDto } from '@app/shared/dtos/wallets/wallet.dto';
-import { HttpStatus, Inject, Injectable, Scope } from '@nestjs/common';
+import {
+  HttpStatus,
+  Inject,
+  Injectable,
+  InternalServerErrorException,
+  Scope,
+} from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -51,5 +57,23 @@ export class WalletService extends BaseTypeOrmService<Wallet> {
     await this.walletRepository.save(newWallet);
 
     return new CustomApiResponse<void>(HttpStatus.CREATED, 'Tạo ví thành công');
+  }
+
+  async handleWalletTopUp(userId: User['id'], amount: number): Promise<void> {
+    const wallet = await this.walletRepository.findOne({
+      where: { user: { id: userId } },
+      withDeleted: false,
+    });
+    if (!wallet) throw new InternalServerErrorException('Wallet not found');
+
+    const currentBalance = Number(wallet.currentBalance ?? 0);
+    const totalIncome = Number(wallet.totalIncome ?? 0);
+    const newCurrent = currentBalance + amount;
+    const newTotal = totalIncome + amount;
+
+    await this.walletRepository.update(wallet.id, {
+      currentBalance: newCurrent,
+      totalIncome: newTotal,
+    });
   }
 }

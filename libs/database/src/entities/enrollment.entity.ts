@@ -25,7 +25,7 @@ export class Enrollment {
   id: number;
 
   @Field(() => Number, { nullable: true })
-  @Column({ type: 'bigint', nullable: true })
+  @Column({ type: 'numeric', precision: 15, scale: 3, nullable: true })
   paymentAmount?: number;
 
   @Field(() => String)

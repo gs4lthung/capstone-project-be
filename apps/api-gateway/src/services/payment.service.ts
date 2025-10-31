@@ -1,6 +1,9 @@
 import { Course } from '@app/database/entities/course.entity';
 import { Enrollment } from '@app/database/entities/enrollment.entity';
-import { Payment, PaginatedPayment } from '@app/database/entities/payment.entity';
+import {
+  Payment,
+  PaginatedPayment,
+} from '@app/database/entities/payment.entity';
 import { User } from '@app/database/entities/user.entity';
 import { PayosService } from '@app/payos';
 import { CustomApiRequest } from '@app/shared/customs/custom-api-request';
@@ -85,7 +88,10 @@ export class PaymentService extends BaseTypeOrmService<Payment> {
         },
         withDeleted: false,
       });
-      if (enrollment.status !== EnrollmentStatus.CANCELLED) {
+      if (
+        enrollment.status !== EnrollmentStatus.CANCELLED &&
+        enrollment.status !== EnrollmentStatus.UNPAID
+      ) {
         throw new BadRequestException('Bạn đã đăng ký khóa học này rồi');
       }
       enrollment.status = EnrollmentStatus.UNPAID;
@@ -139,6 +145,16 @@ export class PaymentService extends BaseTypeOrmService<Payment> {
       return;
     }
 
+    const hasSuccessfulPayment = await this.paymentRepository.findOne({
+      where: {
+        enrollment: { id: payment.enrollment.id },
+        status: PaymentStatus.PAID,
+      },
+    });
+    if (hasSuccessfulPayment) {
+      return;
+    }
+
     const course = await this.courseRepository.findOne({
       where: { id: payment.enrollment.course.id },
       relations: ['enrollments'],
@@ -146,12 +162,13 @@ export class PaymentService extends BaseTypeOrmService<Payment> {
 
     course.enrollments.map((enr) => {
       if (enr.id === payment.enrollment.id) {
-        enr.paymentAmount = payment.amount * 1000;
+        enr.paymentAmount = payment.amount * 1000; /////////
       }
       return enr;
     });
 
     course.currentParticipants += 1;
+    course.totalEarnings += Number(payment.amount) * 1000; ///////////
 
     switch (course.learningFormat) {
       case CourseLearningFormat.INDIVIDUAL:
