@@ -75,6 +75,21 @@ import { ConfigurationService } from './services/configuration.service';
 import { SessionController } from './controllers/session.controller';
 import { SessionEarning } from '@app/database/entities/session-earning.entity';
 
+// ============================================
+// ACHIEVEMENT IMPORTS
+// ============================================
+// Achievement Entities (6 entities)
+import { Achievement } from '@app/database/entities/achievement.entity';
+import { EventCountAchievement } from '@app/database/entities/event-count-achievement.entity';
+import { StreakAchievement } from '@app/database/entities/streak-achievement.entity';
+import { PropertyCheckAchievement } from '@app/database/entities/property-check-achievement.entity';
+import { AchievementProgress } from '@app/database/entities/achievement-progress.entity';
+import { LearnerAchievement } from '@app/database/entities/learner-achievement.entity';
+
+// Achievement Controller & Service
+import { AchievementController } from './controllers/achievement.controller';
+import { AchievementService } from './services/achievement.service';
+
 @Module({
   imports: [
     ConfigModule,
@@ -141,8 +156,13 @@ import { SessionEarning } from '@app/database/entities/session-earning.entity';
       Wallet,
       Configuration,
       Bank,
-      Attendance,
-      SessionEarning,
+      // Achievement entities (6 entities)
+      Achievement,
+      EventCountAchievement,
+      StreakAchievement,
+      PropertyCheckAchievement,
+      AchievementProgress,
+      LearnerAchievement,
     ]),
     ErrorModule,
     GraphQLModule.forRootAsync<ApolloDriverConfig>({
@@ -187,6 +207,7 @@ import { SessionEarning } from '@app/database/entities/session-earning.entity';
     PaymentController,
     CoachController,
     WalletController,
+    AchievementController, // Achievement Management
     ConfigurationController,
     SessionController,
   ],
@@ -214,6 +235,7 @@ import { SessionEarning } from '@app/database/entities/session-earning.entity';
     WalletService,
     WalletResolver,
     PaymentService,
+    AchievementService,
     PaymentResolver,
     EnrollmentService,
     EnrollmentResolver,
