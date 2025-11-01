@@ -83,7 +83,7 @@
     "rxjs": "^7.8.1",
     "socket.io": "^4.8.1",
     "streamifier": "^0.1.1",
-    "typeorm": "^0.3.25",
+    "typeorm": "^0.3.27",
     "uninstall": "^0.0.0"
   },
   "devDependencies": {
