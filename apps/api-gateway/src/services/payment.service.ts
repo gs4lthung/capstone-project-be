@@ -28,6 +28,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { BaseTypeOrmService } from '@app/shared/helpers/typeorm.helper';
 import { FindOptions } from '@app/shared/interfaces/find-options.interface';
+import { Wallet } from '@app/database/entities/wallet.entity';
+import { Bank } from '@app/database/entities/bank.entity';
 
 @Injectable({ scope: Scope.REQUEST })
 export class PaymentService extends BaseTypeOrmService<Payment> {
@@ -39,6 +41,12 @@ export class PaymentService extends BaseTypeOrmService<Payment> {
     private readonly courseRepository: Repository<Course>,
     @InjectRepository(Enrollment)
     private readonly enrollmentRepository: Repository<Enrollment>,
+    @InjectRepository(Wallet)
+    private readonly walletRepository: Repository<Wallet>,
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
+    @InjectRepository(Bank)
+    private readonly bankRepository: Repository<Bank>,
     private readonly payosService: PayosService,
   ) {
     super(paymentRepository);
@@ -111,6 +119,32 @@ export class PaymentService extends BaseTypeOrmService<Payment> {
       description: 'Thanh toán khóa học',
       expiredAt: new Date(Date.now() + 1000 * 60 * 60 * 24),
     });
+    const user = await this.userRepository.findOne({
+      where: { id: this.request.user.id as User['id'] },
+    });
+    if (!user) throw new BadRequestException('User not found');
+    if (payosResponse) {
+      const bank = await this.bankRepository.findOne({
+        where: { bin: payosResponse.bin },
+      });
+      if (bank) {
+        let wallet = await this.walletRepository.findOne({
+          where: { user: { id: user.id } },
+        });
+        if (!wallet) {
+          wallet = this.walletRepository.create({
+            user: user,
+            bank: bank,
+            bankAccountNumber: payosResponse.accountNumber,
+          });
+        } else {
+          if (wallet.bank) return;
+          wallet.bank = bank;
+          wallet.bankAccountNumber = payosResponse.accountNumber;
+        }
+      }
+    }
+
     const payment = this.paymentRepository.create({
       amount: payosResponse.amount,
       description: payosResponse.description,

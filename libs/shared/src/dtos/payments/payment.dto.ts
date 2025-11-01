@@ -21,3 +21,11 @@ export class CheckoutResponseDataType {
     | 'FAILED';
   orderCode: number;
 }
+
+export class CreatePayoutRequestDto {
+  referenceId: string;
+  description: string;
+  amount: number;
+  bankBinCode: string;
+  accountNumber: string;
+}

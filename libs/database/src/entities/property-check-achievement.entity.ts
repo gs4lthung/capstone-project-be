@@ -4,10 +4,8 @@ import { IsNotEmpty, IsString, MaxLength, MinLength } from 'class-validator';
 import { Field, ObjectType } from '@nestjs/graphql';
 import { PaginatedResource } from '@app/shared/graphql/paginated-resource';
 
-@ChildEntity('PROPERTY_CHECK')
 @ChildEntity()
 @ObjectType()
-
 export class PropertyCheckAchievement extends Achievement {
   @Field(() => String)
   @Column({ name: 'event_name', type: 'varchar', length: 25 })
@@ -45,4 +43,6 @@ export class PropertyCheckAchievement extends Achievement {
 }
 
 @ObjectType()
-export class PaginatedPropertyCheckAchievement extends PaginatedResource(PropertyCheckAchievement) {}
+export class PaginatedPropertyCheckAchievement extends PaginatedResource(
+  PropertyCheckAchievement,
+) {}

@@ -52,7 +52,7 @@
     "@nestjs/throttler": "^6.4.0",
     "@nestjs/typeorm": "^11.0.0",
     "@nestjs/websockets": "^11.1.5",
-    "@payos/node": "^1.0.10",
+    "@payos/node": "^2.0.3",
     "@types/compression": "^1.8.1",
     "@types/multer": "^2.0.0",
     "amqp-connection-manager": "^4.1.14",

@@ -4,7 +4,6 @@ import { IsInt, IsString, MaxLength, Min, MinLength } from 'class-validator';
 import { Field, ObjectType } from '@nestjs/graphql';
 import { PaginatedResource } from '@app/shared/graphql/paginated-resource';
 
-@ChildEntity('EVENT_COUNT')
 @ChildEntity()
 @ObjectType()
 export class EventCountAchievement extends Achievement {
@@ -23,4 +22,6 @@ export class EventCountAchievement extends Achievement {
 }
 
 @ObjectType()
-export class PaginatedEventCountAchievement extends PaginatedResource(EventCountAchievement) {}
+export class PaginatedEventCountAchievement extends PaginatedResource(
+  EventCountAchievement,
+) {}
