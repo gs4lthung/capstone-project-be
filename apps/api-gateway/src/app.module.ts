@@ -156,13 +156,14 @@ import { AchievementService } from './services/achievement.service';
       Wallet,
       Configuration,
       Bank,
-      // Achievement entities (6 entities)
       Achievement,
       EventCountAchievement,
       StreakAchievement,
       PropertyCheckAchievement,
       AchievementProgress,
       LearnerAchievement,
+      SessionEarning,
+      Attendance,
     ]),
     ErrorModule,
     GraphQLModule.forRootAsync<ApolloDriverConfig>({
