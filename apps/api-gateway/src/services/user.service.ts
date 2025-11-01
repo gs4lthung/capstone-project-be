@@ -1,4 +1,4 @@
-import { User } from '@app/database/entities/user.entity';
+import { PaginatedUser, User } from '@app/database/entities/user.entity';
 import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
 import { HttpStatus, Inject, Injectable, Scope } from '@nestjs/common';
 
@@ -6,7 +6,6 @@ import { FindOptions } from '@app/shared/interfaces/find-options.interface';
 import { REQUEST } from '@nestjs/core';
 import { CustomApiRequest } from '@app/shared/customs/custom-api-request';
 import { CreateUserDto } from '@app/shared/dtos/users/create-user.dto';
-import { PaginatedUser } from '@app/shared/dtos/users/user.dto';
 import { ConfigService } from '@app/config';
 import { AwsService } from '@app/aws';
 import { InjectRepository } from '@nestjs/typeorm';

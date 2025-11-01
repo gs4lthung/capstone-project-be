@@ -129,11 +129,11 @@ export class FileUtils {
     });
   }
 
-  static deleteFile(filePath: string) {
+  static async deleteFile(filePath: string) {
     if (!fs.existsSync(filePath)) {
       throw new Error(`File not found: ${filePath}`);
     }
-    fs.unlinkSync(filePath);
+    await fs.promises.unlink(filePath);
   }
 
   static deleteFilesInFolder(folderPath: string) {

@@ -19,6 +19,12 @@ export class ConfigurationService {
     private readonly configurationRepository: Repository<Configuration>,
   ) {}
 
+  async findByKey(key: string): Promise<Configuration | null> {
+    return this.configurationRepository.findOne({
+      where: { key },
+    });
+  }
+
   async createConfiguration(
     data: CreateConfigurationDto,
   ): Promise<CustomApiResponse<void>> {

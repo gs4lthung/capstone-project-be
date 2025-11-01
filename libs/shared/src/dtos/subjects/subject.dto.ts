@@ -1,8 +1,5 @@
-import { Subject } from '@app/database/entities/subject.entity';
 import { PickleballLevel } from '@app/shared/enums/pickleball.enum';
 import { SubjectStatus } from '@app/shared/enums/subject.enum';
-import { PaginatedResource } from '@app/shared/graphql/paginated-resource';
-import { ObjectType } from '@nestjs/graphql';
 import { PartialType } from '@nestjs/mapped-types';
 import { ApiProperty } from '@nestjs/swagger';
 import {
@@ -49,6 +46,3 @@ export class CreateSubjectDto {
 }
 
 export class UpdateSubjectDto extends PartialType(CreateSubjectDto) {}
-
-@ObjectType()
-export class PaginatedSubject extends PaginatedResource(Subject) {}

@@ -13,9 +13,6 @@ import {
 import { Type } from 'class-transformer';
 import { PartialType } from '@nestjs/mapped-types';
 import { ApiProperty } from '@nestjs/swagger';
-import { ObjectType } from '@nestjs/graphql';
-import { PaginatedResource } from '@app/shared/graphql/paginated-resource';
-import { Course } from '@app/database/entities/course.entity';
 
 class CreateScheduleDto {
   @ApiProperty({
@@ -136,6 +133,3 @@ export class CreateCourseRequestDto {
 }
 
 export class UpdateCourseDto extends PartialType(CreateCourseRequestDto) {}
-
-@ObjectType()
-export class PaginatedCourse extends PaginatedResource(Course) {}

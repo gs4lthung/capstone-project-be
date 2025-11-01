@@ -1,9 +1,6 @@
-import { Course } from '@app/database/entities/course.entity';
+import { Course, PaginatedCourse } from '@app/database/entities/course.entity';
 import { CustomApiRequest } from '@app/shared/customs/custom-api-request';
-import {
-  CreateCourseRequestDto,
-  PaginatedCourse,
-} from '@app/shared/dtos/course/course.dto';
+import { CreateCourseRequestDto } from '@app/shared/dtos/course/course.dto';
 import { BaseTypeOrmService } from '@app/shared/helpers/typeorm.helper';
 import { FindOptions } from '@app/shared/interfaces/find-options.interface';
 import {
@@ -38,6 +35,7 @@ import { Schedule } from '@app/database/entities/schedule.entity';
 import { Subject } from '@app/database/entities/subject.entity';
 import { SubjectStatus } from '@app/shared/enums/subject.enum';
 import { Wallet } from '@app/database/entities/wallet.entity';
+import { WalletService } from './wallet.service';
 
 @Injectable({ scope: Scope.REQUEST })
 export class CourseService extends BaseTypeOrmService<Course> {
@@ -59,12 +57,25 @@ export class CourseService extends BaseTypeOrmService<Course> {
     private readonly walletRepository: Repository<Wallet>,
     @Inject(forwardRef(() => SessionService))
     private readonly sessionService: SessionService,
+    private readonly walletService: WalletService,
   ) {
     super(courseRepository);
   }
 
   async findAll(findOptions: FindOptions): Promise<PaginatedCourse> {
     return super.find(findOptions, 'course', PaginatedCourse);
+  }
+
+  async findOne(id: number): Promise<Course> {
+    const course = await this.courseRepository.findOne({
+      where: { id: id },
+      withDeleted: false,
+      relations: ['subject', 'sessions', 'enrollments'],
+    });
+
+    if (!course) throw new Error('Course not found');
+
+    return course;
   }
 
   async createCourseCreationRequest(
@@ -198,18 +209,14 @@ export class CourseService extends BaseTypeOrmService<Course> {
       throw new BadRequestException('Trạng thái đăng ký không hợp lệ');
     }
 
-    const wallet = await this.walletRepository.findOne({
-      where: { user: { id: this.request.user.id as User['id'] } },
-      withDeleted: false,
-    });
-    if (!wallet) throw new BadRequestException('Không tìm thấy ví người dùng');
-
     if (
       enrollment.status === EnrollmentStatus.PENDING_GROUP ||
       enrollment.status === EnrollmentStatus.CONFIRMED
     ) {
-      wallet.currentBalance += enrollment.paymentAmount;
-      await this.walletRepository.save(wallet);
+      await this.walletService.handleWalletTopUp(
+        this.request.user.id as User['id'],
+        enrollment.paymentAmount,
+      );
     }
     enrollment.status = EnrollmentStatus.CANCELLED;
     await this.enrollmentRepository.save(enrollment);

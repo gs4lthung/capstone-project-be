@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Get,
   HttpCode,
   HttpStatus,
   Param,
@@ -18,10 +19,45 @@ import { AuthGuard } from '../guards/auth.guard';
 import { RoleGuard } from '../guards/role.guard';
 import { CheckRoles } from '@app/shared/decorators/check-roles.decorator';
 import { UserRole } from '@app/shared/enums/user.enum';
+import { FindOptions } from '@app/shared/interfaces/find-options.interface';
+import { PaginationParams } from '@app/shared/decorators/pagination-params.decorator';
+import { Pagination } from '@app/shared/interfaces/pagination.interface';
+import { SortingParams } from '@app/shared/decorators/sorting-params.decorator';
+import { Sorting } from '@app/shared/interfaces/sorting.interface';
+import { FilteringParams } from '@app/shared/decorators/filtering-params.decorator';
+import { Filtering } from '@app/shared/interfaces/filtering.interface';
+import { PaginatedSubject } from '@app/database/entities/subject.entity';
 
 @Controller('subjects')
 export class SubjectController {
   constructor(private readonly subjectService: SubjectService) {}
+
+  @Get()
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiOperation({
+    tags: ['Subjects'],
+    summary: 'Get all subjects',
+    description: 'Get all subjects',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Subjects',
+  })
+  @CheckRoles(UserRole.COACH)
+  @UseGuards(AuthGuard, RoleGuard)
+  async findAllSubjects(
+    @PaginationParams()
+    pagination: Pagination,
+    @SortingParams() sort: Sorting,
+    @FilteringParams() filter: Filtering,
+  ): Promise<PaginatedSubject> {
+    return this.subjectService.findAll({
+      pagination,
+      sort,
+      filter,
+    } as FindOptions);
+  }
 
   @Post()
   @HttpCode(HttpStatus.CREATED)

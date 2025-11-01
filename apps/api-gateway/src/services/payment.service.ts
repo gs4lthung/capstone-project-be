@@ -1,6 +1,9 @@
 import { Course } from '@app/database/entities/course.entity';
 import { Enrollment } from '@app/database/entities/enrollment.entity';
-import { Payment } from '@app/database/entities/payment.entity';
+import {
+  Payment,
+  PaginatedPayment,
+} from '@app/database/entities/payment.entity';
 import { User } from '@app/database/entities/user.entity';
 import { PayosService } from '@app/payos';
 import { CustomApiRequest } from '@app/shared/customs/custom-api-request';
@@ -23,9 +26,11 @@ import {
 import { REQUEST } from '@nestjs/core';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { BaseTypeOrmService } from '@app/shared/helpers/typeorm.helper';
+import { FindOptions } from '@app/shared/interfaces/find-options.interface';
 
 @Injectable({ scope: Scope.REQUEST })
-export class PaymentService {
+export class PaymentService extends BaseTypeOrmService<Payment> {
   constructor(
     @Inject(REQUEST) private readonly request: CustomApiRequest,
     @InjectRepository(Payment)
@@ -35,7 +40,25 @@ export class PaymentService {
     @InjectRepository(Enrollment)
     private readonly enrollmentRepository: Repository<Enrollment>,
     private readonly payosService: PayosService,
-  ) {}
+  ) {
+    super(paymentRepository);
+  }
+
+  async findAll(findOptions: FindOptions): Promise<PaginatedPayment> {
+    return super.find(findOptions, 'payment', PaginatedPayment);
+  }
+
+  async findOne(id: number): Promise<Payment> {
+    const payment = await this.paymentRepository.findOne({
+      where: { id: id },
+      withDeleted: false,
+      relations: ['enrollment', 'enrollment.course', 'enrollment.user'],
+    });
+
+    if (!payment) throw new Error('Payment not found');
+
+    return payment;
+  }
 
   async createCoursePaymentLink(
     id: number,
@@ -65,7 +88,10 @@ export class PaymentService {
         },
         withDeleted: false,
       });
-      if (enrollment.status !== EnrollmentStatus.CANCELLED) {
+      if (
+        enrollment.status !== EnrollmentStatus.CANCELLED &&
+        enrollment.status !== EnrollmentStatus.UNPAID
+      ) {
         throw new BadRequestException('Bạn đã đăng ký khóa học này rồi');
       }
       enrollment.status = EnrollmentStatus.UNPAID;
@@ -119,6 +145,16 @@ export class PaymentService {
       return;
     }
 
+    const hasSuccessfulPayment = await this.paymentRepository.findOne({
+      where: {
+        enrollment: { id: payment.enrollment.id },
+        status: PaymentStatus.PAID,
+      },
+    });
+    if (hasSuccessfulPayment) {
+      return;
+    }
+
     const course = await this.courseRepository.findOne({
       where: { id: payment.enrollment.course.id },
       relations: ['enrollments'],
@@ -126,12 +162,13 @@ export class PaymentService {
 
     course.enrollments.map((enr) => {
       if (enr.id === payment.enrollment.id) {
-        enr.paymentAmount = payment.amount * 1000;
+        enr.paymentAmount = payment.amount * 1000; /////////
       }
       return enr;
     });
 
     course.currentParticipants += 1;
+    course.totalEarnings += Number(payment.amount) * 1000; ///////////
 
     switch (course.learningFormat) {
       case CourseLearningFormat.INDIVIDUAL:

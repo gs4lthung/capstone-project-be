@@ -1,10 +1,16 @@
 import { PartialType } from '@nestjs/mapped-types';
-import { IsEnum, IsNotEmpty, IsString, MaxLength } from 'class-validator';
+import {
+  IsEnum,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  MaxLength,
+} from 'class-validator';
 
 export class CreateConfigurationDto {
   @IsNotEmpty()
   @IsString()
-  @MaxLength(25)
+  @MaxLength(100)
   key: string;
 
   @IsNotEmpty()
@@ -12,6 +18,7 @@ export class CreateConfigurationDto {
   @MaxLength(255)
   value: string;
 
+  @IsOptional()
   @IsString()
   description?: string;
 

@@ -50,16 +50,30 @@ import { SubjectController } from './controllers/subject.controller';
 import { Subject } from '@app/database/entities/subject.entity';
 import { Lesson } from '@app/database/entities/lesson.entity';
 import { LessonService } from './services/lesson.service';
-import { LessonController } from './controllers/lesson.controllet';
+import { LessonController } from './controllers/lesson.controller';
 import { FfmpegModule } from '@app/ffmpeg';
 import { SubjectResolver } from './resolvers/subject.resolver';
 import { PaymentService } from './services/payment.service';
 import { PaymentController } from './controllers/payment.controller';
+import { Coach } from '@app/database/entities/coach.entity';
+import { Credential } from '@app/database/entities/credential.entity';
+import { CoachController } from './controllers/coach.controller';
+import { CoachService } from './services/coach.service';
 import { Wallet } from '@app/database/entities/wallet.entity';
 import { Bank } from '@app/database/entities/bank.entity';
 import { WalletController } from './controllers/wallet.controller';
 import { WalletService } from './services/wallet.service';
 import { Configuration } from '@app/database/entities/configuration.entity';
+import { SessionResolver } from './resolvers/session.resolver';
+import { WalletResolver } from './resolvers/wallet.resolver';
+import { PaymentResolver } from './resolvers/payment.resolver';
+import { EnrollmentService } from './services/enrollment.service';
+import { EnrollmentResolver } from './resolvers/enrollment.resolver';
+import { Attendance } from '@app/database/entities/attendance.entity';
+import { ConfigurationController } from './controllers/configuration.controller';
+import { ConfigurationService } from './services/configuration.service';
+import { SessionController } from './controllers/session.controller';
+import { SessionEarning } from '@app/database/entities/session-earning.entity';
 
 // ============================================
 // ACHIEVEMENT IMPORTS
@@ -137,6 +151,8 @@ import { AchievementService } from './services/achievement.service';
       Subject,
       Payment,
       Lesson,
+      Coach,
+      Credential,
       Wallet,
       Configuration,
       Bank,
@@ -189,8 +205,11 @@ import { AchievementService } from './services/achievement.service';
     LessonController,
     SubjectController,
     PaymentController,
+    CoachController,
     WalletController,
     AchievementController, // Achievement Management
+    ConfigurationController,
+    SessionController,
   ],
   providers: [
     AppService,
@@ -199,6 +218,7 @@ import { AchievementService } from './services/achievement.service';
     RequestResolver,
     CourseResolver,
     CourseService,
+    CoachService,
     AuthService,
     SocketGateway,
     ConfigService,
@@ -207,13 +227,19 @@ import { AchievementService } from './services/achievement.service';
     RequestService,
     MailService,
     SessionService,
+    SessionResolver,
     CronService,
     SubjectService,
     LessonService,
     SubjectResolver,
     WalletService,
+    WalletResolver,
     PaymentService,
-    AchievementService, // Achievement Service
+    AchievementService,
+    PaymentResolver,
+    EnrollmentService,
+    EnrollmentResolver,
+    ConfigurationService,
   ],
 })
 export class AppModule {}

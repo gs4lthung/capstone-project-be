@@ -32,11 +32,11 @@ import { LearnerProgress } from './learner-progress.entity';
 import { Field, ObjectType } from '@nestjs/graphql';
 import { GqlCustomDateTime } from '@app/shared/graphql/scalars/gql-custom-datetime.scalar';
 import { User } from './user.entity';
-import { UserDto } from '@app/shared/dtos/users/user.dto';
 import { District } from './district.entity';
 import { Province } from './province.entity';
 import { Subject } from './subject.entity';
 import { PickleballLevel } from '@app/shared/enums/pickleball.enum';
+import { PaginatedResource } from '@app/shared/graphql/paginated-resource';
 
 @ObjectType()
 @Entity('courses')
@@ -110,7 +110,13 @@ export class Course {
   maxParticipants: number;
 
   @Field(() => Number)
-  @Column({ name: 'price_per_participant', type: 'bigint', default: 0 })
+  @Column({
+    name: 'price_per_participant',
+    type: 'numeric',
+    precision: 15,
+    scale: 3,
+    default: 0,
+  })
   @IsInt()
   @Min(0)
   pricePerParticipant: number;
@@ -125,6 +131,17 @@ export class Course {
   @IsInt()
   @Min(0)
   totalSessions: number;
+
+  @Column({
+    name: 'total_earnings',
+    type: 'numeric',
+    precision: 15,
+    scale: 3,
+    default: 0,
+  })
+  @IsInt()
+  @Min(0)
+  totalEarnings: number;
 
   @Field(() => GqlCustomDateTime)
   @Column({ name: 'start_date', type: 'date' })
@@ -148,7 +165,7 @@ export class Course {
   @DeleteDateColumn({ name: 'deleted_at' })
   deletedAt?: Date;
 
-  @Field(() => UserDto, { nullable: true })
+  @Field(() => User, { nullable: true })
   @ManyToOne(() => User, (user) => user.courses, {
     onDelete: 'SET NULL',
     eager: true,
@@ -184,20 +201,26 @@ export class Course {
   @OneToMany(() => LearnerProgress, (learnerProgress) => learnerProgress.course)
   learnerProgresses: LearnerProgress[];
 
+  @Field(() => String)
   @Column({ name: 'address', type: 'text' })
   @IsNotEmpty()
   @IsString()
   address: string;
 
+  @Field(() => Province)
   @ManyToOne(() => Province, (province) => province.courses, {
     eager: true,
   })
   @JoinColumn({ name: 'province_id' })
   province: Province;
 
+  @Field(() => District)
   @ManyToOne(() => District, (district) => district.courses, {
     eager: true,
   })
   @JoinColumn({ name: 'district_id' })
   district: District;
 }
+
+@ObjectType()
+export class PaginatedCourse extends PaginatedResource(Course) {}

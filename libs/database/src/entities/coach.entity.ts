@@ -16,7 +16,7 @@ import { Credential } from './credential.entity';
 import { Field, ObjectType } from '@nestjs/graphql';
 import { IsString } from 'class-validator';
 import { GqlCustomDateTime } from '@app/shared/graphql/scalars/gql-custom-datetime.scalar';
-import { UserDto } from '@app/shared/dtos/users/user.dto';
+import { PaginatedResource } from '@app/shared/graphql/paginated-resource';
 
 @ObjectType()
 @Entity('coaches')
@@ -42,6 +42,10 @@ export class Coach {
   @Column({ name: 'year_of_experience', type: 'int' })
   yearOfExperience: number;
 
+  @Field(() => String, { nullable: true })
+  @Column({ name: 'reason', type: 'text', nullable: true })
+  verificationReason?: string;
+
   @Field(() => String)
   @Column({
     name: 'verification_status',
@@ -63,7 +67,7 @@ export class Coach {
   @DeleteDateColumn({ name: 'deleted_at' })
   deletedAt?: Date;
 
-  @Field(() => UserDto, { nullable: true })
+  @Field(() => User, { nullable: true })
   @ManyToOne(() => User, (user) => user.coach, {
     eager: true,
     onDelete: 'CASCADE',
@@ -78,3 +82,6 @@ export class Coach {
   })
   credentials: Credential[];
 }
+
+@ObjectType()
+export class PaginatedCoach extends PaginatedResource(Coach) {}
