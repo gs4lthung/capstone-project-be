@@ -14,6 +14,8 @@ import { Achievement } from '@app/database/entities/achievement.entity';
 import { EventCountAchievement } from '@app/database/entities/event-count-achievement.entity';
 import { StreakAchievement } from '@app/database/entities/streak-achievement.entity';
 import { PropertyCheckAchievement } from '@app/database/entities/property-check-achievement.entity';
+import { AchievementProgress } from '@app/database/entities/achievement-progress.entity';
+import { LearnerAchievement } from '@app/database/entities/learner-achievement.entity';
 import { User } from '@app/database/entities/user.entity';
 
 // Import DTOs
@@ -69,6 +71,12 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
 
     @InjectRepository(PropertyCheckAchievement)
     private readonly propertyCheckRepository: Repository<PropertyCheckAchievement>,
+
+    @InjectRepository(AchievementProgress)
+    private readonly achievementProgressRepository: Repository<AchievementProgress>,
+
+    @InjectRepository(LearnerAchievement)
+    private readonly learnerAchievementRepository: Repository<LearnerAchievement>,
   ) {
     /**
      * super(achievementRepository)
@@ -490,6 +498,192 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
         HttpStatus.OK,
         'ACHIEVEMENT.DEACTIVATE_SUCCESS',
       );
+    } catch (error) {
+      throw ExceptionUtils.wrapAsRpcException(error);
+    }
+  }
+
+  // =====================================================================================================================
+  // USER ACHIEVEMENT PROGRESS METHODS (Phần 2)
+  // =====================================================================================================================
+
+  /**
+   * Lấy tất cả progress của current user
+   * Trả về danh sách achievements với tiến độ hiện tại
+   */
+  async getMyProgress(findOptions: FindOptions): Promise<any> {
+    try {
+      const userId = Number(this.request.user.id);
+      return this.getUserProgress(userId, findOptions);
+    } catch (error) {
+      throw ExceptionUtils.wrapAsRpcException(error);
+    }
+  }
+
+  /**
+   * Lấy progress của 1 achievement cụ thể của current user
+   */
+  async getMyProgressByAchievementId(achievementId: number): Promise<any> {
+    try {
+      const userId = Number(this.request.user.id);
+
+      // Kiểm tra achievement có tồn tại không
+      const achievement = await this.findOne(achievementId);
+
+      // Tìm progress record
+      const progress = await this.achievementProgressRepository.findOne({
+        where: { 
+          achievement: { id: achievementId },
+          user: { id: userId }
+        },
+        relations: ['achievement', 'achievement.createdBy'],
+      });
+
+      if (!progress) {
+        // Nếu chưa có progress, return 0
+        return {
+          achievement: achievement,
+          currentProgress: 0,
+          updatedAt: new Date(),
+          isEarned: false,
+        };
+      }
+
+      // Kiểm tra đã earned chưa
+      const earned = await this.learnerAchievementRepository.findOne({
+        where: {
+          achievement: { id: achievementId },
+          user: { id: userId }
+        }
+      });
+
+      return {
+        achievement: progress.achievement,
+        currentProgress: progress.currentProgress,
+        updatedAt: progress.updatedAt,
+        isEarned: !!earned,
+      };
+    } catch (error) {
+      throw ExceptionUtils.wrapAsRpcException(error);
+    }
+  }
+
+  /**
+   * Lấy progress của user khác (dành cho ADMIN/COACH)
+   * @param userId - ID của user cần xem
+   * @param findOptions - Pagination, filter, sort options
+   */
+  async getUserProgress(userId: number, findOptions: FindOptions): Promise<any> {
+    try {
+      const { page = 1, size = 10 } = findOptions.pagination || {};
+      const skip = (page - 1) * size;
+
+      // Lấy tất cả active achievements
+      const [achievements, totalAchievements] = await this.achievementRepository.findAndCount({
+        where: { isActive: true },
+        relations: ['createdBy'],
+        skip,
+        take: size,
+        order: { createdAt: 'DESC' },
+      });
+
+      // Lấy tất cả progress của user này
+      const progresses = await this.achievementProgressRepository.find({
+        where: { user: { id: userId } },
+        relations: ['achievement'],
+      });
+
+      // Lấy tất cả earned achievements của user
+      const earnedAchievements = await this.learnerAchievementRepository.find({
+        where: { user: { id: userId } },
+        relations: ['achievement'],
+      });
+
+      // Map progress và earned status
+      const progressMap = new Map();
+      progresses.forEach(p => {
+        progressMap.set(p.achievement.id, p);
+      });
+
+      const earnedMap = new Set();
+      earnedAchievements.forEach(e => {
+        earnedMap.add(e.achievement.id);
+      });
+
+      // Kết hợp data
+      const data = achievements.map(achievement => {
+        const progress = progressMap.get(achievement.id);
+        return {
+          achievement: achievement,
+          currentProgress: progress ? progress.currentProgress : 0,
+          updatedAt: progress ? progress.updatedAt : new Date(),
+          isEarned: earnedMap.has(achievement.id),
+        };
+      });
+
+      return {
+        data,
+        total: totalAchievements,
+        page,
+        pageSize: size,
+        totalPages: Math.ceil(totalAchievements / size),
+      };
+    } catch (error) {
+      throw ExceptionUtils.wrapAsRpcException(error);
+    }
+  }
+
+  // =====================================================================================================================
+  // EARNED ACHIEVEMENTS METHODS (Phần 3)
+  // =====================================================================================================================
+
+  /**
+   * Lấy tất cả achievements đã earned của current user
+   */
+  async getMyEarnedAchievements(findOptions: FindOptions): Promise<any> {
+    try {
+      const userId = Number(this.request.user.id);
+      return this.getUserEarnedAchievements(userId, findOptions);
+    } catch (error) {
+      throw ExceptionUtils.wrapAsRpcException(error);
+    }
+  }
+
+  /**
+   * Lấy tất cả achievements đã earned của user khác (dành cho ADMIN/COACH)
+   * @param userId - ID của user cần xem
+   * @param findOptions - Pagination, filter, sort options
+   */
+  async getUserEarnedAchievements(userId: number, findOptions: FindOptions): Promise<any> {
+    try {
+      const { page = 1, size = 10 } = findOptions.pagination || {};
+      const skip = (page - 1) * size;
+
+      // Query earned achievements với pagination
+      const [earnedRecords, total] = await this.learnerAchievementRepository.findAndCount({
+        where: { user: { id: userId } },
+        relations: ['achievement', 'achievement.createdBy', 'user'],
+        skip,
+        take: size,
+        order: { earnedAt: 'DESC' }, // Mới nhất trước
+      });
+
+      // Map sang DTO
+      const data = earnedRecords.map(record => ({
+        id: record.id,
+        achievement: record.achievement,
+        earnedAt: record.earnedAt,
+        userId: record.user.id,
+        userFullName: record.user.fullName,
+      }));
+
+      return {
+        data,
+        total,
+        page,
+        pageSize: size,
+        totalPages: Math.ceil(total / size),
+      };
     } catch (error) {
       throw ExceptionUtils.wrapAsRpcException(error);
     }

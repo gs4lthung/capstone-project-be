@@ -32,6 +32,46 @@ export enum AchievementType {
 
 /**
  * ========================
+ * ACHIEVEMENT DTO (Response Model)
+ * ========================
+ * DTO này dùng để trả về thông tin achievement từ API
+ * Chứa tất cả fields cần thiết để hiển thị achievement
+ */
+export class AchievementDto {
+  @ApiProperty({ description: 'Achievement ID', example: 1 })
+  id: number;
+
+  @ApiProperty({ description: 'Achievement name', example: 'First Steps' })
+  name: string;
+
+  @ApiPropertyOptional({
+    description: 'Achievement description',
+    example: 'Complete your first lesson',
+  })
+  description?: string;
+
+  @ApiPropertyOptional({
+    description: 'Icon URL',
+    example: 'https://example.com/icon.png',
+  })
+  iconUrl?: string;
+
+  @ApiProperty({ description: 'Is achievement active', example: true })
+  isActive: boolean;
+
+  @ApiProperty({ description: 'Creation date' })
+  createdAt: Date;
+
+  @ApiProperty({
+    description: 'Achievement type',
+    example: 'EVENT_COUNT',
+    enum: AchievementType,
+  })
+  type: string;
+}
+
+/**
+ * ========================
  * BASE CREATE DTO
  * ========================
  * DTO này chứa các fields CHUNG cho TẤT CẢ loại achievement
@@ -372,3 +412,122 @@ export class UpdatePropertyCheckAchievementDto {
 @ObjectType()
 export class PaginatedAchievement extends PaginatedResource(Achievement) {}
 
+// =====================================================================================================================
+// ACHIEVEMENT PROGRESS DTOs (Phần 2: User Progress)
+// =====================================================================================================================
+
+/**
+ * DTO cho Achievement Progress (tiến độ của user với 1 achievement)
+ */
+export class AchievementProgressDto {
+  @ApiProperty({ description: 'Progress ID', example: 1 })
+  id: number;
+
+  @ApiProperty({
+    description: 'Current progress percentage (0-100)',
+    example: 75,
+    minimum: 0,
+    maximum: 100,
+  })
+  currentProgress: number;
+
+  @ApiProperty({ description: 'Last updated timestamp' })
+  updatedAt: Date;
+
+  @ApiProperty({ description: 'Achievement ID', example: 1 })
+  achievementId: number;
+
+  @ApiProperty({ description: 'User ID', example: 1 })
+  userId: number;
+}
+
+/**
+ * DTO kết hợp Achievement + Progress của user
+ * Dùng để hiển thị danh sách progress của user
+ */
+export class UserAchievementProgressDto {
+  @ApiProperty({ description: 'Achievement information', type: AchievementDto })
+  achievement: AchievementDto;
+
+  @ApiProperty({
+    description: 'Current progress percentage (0-100)',
+    example: 75,
+    minimum: 0,
+    maximum: 100,
+  })
+  currentProgress: number;
+
+  @ApiProperty({ description: 'Last updated timestamp' })
+  updatedAt: Date;
+
+  @ApiProperty({
+    description: 'Whether the achievement has been earned (progress = 100)',
+    example: false,
+  })
+  isEarned: boolean;
+}
+
+/**
+ * Paginated response cho User Achievement Progress
+ */
+export class PaginatedUserAchievementProgress {
+  @ApiProperty({ type: [UserAchievementProgressDto] })
+  data: UserAchievementProgressDto[];
+
+  @ApiProperty({ description: 'Total number of records', example: 50 })
+  total: number;
+
+  @ApiProperty({ description: 'Current page number', example: 1 })
+  page: number;
+
+  @ApiProperty({ description: 'Number of items per page', example: 10 })
+  pageSize: number;
+
+  @ApiProperty({ description: 'Total number of pages', example: 5 })
+  totalPages: number;
+}
+
+// =====================================================================================================================
+// EARNED ACHIEVEMENT DTOs (Phần 3: Earned Achievements)
+// =====================================================================================================================
+
+/**
+ * DTO cho Achievement đã đạt được (earned)
+ * Bao gồm thông tin achievement và thời điểm đạt được
+ */
+export class EarnedAchievementDto {
+  @ApiProperty({ description: 'Learner Achievement ID', example: 1 })
+  id: number;
+
+  @ApiProperty({ description: 'Achievement information', type: AchievementDto })
+  achievement: AchievementDto;
+
+  @ApiProperty({ description: 'Date when achievement was earned' })
+  earnedAt: Date;
+
+  @ApiProperty({ description: 'User ID who earned this achievement', example: 5 })
+  userId: number;
+
+  @ApiPropertyOptional({ description: 'User full name', example: 'Nguyen Van A' })
+  userFullName?: string;
+}
+
+/**
+ * Paginated response cho Earned Achievements
+ */
+export class PaginatedEarnedAchievement {
+  @ApiProperty({ type: [EarnedAchievementDto] })
+  data: EarnedAchievementDto[];
+
+  @ApiProperty({ description: 'Total number of records', example: 15 })
+  total: number;
+
+  @ApiProperty({ description: 'Current page number', example: 1 })
+  page: number;
+
+  @ApiProperty({ description: 'Number of items per page', example: 10 })
+  pageSize: number;
+
+  @ApiProperty({ description: 'Total number of pages', example: 2 })
+  totalPages: number;
+}
