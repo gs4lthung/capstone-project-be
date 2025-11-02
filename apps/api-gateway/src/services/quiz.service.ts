@@ -1,5 +1,6 @@
 import { Lesson } from '@app/database/entities/lesson.entity';
 import { Quiz } from '@app/database/entities/quiz.entity';
+import { User } from '@app/database/entities/user.entity';
 import { CustomApiRequest } from '@app/shared/customs/custom-api-request';
 import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
 import { CreateQuizDto } from '@app/shared/dtos/quizzes/quiz.dto';
@@ -37,7 +38,11 @@ export class QuizService extends BaseTypeOrmService<Quiz> {
     });
     if (!lesson) throw new BadRequestException('Không tìm thấy bài học');
 
-    lesson.quizzes.push({ ...data } as Quiz);
+    lesson.quizzes.push({
+      ...data,
+      totalQuestions: data.questions.length,
+      createdBy: this.request.user as User,
+    } as Quiz);
     await this.lessonRepository.save(lesson);
 
     return new CustomApiResponse<void>(

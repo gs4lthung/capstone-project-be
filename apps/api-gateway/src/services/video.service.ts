@@ -19,6 +19,7 @@ import { Lesson } from '@app/database/entities/lesson.entity';
 import { Repository } from 'typeorm';
 import { CoachVideoStatus } from '@app/shared/enums/coach.enum';
 import { Video } from '@app/database/entities/video.entity';
+import { User } from '@app/database/entities/user.entity';
 @Injectable({ scope: Scope.REQUEST })
 export class VideoService {
   constructor(
@@ -78,6 +79,7 @@ export class VideoService {
       publicUrl: videoPublicUrl.url,
       thumbnailUrl: videoThumbnailPublicUrl.url,
       status: CoachVideoStatus.READY,
+      uploadedBy: this.request.user as User,
     } as Video);
 
     await this.lessonRepository.save(lesson);
