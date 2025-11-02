@@ -19,6 +19,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { BaseTypeOrmService } from '@app/shared/helpers/typeorm.helper';
 import { FindOptions } from '@app/shared/interfaces/find-options.interface';
+import { WalletTransactionType } from '@app/shared/enums/payment.enum';
 
 @Injectable({ scope: Scope.REQUEST })
 export class WalletService extends BaseTypeOrmService<Wallet> {
@@ -91,6 +92,12 @@ export class WalletService extends BaseTypeOrmService<Wallet> {
     await this.walletRepository.update(wallet.id, {
       currentBalance: newCurrent,
       totalIncome: newTotal,
+      transactions: [
+        {
+          amount: amount,
+          type: WalletTransactionType.CREDIT,
+        },
+      ],
     });
   }
 }

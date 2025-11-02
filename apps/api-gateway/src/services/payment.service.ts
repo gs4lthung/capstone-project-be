@@ -8,7 +8,10 @@ import { User } from '@app/database/entities/user.entity';
 import { PayosService } from '@app/payos';
 import { CustomApiRequest } from '@app/shared/customs/custom-api-request';
 import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
-import { CheckoutResponseDataType } from '@app/shared/dtos/payments/payment.dto';
+import {
+  CheckoutResponseDataType,
+  CreatePayoutRequestDto,
+} from '@app/shared/dtos/payments/payment.dto';
 import {
   CourseLearningFormat,
   CourseStatus,
@@ -115,7 +118,7 @@ export class PaymentService extends BaseTypeOrmService<Payment> {
 
     const payosResponse = await this.payosService.createPaymentLink({
       orderCode: CryptoUtils.generateRandomNumber(10000, 99999),
-      amount: parseInt((course.pricePerParticipant / 1000).toString()),
+      amount: parseInt((course.pricePerParticipant / 1000).toString()), /////////
       description: 'Thanh toán khóa học',
       expiredAt: new Date(Date.now() + 1000 * 60 * 60 * 24),
     });
@@ -124,24 +127,23 @@ export class PaymentService extends BaseTypeOrmService<Payment> {
     });
     if (!user) throw new BadRequestException('User not found');
     if (payosResponse) {
+      let wallet = await this.walletRepository.findOne({
+        where: { user: { id: user.id } },
+      });
       const bank = await this.bankRepository.findOne({
         where: { bin: payosResponse.bin },
       });
-      if (bank) {
-        let wallet = await this.walletRepository.findOne({
-          where: { user: { id: user.id } },
+      if (!wallet) {
+        wallet = this.walletRepository.create({
+          user: user,
+          bank: bank,
+          bankAccountNumber: payosResponse.accountNumber,
         });
-        if (!wallet) {
-          wallet = this.walletRepository.create({
-            user: user,
-            bank: bank,
-            bankAccountNumber: payosResponse.accountNumber,
-          });
-        } else {
-          if (wallet.bank) return;
-          wallet.bank = bank;
-          wallet.bankAccountNumber = payosResponse.accountNumber;
-        }
+      } else {
+        if (wallet.bank && wallet.bankAccountNumber) return;
+        wallet.bank = bank;
+        wallet.bankAccountNumber = payosResponse.accountNumber;
+        await this.walletRepository.save(wallet);
       }
     }
 
@@ -259,5 +261,9 @@ export class PaymentService extends BaseTypeOrmService<Payment> {
     }
     payment.status = PaymentStatus.CANCELLED;
     await this.paymentRepository.save(payment);
+  }
+
+  async createPayoutRequest(data: CreatePayoutRequestDto) {
+    return this.payosService.payoutToBank(data);
   }
 }

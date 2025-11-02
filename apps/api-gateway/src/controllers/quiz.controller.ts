@@ -7,36 +7,33 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
-import { LessonService } from '../services/lesson.service';
+import { QuizService } from '../services/quiz.service';
 import { ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CheckRoles } from '@app/shared/decorators/check-roles.decorator';
 import { UserRole } from '@app/shared/enums/user.enum';
 import { AuthGuard } from '../guards/auth.guard';
 import { RoleGuard } from '../guards/role.guard';
-import { CreateLessonRequestDto } from '@app/shared/dtos/lessons/lesson.dto';
+import { CreateQuizDto } from '@app/shared/dtos/quizzes/quiz.dto';
 
-@Controller('lessons')
-export class LessonController {
-  constructor(private readonly lessonService: LessonService) {}
+@Controller('quizzes')
+export class QuizController {
+  constructor(private readonly quizService: QuizService) {}
 
-  @Post('subjects/:id')
+  @Post('lessons/:id')
   @HttpCode(HttpStatus.CREATED)
   @ApiBearerAuth()
   @ApiOperation({
-    tags: ['Lessons'],
-    summary: 'Create a new lesson',
-    description: 'Create a new lesson',
+    tags: ['Quizzes'],
+    summary: 'Create a new lesson quiz',
+    description: 'Create a new lesson quiz',
   })
   @ApiResponse({
     status: HttpStatus.CREATED,
-    description: 'Subject created successfully',
+    description: 'Lesson quiz created successfully',
   })
   @CheckRoles(UserRole.COACH)
   @UseGuards(AuthGuard, RoleGuard)
-  async createSubject(
-    @Param('id') id: number,
-    @Body() data: CreateLessonRequestDto,
-  ) {
-    return this.lessonService.create(id, data);
+  async createLessonQuiz(@Param('id') id: number, @Body() data: CreateQuizDto) {
+    return this.quizService.create(id, data);
   }
 }

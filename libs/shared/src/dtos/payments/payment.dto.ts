@@ -1,3 +1,4 @@
+import { ApiProperty } from '@nestjs/swagger';
 import { randomInt } from 'crypto';
 
 export class CreatePaymentLinkRequestDto {
@@ -23,9 +24,11 @@ export class CheckoutResponseDataType {
 }
 
 export class CreatePayoutRequestDto {
-  referenceId: string;
+  @ApiProperty({ example: 'Payout for order #1234' })
   description: string;
+  @ApiProperty({ example: 5000 })
   amount: number;
-  bankBinCode: string;
-  accountNumber: string;
+  @ApiProperty({ example: '123456789' })
+  toBin: string;
+  toAccountNumber: string;
 }

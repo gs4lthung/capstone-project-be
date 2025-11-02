@@ -89,6 +89,12 @@ import { LearnerAchievement } from '@app/database/entities/learner-achievement.e
 // Achievement Controller & Service
 import { AchievementController } from './controllers/achievement.controller';
 import { AchievementService } from './services/achievement.service';
+import { QuizService } from './services/quiz.service';
+import { QuizController } from './controllers/quiz.controller';
+import { Quiz } from '@app/database/entities/quiz.entity';
+import { Video } from '@app/database/entities/video.entity';
+import { VideoService } from './services/video.service';
+import { VideoController } from './controllers/video.controller';
 
 @Module({
   imports: [
@@ -150,6 +156,8 @@ import { AchievementService } from './services/achievement.service';
       Session,
       Subject,
       Payment,
+      Video,
+      Quiz,
       Lesson,
       Coach,
       Credential,
@@ -206,11 +214,13 @@ import { AchievementService } from './services/achievement.service';
     LessonController,
     SubjectController,
     PaymentController,
+    QuizController,
     CoachController,
     WalletController,
     AchievementController, // Achievement Management
     ConfigurationController,
     SessionController,
+    VideoController,
   ],
   providers: [
     AppService,
@@ -241,6 +251,8 @@ import { AchievementService } from './services/achievement.service';
     EnrollmentService,
     EnrollmentResolver,
     ConfigurationService,
+    QuizService,
+    VideoService,
   ],
 })
 export class AppModule {}

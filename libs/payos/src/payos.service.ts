@@ -1,15 +1,13 @@
 import { ConfigService } from '@app/config';
-import { CreatePaymentLinkRequestDto } from '@app/shared/dtos/payments/payment.dto';
+import {
+  CreatePaymentLinkRequestDto,
+  CreatePayoutRequestDto,
+} from '@app/shared/dtos/payments/payment.dto';
 import { CryptoUtils } from '@app/shared/utils/crypto.util';
 import { DateTimeUtils } from '@app/shared/utils/datetime.util';
 import { ExceptionUtils } from '@app/shared/utils/exception.util';
 import { Injectable, Logger } from '@nestjs/common';
-import {
-  CreatePaymentLinkResponse,
-  PaymentLink,
-  PayOS,
-  PayoutRequest,
-} from '@payos/node';
+import { CreatePaymentLinkResponse, PaymentLink, PayOS } from '@payos/node';
 
 @Injectable()
 export class PayosService {
@@ -79,9 +77,12 @@ export class PayosService {
     }
   }
 
-  async payoutToBank(data: PayoutRequest) {
+  async payoutToBank(data: CreatePayoutRequestDto) {
     try {
-      const response = await this.payOS.payouts.create(data);
+      const response = await this.payOS.payouts.create({
+        referenceId: this.payOS.checksumKey + Date.now().toString(),
+        ...data,
+      });
       console.log('Payout response:', response);
       return response;
     } catch (error) {
