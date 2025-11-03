@@ -26,7 +26,6 @@ import { SortingParams } from '@app/shared/decorators/sorting-params.decorator';
 import { Sorting } from '@app/shared/interfaces/sorting.interface';
 import { FilteringParams } from '@app/shared/decorators/filtering-params.decorator';
 import { Filtering } from '@app/shared/interfaces/filtering.interface';
-import { PaginatedSubject } from '@app/database/entities/subject.entity';
 
 @Controller('subjects')
 export class SubjectController {
