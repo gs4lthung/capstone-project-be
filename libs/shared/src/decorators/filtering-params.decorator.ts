@@ -31,7 +31,7 @@ export const FilteringParams = createParamDecorator(
         break;
     }
 
-    if (!filter) return null;
+    if (!filter) return;
 
     const filterStrings = filter.split(',');
 
