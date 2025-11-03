@@ -1,4 +1,11 @@
-import { Args, Int, Query, Resolver } from '@nestjs/graphql';
+import {
+  Args,
+  Int,
+  Parent,
+  Query,
+  ResolveField,
+  Resolver,
+} from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import { AuthGuard } from '../guards/auth.guard';
 import { PaginationParams } from '@app/shared/decorators/pagination-params.decorator';
@@ -11,6 +18,7 @@ import { FindOptions } from '@app/shared/interfaces/find-options.interface';
 import { CourseService } from '../services/course.service';
 import { PaginatedGqlArgs } from '@app/shared/graphql/paginated-gql-args';
 import { Course, PaginatedCourse } from '@app/database/entities/course.entity';
+import { Session } from '@app/database/entities/session.entity';
 
 @Resolver(() => Course)
 export class CourseResolver {
@@ -24,6 +32,12 @@ export class CourseResolver {
     @SortingParams() sort: Sorting,
     @FilteringParams() filter: Filtering,
   ): Promise<PaginatedCourse> {
+    console.log('Args received in findCourses:', {
+      args,
+      pagination,
+      sort,
+      filter,
+    });
     const courses = await this.courseService.findAll({
       pagination,
       sort,

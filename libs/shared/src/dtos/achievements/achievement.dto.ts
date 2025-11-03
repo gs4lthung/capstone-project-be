@@ -538,3 +538,97 @@ export class PaginatedEarnedAchievement {
   @ApiProperty({ description: 'Total number of pages', example: 2 })
   totalPages: number;
 }
+
+// ============================================
+// PART 4: STATISTICS & LEADERBOARD DTOs
+// ============================================
+
+/**
+ * General Achievement Statistics (Public)
+ */
+export class AchievementStatsDto {
+  @ApiProperty({ description: 'Total number of achievements', example: 50 })
+  totalAchievements: number;
+
+  @ApiProperty({ description: 'Number of EVENT_COUNT achievements', example: 20 })
+  totalEventCount: number;
+
+  @ApiProperty({ description: 'Number of STREAK achievements', example: 15 })
+  totalStreak: number;
+
+  @ApiProperty({ description: 'Number of PROPERTY_CHECK achievements', example: 15 })
+  totalPropertyCheck: number;
+
+  @ApiProperty({ description: 'Number of active achievements', example: 45 })
+  activeAchievements: number;
+}
+
+/**
+ * Last Earned Achievement Info
+ */
+export class LastEarnedAchievementDto {
+  @ApiProperty({ description: 'Achievement name', example: 'Week Warrior' })
+  name: string;
+
+  @ApiProperty({ description: 'When the achievement was earned', example: '2025-01-15T00:00:00.000Z' })
+  earnedAt: Date;
+}
+
+/**
+ * User Achievement Statistics (Authenticated User)
+ */
+export class UserAchievementStatsDto {
+  @ApiProperty({ description: 'Total achievements earned', example: 12 })
+  totalEarned: number;
+
+  @ApiProperty({ description: 'Total achievements in progress', example: 8 })
+  totalInProgress: number;
+
+  @ApiProperty({ description: 'Completion rate (0-100)', example: 60, minimum: 0, maximum: 100 })
+  completionRate: number;
+
+  @ApiPropertyOptional({ description: 'Last earned achievement', type: LastEarnedAchievementDto })
+  lastEarned?: LastEarnedAchievementDto;
+}
+
+/**
+ * User Info for Leaderboard
+ */
+export class LeaderboardUserDto {
+  @ApiProperty({ description: 'User ID', example: 5 })
+  id: number;
+
+  @ApiProperty({ description: 'User full name', example: 'John Doe' })
+  fullName: string;
+
+  @ApiPropertyOptional({ description: 'User avatar URL', example: 'https://example.com/avatar.jpg' })
+  avatar?: string;
+}
+
+/**
+ * Leaderboard Entry
+ */
+export class LeaderboardEntryDto {
+  @ApiProperty({ description: 'User rank', example: 1 })
+  rank: number;
+
+  @ApiProperty({ description: 'User information', type: LeaderboardUserDto })
+  user: LeaderboardUserDto;
+
+  @ApiProperty({ description: 'Total achievements earned', example: 45 })
+  totalEarned: number;
+
+  @ApiProperty({ description: 'Last earned achievement date', example: '2025-01-15T00:00:00.000Z' })
+  lastEarnedAt: Date;
+}
+
+/**
+ * Leaderboard Response
+ */
+export class LeaderboardResponseDto {
+  @ApiProperty({ description: 'Leaderboard entries', type: [LeaderboardEntryDto] })
+  items: LeaderboardEntryDto[];
+
+  @ApiProperty({ description: 'Total number of users with achievements', example: 100 })
+  total: number;
+}

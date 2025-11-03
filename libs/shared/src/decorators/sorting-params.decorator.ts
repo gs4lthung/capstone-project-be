@@ -31,7 +31,7 @@ export const SortingParams = createParamDecorator(
         break;
     }
 
-    if (!sort) return null;
+    if (!sort) return;
 
     // allow nested properties like role.name_asc or coachProfile.fullName_desc
     const sortPattern = /^([a-zA-Z0-9_.]+)_(asc|desc)$/i;
