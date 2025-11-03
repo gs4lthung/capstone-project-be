@@ -32,11 +32,11 @@ import { LearnerProgress } from './learner-progress.entity';
 import { Field, ObjectType } from '@nestjs/graphql';
 import { GqlCustomDateTime } from '@app/shared/graphql/scalars/gql-custom-datetime.scalar';
 import { User } from './user.entity';
-import { UserDto } from '@app/shared/dtos/users/user.dto';
 import { District } from './district.entity';
 import { Province } from './province.entity';
 import { Subject } from './subject.entity';
 import { PickleballLevel } from '@app/shared/enums/pickleball.enum';
+import { PaginatedResource } from '@app/shared/graphql/paginated-resource';
 
 @ObjectType()
 @Entity('courses')
@@ -148,7 +148,7 @@ export class Course {
   @DeleteDateColumn({ name: 'deleted_at' })
   deletedAt?: Date;
 
-  @Field(() => UserDto, { nullable: true })
+  @Field(() => User, { nullable: true })
   @ManyToOne(() => User, (user) => user.courses, {
     onDelete: 'SET NULL',
     eager: true,
@@ -201,3 +201,6 @@ export class Course {
   @JoinColumn({ name: 'district_id' })
   district: District;
 }
+
+@ObjectType()
+export class PaginatedCourse extends PaginatedResource(Course) {}

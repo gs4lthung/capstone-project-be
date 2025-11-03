@@ -1,7 +1,10 @@
 import { ConfigService } from '@app/config';
 import { Course } from '@app/database/entities/course.entity';
 import { RequestAction } from '@app/database/entities/request-action.entity';
-import { Request } from '@app/database/entities/request.entity';
+import {
+  PaginatedRequest,
+  Request,
+} from '@app/database/entities/request.entity';
 import { Session } from '@app/database/entities/session.entity';
 import { CustomApiRequest } from '@app/shared/customs/custom-api-request';
 import { BaseTypeOrmService } from '@app/shared/helpers/typeorm.helper';
@@ -10,7 +13,6 @@ import { REQUEST } from '@nestjs/core';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { FindOptions } from '@app/shared/interfaces/find-options.interface';
-import { PaginatedRequest } from '@app/shared/dtos/requests/request.dto';
 import { SessionService } from './session.service';
 
 @Injectable({ scope: Scope.REQUEST })
@@ -34,5 +36,17 @@ export class RequestService extends BaseTypeOrmService<Request> {
 
   async findAll(findOptions: FindOptions): Promise<PaginatedRequest> {
     return super.find(findOptions, 'request', PaginatedRequest);
+  }
+
+  async findOne(id: number): Promise<Request> {
+    const request = await this.requestRepository.findOne({
+      where: { id: id },
+      withDeleted: false,
+      relations: ['actions', 'createdBy'],
+    });
+
+    if (!request) throw new Error('Request not found');
+
+    return request;
   }
 }

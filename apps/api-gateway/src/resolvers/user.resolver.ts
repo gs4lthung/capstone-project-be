@@ -10,9 +10,9 @@ import { Filtering } from '@app/shared/interfaces/filtering.interface';
 import { FindOptions } from '@app/shared/interfaces/find-options.interface';
 import { UserService } from '../services/user.service';
 import { PaginatedGqlArgs } from '@app/shared/graphql/paginated-gql-args';
-import { PaginatedUser, UserDto } from '@app/shared/dtos/users/user.dto';
+import { PaginatedUser, User } from '@app/database/entities/user.entity';
 
-@Resolver(() => UserDto)
+@Resolver(() => User)
 export class UserResolver {
   constructor(private readonly userService: UserService) {}
 
@@ -33,11 +33,11 @@ export class UserResolver {
     return users;
   }
 
-  @Query(() => UserDto, { name: 'user' })
+  @Query(() => User, { name: 'user' })
   @UseGuards(AuthGuard)
   async findUserById(
     @Args('id', { type: () => Int }) id: number,
-  ): Promise<UserDto> {
+  ): Promise<User> {
     const user = this.userService.findOne(id);
     return user;
   }

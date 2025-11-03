@@ -1,9 +1,6 @@
-import { Course } from '@app/database/entities/course.entity';
+import { Course, PaginatedCourse } from '@app/database/entities/course.entity';
 import { CustomApiRequest } from '@app/shared/customs/custom-api-request';
-import {
-  CreateCourseRequestDto,
-  PaginatedCourse,
-} from '@app/shared/dtos/course/course.dto';
+import { CreateCourseRequestDto } from '@app/shared/dtos/course/course.dto';
 import { BaseTypeOrmService } from '@app/shared/helpers/typeorm.helper';
 import { FindOptions } from '@app/shared/interfaces/find-options.interface';
 import {
@@ -33,10 +30,11 @@ import {
 } from '@app/database/entities/request.entity';
 import { CourseStatus } from '@app/shared/enums/course.enum';
 import { Enrollment } from '@app/database/entities/enrollment.entity';
-import {} from '@app/shared/enums/enrollment.enum';
+import { EnrollmentStatus } from '@app/shared/enums/enrollment.enum';
 import { Schedule } from '@app/database/entities/schedule.entity';
 import { Subject } from '@app/database/entities/subject.entity';
 import { SubjectStatus } from '@app/shared/enums/subject.enum';
+import { Wallet } from '@app/database/entities/wallet.entity';
 
 @Injectable({ scope: Scope.REQUEST })
 export class CourseService extends BaseTypeOrmService<Course> {
@@ -54,6 +52,8 @@ export class CourseService extends BaseTypeOrmService<Course> {
     private readonly enrollmentRepository: Repository<Enrollment>,
     @InjectRepository(Subject)
     private readonly subjectRepository: Repository<Subject>,
+    @InjectRepository(Wallet)
+    private readonly walletRepository: Repository<Wallet>,
     @Inject(forwardRef(() => SessionService))
     private readonly sessionService: SessionService,
   ) {
@@ -62,6 +62,18 @@ export class CourseService extends BaseTypeOrmService<Course> {
 
   async findAll(findOptions: FindOptions): Promise<PaginatedCourse> {
     return super.find(findOptions, 'course', PaginatedCourse);
+  }
+
+  async findOne(id: number): Promise<Course> {
+    const course = await this.courseRepository.findOne({
+      where: { id: id },
+      withDeleted: false,
+      relations: ['subject', 'sessions', 'enrollments'],
+    });
+
+    if (!course) throw new Error('Course not found');
+
+    return course;
   }
 
   async createCourseCreationRequest(
@@ -123,7 +135,7 @@ export class CourseService extends BaseTypeOrmService<Course> {
       throw new BadRequestException('Yêu cầu không được chờ duyệt');
 
     const course = await this.courseRepository.findOne({
-      where: { id: request.metadata.details.id },
+      where: { id: request.metadata.id },
       withDeleted: false,
     });
     if (!course) throw new BadRequestException('Không tìm thấy khóa học');
@@ -163,6 +175,74 @@ export class CourseService extends BaseTypeOrmService<Course> {
       HttpStatus.CREATED,
       'COURSE.CREATE_SUCCESS',
     );
+  }
+
+  async learnerCancelCourse(id: number): Promise<CustomApiResponse<void>> {
+    const course = await this.courseRepository.findOne({
+      where: { id: id },
+      withDeleted: false,
+    });
+    if (!course) throw new BadRequestException('Không tìm thấy khóa học');
+    if (
+      course.status !== CourseStatus.APPROVED &&
+      course.status !== CourseStatus.READY_OPENED &&
+      course.status !== CourseStatus.FULL
+    ) {
+      throw new BadRequestException('Khóa học không thể hủy');
+    }
+
+    const enrollment = await this.enrollmentRepository.findOne({
+      where: {
+        course: { id: course.id },
+        user: { id: this.request.user.id as User['id'] },
+      },
+      withDeleted: false,
+    });
+    if (!enrollment) throw new BadRequestException('Không tìm thấy đăng ký');
+    if (
+      enrollment.status !== EnrollmentStatus.UNPAID &&
+      enrollment.status !== EnrollmentStatus.PENDING_GROUP &&
+      enrollment.status !== EnrollmentStatus.CONFIRMED
+    ) {
+      throw new BadRequestException('Trạng thái đăng ký không hợp lệ');
+    }
+
+    const wallet = await this.walletRepository.findOne({
+      where: { user: { id: this.request.user.id as User['id'] } },
+      withDeleted: false,
+    });
+    if (!wallet) throw new BadRequestException('Không tìm thấy ví người dùng');
+
+    if (
+      enrollment.status === EnrollmentStatus.PENDING_GROUP ||
+      enrollment.status === EnrollmentStatus.CONFIRMED
+    ) {
+      wallet.currentBalance += enrollment.paymentAmount;
+      await this.walletRepository.save(wallet);
+    }
+    enrollment.status = EnrollmentStatus.CANCELLED;
+    await this.enrollmentRepository.save(enrollment);
+
+    course.currentParticipants -= 1;
+    if (
+      course.currentParticipants >= course.minParticipants &&
+      course.currentParticipants < course.maxParticipants
+    ) {
+      for (const enr of course.enrollments) {
+        if (enr.status === EnrollmentStatus.PENDING_GROUP)
+          enr.status = EnrollmentStatus.CONFIRMED;
+      }
+      course.status = CourseStatus.READY_OPENED;
+    } else if (course.currentParticipants >= course.maxParticipants) {
+      for (const enr of course.enrollments) {
+        if (enr.status === EnrollmentStatus.PENDING_GROUP)
+          enr.status = EnrollmentStatus.CONFIRMED;
+      }
+      course.status = CourseStatus.FULL;
+    }
+    await this.courseRepository.save(course);
+
+    return new CustomApiResponse<void>(HttpStatus.OK, 'COURSE.CANCEL_SUCCESS');
   }
 
   calculateCourseEndDate(

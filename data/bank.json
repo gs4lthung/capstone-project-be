@@ -1,0 +1,306 @@
+[
+    {
+        "name": "VietcomBank",
+        "bin": "970436"
+    },
+    {
+        "name": "VietinBank",
+        "bin": "970415"
+    },
+    {
+        "name": "Techcombank",
+        "bin": "970407"
+    },
+    {
+        "name": "BIDV",
+        "bin": "970418"
+    },
+    {
+        "name": "AgriBank",
+        "bin": "970405"
+    },
+    {
+        "name": "Navibank",
+        "bin": "970419"
+    },
+    {
+        "name": "Sacombank",
+        "bin": "970403"
+    },
+    {
+        "name": "ACB",
+        "bin": "970416"
+    },
+    {
+        "name": "MBBank",
+        "bin": "970422"
+    },
+    {
+        "name": "TPBank",
+        "bin": "970423"
+    },
+    {
+        "name": "Shinhan Bank",
+        "bin": "970424"
+    },
+    {
+        "name": "VIB Bank",
+        "bin": "970441"
+    },
+    {
+        "name": "VPBank",
+        "bin": "970432"
+    },
+    {
+        "name": "SHB",
+        "bin": "970443"
+    },
+    {
+        "name": "Eximbank",
+        "bin": "970431"
+    },
+    {
+        "name": "BaoVietBank",
+        "bin": "970438"
+    },
+    {
+        "name": "VietcapitalBank",
+        "bin": "970454"
+    },
+    {
+        "name": "SCB",
+        "bin": "970429"
+    },
+    {
+        "name": "VietNam - Russia Bank",
+        "bin": "970421"
+    },
+    {
+        "name": "ABBank",
+        "bin": "970425"
+    },
+    {
+        "name": "PVCombank",
+        "bin": "970412"
+    },
+    {
+        "name": "MBV",
+        "bin": "970414"
+    },
+    {
+        "name": "NamA bank",
+        "bin": "970428"
+    },
+    {
+        "name": "HDBank",
+        "bin": "970437"
+    },
+    {
+        "name": "HDBank",
+        "bin": "970420"
+    },
+    {
+        "name": "VietBank",
+        "bin": "970433"
+    },
+    {
+        "name": "VietCredit",
+        "bin": "970460"
+    },
+    {
+        "name": "Public bank",
+        "bin": "970439"
+    },
+    {
+        "name": "Hongleong Bank",
+        "bin": "970442"
+    },
+    {
+        "name": "PG Bank",
+        "bin": "970430"
+    },
+    {
+        "name": "Co.op Bank",
+        "bin": "970446"
+    },
+    {
+        "name": "CIMB",
+        "bin": "422589"
+    },
+    {
+        "name": "Indovina",
+        "bin": "970434"
+    },
+    {
+        "name": "Vikki Digital Bank",
+        "bin": "970406"
+    },
+    {
+        "name": "GPBank",
+        "bin": "970408"
+    },
+    {
+        "name": "BacABank",
+        "bin": "970409"
+    },
+    {
+        "name": "VietABank",
+        "bin": "970427"
+    },
+    {
+        "name": "SaigonBank",
+        "bin": "970400"
+    },
+    {
+        "name": "MSB",
+        "bin": "970426"
+    },
+    {
+        "name": "LPBank",
+        "bin": "970449"
+    },
+    {
+        "name": "KienLongBank",
+        "bin": "970452"
+    },
+    {
+        "name": "IBK - Ha Noi",
+        "bin": "970455"
+    },
+    {
+        "name": "IBK - TP.HCM",
+        "bin": "970456"
+    },
+    {
+        "name": "Woori bank",
+        "bin": "970457"
+    },
+    {
+        "name": "SeABank",
+        "bin": "970440"
+    },
+    {
+        "name": "UOB",
+        "bin": "970458"
+    },
+    {
+        "name": "OCB",
+        "bin": "970448"
+    },
+    {
+        "name": "Mirae Asset",
+        "bin": "9777777"
+    },
+    {
+        "name": "Keb Hana - Ho Chi Minh",
+        "bin": "970466"
+    },
+    {
+        "name": "Keb Hana - Ha Noi",
+        "bin": "970467"
+    },
+    {
+        "name": "Standard Chartered",
+        "bin": "970410"
+    },
+    {
+        "name": "CAKE",
+        "bin": "546034"
+    },
+    {
+        "name": "Ubank",
+        "bin": "546035"
+    },
+    {
+        "name": "Nonghyup Bank - HN",
+        "bin": "801011"
+    },
+    {
+        "name": "Kookmin - HN",
+        "bin": "970462"
+    },
+    {
+        "name": "Kookmin - HCM",
+        "bin": "970463"
+    },
+    {
+        "name": "DBS - HCM",
+        "bin": "796500"
+    },
+    {
+        "name": "CBBank",
+        "bin": "970444"
+    },
+    {
+        "name": "KBank - HCM",
+        "bin": "668888"
+    },
+    {
+        "name": "HSBC",
+        "bin": "458761"
+    },
+    {
+        "name": "Timo",
+        "bin": ""
+    },
+    {
+        "name": "CITI",
+        "bin": "533948"
+    },
+    {
+        "name": "VNPT Money",
+        "bin": "971011"
+    },
+    {
+        "name": "Viettel Money",
+        "bin": "971005"
+    },
+    {
+        "name": "VBSP",
+        "bin": "999888"
+    },
+    {
+        "name": "PVcomBank Pay",
+        "bin": "971133"
+    },
+    {
+        "name": "BNP PARIBAS HN",
+        "bin": "963668"
+    },
+    {
+        "name": "BNP PARIBAS HCM",
+        "bin": "963666"
+    },
+    {
+        "name": "Cathay -HCM",
+        "bin": "168999"
+    },
+    {
+        "name": "BIDC",
+        "bin": "555666"
+    },
+    {
+        "name": "Tài chính Shinhan",
+        "bin": "963368"
+    },
+    {
+        "name": "Bank of China (HK) - HCM",
+        "bin": "963688"
+    },
+    {
+        "name": "Vikki by HDBank",
+        "bin": "963311"
+    },
+    {
+        "name": "Umee",
+        "bin": "963399"
+    },
+    {
+        "name": "Liobank",
+        "bin": "963369"
+    },
+    {
+        "name": "MVAS",
+        "bin": "971032"
+    }
+]

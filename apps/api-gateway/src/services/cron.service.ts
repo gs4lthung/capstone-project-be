@@ -31,7 +31,7 @@ export class CronService {
     });
 
     for (const course of courses) {
-      if (new Date(course.startDate) >= new Date()) {
+      if (new Date(course.startDate) === new Date()) {
         this.logger.log(`Start course ${course.id}`);
         course.status = CourseStatus.ON_GOING;
         for (const enrollment of course.enrollments) {

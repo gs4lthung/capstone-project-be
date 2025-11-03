@@ -8,40 +8,40 @@ import { Sorting } from '@app/shared/interfaces/sorting.interface';
 import { FilteringParams } from '@app/shared/decorators/filtering-params.decorator';
 import { Filtering } from '@app/shared/interfaces/filtering.interface';
 import { FindOptions } from '@app/shared/interfaces/find-options.interface';
-import { RequestService } from '../services/request.service';
+import { PaymentService } from '../services/payment.service';
 import { PaginatedGqlArgs } from '@app/shared/graphql/paginated-gql-args';
 import {
-  PaginatedRequest,
-  Request,
-} from '@app/database/entities/request.entity';
+  PaginatedPayment,
+  Payment,
+} from '@app/database/entities/payment.entity';
 
-@Resolver(() => Request)
-export class RequestResolver {
-  constructor(private readonly requestService: RequestService) {}
+@Resolver(() => Payment)
+export class PaymentResolver {
+  constructor(private readonly paymentService: PaymentService) {}
 
-  @Query(() => PaginatedRequest, { name: 'requests' })
+  @Query(() => PaginatedPayment, { name: 'payments' })
   @UseGuards(AuthGuard)
-  async findRequests(
+  async findPayments(
     @Args() args: PaginatedGqlArgs,
     @PaginationParams()
     pagination: Pagination,
     @SortingParams() sort: Sorting,
     @FilteringParams() filter: Filtering,
-  ): Promise<PaginatedRequest> {
-    const requests = await this.requestService.findAll({
+  ): Promise<PaginatedPayment> {
+    const payments = await this.paymentService.findAll({
       pagination,
       sort,
       filter,
     } as FindOptions);
-    return requests;
+    return payments;
   }
 
-  @Query(() => Request, { name: 'request' })
+  @Query(() => Payment, { name: 'payment' })
   @UseGuards(AuthGuard)
-  async findRequestById(
+  async findPaymentById(
     @Args('id', { type: () => Int }) id: number,
-  ): Promise<Request> {
-    const request = this.requestService.findOne(id);
-    return request;
+  ): Promise<Payment> {
+    const payment = this.paymentService.findOne(id);
+    return payment;
   }
 }
