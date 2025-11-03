@@ -69,7 +69,9 @@ export class Wallet {
   user: User;
 
   @Field(() => [WalletTransaction], { nullable: true })
-  @OneToMany(() => WalletTransaction, (transaction) => transaction.wallet)
+  @OneToMany(() => WalletTransaction, (transaction) => transaction.wallet, {
+    cascade: ['insert', 'update'],
+  })
   transactions: WalletTransaction[];
 
   @Field(() => [WithdrawalRequest], { nullable: true })

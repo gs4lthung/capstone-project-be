@@ -1,11 +1,10 @@
-import { Course, PaginatedCourse } from '@app/database/entities/course.entity';
+import { Course } from '@app/database/entities/course.entity';
 import { CustomApiRequest } from '@app/shared/customs/custom-api-request';
 import { CreateCourseRequestDto } from '@app/shared/dtos/course/course.dto';
 import { BaseTypeOrmService } from '@app/shared/helpers/typeorm.helper';
 import { FindOptions } from '@app/shared/interfaces/find-options.interface';
 import {
   BadRequestException,
-  forwardRef,
   HttpStatus,
   Inject,
   Injectable,
@@ -36,6 +35,7 @@ import { Subject } from '@app/database/entities/subject.entity';
 import { SubjectStatus } from '@app/shared/enums/subject.enum';
 import { Wallet } from '@app/database/entities/wallet.entity';
 import { WalletService } from './wallet.service';
+import { PaginateObject } from '@app/shared/dtos/paginate.dto';
 
 @Injectable({ scope: Scope.REQUEST })
 export class CourseService extends BaseTypeOrmService<Course> {
@@ -55,15 +55,19 @@ export class CourseService extends BaseTypeOrmService<Course> {
     private readonly subjectRepository: Repository<Subject>,
     @InjectRepository(Wallet)
     private readonly walletRepository: Repository<Wallet>,
-    @Inject(forwardRef(() => SessionService))
     private readonly sessionService: SessionService,
     private readonly walletService: WalletService,
   ) {
     super(courseRepository);
   }
 
-  async findAll(findOptions: FindOptions): Promise<PaginatedCourse> {
-    return super.find(findOptions, 'course', PaginatedCourse);
+  async findAll(findOptions: FindOptions): Promise<PaginateObject<Course>> {
+    const courses = await super.find(
+      findOptions,
+      'course',
+      PaginateObject<Course>,
+    );
+    return courses;
   }
 
   async findOne(id: number): Promise<Course> {

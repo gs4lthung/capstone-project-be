@@ -14,6 +14,7 @@ import { FilterRule } from '../enums/filter-rules.enum';
 import { Sorting } from '../interfaces/sorting.interface';
 import { Filtering } from '../interfaces/filtering.interface';
 import { FindOptions } from '../interfaces/find-options.interface';
+import { PaginateObject } from '../dtos/paginate.dto';
 
 export const getOrder = (sort: Sorting) =>
   sort ? { [sort.property]: sort.direction } : {};
@@ -176,7 +177,7 @@ export class BaseTypeOrmService<T> {
   async find<R>(
     findOptions: FindOptions,
     alias: string,
-    returnType: new (data: any) => R,
+    returnType: new (data: PaginateObject<T>) => R,
   ): Promise<R> {
     const filters = Array.isArray(findOptions.filter)
       ? findOptions.filter
@@ -210,11 +211,29 @@ export class BaseTypeOrmService<T> {
 
     const [items, total] = await qb.getManyAndCount();
 
-    return new returnType({
+    const page = findOptions.pagination.page;
+    const pageSize = findOptions.pagination.size;
+
+    // Some return types (like PaginatedResource(...) generated classes)
+    // have a constructor that accepts a partial. Others (like PaginateObject)
+    // don't — calling `new ReturnType(partial)` will ignore the partial and
+    // produce an empty object. To be robust, always instantiate the class
+    // then assign the paginated payload into it.
+    // Use `any` here because returnType's constructor signature may require an
+    // argument in the typing, but at runtime we want to call the no-arg ctor
+    // and then assign properties. This is safe because we'll populate fields
+    // with Object.assign immediately afterwards.
+    const instance = new (returnType as any)();
+    // Only assign concrete, writable fields. Computed getters (totalPages,
+    // nextPage, previousPage, hasNextPage, hasPreviousPage) are read-only and
+    // will throw if assigned to, so we only set the base properties.
+    Object.assign(instance, {
       items,
-      page: findOptions.pagination.page,
-      pageSize: findOptions.pagination.size,
+      page,
+      pageSize,
       total,
     });
+
+    return instance;
   }
 }

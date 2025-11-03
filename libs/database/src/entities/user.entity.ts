@@ -158,7 +158,9 @@ export class User {
   @OneToMany(() => VideoConferencePresenceLog, (log) => log.user)
   videoConferencePresenceLogs: VideoConferencePresenceLog[];
 
-  @OneToOne(() => Wallet, (wallet) => wallet.user)
+  @OneToOne(() => Wallet, (wallet) => wallet.user, {
+    eager: true,
+  })
   wallet: Wallet;
 
   @OneToMany(() => Course, (course) => course.createdBy)

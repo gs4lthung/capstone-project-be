@@ -21,7 +21,7 @@ export class WalletTransaction {
   id: number;
 
   @Field(() => Number)
-  @Column({ type: 'int' })
+  @Column({ type: 'numeric', precision: 15, scale: 3 })
   amount: number;
 
   @Field(() => String, { nullable: true })
@@ -67,4 +67,6 @@ export class WalletTransaction {
 import { PaginatedResource } from '@app/shared/graphql/paginated-resource';
 
 @ObjectType()
-export class PaginatedWalletTransaction extends PaginatedResource(WalletTransaction) {}
+export class PaginatedWalletTransaction extends PaginatedResource(
+  WalletTransaction,
+) {}

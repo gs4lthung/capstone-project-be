@@ -4,7 +4,6 @@ import { ObjectType } from '@nestjs/graphql';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsBoolean,
-  IsEnum,
   IsInt,
   IsNotEmpty,
   IsOptional,
@@ -126,7 +125,8 @@ export class CreateAchievementDto {
  */
 export class CreateEventCountAchievementDto extends CreateAchievementDto {
   @ApiProperty({
-    description: 'Tên sự kiện cần track (VD: LESSON_COMPLETED, SESSION_ATTENDED)',
+    description:
+      'Tên sự kiện cần track (VD: LESSON_COMPLETED, SESSION_ATTENDED)',
     example: 'LESSON_COMPLETED',
     minLength: 2,
     maxLength: 100,
@@ -198,7 +198,8 @@ export class CreateStreakAchievementDto extends CreateAchievementDto {
  */
 export class CreatePropertyCheckAchievementDto extends CreateAchievementDto {
   @ApiProperty({
-    description: 'Tên sự kiện trigger việc check (VD: QUIZ_COMPLETED, COURSE_RATED)',
+    description:
+      'Tên sự kiện trigger việc check (VD: QUIZ_COMPLETED, COURSE_RATED)',
     example: 'QUIZ_COMPLETED',
     minLength: 2,
     maxLength: 25,
@@ -260,7 +261,7 @@ export class CreatePropertyCheckAchievementDto extends CreateAchievementDto {
  * ========================
  * DTO để update achievement
  * Dùng PartialType để tất cả fields đều optional
- * 
+ *
  * NOTE: Không thể đổi TYPE của achievement sau khi tạo!
  * Chỉ có thể update: name, description, iconUrl, isActive, và các target values
  */
@@ -505,10 +506,16 @@ export class EarnedAchievementDto {
   @ApiProperty({ description: 'Date when achievement was earned' })
   earnedAt: Date;
 
-  @ApiProperty({ description: 'User ID who earned this achievement', example: 5 })
+  @ApiProperty({
+    description: 'User ID who earned this achievement',
+    example: 5,
+  })
   userId: number;
 
-  @ApiPropertyOptional({ description: 'User full name', example: 'Nguyen Van A' })
+  @ApiPropertyOptional({
+    description: 'User full name',
+    example: 'Nguyen Van A',
+  })
   userFullName?: string;
 }
 

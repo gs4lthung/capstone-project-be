@@ -24,12 +24,8 @@ import { CreateUserDto } from '@app/shared/dtos/users/create-user.dto';
 
 @Controller('users')
 export class UserController {
-  private static readonly MAX_PAGE_SIZE = 100;
-  private static readonly DEFAULT_PAGE_SIZE = 10;
-  private static readonly DEFAULT_PAGE = 1;
-
   constructor(private readonly userService: UserService) {}
-  @Post('')
+  @Post()
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
     tags: ['Users'],

@@ -8,6 +8,7 @@ import {
   Post,
   UseGuards,
   Logger,
+  Get,
 } from '@nestjs/common';
 import { CourseService } from '../services/course.service';
 import { ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
@@ -17,11 +18,50 @@ import { AuthGuard } from '../guards/auth.guard';
 import { RoleGuard } from '../guards/role.guard';
 import { CreateCourseRequestDto } from '@app/shared/dtos/course/course.dto';
 import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
+import { Course } from '@app/database/entities/course.entity';
+import { PaginationParams } from '@app/shared/decorators/pagination-params.decorator';
+import { Pagination } from '@app/shared/interfaces/pagination.interface';
+import { Sorting } from '@app/shared/interfaces/sorting.interface';
+import { SortingParams } from '@app/shared/decorators/sorting-params.decorator';
+import { FilteringParams } from '@app/shared/decorators/filtering-params.decorator';
+import { Filtering } from '@app/shared/interfaces/filtering.interface';
+import { FindOptions } from '@app/shared/interfaces/find-options.interface';
+import { PaginatedCourse } from '@app/database/entities/course.entity';
+import { PaginateObject } from '@app/shared/dtos/paginate.dto';
 
 @Controller('courses')
 export class CourseController {
   private readonly logger = new Logger(CourseController.name);
   constructor(private readonly courseService: CourseService) {}
+
+  @Get()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    tags: ['Courses'],
+    summary: 'Get all courses',
+    description: 'Retrieve a list of all available courses',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'List of courses retrieved successfully',
+  })
+  async findAll(
+    @PaginationParams()
+    pagination: Pagination,
+    @SortingParams() sort: Sorting,
+    @FilteringParams() filter: Filtering,
+  ): Promise<PaginateObject<Course>> {
+    console.log('Fetching all courses with params:', {
+      pagination,
+      sort,
+      filter,
+    });
+    return await this.courseService.findAll({
+      pagination,
+      sort,
+      filter,
+    } as FindOptions);
+  }
 
   @Post('subjects/:id')
   @HttpCode(HttpStatus.CREATED)
@@ -74,7 +114,7 @@ export class CourseController {
       'Allows a learner to cancel their enrollment in a specific course',
   })
   @UseGuards(AuthGuard)
-  async cancelLearnerEnrollment(
+  async learnerCancelEnrollment(
     @Param('id') courseId: number,
   ): Promise<CustomApiResponse<void>> {
     return this.courseService.learnerCancelCourse(courseId);

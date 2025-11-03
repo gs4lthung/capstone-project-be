@@ -1,3 +1,4 @@
+import { PartialType } from '@nestjs/mapped-types';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsInt, IsNotEmpty, IsString } from 'class-validator';
 
@@ -18,3 +19,5 @@ export class CreateWalletDto {
   @IsString()
   bankAccountNumber: string;
 }
+
+export class UpdateWalletDto extends PartialType(CreateWalletDto) {}
