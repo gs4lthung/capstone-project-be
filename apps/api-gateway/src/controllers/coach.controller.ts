@@ -39,7 +39,6 @@ export class CoachController {
 
   @Get()
   @HttpCode(HttpStatus.OK)
-  @ApiBearerAuth()
   @ApiOperation({
     tags: ['Coaches'],
     summary: 'Get all coaches',
@@ -49,8 +48,6 @@ export class CoachController {
     status: HttpStatus.OK,
     description: 'Coaches',
   })
-  @CheckRoles(UserRole.COACH)
-  @UseGuards(AuthGuard, RoleGuard)
   async findAll(
     @PaginationParams()
     pagination: Pagination,
@@ -62,6 +59,18 @@ export class CoachController {
       sort,
       filter,
     } as FindOptions);
+  }
+
+  @Get(':id')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    tags: ['Coaches'],
+    summary: 'Get a coach by id',
+    description: 'Get a coach by id',
+  })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Coach' })
+  async findOne(@Param('id') id: number): Promise<Coach> {
+    return this.coachService.findOne(Number(id));
   }
 
   @Post('register')
