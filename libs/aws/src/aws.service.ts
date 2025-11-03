@@ -32,7 +32,7 @@ export class AwsService {
       }),
     );
 
-    FileUtils.deleteFile(data.file.path);
+    await FileUtils.deleteFile(data.file.path);
 
     return {
       url: `https://${bucketName}.s3.${this.configService.get('aws').s3.region}.amazonaws.com/${key}`,

@@ -19,11 +19,21 @@ export class SessionEarning {
   id: number;
 
   @Field(() => Number)
-  @Column({ name: 'session_price', type: 'bigint' })
+  @Column({
+    name: 'session_price',
+    type: 'numeric',
+    precision: 15,
+    scale: 3,
+  })
   sessionPrice: number;
 
   @Field(() => Number)
-  @Column({ name: 'coach_earning_total', type: 'bigint' })
+  @Column({
+    name: 'coach_earning_total',
+    type: 'numeric',
+    precision: 15,
+    scale: 3,
+  })
   coachEarningTotal: number;
 
   @Field(() => String)
@@ -53,4 +63,6 @@ export class SessionEarning {
 import { PaginatedResource } from '@app/shared/graphql/paginated-resource';
 
 @ObjectType()
-export class PaginatedSessionEarning extends PaginatedResource(SessionEarning) {}
+export class PaginatedSessionEarning extends PaginatedResource(
+  SessionEarning,
+) {}

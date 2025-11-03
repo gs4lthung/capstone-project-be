@@ -43,4 +43,6 @@ export class QuestionOption {
 import { PaginatedResource } from '@app/shared/graphql/paginated-resource';
 
 @ObjectType()
-export class PaginatedQuestionOption extends PaginatedResource(QuestionOption) {}
+export class PaginatedQuestionOption extends PaginatedResource(
+  QuestionOption,
+) {}

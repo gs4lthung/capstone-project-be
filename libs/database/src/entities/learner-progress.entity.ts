@@ -70,4 +70,6 @@ export class LearnerProgress {
 }
 
 @ObjectType()
-export class PaginatedLearnerProgress extends PaginatedResource(LearnerProgress) {}
+export class PaginatedLearnerProgress extends PaginatedResource(
+  LearnerProgress,
+) {}

@@ -152,4 +152,6 @@ export class AiVideoComparisonResult {
 }
 
 @ObjectType()
-export class PaginatedAiVideoComparisonResult extends PaginatedResource(AiVideoComparisonResult) {}
+export class PaginatedAiVideoComparisonResult extends PaginatedResource(
+  AiVideoComparisonResult,
+) {}

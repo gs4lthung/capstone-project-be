@@ -26,6 +26,7 @@ import { SortingParams } from '@app/shared/decorators/sorting-params.decorator';
 import { Sorting } from '@app/shared/interfaces/sorting.interface';
 import { FilteringParams } from '@app/shared/decorators/filtering-params.decorator';
 import { Filtering } from '@app/shared/interfaces/filtering.interface';
+import { PaginatedSubject } from '@app/database/entities/subject.entity';
 
 @Controller('subjects')
 export class SubjectController {
@@ -45,7 +46,7 @@ export class SubjectController {
   })
   @CheckRoles(UserRole.COACH)
   @UseGuards(AuthGuard, RoleGuard)
-  async findAllSubjects(
+  async findAll(
     @PaginationParams()
     pagination: Pagination,
     @SortingParams() sort: Sorting,
@@ -72,7 +73,7 @@ export class SubjectController {
   })
   @CheckRoles(UserRole.COACH)
   @UseGuards(AuthGuard, RoleGuard)
-  async createSubject(@Body() data: CreateSubjectDto) {
+  async create(@Body() data: CreateSubjectDto) {
     return this.subjectService.create(data);
   }
 
@@ -88,7 +89,7 @@ export class SubjectController {
     status: HttpStatus.OK,
     description: 'Subject updated successfully',
   })
-  async updateSubject(@Body() data: UpdateSubjectDto, @Param('id') id: number) {
+  async update(@Body() data: UpdateSubjectDto, @Param('id') id: number) {
     return this.subjectService.update(id, data);
   }
 }

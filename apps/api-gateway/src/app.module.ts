@@ -69,6 +69,37 @@ import { WalletResolver } from './resolvers/wallet.resolver';
 import { PaymentResolver } from './resolvers/payment.resolver';
 import { EnrollmentService } from './services/enrollment.service';
 import { EnrollmentResolver } from './resolvers/enrollment.resolver';
+import { Attendance } from '@app/database/entities/attendance.entity';
+import { ConfigurationController } from './controllers/configuration.controller';
+import { ConfigurationService } from './services/configuration.service';
+import { SessionController } from './controllers/session.controller';
+import { SessionEarning } from '@app/database/entities/session-earning.entity';
+
+// ============================================
+// ACHIEVEMENT IMPORTS
+// ============================================
+// Achievement Entities (6 entities)
+import { Achievement } from '@app/database/entities/achievement.entity';
+import { EventCountAchievement } from '@app/database/entities/event-count-achievement.entity';
+import { StreakAchievement } from '@app/database/entities/streak-achievement.entity';
+import { PropertyCheckAchievement } from '@app/database/entities/property-check-achievement.entity';
+import { AchievementProgress } from '@app/database/entities/achievement-progress.entity';
+import { LearnerAchievement } from '@app/database/entities/learner-achievement.entity';
+
+// Achievement Controller & Service
+import { AchievementController } from './controllers/achievement.controller';
+import { AchievementService } from './services/achievement.service';
+import { QuizService } from './services/quiz.service';
+import { QuizController } from './controllers/quiz.controller';
+import { Quiz } from '@app/database/entities/quiz.entity';
+import { Video } from '@app/database/entities/video.entity';
+import { VideoService } from './services/video.service';
+import { VideoController } from './controllers/video.controller';
+import { QuizAttempt } from '@app/database/entities/quiz_attempt.entity';
+import { WalletTransaction } from '@app/database/entities/wallet-transaction.entity';
+import { Feedback } from '@app/database/entities/feedback.entity';
+import { FeedbackController } from './controllers/feedback.controller';
+import { FeedbackService } from './services/feedback.service';
 
 @Module({
   imports: [
@@ -130,12 +161,25 @@ import { EnrollmentResolver } from './resolvers/enrollment.resolver';
       Session,
       Subject,
       Payment,
+      Video,
+      Quiz,
       Lesson,
       Coach,
       Credential,
       Wallet,
       Configuration,
       Bank,
+      Achievement,
+      EventCountAchievement,
+      StreakAchievement,
+      QuizAttempt,
+      PropertyCheckAchievement,
+      AchievementProgress,
+      LearnerAchievement,
+      SessionEarning,
+      Attendance,
+      WalletTransaction,
+      Feedback,
     ]),
     ErrorModule,
     GraphQLModule.forRootAsync<ApolloDriverConfig>({
@@ -178,8 +222,14 @@ import { EnrollmentResolver } from './resolvers/enrollment.resolver';
     LessonController,
     SubjectController,
     PaymentController,
+    QuizController,
     CoachController,
     WalletController,
+    AchievementController, // Achievement Management
+    ConfigurationController,
+    SessionController,
+    VideoController,
+    FeedbackController,
   ],
   providers: [
     AppService,
@@ -205,9 +255,14 @@ import { EnrollmentResolver } from './resolvers/enrollment.resolver';
     WalletService,
     WalletResolver,
     PaymentService,
+    AchievementService,
     PaymentResolver,
     EnrollmentService,
     EnrollmentResolver,
+    ConfigurationService,
+    QuizService,
+    VideoService,
+    FeedbackService,
   ],
 })
 export class AppModule {}

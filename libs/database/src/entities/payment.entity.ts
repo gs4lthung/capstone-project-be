@@ -21,7 +21,7 @@ export class Payment {
   id: number;
 
   @Field(() => Number)
-  @Column({ type: 'bigint' })
+  @Column({ type: 'numeric', precision: 15, scale: 3 })
   @Min(0)
   amount: number;
 

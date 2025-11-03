@@ -22,4 +22,6 @@ export class EventCountAchievement extends Achievement {
 }
 
 @ObjectType()
-export class PaginatedEventCountAchievement extends PaginatedResource(EventCountAchievement) {}
+export class PaginatedEventCountAchievement extends PaginatedResource(
+  EventCountAchievement,
+) {}

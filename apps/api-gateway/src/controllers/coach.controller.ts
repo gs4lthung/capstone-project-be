@@ -22,6 +22,7 @@ import { Coach } from '@app/database/entities/coach.entity';
 import { RejectCoachDto } from '@app/shared/dtos/coaches/reject-coach.dto';
 import { UserRole } from '@app/shared/enums/user.enum';
 import { CheckRoles } from '@app/shared/decorators/check-roles.decorator';
+import { RoleGuard } from '../guards/role.guard';
 
 @ApiTags('Coaches')
 @Controller('coaches')
@@ -43,11 +44,11 @@ export class CoachController {
 
   @Put(':id/verify')
   @ApiBearerAuth()
-  @UseGuards(AuthGuard)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Verify coach profile (admin)' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Coach verified' })
   @CheckRoles(UserRole.ADMIN)
+  @UseGuards(AuthGuard, RoleGuard)
   @ApiBody({
     schema: {
       type: 'object',
@@ -63,11 +64,11 @@ export class CoachController {
 
   @Put(':id/reject')
   @ApiBearerAuth()
-  @UseGuards(AuthGuard)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Reject coach profile (admin)' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Coach rejected' })
   @CheckRoles(UserRole.ADMIN)
+  @UseGuards(AuthGuard, RoleGuard)
   async reject(
     @Param('id') id: number,
     @Body() body: RejectCoachDto,

@@ -30,4 +30,6 @@ export class StreakAchievement extends Achievement {
 import { PaginatedResource } from '@app/shared/graphql/paginated-resource';
 
 @ObjectType()
-export class PaginatedStreakAchievement extends PaginatedResource(StreakAchievement) {}
+export class PaginatedStreakAchievement extends PaginatedResource(
+  StreakAchievement,
+) {}

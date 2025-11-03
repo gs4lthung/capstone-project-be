@@ -35,6 +35,7 @@ import { Schedule } from '@app/database/entities/schedule.entity';
 import { Subject } from '@app/database/entities/subject.entity';
 import { SubjectStatus } from '@app/shared/enums/subject.enum';
 import { Wallet } from '@app/database/entities/wallet.entity';
+import { WalletService } from './wallet.service';
 
 @Injectable({ scope: Scope.REQUEST })
 export class CourseService extends BaseTypeOrmService<Course> {
@@ -56,6 +57,7 @@ export class CourseService extends BaseTypeOrmService<Course> {
     private readonly walletRepository: Repository<Wallet>,
     @Inject(forwardRef(() => SessionService))
     private readonly sessionService: SessionService,
+    private readonly walletService: WalletService,
   ) {
     super(courseRepository);
   }
@@ -207,18 +209,14 @@ export class CourseService extends BaseTypeOrmService<Course> {
       throw new BadRequestException('Trạng thái đăng ký không hợp lệ');
     }
 
-    const wallet = await this.walletRepository.findOne({
-      where: { user: { id: this.request.user.id as User['id'] } },
-      withDeleted: false,
-    });
-    if (!wallet) throw new BadRequestException('Không tìm thấy ví người dùng');
-
     if (
       enrollment.status === EnrollmentStatus.PENDING_GROUP ||
       enrollment.status === EnrollmentStatus.CONFIRMED
     ) {
-      wallet.currentBalance += enrollment.paymentAmount;
-      await this.walletRepository.save(wallet);
+      await this.walletService.handleWalletTopUp(
+        this.request.user.id as User['id'],
+        enrollment.paymentAmount,
+      );
     }
     enrollment.status = EnrollmentStatus.CANCELLED;
     await this.enrollmentRepository.save(enrollment);

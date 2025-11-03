@@ -1,11 +1,17 @@
 import { Course } from '@app/database/entities/course.entity';
 import { Enrollment } from '@app/database/entities/enrollment.entity';
-import { Payment, PaginatedPayment } from '@app/database/entities/payment.entity';
+import {
+  Payment,
+  PaginatedPayment,
+} from '@app/database/entities/payment.entity';
 import { User } from '@app/database/entities/user.entity';
 import { PayosService } from '@app/payos';
 import { CustomApiRequest } from '@app/shared/customs/custom-api-request';
 import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
-import { CheckoutResponseDataType } from '@app/shared/dtos/payments/payment.dto';
+import {
+  CheckoutResponseDataType,
+  CreatePayoutRequestDto,
+} from '@app/shared/dtos/payments/payment.dto';
 import {
   CourseLearningFormat,
   CourseStatus,
@@ -25,6 +31,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { BaseTypeOrmService } from '@app/shared/helpers/typeorm.helper';
 import { FindOptions } from '@app/shared/interfaces/find-options.interface';
+import { Wallet } from '@app/database/entities/wallet.entity';
+import { Bank } from '@app/database/entities/bank.entity';
 
 @Injectable({ scope: Scope.REQUEST })
 export class PaymentService extends BaseTypeOrmService<Payment> {
@@ -36,6 +44,12 @@ export class PaymentService extends BaseTypeOrmService<Payment> {
     private readonly courseRepository: Repository<Course>,
     @InjectRepository(Enrollment)
     private readonly enrollmentRepository: Repository<Enrollment>,
+    @InjectRepository(Wallet)
+    private readonly walletRepository: Repository<Wallet>,
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
+    @InjectRepository(Bank)
+    private readonly bankRepository: Repository<Bank>,
     private readonly payosService: PayosService,
   ) {
     super(paymentRepository);
@@ -85,7 +99,10 @@ export class PaymentService extends BaseTypeOrmService<Payment> {
         },
         withDeleted: false,
       });
-      if (enrollment.status !== EnrollmentStatus.CANCELLED) {
+      if (
+        enrollment.status !== EnrollmentStatus.CANCELLED &&
+        enrollment.status !== EnrollmentStatus.UNPAID
+      ) {
         throw new BadRequestException('Bạn đã đăng ký khóa học này rồi');
       }
       enrollment.status = EnrollmentStatus.UNPAID;
@@ -101,10 +118,11 @@ export class PaymentService extends BaseTypeOrmService<Payment> {
 
     const payosResponse = await this.payosService.createPaymentLink({
       orderCode: CryptoUtils.generateRandomNumber(10000, 99999),
-      amount: parseInt((course.pricePerParticipant / 1000).toString()),
+      amount: parseInt((course.pricePerParticipant / 1000).toString()), /////////
       description: 'Thanh toán khóa học',
       expiredAt: new Date(Date.now() + 1000 * 60 * 60 * 24),
     });
+
     const payment = this.paymentRepository.create({
       amount: payosResponse.amount,
       description: payosResponse.description,
@@ -139,6 +157,16 @@ export class PaymentService extends BaseTypeOrmService<Payment> {
       return;
     }
 
+    const hasSuccessfulPayment = await this.paymentRepository.findOne({
+      where: {
+        enrollment: { id: payment.enrollment.id },
+        status: PaymentStatus.PAID,
+      },
+    });
+    if (hasSuccessfulPayment) {
+      return;
+    }
+
     const course = await this.courseRepository.findOne({
       where: { id: payment.enrollment.course.id },
       relations: ['enrollments'],
@@ -146,12 +174,14 @@ export class PaymentService extends BaseTypeOrmService<Payment> {
 
     course.enrollments.map((enr) => {
       if (enr.id === payment.enrollment.id) {
-        enr.paymentAmount = payment.amount * 1000;
+        enr.paymentAmount = payment.amount * 1000; /////////
       }
       return enr;
     });
 
     course.currentParticipants += 1;
+    course.totalEarnings =
+      Number(course.totalEarnings) + Number(payment.amount) * 1000;
 
     switch (course.learningFormat) {
       case CourseLearningFormat.INDIVIDUAL:
@@ -208,5 +238,9 @@ export class PaymentService extends BaseTypeOrmService<Payment> {
     }
     payment.status = PaymentStatus.CANCELLED;
     await this.paymentRepository.save(payment);
+  }
+
+  async createPayoutRequest(data: CreatePayoutRequestDto) {
+    return this.payosService.payoutToBank(data);
   }
 }

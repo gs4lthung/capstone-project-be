@@ -1,4 +1,3 @@
-import { PaymentStatus } from '@app/shared/enums/payment.enum';
 import { SessionStatus } from '@app/shared/enums/session.enum';
 import {
   Check,
@@ -73,7 +72,7 @@ export class Session {
   @Column({ name: 'end_time', type: 'time' })
   endTime: string;
 
-  @Field(()=> Number)
+  @Field(() => Number)
   @Column({ name: 'duration_in_minutes', type: 'int', nullable: true })
   durationInMinutes?: number;
 
@@ -114,15 +113,6 @@ export class Session {
   @Column({ name: 'completed_at', type: 'date', nullable: true })
   completedAt?: Date;
 
-  @Field(() => String)
-  @Column({
-    name: 'coach_payment_status',
-    type: 'enum',
-    enum: PaymentStatus,
-    default: PaymentStatus.PENDING,
-  })
-  coachPaymentStatus: PaymentStatus;
-
   @Field(() => Course)
   @ManyToOne(() => Course, (course) => course.sessions, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'course_id' })
@@ -145,7 +135,9 @@ export class Session {
   transactions: WalletTransaction[];
 
   @Field(() => [SessionEarning], { nullable: true })
-  @OneToMany(() => SessionEarning, (sessionEarning) => sessionEarning.session)
+  @OneToMany(() => SessionEarning, (sessionEarning) => sessionEarning.session, {
+    cascade: ['insert', 'update'],
+  })
   sessionEarnings: SessionEarning[];
 
   @Field(() => [LearnerVideo], { nullable: true })

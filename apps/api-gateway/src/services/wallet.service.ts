@@ -3,13 +3,24 @@ import { User } from '@app/database/entities/user.entity';
 import { Wallet, PaginatedWallet } from '@app/database/entities/wallet.entity';
 import { CustomApiRequest } from '@app/shared/customs/custom-api-request';
 import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
-import { CreateWalletDto } from '@app/shared/dtos/wallets/wallet.dto';
-import { HttpStatus, Inject, Injectable, Scope } from '@nestjs/common';
+import {
+  CreateWalletDto,
+  UpdateWalletDto,
+} from '@app/shared/dtos/wallets/wallet.dto';
+import {
+  HttpStatus,
+  Inject,
+  Injectable,
+  InternalServerErrorException,
+  Scope,
+} from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { BaseTypeOrmService } from '@app/shared/helpers/typeorm.helper';
 import { FindOptions } from '@app/shared/interfaces/find-options.interface';
+import { WalletTransactionType } from '@app/shared/enums/payment.enum';
+import { WalletTransaction } from '@app/database/entities/wallet-transaction.entity';
 
 @Injectable({ scope: Scope.REQUEST })
 export class WalletService extends BaseTypeOrmService<Wallet> {
@@ -19,6 +30,8 @@ export class WalletService extends BaseTypeOrmService<Wallet> {
     private readonly walletRepository: Repository<Wallet>,
     @InjectRepository(Bank)
     private readonly bankRepository: Repository<Bank>,
+    @InjectRepository(WalletTransaction)
+    private readonly walletTransactionRepository: Repository<WalletTransaction>,
   ) {
     super(walletRepository);
   }
@@ -39,7 +52,7 @@ export class WalletService extends BaseTypeOrmService<Wallet> {
     return wallet;
   }
 
-  async createWallet(data: CreateWalletDto): Promise<CustomApiResponse<void>> {
+  async create(data: CreateWalletDto): Promise<CustomApiResponse<void>> {
     const bank = await this.bankRepository.findOne({
       where: { id: data.bankId },
     });
@@ -51,5 +64,43 @@ export class WalletService extends BaseTypeOrmService<Wallet> {
     await this.walletRepository.save(newWallet);
 
     return new CustomApiResponse<void>(HttpStatus.CREATED, 'Tạo ví thành công');
+  }
+
+  async update(
+    id: number,
+    data: UpdateWalletDto,
+  ): Promise<CustomApiResponse<void>> {
+    const wallet = await this.walletRepository.findOne({
+      where: { id: id },
+      withDeleted: false,
+    });
+    if (!wallet) throw new InternalServerErrorException('Wallet not found');
+    await this.walletRepository.update(wallet.id, data);
+
+    return new CustomApiResponse<void>(HttpStatus.OK, 'Cập nhật ví thành công');
+  }
+
+  async handleWalletTopUp(userId: User['id'], amount: number): Promise<void> {
+    const wallet = await this.walletRepository.findOne({
+      where: { user: { id: userId } },
+      withDeleted: false,
+    });
+    if (!wallet) throw new InternalServerErrorException('Wallet not found');
+
+    const currentBalance = Number(wallet.currentBalance ?? 0);
+    const totalIncome = Number(wallet.totalIncome ?? 0);
+    const newCurrent = currentBalance + amount;
+    const newTotal = totalIncome + amount;
+
+    wallet.currentBalance = newCurrent;
+    wallet.totalIncome = newTotal;
+    await this.walletRepository.save(wallet);
+
+    const newTransaction = this.walletTransactionRepository.create({
+      wallet: wallet,
+      type: WalletTransactionType.CREDIT,
+      amount: amount,
+    });
+    await this.walletTransactionRepository.save(newTransaction);
   }
 }

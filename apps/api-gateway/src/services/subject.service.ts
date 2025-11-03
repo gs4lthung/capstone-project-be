@@ -75,8 +75,26 @@ export class SubjectService extends BaseTypeOrmService<Subject> {
     });
     if (!subject) throw new BadRequestException('Không tìm thấy khóa học');
 
-    await this.subjectRepository.update(subject.id, data);
+    if (data.status === SubjectStatus.PUBLISHED) {
+      for (const lesson of subject.lessons) {
+        if (
+          !lesson.videos ||
+          lesson.videos.length === 0 ||
+          !lesson.quizzes ||
+          lesson.quizzes.length === 0
+        ) {
+          throw new BadRequestException(
+            'Không thể xuất bản chủ đề khi còn bài học chưa có video hoặc quiz',
+          );
+        }
+      }
 
-    return new CustomApiResponse<void>(HttpStatus.OK, 'SUBJECT.UPDATE_SUCCESS');
+      await this.subjectRepository.update(subject.id, data);
+
+      return new CustomApiResponse<void>(
+        HttpStatus.OK,
+        'SUBJECT.UPDATE_SUCCESS',
+      );
+    }
   }
 }

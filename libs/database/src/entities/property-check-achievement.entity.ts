@@ -43,4 +43,6 @@ export class PropertyCheckAchievement extends Achievement {
 }
 
 @ObjectType()
-export class PaginatedPropertyCheckAchievement extends PaginatedResource(PropertyCheckAchievement) {}
+export class PaginatedPropertyCheckAchievement extends PaginatedResource(
+  PropertyCheckAchievement,
+) {}

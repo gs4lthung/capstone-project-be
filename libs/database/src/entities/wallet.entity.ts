@@ -36,11 +36,23 @@ export class Wallet {
   bankAccountNumber: string;
 
   @Field(() => Number)
-  @Column({ name: 'current_balance', type: 'bigint', default: 0 })
+  @Column({
+    name: 'current_balance',
+    type: 'numeric',
+    precision: 15,
+    scale: 3,
+    default: 0,
+  })
   currentBalance: number;
 
   @Field(() => Number)
-  @Column({ name: 'total_income', type: 'bigint', default: 0 })
+  @Column({
+    name: 'total_income',
+    type: 'numeric',
+    precision: 15,
+    scale: 3,
+    default: 0,
+  })
   totalIncome: number;
 
   @Field(() => GqlCustomDateTime)
@@ -57,7 +69,9 @@ export class Wallet {
   user: User;
 
   @Field(() => [WalletTransaction], { nullable: true })
-  @OneToMany(() => WalletTransaction, (transaction) => transaction.wallet)
+  @OneToMany(() => WalletTransaction, (transaction) => transaction.wallet, {
+    cascade: ['insert', 'update'],
+  })
   transactions: WalletTransaction[];
 
   @Field(() => [WithdrawalRequest], { nullable: true })
