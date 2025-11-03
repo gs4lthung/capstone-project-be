@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Get,
   HttpCode,
   HttpStatus,
   Param,
@@ -23,11 +24,45 @@ import { RejectCoachDto } from '@app/shared/dtos/coaches/reject-coach.dto';
 import { UserRole } from '@app/shared/enums/user.enum';
 import { CheckRoles } from '@app/shared/decorators/check-roles.decorator';
 import { RoleGuard } from '../guards/role.guard';
+import { FilteringParams } from '@app/shared/decorators/filtering-params.decorator';
+import { Filtering } from '@app/shared/interfaces/filtering.interface';
+import { PaginationParams } from '@app/shared/decorators/pagination-params.decorator';
+import { Sorting } from '@app/shared/interfaces/sorting.interface';
+import { Pagination } from '@app/shared/interfaces/pagination.interface';
+import { SortingParams } from '@app/shared/decorators/sorting-params.decorator';
+import { FindOptions } from '@app/shared/interfaces/find-options.interface';
 
 @ApiTags('Coaches')
 @Controller('coaches')
 export class CoachController {
   constructor(private readonly coachService: CoachService) {}
+
+  @Get()
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiOperation({
+    tags: ['Coaches'],
+    summary: 'Get all coaches',
+    description: 'Get all coaches',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Coaches',
+  })
+  @CheckRoles(UserRole.COACH)
+  @UseGuards(AuthGuard, RoleGuard)
+  async findAll(
+    @PaginationParams()
+    pagination: Pagination,
+    @SortingParams() sort: Sorting,
+    @FilteringParams() filter: Filtering,
+  ): Promise<any> {
+    return this.coachService.findAll({
+      pagination,
+      sort,
+      filter,
+    } as FindOptions);
+  }
 
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
