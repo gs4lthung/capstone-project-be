@@ -4,14 +4,19 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In } from 'typeorm';
+import { Repository } from 'typeorm';
 import { Coach } from '@app/database/entities/coach.entity';
 import { User } from '@app/database/entities/user.entity';
 import { Credential } from '@app/database/entities/credential.entity';
 import { CoachVerificationStatus } from '@app/shared/enums/coach.enum';
 import { RegisterCoachDto } from '@app/shared/dtos/coaches/register-coach.dto';
-import { Subject } from '@app/database/entities/subject.entity';
-import { SubjectStatus } from '@app/shared/enums/subject.enum';
+import { Role } from '@app/database/entities/role.entity';
+import { AuthProvider } from '@app/database/entities/auth-provider.entity';
+import { AuthProviderEnum } from '@app/shared/enums/auth.enum';
+import { UserRole } from '@app/shared/enums/user.enum';
+import { ConfigService } from '@app/config';
+import * as bcrypt from 'bcrypt';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class CoachService {
@@ -21,41 +26,75 @@ export class CoachService {
     @InjectRepository(User) private readonly userRepository: Repository<User>,
     @InjectRepository(Credential)
     private readonly credentialRepository: Repository<Credential>,
-    @InjectRepository(Subject)
-    private readonly subjectRepository: Repository<Subject>,
+    @InjectRepository(Role)
+    private readonly roleRepository: Repository<Role>,
+    private readonly configService: ConfigService,
+    private readonly jwtService: JwtService,
   ) {}
 
-  async registerCoach(userId: number, data: RegisterCoachDto): Promise<Coach> {
-    const user = await this.userRepository.findOne({ where: { id: userId } });
-    if (!user) throw new NotFoundException('User not found');
+  async registerCoach(data: RegisterCoachDto): Promise<Coach> {
+    // Check email already exists
+    const existingUser = await this.userRepository.findOne({
+      where: { email: data.email },
+    });
+    if (existingUser) {
+      throw new BadRequestException('Email đã tồn tại');
+    }
 
+    // Check coach profile already exists (if user exists)
     const existed = await this.coachRepository.findOne({
-      where: { user: { id: userId } },
+      where: { user: { email: data.email } },
     });
     if (existed) throw new BadRequestException('Coach profile already exists');
 
-    // VALIDATE ONLY subjects with status=PUBLISH may be selected
-    if (data.subjectIds?.length) {
-      const numValid = await this.userRepository.manager.count(Subject, {
-        where: {
-          id: In(data.subjectIds),
-          status: SubjectStatus.PUBLISHED,
-        },
-      });
-      if (numValid !== data.subjectIds.length) {
-        throw new BadRequestException(
-          'Chỉ được chọn subject có trạng thái publish!',
-        );
-      }
+    // Hash password
+    const passwordHashed = await bcrypt.hash(
+      data.password,
+      this.configService.get('password_salt_rounds'),
+    );
+
+    // Get COACH role
+    const coachRole = await this.roleRepository.findOne({
+      where: { name: UserRole.COACH },
+    });
+    if (!coachRole) {
+      throw new BadRequestException('Coach role not found');
     }
 
+    // Create email verification token
+    const emailVerificationToken = await this.jwtService.signAsync(
+      { email: data.email },
+      {
+        secret: this.configService.get('jwt').verify_email_token.secret,
+        expiresIn: this.configService.get('jwt').verify_email_token.expiration,
+      },
+    );
+
+    // Create new user with COACH role
+    const newUser = this.userRepository.create({
+      fullName: data.fullName,
+      email: data.email,
+      password: passwordHashed,
+      role: coachRole,
+      authProviders: [
+        {
+          provider: AuthProviderEnum.LOCAL,
+          providerId: data.email,
+        } as AuthProvider,
+      ],
+      emailVerificationToken,
+    });
+
+    const savedUser = await this.userRepository.save(newUser);
+
+    // Create coach profile
     const coach = this.coachRepository.create({
       bio: data.bio,
       specialties: data.specialties,
       teachingMethods: data.teachingMethods,
       yearOfExperience: data.yearOfExperience,
       verificationStatus: CoachVerificationStatus.UNVERIFIED,
-      user: user,
+      user: savedUser,
     });
 
     const savedCoach = await this.coachRepository.save(coach);
@@ -77,23 +116,12 @@ export class CoachService {
     return savedCoach;
   }
 
-  async verifyCoach(
-    coachId: number,
-    approvedSubjectIds?: number[],
-  ): Promise<void> {
+  async verifyCoach(coachId: number): Promise<void> {
     const coach = await this.coachRepository.findOne({
       where: { id: coachId },
       relations: ['user'],
     });
     if (!coach) throw new NotFoundException('Coach not found');
-
-    // Gán quyền sở hữu subject cho coach nếu có truyền approvedSubjectIds
-    if (approvedSubjectIds && approvedSubjectIds.length > 0) {
-      await this.subjectRepository.update(
-        { id: In(approvedSubjectIds) },
-        { createdBy: coach.user },
-      );
-    }
 
     await this.coachRepository.update(coachId, {
       verificationStatus: CoachVerificationStatus.VERIFIED,

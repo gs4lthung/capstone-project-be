@@ -467,12 +467,12 @@ export class AuthService {
     if (this.customerRoleId !== null) return this.customerRoleId;
 
     const role = await this.roleRepository.findOne({
-      where: { name: UserRole.CUSTOMER },
+      where: { name: UserRole.LEARNER },
     });
 
     if (!role) {
       throw new CustomRpcException(
-        'Customer role not found',
+        'Role not found',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }

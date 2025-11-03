@@ -51,7 +51,7 @@ export class SubjectController {
     pagination: Pagination,
     @SortingParams() sort: Sorting,
     @FilteringParams() filter: Filtering,
-  ): Promise<PaginatedSubject> {
+  ): Promise<any> {
     return this.subjectService.findAll({
       pagination,
       sort,

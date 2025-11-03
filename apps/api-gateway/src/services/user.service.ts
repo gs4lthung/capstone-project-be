@@ -47,15 +47,15 @@ export class UserService extends BaseTypeOrmService<User> {
         this.configService.get('password_salt_rounds'),
       );
 
-      const customerRole = await this.roleRepository.findOne({
-        where: { name: UserRole.CUSTOMER },
+      const learnerRole = await this.roleRepository.findOne({
+        where: { name: UserRole.LEARNER },
       });
 
       const user = this.userRepository.create({
         fullName: data.fullName,
         email: data.email,
         password: passwordHashed,
-        role: data.role ? data.role : customerRole,
+        role: data.role ? data.role : learnerRole,
         isEmailVerified: true,
       });
 
