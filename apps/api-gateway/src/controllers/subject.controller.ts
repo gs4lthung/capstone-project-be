@@ -19,7 +19,6 @@ import { AuthGuard } from '../guards/auth.guard';
 import { RoleGuard } from '../guards/role.guard';
 import { CheckRoles } from '@app/shared/decorators/check-roles.decorator';
 import { UserRole } from '@app/shared/enums/user.enum';
-import { PaginatedSubject } from '@app/shared/dtos/subjects/subject.dto';
 import { FindOptions } from '@app/shared/interfaces/find-options.interface';
 import { PaginationParams } from '@app/shared/decorators/pagination-params.decorator';
 import { Pagination } from '@app/shared/interfaces/pagination.interface';
@@ -51,7 +50,7 @@ export class SubjectController {
     pagination: Pagination,
     @SortingParams() sort: Sorting,
     @FilteringParams() filter: Filtering,
-  ): Promise<PaginatedSubject> {
+  ): Promise<any> {
     return this.subjectService.findAll({
       pagination,
       sort,
