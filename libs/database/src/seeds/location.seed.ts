@@ -44,9 +44,14 @@ export const seedLocations = async (dataSource: DataSource) => {
     console.log(`Seeded ${province.name} with ${districts.length} districts`);
   }
 
-  console.log('Location seeding completed successfully!');
+  console.log('  ✅ Location seeding completed successfully!');
 };
 
+// ============================================
+// Run this file directly (optional)
+// ============================================
+// Uncomment below to run this seed file standalone
+/*
 async function runSeed() {
   await AppDataSource.initialize();
   await seedLocations(AppDataSource);
@@ -54,6 +59,7 @@ async function runSeed() {
 }
 
 runSeed().catch((error) => {
-  console.error('Error seeding users:', error);
+  console.error('Error seeding locations:', error);
   process.exit(1);
 });
+*/

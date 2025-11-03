@@ -159,6 +159,8 @@ import { FeedbackService } from './services/feedback.service';
       Request,
       RequestAction,
       Session,
+      SessionEarning,
+      Attendance,
       Subject,
       Payment,
       Video,

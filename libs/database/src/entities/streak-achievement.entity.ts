@@ -3,7 +3,7 @@ import { Achievement } from './achievement.entity';
 import { IsInt, IsString, MaxLength, Min, MinLength } from 'class-validator';
 import { Field, ObjectType } from '@nestjs/graphql';
 
-@ChildEntity()
+@ChildEntity('STREAK')
 @ObjectType()
 export class StreakAchievement extends Achievement {
   @Field(() => String)
@@ -30,6 +30,4 @@ export class StreakAchievement extends Achievement {
 import { PaginatedResource } from '@app/shared/graphql/paginated-resource';
 
 @ObjectType()
-export class PaginatedStreakAchievement extends PaginatedResource(
-  StreakAchievement,
-) {}
+export class PaginatedStreakAchievement extends PaginatedResource(StreakAchievement) {}
