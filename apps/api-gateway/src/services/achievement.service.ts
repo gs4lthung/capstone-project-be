@@ -18,7 +18,7 @@ import { AchievementProgress } from '@app/database/entities/achievement-progress
 import { LearnerAchievement } from '@app/database/entities/learner-achievement.entity';
 import { User } from '@app/database/entities/user.entity';
 
-// Import DTOs
+// Import DTOs & Enums
 import {
   CreateEventCountAchievementDto,
   CreateStreakAchievementDto,
@@ -27,6 +27,7 @@ import {
   UpdateStreakAchievementDto,
   UpdatePropertyCheckAchievementDto,
   PaginatedAchievement,
+  AchievementType,
 } from '@app/shared/dtos/achievements/achievement.dto';
 
 /**
@@ -683,6 +684,160 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
         page,
         pageSize: size,
         totalPages: Math.ceil(total / size),
+      };
+    } catch (error) {
+      throw ExceptionUtils.wrapAsRpcException(error);
+    }
+  }
+
+  // ============================================
+  // PART 4: STATISTICS & LEADERBOARD
+  // ============================================
+
+  /**
+   * Get general achievement statistics (Public)
+   * @returns AchievementStatsDto
+   */
+  async getStats(): Promise<any> {
+    try {
+      // Đếm tổng số achievements
+      const totalAchievements = await this.achievementRepository.count();
+
+      // Đếm theo type sử dụng child repositories
+      const totalEventCount = await this.eventCountRepository.count();
+      const totalStreak = await this.streakRepository.count();
+      const totalPropertyCheck = await this.propertyCheckRepository.count();
+
+      // Đếm achievements đang active
+      const activeAchievements = await this.achievementRepository.count({
+        where: { isActive: true },
+      });
+
+      return {
+        totalAchievements,
+        totalEventCount,
+        totalStreak,
+        totalPropertyCheck,
+        activeAchievements,
+      };
+    } catch (error) {
+      throw ExceptionUtils.wrapAsRpcException(error);
+    }
+  }
+
+  /**
+   * Get current user's achievement statistics
+   * @returns UserAchievementStatsDto
+   */
+  async getMyStats(): Promise<any> {
+    try {
+      const userId = Number(this.request.user.id);
+
+      // Đếm tổng achievements đã earned
+      const totalEarned = await this.learnerAchievementRepository.count({
+        where: { user: { id: userId } },
+      });
+
+      // Đếm tổng achievements đang in progress (progress > 0 nhưng < 100)
+      const progressRecords = await this.achievementProgressRepository.find({
+        where: { user: { id: userId } },
+      });
+
+      const totalInProgress = progressRecords.filter(
+        p => p.currentProgress > 0 && p.currentProgress < 100,
+      ).length;
+
+      // Tính completion rate
+      const totalActiveAchievements = await this.achievementRepository.count({
+        where: { isActive: true },
+      });
+
+      const completionRate = totalActiveAchievements > 0 
+        ? Math.round((totalEarned / totalActiveAchievements) * 100) 
+        : 0;
+
+      // Lấy achievement được earned gần nhất
+      const lastEarnedRecord = await this.learnerAchievementRepository.findOne({
+        where: { user: { id: userId } },
+        relations: ['achievement'],
+        order: { earnedAt: 'DESC' },
+      });
+
+      const result: any = {
+        totalEarned,
+        totalInProgress,
+        completionRate,
+      };
+
+      if (lastEarnedRecord) {
+        result.lastEarned = {
+          name: lastEarnedRecord.achievement.name,
+          earnedAt: lastEarnedRecord.earnedAt,
+        };
+      }
+
+      return result;
+    } catch (error) {
+      throw ExceptionUtils.wrapAsRpcException(error);
+    }
+  }
+
+  /**
+   * Get leaderboard - top users with most achievements
+   * @param limit - Number of top users to return (default 10)
+   * @returns LeaderboardResponseDto
+   */
+  async getLeaderboard(limit: number = 10): Promise<any> {
+    try {
+      // Check if table has any data first
+      const hasData = await this.learnerAchievementRepository.count();
+      
+      if (hasData === 0) {
+        // Return empty leaderboard if no achievements earned yet
+        return {
+          items: [],
+          total: 0,
+        };
+      }
+
+      // Query để lấy top users với số achievements nhiều nhất
+      const leaderboardData = await this.learnerAchievementRepository
+        .createQueryBuilder('learner_achievement')
+        .select('user.id', 'user_id')
+        .addSelect('user.full_name', 'full_name')
+        .addSelect('user.profile_picture', 'profile_picture')
+        .addSelect('COUNT(learner_achievement.id)', 'total_earned')
+        .addSelect('MAX(learner_achievement.earned_at)', 'last_earned_at')
+        .innerJoin('learner_achievement.user', 'user')
+        .groupBy('user.id')
+        .addGroupBy('user.full_name')
+        .addGroupBy('user.profile_picture')
+        .orderBy('total_earned', 'DESC')
+        .addOrderBy('last_earned_at', 'DESC')
+        .limit(limit)
+        .getRawMany();
+
+      // Đếm tổng số users có achievements
+      const totalUsersWithAchievements = await this.learnerAchievementRepository
+        .createQueryBuilder('learner_achievement')
+        .select('COUNT(DISTINCT learner_achievement.user_id)', 'total')
+        .getRawOne();
+
+      // Map to DTO format với rank
+      const items = leaderboardData.map((record, index) => ({
+        rank: index + 1,
+        user: {
+          id: record.user_id,
+          fullName: record.full_name,
+          profilePicture: record.profile_picture,
+        },
+        totalEarned: parseInt(record.total_earned),
+        lastEarnedAt: record.last_earned_at,
+      }));
+
+      return {
+        items,
+        total: parseInt(totalUsersWithAchievements.total || 0),
       };
     } catch (error) {
       throw ExceptionUtils.wrapAsRpcException(error);

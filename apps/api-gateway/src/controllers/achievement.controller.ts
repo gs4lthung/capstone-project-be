@@ -31,6 +31,9 @@ import {
   PaginatedUserAchievementProgress,
   UserAchievementProgressDto,
   PaginatedEarnedAchievement,
+  AchievementStatsDto,
+  UserAchievementStatsDto,
+  LeaderboardResponseDto,
 } from '@app/shared/dtos/achievements/achievement.dto';
 import { AuthGuard } from '../guards/auth.guard';
 import { RoleGuard } from '../guards/role.guard';
@@ -334,7 +337,7 @@ export class AchievementController {
   })
   @ApiOperation({
     summary: 'Get all achievements',
-    description: 'Retrieve paginated list of achievements with optional filters',
+    description: 'Retrieve paginated list of achievements with optional filters (Public - No authentication required)',
   })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -353,6 +356,9 @@ export class AchievementController {
    * Default values:
    * → page = 1 nếu không truyền
    * → pageSize = 10 nếu không truyền
+   * 
+   * ⚠️ AUTHENTICATION REQUIRED
+   * → User phải login (có JWT token)
    */
   async findAll(
     @Query('page') page: number = 1,
@@ -371,6 +377,174 @@ export class AchievementController {
     };
 
     return this.achievementService.findAll(findOptions);
+  }
+
+  // ============================================
+  // STATISTICS & LEADERBOARD ENDPOINTS
+  // ============================================
+  // Note: These MUST come BEFORE @Get(':id') to avoid route conflicts
+  // Otherwise "stats" and "leaderboard" will be interpreted as :id values
+
+  /**
+   * Get general achievement statistics
+   * Public - No authentication required
+   */
+  @Get('stats')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Get achievement statistics',
+    description: 'Get general statistics about all achievements in the system (Public - No authentication required)',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Achievement statistics retrieved successfully',
+    type: AchievementStatsDto,
+  })
+  async getStats(): Promise<AchievementStatsDto> {
+    return this.achievementService.getStats();
+  }
+
+  /**
+   * Get current user's achievement statistics
+   * Authenticated endpoint - user can view their own stats
+   */
+  @Get('my-stats')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Get my achievement statistics',
+    description: 'Get personal achievement statistics for the current authenticated user',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'User achievement statistics retrieved successfully',
+    type: UserAchievementStatsDto,
+  })
+  @UseGuards(AuthGuard)
+  async getMyStats(): Promise<UserAchievementStatsDto> {
+    return this.achievementService.getMyStats();
+  }
+
+  /**
+   * Get achievement leaderboard
+   * Public - No authentication required
+   */
+  @Get('leaderboard')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Get achievement leaderboard',
+    description: 'Get top users with the most achievements earned (Public - No authentication required)',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Number of top users to return (default: 10, max: 100)',
+    example: 10,
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Leaderboard retrieved successfully',
+    type: LeaderboardResponseDto,
+  })
+  async getLeaderboard(
+    @Query('limit') limit: number = 10,
+  ): Promise<LeaderboardResponseDto> {
+    const validatedLimit = Math.min(Math.max(limit, 1), 100);
+    return this.achievementService.getLeaderboard(validatedLimit);
+  }
+
+  // =====================================================================================================================
+  // USER ACHIEVEMENT PROGRESS ENDPOINTS
+  // =====================================================================================================================
+  // NOTE: These MUST come BEFORE @Get(':id') to avoid route conflicts
+
+  @Get('my-progress')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Get my achievement progress',
+    description: 'Get all achievement progress for the current authenticated user',
+  })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: 'Page number (default: 1)',
+  })
+  @ApiQuery({
+    name: 'pageSize',
+    required: false,
+    type: Number,
+    description: 'Number of items per page (default: 10, max: 100)',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'User achievement progress retrieved successfully',
+    type: PaginatedUserAchievementProgress,
+  })
+  @UseGuards(AuthGuard)
+  async getMyProgress(
+    @Query('page') page: number = AchievementController.DEFAULT_PAGE,
+    @Query('pageSize')
+    pageSize: number = AchievementController.DEFAULT_PAGE_SIZE,
+  ): Promise<PaginatedUserAchievementProgress> {
+    const validatedPageSize = Math.min(
+      pageSize,
+      AchievementController.MAX_PAGE_SIZE,
+    );
+    const findOptions: FindOptions = {
+      pagination: {
+        page: page,
+        size: validatedPageSize,
+        offset: (page - 1) * validatedPageSize,
+      } as Pagination,
+    };
+    return this.achievementService.getMyProgress(findOptions);
+  }
+
+  @Get('my-earned')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Get my earned achievements',
+    description: 'Get all achievements that the current user has earned (completed)',
+  })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: 'Page number (default: 1)',
+  })
+  @ApiQuery({
+    name: 'pageSize',
+    required: false,
+    type: Number,
+    description: 'Number of items per page (default: 10, max: 100)',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Earned achievements retrieved successfully',
+    type: PaginatedEarnedAchievement,
+  })
+  @UseGuards(AuthGuard)
+  async getMyEarnedAchievements(
+    @Query('page') page: number = AchievementController.DEFAULT_PAGE,
+    @Query('pageSize')
+    pageSize: number = AchievementController.DEFAULT_PAGE_SIZE,
+  ): Promise<PaginatedEarnedAchievement> {
+    const validatedPageSize = Math.min(
+      pageSize,
+      AchievementController.MAX_PAGE_SIZE,
+    );
+    const findOptions: FindOptions = {
+      pagination: {
+        page: page,
+        size: validatedPageSize,
+        offset: (page - 1) * validatedPageSize,
+      } as Pagination,
+    };
+    return this.achievementService.getMyEarnedAchievements(findOptions);
   }
 
   /**
@@ -417,7 +591,7 @@ export class AchievementController {
   })
   @ApiOperation({
     summary: 'Get achievement by ID',
-    description: 'Retrieve detailed information about a specific achievement',
+    description: 'Retrieve detailed information about a specific achievement (Public - No authentication required)',
   })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -435,6 +609,9 @@ export class AchievementController {
    * → Extract path parameter từ URL
    * → VD: /achievements/5 → id = 5
    * → NestJS tự động convert string "5" → number 5
+   * 
+   * ⚠️ AUTHENTICATION REQUIRED
+   * → User phải login (có JWT token)
    */
   async findOne(@Param('id') id: number): Promise<Achievement> {
     return this.achievementService.findOne(id);
@@ -665,52 +842,8 @@ export class AchievementController {
   }
 
   // =====================================================================================================================
-  // USER ACHIEVEMENT PROGRESS ENDPOINTS (Phần 2)
+  // SPECIFIC ACHIEVEMENT PROGRESS ENDPOINT (with :id parameter)
   // =====================================================================================================================
-
-  @Get('my-progress')
-  @HttpCode(HttpStatus.OK)
-  @ApiBearerAuth()
-  @ApiOperation({
-    summary: 'Get my achievement progress',
-    description: 'Get all achievement progress for the current authenticated user',
-  })
-  @ApiQuery({
-    name: 'page',
-    required: false,
-    type: Number,
-    description: 'Page number (default: 1)',
-  })
-  @ApiQuery({
-    name: 'pageSize',
-    required: false,
-    type: Number,
-    description: 'Number of items per page (default: 10, max: 100)',
-  })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'User achievement progress retrieved successfully',
-    type: PaginatedUserAchievementProgress,
-  })
-  @UseGuards(AuthGuard)
-  async getMyProgress(
-    @Query('page') page: number = AchievementController.DEFAULT_PAGE,
-    @Query('pageSize')
-    pageSize: number = AchievementController.DEFAULT_PAGE_SIZE,
-  ): Promise<PaginatedUserAchievementProgress> {
-    const validatedPageSize = Math.min(
-      pageSize,
-      AchievementController.MAX_PAGE_SIZE,
-    );
-    const findOptions: FindOptions = {
-      pagination: {
-        page: page,
-        size: validatedPageSize,
-        offset: (page - 1) * validatedPageSize,
-      } as Pagination,
-    };
-    return this.achievementService.getMyProgress(findOptions);
-  }
 
   @Get(':id/my-progress')
   @HttpCode(HttpStatus.OK)
@@ -781,54 +914,6 @@ export class AchievementController {
       } as Pagination,
     };
     return this.achievementService.getUserProgress(userId, findOptions);
-  }
-
-  // =====================================================================================================================
-  // EARNED ACHIEVEMENTS ENDPOINTS (Phần 3)
-  // =====================================================================================================================
-
-  @Get('my-earned')
-  @HttpCode(HttpStatus.OK)
-  @ApiBearerAuth()
-  @ApiOperation({
-    summary: 'Get my earned achievements',
-    description: 'Get all achievements that the current user has earned (completed)',
-  })
-  @ApiQuery({
-    name: 'page',
-    required: false,
-    type: Number,
-    description: 'Page number (default: 1)',
-  })
-  @ApiQuery({
-    name: 'pageSize',
-    required: false,
-    type: Number,
-    description: 'Number of items per page (default: 10, max: 100)',
-  })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Earned achievements retrieved successfully',
-    type: PaginatedEarnedAchievement,
-  })
-  @UseGuards(AuthGuard)
-  async getMyEarnedAchievements(
-    @Query('page') page: number = AchievementController.DEFAULT_PAGE,
-    @Query('pageSize')
-    pageSize: number = AchievementController.DEFAULT_PAGE_SIZE,
-  ): Promise<PaginatedEarnedAchievement> {
-    const validatedPageSize = Math.min(
-      pageSize,
-      AchievementController.MAX_PAGE_SIZE,
-    );
-    const findOptions: FindOptions = {
-      pagination: {
-        page: page,
-        size: validatedPageSize,
-        offset: (page - 1) * validatedPageSize,
-      } as Pagination,
-    };
-    return this.achievementService.getMyEarnedAchievements(findOptions);
   }
 
   @Get('users/:userId/earned')

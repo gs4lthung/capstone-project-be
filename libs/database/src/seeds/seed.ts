@@ -1,7 +1,11 @@
 import { DataSource } from 'typeorm';
 import { AppDataSource } from '../data-source';
+import { roleSeed } from './role.seed';
+import { seedBanks } from './bank.seed';
+import { seedLocations } from './location.seed';
 import { userSeed } from './user.seed';
 import { achievementSeed } from './achievement.seed';
+import { learnerAchievementSeed } from './learner-achievement.seed';
 
 /**
  * ============================================
@@ -9,14 +13,18 @@ import { achievementSeed } from './achievement.seed';
  * ============================================
  * File này chạy tất cả các seed theo thứ tự
  * 
- * Thứ tự quan trọng:
- * 1. user.seed - Tạo users (bao gồm admin)
- * 2. achievement.seed - Tạo achievements (cần admin user)
+ * Thứ tự quan trọng (dependencies):
+ * 1. role.seed - Tạo roles (ADMIN, COACH, LEARNER, CUSTOMER)
+ * 2. bank.seed - Tạo danh sách ngân hàng
+ * 3. location.seed - Tạo tỉnh/thành phố, quận/huyện
+ * 4. user.seed - Tạo users, wallets (cần roles)
+ * 5. achievement.seed - Tạo achievements (cần admin user)
+ * 6. learner-achievement.seed - Tạo earned achievements & progress (cần users & achievements)
  */
 
 async function runSeed() {
   console.log('\n' + '='.repeat(60));
-  console.log('🌱 STARTING DATABASE SEEDING');
+  console.log('🌱 STARTING COMPLETE DATABASE SEEDING');
   console.log('='.repeat(60) + '\n');
 
   let dataSource: DataSource;
@@ -33,7 +41,34 @@ async function runSeed() {
     // Run seeds in order
     // ============================================
     
-    // 1. User seed (includes roles, users, wallets)
+    // 1. Role seed (MUST run first)
+    console.log('👑 Running ROLE seed...');
+    try {
+      await roleSeed(dataSource);
+      console.log('✅ Role seed completed!\n');
+    } catch (error) {
+      console.log('⚠️  Role seed skipped (roles already exist)\n');
+    }
+
+    // 2. Bank seed
+    console.log('🏦 Running BANK seed...');
+    try {
+      await seedBanks(dataSource);
+      console.log('✅ Bank seed completed!\n');
+    } catch (error) {
+      console.log('⚠️  Bank seed skipped (banks already exist)\n');
+    }
+
+    // 3. Location seed
+    console.log('🌍 Running LOCATION seed...');
+    try {
+      await seedLocations(dataSource);
+      console.log('✅ Location seed completed!\n');
+    } catch (error) {
+      console.log('⚠️  Location seed skipped (locations already exist)\n');
+    }
+
+    // 4. User seed (includes users, wallets, learners, coaches)
     console.log('👥 Running USER seed...');
     try {
       await userSeed(dataSource);
@@ -42,10 +77,19 @@ async function runSeed() {
       console.log('⚠️  User seed skipped (users already exist)\n');
     }
 
-    // 2. Achievement seed
+    // 5. Achievement seed
     console.log('🏆 Running ACHIEVEMENT seed...');
     await achievementSeed(dataSource);
     console.log('✅ Achievement seed completed!\n');
+
+    // 6. Learner Achievement seed (TEST DATA for leaderboard)
+    console.log('🏅 Running LEARNER ACHIEVEMENT seed (test data)...');
+    try {
+      await learnerAchievementSeed(dataSource);
+      console.log('✅ Learner Achievement seed completed!\n');
+    } catch (error) {
+      console.log('⚠️  Learner Achievement seed skipped (data already exists)\n');
+    }
 
     // ============================================
     // Success summary

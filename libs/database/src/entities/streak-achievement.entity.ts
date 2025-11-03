@@ -4,9 +4,7 @@ import { IsInt, IsString, MaxLength, Min, MinLength } from 'class-validator';
 import { Field, ObjectType } from '@nestjs/graphql';
 
 @ChildEntity('STREAK')
-@ChildEntity()
 @ObjectType()
-
 export class StreakAchievement extends Achievement {
   @Field(() => String)
   @Column({ name: 'event_name', type: 'varchar', length: 25 })

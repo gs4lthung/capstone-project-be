@@ -5,7 +5,6 @@ import { Field, ObjectType } from '@nestjs/graphql';
 import { PaginatedResource } from '@app/shared/graphql/paginated-resource';
 
 @ChildEntity('EVENT_COUNT')
-@ChildEntity()
 @ObjectType()
 export class EventCountAchievement extends Achievement {
   @Column({ name: 'event_name', type: 'varchar', length: 100 })

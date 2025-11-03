@@ -148,6 +148,8 @@ import { AchievementService } from './services/achievement.service';
       Request,
       RequestAction,
       Session,
+      SessionEarning,
+      Attendance,
       Subject,
       Payment,
       Lesson,
