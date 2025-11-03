@@ -1,10 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
   IsArray,
+  IsEmail,
   IsInt,
   IsNotEmpty,
   IsOptional,
   IsString,
+  IsStrongPassword,
   Max,
   Min,
   ValidateNested,
@@ -40,6 +42,34 @@ class RegisterCoachCredentialDto {
 }
 
 export class RegisterCoachDto {
+  @ApiProperty({ example: 'John Doe' })
+  @IsString()
+  @IsNotEmpty()
+  fullName: string;
+
+  @ApiProperty({ example: 'coach@example.com' })
+  @IsEmail()
+  @IsNotEmpty()
+  email: string;
+
+  @ApiProperty({ example: 'Password123@' })
+  @IsString()
+  @IsNotEmpty()
+  @IsStrongPassword(
+    {
+      minLength: 8,
+      minLowercase: 1,
+      minUppercase: 1,
+      minNumbers: 1,
+      minSymbols: 1,
+    },
+    {
+      message:
+        'Password must be strong (at least 8 characters, 1 lowercase, 1 uppercase, 1 number, and 1 symbol)',
+    },
+  )
+  password: string;
+
   @ApiProperty({ example: 'I have 10 years of experience coaching tennis.' })
   @IsString()
   @IsNotEmpty()
@@ -70,12 +100,6 @@ export class RegisterCoachDto {
   @Min(0)
   @Max(80)
   yearOfExperience: number;
-
-  @ApiProperty({ type: [Number], example: [1, 2, 3], required: true })
-  @IsArray()
-  @IsInt({ each: true })
-  @IsNotEmpty({ each: true })
-  subjectIds: number[];
 
   @ApiProperty({ type: [RegisterCoachCredentialDto], required: false })
   @IsOptional()
