@@ -5,9 +5,7 @@ import {
   HttpStatus,
   Param,
   Post,
-  UploadedFile,
   UseGuards,
-  UseInterceptors,
 } from '@nestjs/common';
 import { LessonService } from '../services/lesson.service';
 import { ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
@@ -16,7 +14,6 @@ import { UserRole } from '@app/shared/enums/user.enum';
 import { AuthGuard } from '../guards/auth.guard';
 import { RoleGuard } from '../guards/role.guard';
 import { CreateLessonRequestDto } from '@app/shared/dtos/lessons/lesson.dto';
-import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('lessons')
 export class LessonController {
@@ -36,12 +33,10 @@ export class LessonController {
   })
   @CheckRoles(UserRole.COACH)
   @UseGuards(AuthGuard, RoleGuard)
-  @UseInterceptors(FileInterceptor('video'))
   async createSubject(
     @Param('id') id: number,
-    @UploadedFile() videoFile: Express.Multer.File,
     @Body() data: CreateLessonRequestDto,
   ) {
-    return this.lessonService.create(id, videoFile, data);
+    return this.lessonService.create(id, data);
   }
 }

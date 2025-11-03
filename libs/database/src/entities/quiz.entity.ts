@@ -1,9 +1,9 @@
 import {
   Column,
   Entity,
+  JoinColumn,
   ManyToOne,
   OneToMany,
-  OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Field, ObjectType } from '@nestjs/graphql';
@@ -44,7 +44,8 @@ export class Quiz {
   createdBy: User;
 
   @Field(() => Lesson, { nullable: true })
-  @OneToOne(() => Lesson, (lesson) => lesson.quiz)
+  @ManyToOne(() => Lesson, (lesson) => lesson.quizzes)
+  @JoinColumn({ name: 'lesson_id' })
   lesson: Lesson;
 }
 

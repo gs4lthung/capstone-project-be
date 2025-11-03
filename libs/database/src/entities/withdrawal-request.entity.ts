@@ -20,6 +20,10 @@ export class WithdrawalRequest {
   @PrimaryGeneratedColumn()
   id: number;
 
+  @Field(() => String)
+  @Column({ type: 'varchar', length: 255 })
+  referenceId: string;
+
   @Field(() => Number)
   @Column({ type: 'numeric', precision: 15, scale: 3 })
   amount: number;

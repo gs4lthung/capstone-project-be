@@ -13,7 +13,6 @@ import {
   JoinColumn,
   ManyToOne,
   OneToMany,
-  OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
@@ -74,21 +73,19 @@ export class Lesson {
   @OneToMany(() => Session, (session) => session.lesson)
   sessions: Session[];
 
-  @Field(() => Video, { nullable: true })
-  @OneToOne(() => Video, (video) => video.lesson, {
-    cascade: ['insert'],
+  @Field(() => [Video], { nullable: true })
+  @OneToMany(() => Video, (video) => video.lesson, {
+    cascade: ['insert', 'update'],
     eager: true,
   })
-  @JoinColumn({ name: 'video_id' })
-  video: Video;
+  videos: Video[];
 
-  @Field(() => Quiz, { nullable: true })
-  @OneToOne(() => Quiz, (quiz) => quiz.lesson, {
-    cascade: ['insert'],
+  @Field(() => [Quiz], { nullable: true })
+  @OneToMany(() => Quiz, (quiz) => quiz.lesson, {
+    cascade: ['insert', 'update'],
     eager: true,
   })
-  @JoinColumn({ name: 'quiz_id' })
-  quiz: Quiz;
+  quizzes: Quiz[];
 
   @Field(() => Subject)
   @ManyToOne(() => Subject, (subject) => subject.lessons, {

@@ -1,4 +1,5 @@
 import {
+  Body,
   Controller,
   Get,
   HttpCode,
@@ -16,7 +17,10 @@ import { AuthGuard } from '../guards/auth.guard';
 import { RoleGuard } from '../guards/role.guard';
 import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
 import { Payment } from '@app/database/entities/payment.entity';
-import { CheckoutResponseDataType } from '@app/shared/dtos/payments/payment.dto';
+import {
+  CheckoutResponseDataType,
+  CreatePayoutRequestDto,
+} from '@app/shared/dtos/payments/payment.dto';
 
 @Controller('payments')
 export class PaymentController {
@@ -26,7 +30,7 @@ export class PaymentController {
   @HttpCode(HttpStatus.CREATED)
   @ApiBearerAuth()
   @ApiOperation({
-    tags: ['Courses'],
+    tags: ['Payments'],
     summary: 'Create a payment link for a course',
     description: 'Create a payment link for a course',
   })
@@ -43,6 +47,12 @@ export class PaymentController {
   }
 
   @Get('course/success')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    tags: ['Payments'],
+    summary: 'Handle payment success callback',
+    description: 'Handle payment success callback from PayOS',
+  })
   async handlePaymentSuccess(
     @Query('id') id: CheckoutResponseDataType['id'],
     @Query('code') code: CheckoutResponseDataType['code'],
@@ -60,6 +70,12 @@ export class PaymentController {
   }
 
   @Get('course/cancel')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    tags: ['Payments'],
+    summary: 'Handle payment success callback',
+    description: 'Handle payment success callback from PayOS',
+  })
   async handlePaymentCancel(
     @Query('id') id: CheckoutResponseDataType['id'],
     @Query('code') code: CheckoutResponseDataType['code'],
@@ -74,5 +90,23 @@ export class PaymentController {
       status,
       cancel,
     });
+  }
+
+  @Post('payouts')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiBearerAuth()
+  @ApiOperation({
+    tags: ['Payments'],
+    summary: 'Create a payout request to bank',
+    description: 'Create a payout request to bank',
+  })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: 'Payout request created successfully',
+  })
+  @CheckRoles(UserRole.COACH)
+  @UseGuards(AuthGuard, RoleGuard)
+  async createPayoutRequest(@Body() data: CreatePayoutRequestDto) {
+    return this.paymentService.createPayoutRequest(data);
   }
 }

@@ -72,7 +72,7 @@ export class Session {
   @Column({ name: 'end_time', type: 'time' })
   endTime: string;
 
-  @Field(()=> Number)
+  @Field(() => Number)
   @Column({ name: 'duration_in_minutes', type: 'int', nullable: true })
   durationInMinutes?: number;
 

@@ -58,12 +58,16 @@ export class Configuration {
   updatedAt: Date;
 
   @Field(() => User, { nullable: true })
-  @ManyToOne(() => User, (user) => user.createdConfigurations)
+  @ManyToOne(() => User, (user) => user.createdConfigurations, {
+    nullable: true,
+  })
   @JoinColumn({ name: 'created_by' })
   createdBy: User;
 
   @Field(() => User, { nullable: true })
-  @ManyToOne(() => User, (user) => user.updatedConfigurations)
+  @ManyToOne(() => User, (user) => user.updatedConfigurations, {
+    nullable: true,
+  })
   @JoinColumn({ name: 'updated_by' })
   updatedBy: User;
 }

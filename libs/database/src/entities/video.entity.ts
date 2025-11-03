@@ -2,9 +2,9 @@ import { CoachVideoStatus } from '@app/shared/enums/coach.enum';
 import {
   Column,
   Entity,
+  JoinColumn,
   ManyToOne,
   OneToMany,
-  OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Field, ObjectType } from '@nestjs/graphql';
@@ -70,7 +70,8 @@ export class Video {
   uploadedBy: User;
 
   @Field(() => Lesson, { nullable: true })
-  @OneToOne(() => Lesson, (lesson) => lesson.video)
+  @ManyToOne(() => Lesson, (lesson) => lesson.videos)
+  @JoinColumn({ name: 'lesson_id' })
   lesson: Lesson;
 
   @Field(() => [AiVideoComparisonResult], { nullable: true })

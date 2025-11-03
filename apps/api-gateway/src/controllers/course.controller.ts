@@ -74,7 +74,7 @@ export class CourseController {
       'Allows a learner to cancel their enrollment in a specific course',
   })
   @UseGuards(AuthGuard)
-  async cancelLearnerEnrollment(
+  async learnerCancelEnrollment(
     @Param('id') courseId: number,
   ): Promise<CustomApiResponse<void>> {
     return this.courseService.learnerCancelCourse(courseId);

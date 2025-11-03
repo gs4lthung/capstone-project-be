@@ -34,11 +34,11 @@ import {
  * ACHIEVEMENT SERVICE
  * ============================================
  * Service này quản lý TẤT CẢ business logic liên quan đến Achievement
- * 
+ *
  * @Injectable({ scope: Scope.REQUEST })
  * → Mỗi HTTP request tạo 1 instance mới của service này
  * → Cho phép inject REQUEST để lấy thông tin user hiện tại
- * 
+ *
  * extends BaseTypeOrmService<Achievement>
  * → Kế thừa các method CRUD cơ bản: find(), findOne(), update(), delete()
  * → Không cần viết lại code pagination, filtering, sorting
@@ -56,7 +56,7 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
     /**
      * @InjectRepository()
      * Inject TypeORM repositories để tương tác với database
-     * 
+     *
      * Lưu ý: Achievement dùng Single Table Inheritance
      * → 1 repository nhưng có thể query theo type
      */
@@ -95,10 +95,10 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
    * ─────────────────────────────────────
    * Tạo achievement kiểu "đếm số lần sự kiện"
    * VD: "Hoàn thành 50 bài học", "Tham gia 10 buổi học"
-   * 
+   *
    * @param data - DTO chứa thông tin achievement
    * @returns CustomApiResponse với status 201 CREATED
-   * 
+   *
    * Flow:
    * 1. Tạo entity mới từ DTO
    * 2. Gán createdBy = user hiện tại (từ JWT)
@@ -108,31 +108,21 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
   async createEventCount(
     data: CreateEventCountAchievementDto,
   ): Promise<CustomApiResponse<void>> {
-    try {
-      // Tạo entity mới (chưa save DB)
-      const achievement = this.eventCountRepository.create({
-        ...data, // Spread all fields từ DTO
-        createdBy: this.request.user as User, // Lấy user từ JWT token
-        isActive: data.isActive ?? true, // Default true nếu không truyền
-      });
+    // Tạo entity mới (chưa save DB)
+    const achievement = this.eventCountRepository.create({
+      ...data, // Spread all fields từ DTO
+      createdBy: this.request.user as User, // Lấy user từ JWT token
+      isActive: data.isActive ?? true, // Default true nếu không truyền
+    });
 
-      // Save vào database
-      await this.eventCountRepository.save(achievement);
+    // Save vào database
+    await this.eventCountRepository.save(achievement);
 
-      // Trả về response success
-      return new CustomApiResponse<void>(
-        HttpStatus.CREATED,
-        'ACHIEVEMENT.CREATE_SUCCESS',
-      );
-    } catch (error) {
-      /**
-       * ExceptionUtils.wrapAsRpcException()
-       * → Wrap error thành CustomRpcException
-       * → ErrorLoggingFilter sẽ catch và log vào DB
-       * → Trả về response error cho client
-       */
-      throw ExceptionUtils.wrapAsRpcException(error);
-    }
+    // Trả về response success
+    return new CustomApiResponse<void>(
+      HttpStatus.CREATED,
+      'ACHIEVEMENT.CREATE_SUCCESS',
+    );
   }
 
   /**
@@ -144,22 +134,18 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
   async createStreak(
     data: CreateStreakAchievementDto,
   ): Promise<CustomApiResponse<void>> {
-    try {
-      const achievement = this.streakRepository.create({
-        ...data,
-        createdBy: this.request.user as User,
-        isActive: data.isActive ?? true,
-      });
+    const achievement = this.streakRepository.create({
+      ...data,
+      createdBy: this.request.user as User,
+      isActive: data.isActive ?? true,
+    });
 
-      await this.streakRepository.save(achievement);
+    await this.streakRepository.save(achievement);
 
-      return new CustomApiResponse<void>(
-        HttpStatus.CREATED,
-        'ACHIEVEMENT.CREATE_SUCCESS',
-      );
-    } catch (error) {
-      throw ExceptionUtils.wrapAsRpcException(error);
-    }
+    return new CustomApiResponse<void>(
+      HttpStatus.CREATED,
+      'ACHIEVEMENT.CREATE_SUCCESS',
+    );
   }
 
   /**
@@ -171,31 +157,27 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
   async createPropertyCheck(
     data: CreatePropertyCheckAchievementDto,
   ): Promise<CustomApiResponse<void>> {
-    try {
-      // Validate comparison operator
-      const validOperators = ['==', '!=', '>', '<', '>=', '<='];
-      if (!validOperators.includes(data.comparisonOperator)) {
-        throw new CustomRpcException(
-          `Invalid comparison operator. Must be one of: ${validOperators.join(', ')}`,
-          HttpStatus.BAD_REQUEST,
-        );
-      }
-
-      const achievement = this.propertyCheckRepository.create({
-        ...data,
-        createdBy: this.request.user as User,
-        isActive: data.isActive ?? true,
-      });
-
-      await this.propertyCheckRepository.save(achievement);
-
-      return new CustomApiResponse<void>(
-        HttpStatus.CREATED,
-        'ACHIEVEMENT.CREATE_SUCCESS',
+    // Validate comparison operator
+    const validOperators = ['==', '!=', '>', '<', '>=', '<='];
+    if (!validOperators.includes(data.comparisonOperator)) {
+      throw new CustomRpcException(
+        `Invalid comparison operator. Must be one of: ${validOperators.join(', ')}`,
+        HttpStatus.BAD_REQUEST,
       );
-    } catch (error) {
-      throw ExceptionUtils.wrapAsRpcException(error);
     }
+
+    const achievement = this.propertyCheckRepository.create({
+      ...data,
+      createdBy: this.request.user as User,
+      isActive: data.isActive ?? true,
+    });
+
+    await this.propertyCheckRepository.save(achievement);
+
+    return new CustomApiResponse<void>(
+      HttpStatus.CREATED,
+      'ACHIEVEMENT.CREATE_SUCCESS',
+    );
   }
 
   // ============================================
@@ -206,17 +188,17 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
    * GET ALL ACHIEVEMENTS (with pagination, filter, sort)
    * ─────────────────────────────────────────────────────
    * Lấy danh sách achievements có phân trang, filter, sort
-   * 
+   *
    * @param findOptions - Object chứa: pagination, filter, sort
    * @returns PaginatedAchievement { items: [], total, page, pageSize }
-   * 
+   *
    * Ví dụ findOptions:
    * {
    *   pagination: { page: 1, size: 10, offset: 0 },
    *   filter: { property: 'isActive', value: true, rule: 'EQUALS' },
    *   sort: { property: 'createdAt', direction: 'DESC' }
    * }
-   * 
+   *
    * super.find() từ BaseTypeOrmService sẽ:
    * 1. Build query với WHERE, ORDER BY, LIMIT, OFFSET
    * 2. Execute query
@@ -231,36 +213,32 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
    * GET ONE ACHIEVEMENT BY ID
    * ─────────────────────────────────────
    * Lấy chi tiết 1 achievement theo ID
-   * 
+   *
    * @param id - Achievement ID
    * @returns Achievement entity với đầy đủ thông tin
    * @throws CustomRpcException nếu không tìm thấy
-   * 
+   *
    * Relations được load:
    * - createdBy: User tạo achievement
    * - achievementProgresses: Tiến độ của users (nếu cần)
    */
   async findOne(id: number): Promise<Achievement> {
-    try {
-      const achievement = await this.achievementRepository.findOne({
-        where: { id },
-        relations: ['createdBy'], // Load thông tin user tạo achievement
-        withDeleted: false, // Không lấy records đã bị soft delete
-      });
+    const achievement = await this.achievementRepository.findOne({
+      where: { id },
+      relations: ['createdBy'], // Load thông tin user tạo achievement
+      withDeleted: false, // Không lấy records đã bị soft delete
+    });
 
-      // Nếu không tìm thấy → throw error
-      if (!achievement) {
-        throw new CustomRpcException(
-          'Achievement not found',
-          HttpStatus.NOT_FOUND,
-          `achievement:${id}`,
-        );
-      }
-
-      return achievement;
-    } catch (error) {
-      throw ExceptionUtils.wrapAsRpcException(error);
+    // Nếu không tìm thấy → throw error
+    if (!achievement) {
+      throw new CustomRpcException(
+        'Achievement not found',
+        HttpStatus.NOT_FOUND,
+        `achievement:${id}`,
+      );
     }
+
+    return achievement;
   }
 
   // ============================================
@@ -271,17 +249,17 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
    * UPDATE EVENT COUNT ACHIEVEMENT
    * ─────────────────────────────────────
    * Cập nhật achievement kiểu EVENT_COUNT
-   * 
+   *
    * @param id - Achievement ID
    * @param data - UpdateEventCountAchievementDto (partial fields)
    * @returns Success response
-   * 
+   *
    * Flow:
    * 1. Tìm achievement theo ID
    * 2. Validate type === EVENT_COUNT
    * 3. Update fields từ DTO
    * 4. Save vào DB
-   * 
+   *
    * NOTE: Chỉ update fields được truyền trong DTO
    * VD: { targetCount: 100 } → Chỉ update targetCount, giữ nguyên các field khác
    */
@@ -289,37 +267,33 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
     id: number,
     data: UpdateEventCountAchievementDto,
   ): Promise<CustomApiResponse<void>> {
-    try {
-      // Tìm achievement
-      const achievement = await this.eventCountRepository.findOne({
-        where: { id },
-        withDeleted: false,
-      });
+    // Tìm achievement
+    const achievement = await this.eventCountRepository.findOne({
+      where: { id },
+      withDeleted: false,
+    });
 
-      if (!achievement) {
-        throw new CustomRpcException(
-          'Achievement not found',
-          HttpStatus.NOT_FOUND,
-        );
-      }
-
-      /**
-       * Object.assign(target, source)
-       * → Copy tất cả properties từ source vào target
-       * → Chỉ update fields có trong data (partial update)
-       */
-      Object.assign(achievement, data);
-
-      // Save changes
-      await this.eventCountRepository.save(achievement);
-
-      return new CustomApiResponse<void>(
-        HttpStatus.OK,
-        'ACHIEVEMENT.UPDATE_SUCCESS',
+    if (!achievement) {
+      throw new CustomRpcException(
+        'Achievement not found',
+        HttpStatus.NOT_FOUND,
       );
-    } catch (error) {
-      throw ExceptionUtils.wrapAsRpcException(error);
     }
+
+    /**
+     * Object.assign(target, source)
+     * → Copy tất cả properties từ source vào target
+     * → Chỉ update fields có trong data (partial update)
+     */
+    Object.assign(achievement, data);
+
+    // Save changes
+    await this.eventCountRepository.save(achievement);
+
+    return new CustomApiResponse<void>(
+      HttpStatus.OK,
+      'ACHIEVEMENT.UPDATE_SUCCESS',
+    );
   }
 
   /**
@@ -331,29 +305,25 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
     id: number,
     data: UpdateStreakAchievementDto,
   ): Promise<CustomApiResponse<void>> {
-    try {
-      const achievement = await this.streakRepository.findOne({
-        where: { id },
-        withDeleted: false,
-      });
+    const achievement = await this.streakRepository.findOne({
+      where: { id },
+      withDeleted: false,
+    });
 
-      if (!achievement) {
-        throw new CustomRpcException(
-          'Achievement not found',
-          HttpStatus.NOT_FOUND,
-        );
-      }
-
-      Object.assign(achievement, data);
-      await this.streakRepository.save(achievement);
-
-      return new CustomApiResponse<void>(
-        HttpStatus.OK,
-        'ACHIEVEMENT.UPDATE_SUCCESS',
+    if (!achievement) {
+      throw new CustomRpcException(
+        'Achievement not found',
+        HttpStatus.NOT_FOUND,
       );
-    } catch (error) {
-      throw ExceptionUtils.wrapAsRpcException(error);
     }
+
+    Object.assign(achievement, data);
+    await this.streakRepository.save(achievement);
+
+    return new CustomApiResponse<void>(
+      HttpStatus.OK,
+      'ACHIEVEMENT.UPDATE_SUCCESS',
+    );
   }
 
   /**
@@ -365,40 +335,36 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
     id: number,
     data: UpdatePropertyCheckAchievementDto,
   ): Promise<CustomApiResponse<void>> {
-    try {
-      // Validate comparison operator nếu có update
-      if (data.comparisonOperator) {
-        const validOperators = ['==', '!=', '>', '<', '>=', '<='];
-        if (!validOperators.includes(data.comparisonOperator)) {
-          throw new CustomRpcException(
-            `Invalid comparison operator. Must be one of: ${validOperators.join(', ')}`,
-            HttpStatus.BAD_REQUEST,
-          );
-        }
-      }
-
-      const achievement = await this.propertyCheckRepository.findOne({
-        where: { id },
-        withDeleted: false,
-      });
-
-      if (!achievement) {
+    // Validate comparison operator nếu có update
+    if (data.comparisonOperator) {
+      const validOperators = ['==', '!=', '>', '<', '>=', '<='];
+      if (!validOperators.includes(data.comparisonOperator)) {
         throw new CustomRpcException(
-          'Achievement not found',
-          HttpStatus.NOT_FOUND,
+          `Invalid comparison operator. Must be one of: ${validOperators.join(', ')}`,
+          HttpStatus.BAD_REQUEST,
         );
       }
-
-      Object.assign(achievement, data);
-      await this.propertyCheckRepository.save(achievement);
-
-      return new CustomApiResponse<void>(
-        HttpStatus.OK,
-        'ACHIEVEMENT.UPDATE_SUCCESS',
-      );
-    } catch (error) {
-      throw ExceptionUtils.wrapAsRpcException(error);
     }
+
+    const achievement = await this.propertyCheckRepository.findOne({
+      where: { id },
+      withDeleted: false,
+    });
+
+    if (!achievement) {
+      throw new CustomRpcException(
+        'Achievement not found',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    Object.assign(achievement, data);
+    await this.propertyCheckRepository.save(achievement);
+
+    return new CustomApiResponse<void>(
+      HttpStatus.OK,
+      'ACHIEVEMENT.UPDATE_SUCCESS',
+    );
   }
 
   // ============================================
@@ -409,47 +375,43 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
    * DELETE ACHIEVEMENT
    * ─────────────────────────────────────
    * Xóa achievement theo ID
-   * 
+   *
    * @param id - Achievement ID
    * @returns Success response
-   * 
+   *
    * Side effects (CASCADE DELETE):
    * - Xóa tất cả achievement_progresses liên quan
    * - Xóa tất cả learner_achievements liên quan
-   * 
+   *
    * NOTE: Đây là HARD DELETE, không phải soft delete
    * Nếu muốn soft delete → dùng isActive = false
    */
   async delete(id: number): Promise<CustomApiResponse<void>> {
-    try {
-      const achievement = await this.achievementRepository.findOne({
-        where: { id },
-        withDeleted: false,
-      });
+    const achievement = await this.achievementRepository.findOne({
+      where: { id },
+      withDeleted: false,
+    });
 
-      if (!achievement) {
-        throw new CustomRpcException(
-          'Achievement not found',
-          HttpStatus.NOT_FOUND,
-        );
-      }
-
-      /**
-       * remove() vs delete():
-       * - remove(): Load entity trước, trigger cascade, hooks
-       * - delete(): Direct SQL DELETE, nhanh hơn nhưng không trigger hooks
-       * 
-       * Dùng remove() để CASCADE DELETE hoạt động đúng
-       */
-      await this.achievementRepository.remove(achievement);
-
-      return new CustomApiResponse<void>(
-        HttpStatus.OK,
-        'ACHIEVEMENT.DELETE_SUCCESS',
+    if (!achievement) {
+      throw new CustomRpcException(
+        'Achievement not found',
+        HttpStatus.NOT_FOUND,
       );
-    } catch (error) {
-      throw ExceptionUtils.wrapAsRpcException(error);
     }
+
+    /**
+     * remove() vs delete():
+     * - remove(): Load entity trước, trigger cascade, hooks
+     * - delete(): Direct SQL DELETE, nhanh hơn nhưng không trigger hooks
+     *
+     * Dùng remove() để CASCADE DELETE hoạt động đúng
+     */
+    await this.achievementRepository.remove(achievement);
+
+    return new CustomApiResponse<void>(
+      HttpStatus.OK,
+      'ACHIEVEMENT.DELETE_SUCCESS',
+    );
   }
 
   // ============================================
@@ -465,7 +427,7 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
   async activate(id: number): Promise<CustomApiResponse<void>> {
     try {
       const achievement = await this.findOne(id);
-      
+
       achievement.isActive = true;
       await this.achievementRepository.save(achievement);
 
@@ -484,23 +446,19 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
    * Tắt achievement (isActive = false)
    * → Achievement sẽ KHÔNG được track
    * → Data cũ (progress, earned) vẫn giữ nguyên
-   * 
+   *
    * Use case: Tạm dừng track achievement nhưng không xóa data
    */
   async deactivate(id: number): Promise<CustomApiResponse<void>> {
-    try {
-      const achievement = await this.findOne(id);
-      
-      achievement.isActive = false;
-      await this.achievementRepository.save(achievement);
+    const achievement = await this.findOne(id);
 
-      return new CustomApiResponse<void>(
-        HttpStatus.OK,
-        'ACHIEVEMENT.DEACTIVATE_SUCCESS',
-      );
-    } catch (error) {
-      throw ExceptionUtils.wrapAsRpcException(error);
-    }
+    achievement.isActive = false;
+    await this.achievementRepository.save(achievement);
+
+    return new CustomApiResponse<void>(
+      HttpStatus.OK,
+      'ACHIEVEMENT.DEACTIVATE_SUCCESS',
+    );
   }
 
   // =====================================================================================================================
@@ -512,60 +470,52 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
    * Trả về danh sách achievements với tiến độ hiện tại
    */
   async getMyProgress(findOptions: FindOptions): Promise<any> {
-    try {
-      const userId = Number(this.request.user.id);
-      return this.getUserProgress(userId, findOptions);
-    } catch (error) {
-      throw ExceptionUtils.wrapAsRpcException(error);
-    }
+    const userId = Number(this.request.user.id);
+    return this.getUserProgress(userId, findOptions);
   }
 
   /**
    * Lấy progress của 1 achievement cụ thể của current user
    */
   async getMyProgressByAchievementId(achievementId: number): Promise<any> {
-    try {
-      const userId = Number(this.request.user.id);
+    const userId = Number(this.request.user.id);
 
-      // Kiểm tra achievement có tồn tại không
-      const achievement = await this.findOne(achievementId);
+    // Kiểm tra achievement có tồn tại không
+    const achievement = await this.findOne(achievementId);
 
-      // Tìm progress record
-      const progress = await this.achievementProgressRepository.findOne({
-        where: { 
-          achievement: { id: achievementId },
-          user: { id: userId }
-        },
-        relations: ['achievement', 'achievement.createdBy'],
-      });
+    // Tìm progress record
+    const progress = await this.achievementProgressRepository.findOne({
+      where: {
+        achievement: { id: achievementId },
+        user: { id: userId },
+      },
+      relations: ['achievement', 'achievement.createdBy'],
+    });
 
-      if (!progress) {
-        // Nếu chưa có progress, return 0
-        return {
-          achievement: achievement,
-          currentProgress: 0,
-          updatedAt: new Date(),
-          isEarned: false,
-        };
-      }
-
-      // Kiểm tra đã earned chưa
-      const earned = await this.learnerAchievementRepository.findOne({
-        where: {
-          achievement: { id: achievementId },
-          user: { id: userId }
-        }
-      });
-
+    if (!progress) {
+      // Nếu chưa có progress, return 0
       return {
-        achievement: progress.achievement,
-        currentProgress: progress.currentProgress,
-        updatedAt: progress.updatedAt,
-        isEarned: !!earned,
+        achievement: achievement,
+        currentProgress: 0,
+        updatedAt: new Date(),
+        isEarned: false,
       };
-    } catch (error) {
-      throw ExceptionUtils.wrapAsRpcException(error);
     }
+
+    // Kiểm tra đã earned chưa
+    const earned = await this.learnerAchievementRepository.findOne({
+      where: {
+        achievement: { id: achievementId },
+        user: { id: userId },
+      },
+    });
+
+    return {
+      achievement: progress.achievement,
+      currentProgress: progress.currentProgress,
+      updatedAt: progress.updatedAt,
+      isEarned: !!earned,
+    };
   }
 
   /**
@@ -573,13 +523,16 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
    * @param userId - ID của user cần xem
    * @param findOptions - Pagination, filter, sort options
    */
-  async getUserProgress(userId: number, findOptions: FindOptions): Promise<any> {
-    try {
-      const { page = 1, size = 10 } = findOptions.pagination || {};
-      const skip = (page - 1) * size;
+  async getUserProgress(
+    userId: number,
+    findOptions: FindOptions,
+  ): Promise<any> {
+    const { page = 1, size = 10 } = findOptions.pagination || {};
+    const skip = (page - 1) * size;
 
-      // Lấy tất cả active achievements
-      const [achievements, totalAchievements] = await this.achievementRepository.findAndCount({
+    // Lấy tất cả active achievements
+    const [achievements, totalAchievements] =
+      await this.achievementRepository.findAndCount({
         where: { isActive: true },
         relations: ['createdBy'],
         skip,
@@ -587,50 +540,47 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
         order: { createdAt: 'DESC' },
       });
 
-      // Lấy tất cả progress của user này
-      const progresses = await this.achievementProgressRepository.find({
-        where: { user: { id: userId } },
-        relations: ['achievement'],
-      });
+    // Lấy tất cả progress của user này
+    const progresses = await this.achievementProgressRepository.find({
+      where: { user: { id: userId } },
+      relations: ['achievement'],
+    });
 
-      // Lấy tất cả earned achievements của user
-      const earnedAchievements = await this.learnerAchievementRepository.find({
-        where: { user: { id: userId } },
-        relations: ['achievement'],
-      });
+    // Lấy tất cả earned achievements của user
+    const earnedAchievements = await this.learnerAchievementRepository.find({
+      where: { user: { id: userId } },
+      relations: ['achievement'],
+    });
 
-      // Map progress và earned status
-      const progressMap = new Map();
-      progresses.forEach(p => {
-        progressMap.set(p.achievement.id, p);
-      });
+    // Map progress và earned status
+    const progressMap = new Map();
+    progresses.forEach((p) => {
+      progressMap.set(p.achievement.id, p);
+    });
 
-      const earnedMap = new Set();
-      earnedAchievements.forEach(e => {
-        earnedMap.add(e.achievement.id);
-      });
+    const earnedMap = new Set();
+    earnedAchievements.forEach((e) => {
+      earnedMap.add(e.achievement.id);
+    });
 
-      // Kết hợp data
-      const data = achievements.map(achievement => {
-        const progress = progressMap.get(achievement.id);
-        return {
-          achievement: achievement,
-          currentProgress: progress ? progress.currentProgress : 0,
-          updatedAt: progress ? progress.updatedAt : new Date(),
-          isEarned: earnedMap.has(achievement.id),
-        };
-      });
-
+    // Kết hợp data
+    const data = achievements.map((achievement) => {
+      const progress = progressMap.get(achievement.id);
       return {
-        data,
-        total: totalAchievements,
-        page,
-        pageSize: size,
-        totalPages: Math.ceil(totalAchievements / size),
+        achievement: achievement,
+        currentProgress: progress ? progress.currentProgress : 0,
+        updatedAt: progress ? progress.updatedAt : new Date(),
+        isEarned: earnedMap.has(achievement.id),
       };
-    } catch (error) {
-      throw ExceptionUtils.wrapAsRpcException(error);
-    }
+    });
+
+    return {
+      data,
+      total: totalAchievements,
+      page,
+      pageSize: size,
+      totalPages: Math.ceil(totalAchievements / size),
+    };
   }
 
   // =====================================================================================================================
@@ -641,12 +591,8 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
    * Lấy tất cả achievements đã earned của current user
    */
   async getMyEarnedAchievements(findOptions: FindOptions): Promise<any> {
-    try {
-      const userId = Number(this.request.user.id);
-      return this.getUserEarnedAchievements(userId, findOptions);
-    } catch (error) {
-      throw ExceptionUtils.wrapAsRpcException(error);
-    }
+    const userId = Number(this.request.user.id);
+    return this.getUserEarnedAchievements(userId, findOptions);
   }
 
   /**
@@ -654,13 +600,16 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
    * @param userId - ID của user cần xem
    * @param findOptions - Pagination, filter, sort options
    */
-  async getUserEarnedAchievements(userId: number, findOptions: FindOptions): Promise<any> {
-    try {
-      const { page = 1, size = 10 } = findOptions.pagination || {};
-      const skip = (page - 1) * size;
+  async getUserEarnedAchievements(
+    userId: number,
+    findOptions: FindOptions,
+  ): Promise<any> {
+    const { page = 1, size = 10 } = findOptions.pagination || {};
+    const skip = (page - 1) * size;
 
-      // Query earned achievements với pagination
-      const [earnedRecords, total] = await this.learnerAchievementRepository.findAndCount({
+    // Query earned achievements với pagination
+    const [earnedRecords, total] =
+      await this.learnerAchievementRepository.findAndCount({
         where: { user: { id: userId } },
         relations: ['achievement', 'achievement.createdBy', 'user'],
         skip,
@@ -668,25 +617,21 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
         order: { earnedAt: 'DESC' }, // Mới nhất trước
       });
 
-      // Map sang DTO
-      const data = earnedRecords.map(record => ({
-        id: record.id,
-        achievement: record.achievement,
-        earnedAt: record.earnedAt,
-        userId: record.user.id,
-        userFullName: record.user.fullName,
-      }));
+    // Map sang DTO
+    const data = earnedRecords.map((record) => ({
+      id: record.id,
+      achievement: record.achievement,
+      earnedAt: record.earnedAt,
+      userId: record.user.id,
+      userFullName: record.user.fullName,
+    }));
 
-      return {
-        data,
-        total,
-        page,
-        pageSize: size,
-        totalPages: Math.ceil(total / size),
-      };
-    } catch (error) {
-      throw ExceptionUtils.wrapAsRpcException(error);
-    }
+    return {
+      data,
+      total,
+      page,
+      pageSize: size,
+      totalPages: Math.ceil(total / size),
+    };
   }
 }
-
