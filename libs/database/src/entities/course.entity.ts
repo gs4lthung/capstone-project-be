@@ -173,31 +173,37 @@ export class Course {
   @JoinColumn({ name: 'created_by' })
   createdBy: User;
 
+  @Field(() => Subject)
   @ManyToOne(() => Subject, (subject) => subject.courses, {
     eager: true,
   })
   @JoinColumn({ name: 'subject_id' })
   subject: Subject;
 
+  @Field(() => [Session])
   @OneToMany(() => Session, (session) => session.course, {
     cascade: ['insert'],
   })
   sessions: Session[];
 
+  @Field(() => [Schedule])
   @OneToMany(() => Schedule, (schedule) => schedule.course, {
     eager: true,
     cascade: ['insert'],
   })
   schedules: Schedule[];
 
+  @Field(() => [Enrollment])
   @OneToMany(() => Enrollment, (enrollment) => enrollment.course, {
     cascade: ['update'],
   })
   enrollments: Enrollment[];
 
+  @Field(() => [Feedback])
   @OneToMany(() => Feedback, (feedback) => feedback.course)
   feedbacks: Feedback[];
 
+  @Field(() => [LearnerProgress])
   @OneToMany(() => LearnerProgress, (learnerProgress) => learnerProgress.course)
   learnerProgresses: LearnerProgress[];
 
