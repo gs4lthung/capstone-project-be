@@ -1,9 +1,16 @@
+import { LearnerAnswer } from '@app/database/entities/learner-answer.entity';
 import { Lesson } from '@app/database/entities/lesson.entity';
 import { Quiz } from '@app/database/entities/quiz.entity';
+import { QuizAttempt } from '@app/database/entities/quiz_attempt.entity';
+import { Session } from '@app/database/entities/session.entity';
 import { User } from '@app/database/entities/user.entity';
 import { CustomApiRequest } from '@app/shared/customs/custom-api-request';
 import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
-import { CreateQuizDto } from '@app/shared/dtos/quizzes/quiz.dto';
+import {
+  CreateQuizDto,
+  LearnerAttemptQuizDto,
+} from '@app/shared/dtos/quizzes/quiz.dto';
+import { SessionStatus } from '@app/shared/enums/session.enum';
 import { BaseTypeOrmService } from '@app/shared/helpers/typeorm.helper';
 import {
   BadRequestException,
@@ -24,6 +31,10 @@ export class QuizService extends BaseTypeOrmService<Quiz> {
     private readonly quizRepository: Repository<Quiz>,
     @InjectRepository(Lesson)
     private readonly lessonRepository: Repository<Lesson>,
+    @InjectRepository(QuizAttempt)
+    private readonly quizAttemptRepository: Repository<QuizAttempt>,
+    @InjectRepository(Session)
+    private readonly sessionRepository: Repository<Session>,
   ) {
     super(quizRepository);
   }
@@ -48,6 +59,88 @@ export class QuizService extends BaseTypeOrmService<Quiz> {
     return new CustomApiResponse<void>(
       HttpStatus.CREATED,
       'LESSON.QUIZ_CREATE_SUCCESS',
+    );
+  }
+
+  async learnerAttemptQuiz(
+    quizId: number,
+    sessionId: number,
+    data: LearnerAttemptQuizDto,
+  ) {
+    const quiz = await this.quizRepository.findOne({
+      where: { id: quizId },
+      withDeleted: false,
+      relations: ['questions', 'questions.options'],
+    });
+    if (!quiz) throw new BadRequestException('Quiz not found');
+
+    const session = await this.sessionRepository.findOne({
+      where: { id: sessionId },
+      relations: ['quizAttempts', 'course', 'course.enrollments'],
+      withDeleted: false,
+    });
+    if (!session)
+      throw new BadRequestException(
+        'Session not found or you are not enrolled in this session',
+      );
+    if (session.status !== SessionStatus.COMPLETED) {
+      throw new BadRequestException(
+        'You can only attempt the quiz for completed sessions',
+      );
+    }
+    if (
+      !session.course.enrollments.some(
+        (enrollment) => enrollment.user.id === (this.request.user as User).id,
+      )
+    ) {
+      throw new BadRequestException(
+        'You are not enrolled in the course for this session',
+      );
+    }
+
+    let correctAnswers = 0;
+    for (const answer of data.learnerAnswers) {
+      const question = quiz.questions.find((q) => q.id === answer.question);
+      if (!question) {
+        throw new BadRequestException(
+          `Question with ID ${answer.question} not found in the quiz`,
+        );
+      }
+      const selectedOption = question.options.find(
+        (opt) => opt.id === answer.questionOption,
+      );
+      if (!selectedOption) {
+        throw new BadRequestException(
+          `Option with ID ${answer.questionOption} not found in question ${answer.question}`,
+        );
+      }
+      if (selectedOption.isCorrect) {
+        correctAnswers++;
+        answer['isCorrect'] = true;
+      }
+    }
+
+    const score = (correctAnswers / quiz.totalQuestions) * 100;
+
+    const quizAttempt = this.quizAttemptRepository.create({
+      session,
+      attemptNumber: session.quizAttempts ? session.quizAttempts.length + 1 : 1,
+      attemptedBy: this.request.user as User,
+      score,
+      learnerAnswers: data.learnerAnswers.map(
+        (ans) =>
+          ({
+            question: { id: ans.question },
+            questionOption: { id: ans.questionOption },
+            isCorrect: ans['isCorrect'] || false,
+          }) as LearnerAnswer,
+      ),
+    });
+    await this.quizAttemptRepository.save(quizAttempt);
+
+    return new CustomApiResponse<void>(
+      HttpStatus.CREATED,
+      'QUIZ.ATTEMPT_SUCCESS',
     );
   }
 }

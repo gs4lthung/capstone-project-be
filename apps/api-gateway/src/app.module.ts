@@ -95,6 +95,11 @@ import { Quiz } from '@app/database/entities/quiz.entity';
 import { Video } from '@app/database/entities/video.entity';
 import { VideoService } from './services/video.service';
 import { VideoController } from './controllers/video.controller';
+import { QuizAttempt } from '@app/database/entities/quiz_attempt.entity';
+import { WalletTransaction } from '@app/database/entities/wallet-transaction.entity';
+import { Feedback } from '@app/database/entities/feedback.entity';
+import { FeedbackController } from './controllers/feedback.controller';
+import { FeedbackService } from './services/feedback.service';
 
 @Module({
   imports: [
@@ -167,11 +172,14 @@ import { VideoController } from './controllers/video.controller';
       Achievement,
       EventCountAchievement,
       StreakAchievement,
+      QuizAttempt,
       PropertyCheckAchievement,
       AchievementProgress,
       LearnerAchievement,
       SessionEarning,
       Attendance,
+      WalletTransaction,
+      Feedback,
     ]),
     ErrorModule,
     GraphQLModule.forRootAsync<ApolloDriverConfig>({
@@ -221,6 +229,7 @@ import { VideoController } from './controllers/video.controller';
     ConfigurationController,
     SessionController,
     VideoController,
+    FeedbackController,
   ],
   providers: [
     AppService,
@@ -253,6 +262,7 @@ import { VideoController } from './controllers/video.controller';
     ConfigurationService,
     QuizService,
     VideoService,
+    FeedbackService,
   ],
 })
 export class AppModule {}

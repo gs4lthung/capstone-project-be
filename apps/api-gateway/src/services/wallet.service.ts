@@ -20,6 +20,7 @@ import { Repository } from 'typeorm';
 import { BaseTypeOrmService } from '@app/shared/helpers/typeorm.helper';
 import { FindOptions } from '@app/shared/interfaces/find-options.interface';
 import { WalletTransactionType } from '@app/shared/enums/payment.enum';
+import { WalletTransaction } from '@app/database/entities/wallet-transaction.entity';
 
 @Injectable({ scope: Scope.REQUEST })
 export class WalletService extends BaseTypeOrmService<Wallet> {
@@ -29,6 +30,8 @@ export class WalletService extends BaseTypeOrmService<Wallet> {
     private readonly walletRepository: Repository<Wallet>,
     @InjectRepository(Bank)
     private readonly bankRepository: Repository<Bank>,
+    @InjectRepository(WalletTransaction)
+    private readonly walletTransactionRepository: Repository<WalletTransaction>,
   ) {
     super(walletRepository);
   }
@@ -89,15 +92,15 @@ export class WalletService extends BaseTypeOrmService<Wallet> {
     const newCurrent = currentBalance + amount;
     const newTotal = totalIncome + amount;
 
-    await this.walletRepository.update(wallet.id, {
-      currentBalance: newCurrent,
-      totalIncome: newTotal,
-      transactions: [
-        {
-          amount: amount,
-          type: WalletTransactionType.CREDIT,
-        },
-      ],
+    wallet.currentBalance = newCurrent;
+    wallet.totalIncome = newTotal;
+    await this.walletRepository.save(wallet);
+
+    const newTransaction = this.walletTransactionRepository.create({
+      wallet: wallet,
+      type: WalletTransactionType.CREDIT,
+      amount: amount,
     });
+    await this.walletTransactionRepository.save(newTransaction);
   }
 }

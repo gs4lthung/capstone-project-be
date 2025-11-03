@@ -3,6 +3,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
   IsBoolean,
+  IsInt,
   IsNotEmpty,
   IsOptional,
   IsString,
@@ -100,3 +101,33 @@ export class CreateQuizDto {
 }
 
 export class UpdateQuizDto extends PartialType(CreateQuizDto) {}
+
+export class LearnerAnswerDto {
+  @ApiProperty({
+    description: 'The ID of the question being answered',
+    example: 1,
+  })
+  @IsNotEmpty()
+  @IsInt()
+  question: number;
+  @ApiProperty({
+    description: 'The ID of the selected option for the question',
+    example: 3,
+  })
+  @IsNotEmpty()
+  @IsInt()
+  questionOption: number;
+}
+export class LearnerAttemptQuizDto {
+  @ApiProperty({
+    description: 'The answers provided by the learner',
+    example: [
+      { questionId: 1, selectedOptionId: 3 },
+      { questionId: 2, selectedOptionId: 5 },
+    ],
+  })
+  @IsNotEmpty({ each: true })
+  @ValidateNested({ each: true })
+  @Type(() => LearnerAnswerDto)
+  learnerAnswers: LearnerAnswerDto[];
+}

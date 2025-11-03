@@ -43,7 +43,7 @@ import { PaginatedResource } from '@app/shared/graphql/paginated-resource';
 @Check(
   `min_participants > 0 AND max_participants > 0 AND max_participants >= min_participants`,
 )
-@Check(`start_date < end_date`)
+@Check(`start_date <= end_date`)
 export class Course {
   @Field(() => Number)
   @PrimaryGeneratedColumn()

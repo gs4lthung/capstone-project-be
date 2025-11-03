@@ -1,4 +1,4 @@
-import { IsInt, IsString, Max, Min } from 'class-validator';
+import { IsInt, IsNotEmpty, IsString, Max, Min } from 'class-validator';
 import {
   Column,
   CreateDateColumn,
@@ -22,10 +22,12 @@ export class Feedback {
   id: number;
 
   @Column({ type: 'text' })
+  @IsNotEmpty()
   @IsString()
   comment: string;
 
   @Column({ type: 'int' })
+  @IsNotEmpty()
   @IsInt()
   @Min(1)
   @Max(5)

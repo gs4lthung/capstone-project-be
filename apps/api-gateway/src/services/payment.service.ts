@@ -122,30 +122,6 @@ export class PaymentService extends BaseTypeOrmService<Payment> {
       description: 'Thanh toán khóa học',
       expiredAt: new Date(Date.now() + 1000 * 60 * 60 * 24),
     });
-    const user = await this.userRepository.findOne({
-      where: { id: this.request.user.id as User['id'] },
-    });
-    if (!user) throw new BadRequestException('User not found');
-    if (payosResponse) {
-      let wallet = await this.walletRepository.findOne({
-        where: { user: { id: user.id } },
-      });
-      const bank = await this.bankRepository.findOne({
-        where: { bin: payosResponse.bin },
-      });
-      if (!wallet) {
-        wallet = this.walletRepository.create({
-          user: user,
-          bank: bank,
-          bankAccountNumber: payosResponse.accountNumber,
-        });
-      } else {
-        if (wallet.bank && wallet.bankAccountNumber) return;
-        wallet.bank = bank;
-        wallet.bankAccountNumber = payosResponse.accountNumber;
-        await this.walletRepository.save(wallet);
-      }
-    }
 
     const payment = this.paymentRepository.create({
       amount: payosResponse.amount,
@@ -204,7 +180,8 @@ export class PaymentService extends BaseTypeOrmService<Payment> {
     });
 
     course.currentParticipants += 1;
-    course.totalEarnings += Number(payment.amount) * 1000; ///////////
+    course.totalEarnings =
+      Number(course.totalEarnings) + Number(payment.amount) * 1000;
 
     switch (course.learningFormat) {
       case CourseLearningFormat.INDIVIDUAL:

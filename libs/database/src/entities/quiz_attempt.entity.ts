@@ -43,7 +43,13 @@ export class QuizAttempt {
   session: Session;
 
   @Field(() => [LearnerAnswer], { nullable: true })
-  @OneToMany(() => LearnerAnswer, (learnerAnswer) => learnerAnswer.quizAttempt)
+  @OneToMany(
+    () => LearnerAnswer,
+    (learnerAnswer) => learnerAnswer.quizAttempt,
+    {
+      cascade: ['insert', 'update'],
+    },
+  )
   learnerAnswers: LearnerAnswer[];
 }
 

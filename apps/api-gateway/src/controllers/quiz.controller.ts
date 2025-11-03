@@ -13,7 +13,10 @@ import { CheckRoles } from '@app/shared/decorators/check-roles.decorator';
 import { UserRole } from '@app/shared/enums/user.enum';
 import { AuthGuard } from '../guards/auth.guard';
 import { RoleGuard } from '../guards/role.guard';
-import { CreateQuizDto } from '@app/shared/dtos/quizzes/quiz.dto';
+import {
+  CreateQuizDto,
+  LearnerAttemptQuizDto,
+} from '@app/shared/dtos/quizzes/quiz.dto';
 
 @Controller('quizzes')
 export class QuizController {
@@ -35,5 +38,27 @@ export class QuizController {
   @UseGuards(AuthGuard, RoleGuard)
   async createLessonQuiz(@Param('id') id: number, @Body() data: CreateQuizDto) {
     return this.quizService.create(id, data);
+  }
+
+  @Post(':id/attempts')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiBearerAuth()
+  @ApiOperation({
+    tags: ['Quizzes'],
+    summary: 'Learner attempts a quiz',
+    description: 'Learner attempts a quiz',
+  })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: 'Quiz attempt created successfully',
+  })
+  @CheckRoles(UserRole.LEARNER)
+  @UseGuards(AuthGuard, RoleGuard)
+  async learnerAttemptQuiz(
+    @Param('id') id: number,
+    @Body('sessionId') sessionId: number,
+    @Body() data: LearnerAttemptQuizDto,
+  ) {
+    return this.quizService.learnerAttemptQuiz(id, sessionId, data);
   }
 }

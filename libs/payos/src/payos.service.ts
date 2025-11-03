@@ -52,7 +52,6 @@ export class PayosService {
       const response = await this.payOS.paymentRequests.create({
         ...payosData,
       });
-      this.logger.log('PayOS response:', response);
       return response;
     } catch (error) {
       this.logger.error(error);

@@ -30,6 +30,7 @@ import { Repository } from 'typeorm';
 import { WalletService } from './wallet.service';
 import { ConfigurationService } from './configuration.service';
 import { SessionEarning } from '@app/database/entities/session-earning.entity';
+import { CourseStatus } from '@app/shared/enums/course.enum';
 
 @Injectable({ scope: Scope.REQUEST })
 export class SessionService extends BaseTypeOrmService<Session> {
@@ -114,8 +115,8 @@ export class SessionService extends BaseTypeOrmService<Session> {
       100 /
       course.totalSessions;
     const sessionEarningRecord = this.sessionEarningRepository.create({
-      sessionPrice: sessionEarning,
-      coachEarningTotal: sessionEarning,
+      sessionPrice: Number(sessionEarning),
+      coachEarningTotal: Number(sessionEarning),
       status: SessionEarningStatus.PAID,
       paidAt: new Date(),
       session: session,
@@ -139,6 +140,21 @@ export class SessionService extends BaseTypeOrmService<Session> {
       this.request.user.id as User['id'],
       sessionEarning,
     );
+
+    const totalSessions = await this.sessionRepository.count({
+      where: { course: { id: course.id } },
+    });
+    const completedSessions = await this.sessionRepository.count({
+      where: {
+        course: { id: course.id },
+        status: SessionStatus.COMPLETED,
+      },
+    });
+    if (totalSessions === completedSessions) {
+      await this.courseRepository.update(course.id, {
+        status: CourseStatus.COMPLETED,
+      });
+    }
 
     return new CustomApiResponse<void>(
       HttpStatus.OK,
