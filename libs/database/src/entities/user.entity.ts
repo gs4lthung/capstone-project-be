@@ -200,7 +200,10 @@ export class User {
   enrollments: Enrollment[];
 
   @OneToMany(() => Feedback, (feedback) => feedback.createdBy)
-  feedbacks: Feedback[];
+  createdFeedback: Feedback[];
+
+  @OneToMany(() => Feedback, (feedback) => feedback.receivedBy)
+  receivedFeedback: Feedback[];
 
   @OneToMany(() => Note, (note) => note.receivedBy)
   noteBeingTaken: Note[];
