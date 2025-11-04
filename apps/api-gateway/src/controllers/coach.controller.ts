@@ -31,6 +31,7 @@ import { Sorting } from '@app/shared/interfaces/sorting.interface';
 import { Pagination } from '@app/shared/interfaces/pagination.interface';
 import { SortingParams } from '@app/shared/decorators/sorting-params.decorator';
 import { FindOptions } from '@app/shared/interfaces/find-options.interface';
+import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
 
 @ApiTags('Coaches')
 @Controller('coaches')
@@ -71,6 +72,18 @@ export class CoachController {
   @ApiResponse({ status: HttpStatus.OK, description: 'Coach' })
   async findOne(@Param('id') id: number): Promise<Coach> {
     return this.coachService.findOne(Number(id));
+  }
+
+  @Get('rating/overall')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    tags: ['Coaches'],
+    summary: 'Get overall rating of the coach',
+    description: 'Get overall rating of the coach',
+  })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Overall rating' })
+  async getOverallRating(): Promise<CustomApiResponse<number>> {
+    return this.coachService.getCoachOverallRating();
   }
 
   @Post('register')

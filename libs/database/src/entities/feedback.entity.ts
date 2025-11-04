@@ -45,9 +45,13 @@ export class Feedback {
   @DeleteDateColumn({ name: 'deleted_at' })
   deletedAt?: Date;
 
-  @ManyToOne(() => User, (user) => user.feedbacks, { eager: true })
-  @JoinColumn({ name: 'user_id' })
+  @ManyToOne(() => User, (user) => user.createdFeedback, { eager: true })
+  @JoinColumn({ name: 'created_by' })
   createdBy: User;
+
+  @ManyToOne(() => User, (user) => user.receivedFeedback, { eager: true })
+  @JoinColumn({ name: 'received_by' })
+  receivedBy: User;
 
   @ManyToOne(() => Course, (course) => course.feedbacks)
   @JoinColumn({ name: 'course_id' })

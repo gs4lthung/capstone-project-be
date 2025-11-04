@@ -12,6 +12,13 @@ export const configurationSeed = async (dataSource: DataSource) => {
       description: 'Platform fee of course earning total',
       dataType: 'number',
     },
+    {
+      key: 'course_start_before_days',
+      value: '1',
+      description:
+        'Number of days before course start date to automatically start the course',
+      dataType: 'number',
+    },
   ]);
 };
 

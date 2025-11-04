@@ -36,11 +36,22 @@ export class CronService {
       withDeleted: false,
       relations: ['enrollments'],
     });
-    const checkCourseBeforeDays = await this.configurationRepository.findOne({
+    let checkCourseBeforeDays = await this.configurationRepository.findOne({
       where: { key: 'course_start_before_days' },
     });
-    if (!checkCourseBeforeDays)
-      this.logger.error("Configuration 'course_start_before_days' not found");
+    if (!checkCourseBeforeDays) {
+      this.logger.error(
+        "Configuration 'course_start_before_days' not found. Create a default value of 1.",
+      );
+      checkCourseBeforeDays = this.configurationRepository.create({
+        key: 'course_start_before_days',
+        value: '1',
+        dataType: 'number',
+        description:
+          'Number of days before course start to trigger the start process',
+      });
+      await this.configurationRepository.save(checkCourseBeforeDays);
+    }
 
     for (const course of courses) {
       if (

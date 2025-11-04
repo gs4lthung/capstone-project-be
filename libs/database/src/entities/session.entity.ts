@@ -29,6 +29,8 @@ import {
   MaxLength,
 } from 'class-validator';
 import { Lesson } from './lesson.entity';
+import { Quiz } from './quiz.entity';
+import { Video } from './video.entity';
 
 @ObjectType()
 @Entity('sessions')
@@ -148,6 +150,16 @@ export class Session {
   @ManyToOne(() => Lesson, (lesson) => lesson.sessions)
   @JoinColumn({ name: 'lesson_id' })
   lesson: Lesson;
+
+  @OneToMany(() => Quiz, (quiz) => quiz.session, {
+    cascade: ['insert', 'update'],
+  })
+  quizzes: Quiz[];
+
+  @OneToMany(() => Video, (video) => video.session, {
+    cascade: ['insert', 'update'],
+  })
+  videos: Video[];
 }
 
 import { PaginatedResource } from '@app/shared/graphql/paginated-resource';
