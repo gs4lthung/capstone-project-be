@@ -21,8 +21,8 @@ export const PaginationParams = createParamDecorator(
       case ProtocolEnum.HTTP:
         const ctx = host.switchToHttp();
         request = ctx.getRequest<CustomApiRequest>();
-        page = request.query.page;
-        size = request.query.size;
+        page = parseFloat(String(request.query.page || '1')) || 1;
+        size = parseFloat(String(request.query.size || '10')) || 10;
         break;
       case ProtocolEnum.GRAPHQL:
         const gqlCtx = GqlArgumentsHost.create(host);
