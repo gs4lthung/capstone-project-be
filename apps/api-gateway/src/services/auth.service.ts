@@ -303,7 +303,9 @@ export class AuthService {
 
   async verifyEmail(data: { token: string }): Promise<string> {
     try {
-      const payload = await this.jwtService.verifyAsync(data.token);
+      const payload = await this.jwtService.verifyAsync(data.token, {
+        secret: this.configService.get('jwt').verify_email_token.secret,
+      });
       const user = await this.userRepository.findOne({
         where: { id: payload.id, emailVerificationToken: data.token },
       });

@@ -111,10 +111,10 @@ export class LearnerVideoService {
   async saveAiFeedback(learnerVideoId: number, aiText: any) {
     const learnerVideo = await this.learnerVideoRepo.findOne({
       where: { id: learnerVideoId },
-      relations: ['session', 'session.lesson', 'session.lesson.video'],
+      relations: ['session', 'session.lesson', 'session.lesson.videos'],
     });
     if (!learnerVideo) throw new Error('LearnerVideo not found');
-    const coachVideo = learnerVideo.session?.lesson?.video as Video;
+    const coachVideo = learnerVideo.session?.lesson?.videos?.[0] as Video;
     const aiResultRecord = this.aiVideoComparisonResultRepo.create({
       learnerVideo,
       video: coachVideo,
