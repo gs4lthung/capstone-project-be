@@ -102,6 +102,8 @@ import { Feedback } from '@app/database/entities/feedback.entity';
 import { FeedbackController } from './controllers/feedback.controller';
 import { FeedbackService } from './services/feedback.service';
 import { LearnerProgress } from '@app/database/entities/learner-progress.entity';
+import { LearnerProgressController } from './controllers/learner-progress.controller';
+import { LearnerProgressService } from './services/learner-progress.service';
 
 @Module({
   imports: [
@@ -234,6 +236,7 @@ import { LearnerProgress } from '@app/database/entities/learner-progress.entity'
     ConfigurationController,
     SessionController,
     VideoController,
+    LearnerProgressController,
     FeedbackController,
   ],
   providers: [
@@ -267,6 +270,7 @@ import { LearnerProgress } from '@app/database/entities/learner-progress.entity'
     ConfigurationService,
     QuizService,
     VideoService,
+    LearnerProgressService,
     FeedbackService,
   ],
 })
