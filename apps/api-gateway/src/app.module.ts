@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { join } from 'path';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ConfigModule, ConfigService } from '@app/config';
@@ -137,7 +138,7 @@ import { FeedbackService } from './services/feedback.service';
           from: `"No Reply" <Hello>`,
         },
         template: {
-          dir: __dirname + '/src/mail-templates',
+          dir: join(__dirname, 'mail-templates'),
           adapter: new HandlebarsAdapter(undefined, {
             inlineCssEnabled: true,
           }),

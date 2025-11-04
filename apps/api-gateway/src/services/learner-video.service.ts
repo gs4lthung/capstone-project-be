@@ -114,7 +114,7 @@ export class LearnerVideoService {
       relations: ['session', 'session.lesson', 'session.lesson.videos'],
     });
     if (!learnerVideo) throw new Error('LearnerVideo not found');
-    const coachVideo = (learnerVideo.session?.lesson?.videos || [])[0] as Video;
+    const coachVideo = learnerVideo.session?.lesson?.videos?.[0] as Video;
     const aiResultRecord = this.aiVideoComparisonResultRepo.create({
       learnerVideo,
       video: coachVideo,
