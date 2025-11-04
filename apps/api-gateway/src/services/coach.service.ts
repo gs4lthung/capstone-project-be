@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Coach } from '@app/database/entities/coach.entity';
+import { Coach, PaginatedCoach } from '@app/database/entities/coach.entity';
 import { User } from '@app/database/entities/user.entity';
 import { Credential } from '@app/database/entities/credential.entity';
 import { CoachVerificationStatus } from '@app/shared/enums/coach.enum';
@@ -17,9 +17,11 @@ import { UserRole } from '@app/shared/enums/user.enum';
 import { ConfigService } from '@app/config';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
+import { BaseTypeOrmService } from '@app/shared/helpers/typeorm.helper';
+import { FindOptions } from '@app/shared/interfaces/find-options.interface';
 
 @Injectable()
-export class CoachService {
+export class CoachService extends BaseTypeOrmService<Coach> {
   constructor(
     @InjectRepository(Coach)
     private readonly coachRepository: Repository<Coach>,
@@ -30,7 +32,25 @@ export class CoachService {
     private readonly roleRepository: Repository<Role>,
     private readonly configService: ConfigService,
     private readonly jwtService: JwtService,
-  ) {}
+  ) {
+    super(coachRepository);
+  }
+
+  async findAll(findOptions: FindOptions): Promise<PaginatedCoach> {
+    return super.find(findOptions, 'coach', PaginatedCoach);
+  }
+
+  async findOne(id: number): Promise<Coach> {
+    const coach = await this.coachRepository.findOne({
+      where: { id: id },
+      withDeleted: false,
+      relations: ['user', 'credentials'],
+    });
+
+    if (!coach) throw new Error('Coach not found');
+
+    return coach;
+  }
 
   async registerCoach(data: RegisterCoachDto): Promise<Coach> {
     // Check email already exists

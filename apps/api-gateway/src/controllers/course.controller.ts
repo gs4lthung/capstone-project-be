@@ -26,7 +26,6 @@ import { SortingParams } from '@app/shared/decorators/sorting-params.decorator';
 import { FilteringParams } from '@app/shared/decorators/filtering-params.decorator';
 import { Filtering } from '@app/shared/interfaces/filtering.interface';
 import { FindOptions } from '@app/shared/interfaces/find-options.interface';
-import { PaginatedCourse } from '@app/database/entities/course.entity';
 import { PaginateObject } from '@app/shared/dtos/paginate.dto';
 
 @Controller('courses')
