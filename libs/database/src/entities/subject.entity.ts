@@ -63,6 +63,12 @@ export class Subject {
   @IsEnum(SubjectStatus)
   status: SubjectStatus;
 
+  @Field(() => String)
+  @Column({ name: 'public_url', type: 'text', nullable: true })
+  @IsOptional()
+  @IsString()
+  publicUrl?: string;
+
   @Field(() => GqlCustomDateTime)
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;

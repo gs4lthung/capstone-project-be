@@ -24,7 +24,7 @@ export class LearnerProgress {
   id: number;
 
   @Field(() => Number)
-  @Column({ name: 'sessions_completed', type: 'int' })
+  @Column({ name: 'sessions_completed', type: 'int', default: 0 })
   @IsInt()
   sessionsCompleted: number;
 
@@ -34,11 +34,11 @@ export class LearnerProgress {
   totalSessions: number;
 
   @Field(() => Number)
-  @Column({ name: 'avg_ai_analysis_score', type: 'int' })
+  @Column({ name: 'avg_ai_analysis_score', type: 'int', default: 0 })
   avgAiAnalysisScore: number;
 
   @Field(() => Number)
-  @Column({ name: 'avg_quiz_score', type: 'int' })
+  @Column({ name: 'avg_quiz_score', type: 'int', default: 0 })
   avgQuizScore: number;
 
   @Field(() => String)

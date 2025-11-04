@@ -9,6 +9,7 @@ import {
   UseGuards,
   Logger,
   Get,
+  Put,
 } from '@nestjs/common';
 import { CourseService } from '../services/course.service';
 import { ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
@@ -83,6 +84,27 @@ export class CourseController {
     return this.courseService.createCourseCreationRequest(subjectId, data);
   }
 
+  @Put(':id')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiOperation({
+    tags: ['Courses'],
+    summary: 'Update an existing course creation request',
+    description: 'Update an existing course creation request with given data',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Course creation request updated successfully',
+  })
+  @CheckRoles(UserRole.COACH)
+  @UseGuards(AuthGuard, RoleGuard)
+  async updateCourseCreationRequest(
+    @Param('id') id: number,
+    @Body() data: CreateCourseRequestDto,
+  ) {
+    return this.courseService.update(id, data);
+  }
+
   @Patch('requests/:id/approve')
   @HttpCode(HttpStatus.OK)
   @ApiBearerAuth()
@@ -101,6 +123,27 @@ export class CourseController {
     @Param('id') id: number,
   ): Promise<CustomApiResponse<void>> {
     return this.courseService.approveCourseCreationRequest(id);
+  }
+
+  @Patch('requests/:id/reject')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiOperation({
+    tags: ['Courses'],
+    summary: 'Reject a course creation request',
+    description: 'Reject a course creation request with given ID',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Course creation request rejected successfully',
+  })
+  @CheckRoles(UserRole.ADMIN)
+  @UseGuards(AuthGuard, RoleGuard)
+  async rejectCourseCreationRequest(
+    @Param('id') id: number,
+    @Body('reason') reason: string,
+  ): Promise<CustomApiResponse<void>> {
+    return this.courseService.rejectCourseCreationRequest(id, reason);
   }
 
   @Patch(':id/learners/cancel')

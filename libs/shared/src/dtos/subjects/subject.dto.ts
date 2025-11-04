@@ -34,7 +34,9 @@ export class CreateSubjectDto {
   })
   @IsEnum(PickleballLevel)
   level: PickleballLevel;
+}
 
+export class UpdateSubjectDto extends PartialType(CreateSubjectDto) {
   @ApiProperty({
     type: String,
     enum: SubjectStatus,
@@ -44,5 +46,3 @@ export class CreateSubjectDto {
   @IsEnum(SubjectStatus)
   status?: SubjectStatus;
 }
-
-export class UpdateSubjectDto extends PartialType(CreateSubjectDto) {}
