@@ -1,4 +1,4 @@
-import { Lesson } from '@app/database/entities/lesson.entity';
+import { Lesson, PaginatedLesson } from '@app/database/entities/lesson.entity';
 import { Subject } from '@app/database/entities/subject.entity';
 import { CustomApiRequest } from '@app/shared/customs/custom-api-request';
 import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
@@ -15,6 +15,7 @@ import {
 import { REQUEST } from '@nestjs/core';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { FindOptions } from '@app/shared/interfaces/find-options.interface';
 
 @Injectable({ scope: Scope.REQUEST })
 export class LessonService extends BaseTypeOrmService<Lesson> {
@@ -26,6 +27,10 @@ export class LessonService extends BaseTypeOrmService<Lesson> {
     private readonly subjectRepository: Repository<Subject>,
   ) {
     super(lessonRepository);
+  }
+
+  async findAll(findOptions: FindOptions): Promise<PaginatedLesson> {
+    return super.find(findOptions, 'lesson', PaginatedLesson);
   }
 
   async create(

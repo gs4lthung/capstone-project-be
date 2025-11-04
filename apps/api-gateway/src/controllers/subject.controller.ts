@@ -43,8 +43,7 @@ export class SubjectController {
     status: HttpStatus.OK,
     description: 'Subjects',
   })
-  @CheckRoles(UserRole.COACH)
-  @UseGuards(AuthGuard, RoleGuard)
+  @UseGuards(AuthGuard)
   async findAll(
     @PaginationParams()
     pagination: Pagination,
@@ -68,7 +67,7 @@ export class SubjectController {
   })
   @ApiResponse({
     status: HttpStatus.CREATED,
-    description: 'Subject created successfully',
+    description: 'Tạo môn học thành công',
   })
   @CheckRoles(UserRole.COACH)
   @UseGuards(AuthGuard, RoleGuard)
@@ -86,7 +85,7 @@ export class SubjectController {
   })
   @ApiResponse({
     status: HttpStatus.OK,
-    description: 'Subject updated successfully',
+    description: 'Cập nhật môn học thành công',
   })
   async update(@Body() data: UpdateSubjectDto, @Param('id') id: number) {
     return this.subjectService.update(id, data);
