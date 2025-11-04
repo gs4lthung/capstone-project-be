@@ -42,7 +42,7 @@ export class QuizService extends BaseTypeOrmService<Quiz> {
     super(quizRepository);
   }
 
-  async create(
+  async createLessonQuiz(
     lessonId: number,
     data: CreateQuizDto,
   ): Promise<CustomApiResponse<void>> {

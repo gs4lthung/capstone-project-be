@@ -174,6 +174,7 @@ export class CourseService extends BaseTypeOrmService<Course> {
     const course = await this.courseRepository.findOne({
       where: { id: request.metadata.id },
       withDeleted: false,
+      relations: ['subject', 'subject.lessons'],
     });
     if (!course) throw new BadRequestException('Không tìm thấy khóa học');
 
@@ -191,7 +192,37 @@ export class CourseService extends BaseTypeOrmService<Course> {
         course,
         request.metadata.details.schedules,
       );
-      await this.sessionRepository.insert(sessions);
+      for (const lesson of course.subject.lessons) {
+        const session = sessions.find((ses) => ses.lesson.id === lesson.id);
+        if (session) {
+          session.videos = [];
+          session.quizzes = [];
+          for (const video of lesson.videos) {
+            delete video.id;
+            session.videos.push({
+              ...video,
+              lesson: null,
+              session: session,
+            });
+          }
+          for (const quiz of lesson.quizzes) {
+            delete quiz.id;
+            for (const question of quiz.questions) {
+              delete question.id;
+              for (const option of question.options) {
+                delete option.id;
+              }
+            }
+            session.quizzes.push({
+              ...quiz,
+              lesson: null,
+              session: session,
+            });
+          }
+        }
+      }
+
+      await this.sessionRepository.save(sessions);
     }
 
     course.status = CourseStatus.APPROVED;

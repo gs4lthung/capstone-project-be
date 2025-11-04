@@ -37,7 +37,7 @@ export class QuizController {
   @CheckRoles(UserRole.COACH)
   @UseGuards(AuthGuard, RoleGuard)
   async createLessonQuiz(@Param('id') id: number, @Body() data: CreateQuizDto) {
-    return this.quizService.create(id, data);
+    return this.quizService.createLessonQuiz(id, data);
   }
 
   @Post(':id/attempts')

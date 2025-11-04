@@ -23,11 +23,7 @@ export const userSeed = async (dataSource: DataSource) => {
   const learnerRole = await roleRepository.findOne({
     where: { name: 'LEARNER' },
   });
-  const customerRole = await roleRepository.findOne({
-    where: { name: 'CUSTOMER' },
-  });
-
-  if (!adminRole || !coachRole || !learnerRole || !customerRole) {
+  if (!adminRole || !coachRole || !learnerRole) {
     throw new Error('Roles not found. Please seed roles first.');
   }
 
@@ -80,15 +76,6 @@ export const userSeed = async (dataSource: DataSource) => {
       isEmailVerified: true,
       isActive: true,
       phoneNumber: '0905234567',
-    },
-    {
-      fullName: 'Khách hàng Võ Văn E',
-      email: 'customer.e@pickleball.vn',
-      role: customerRole,
-      password: await bcrypt.hash('customer123', 10),
-      isEmailVerified: true,
-      isActive: true,
-      phoneNumber: '0906234567',
     },
   ];
 

@@ -1,4 +1,5 @@
 import {
+  Check,
   Column,
   Entity,
   JoinColumn,
@@ -10,9 +11,13 @@ import { Field, ObjectType } from '@nestjs/graphql';
 import { Question } from './question.entity';
 import { User } from './user.entity';
 import { Lesson } from './lesson.entity';
-
+import { PaginatedResource } from '@app/shared/graphql/paginated-resource';
+import { Session } from './session.entity';
 @ObjectType()
 @Entity('quizzes')
+@Check(
+  `("lesson_id" IS NOT NULL AND "session_id" IS NULL) OR ("lesson_id" IS NULL AND "session_id" IS NOT NULL)`,
+)
 export class Quiz {
   @Field(() => Number)
   @PrimaryGeneratedColumn()
@@ -44,12 +49,14 @@ export class Quiz {
   createdBy: User;
 
   @Field(() => Lesson, { nullable: true })
-  @ManyToOne(() => Lesson, (lesson) => lesson.quizzes)
+  @ManyToOne(() => Lesson, (lesson) => lesson.quizzes, { nullable: true })
   @JoinColumn({ name: 'lesson_id' })
   lesson: Lesson;
-}
 
-import { PaginatedResource } from '@app/shared/graphql/paginated-resource';
+  @ManyToOne(() => Session, (session) => session.quizzes, { nullable: true })
+  @JoinColumn({ name: 'session_id' })
+  session: Session;
+}
 
 @ObjectType()
 export class PaginatedQuiz extends PaginatedResource(Quiz) {}
