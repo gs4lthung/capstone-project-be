@@ -101,6 +101,7 @@ import { WalletTransaction } from '@app/database/entities/wallet-transaction.ent
 import { Feedback } from '@app/database/entities/feedback.entity';
 import { FeedbackController } from './controllers/feedback.controller';
 import { FeedbackService } from './services/feedback.service';
+import { LearnerProgress } from '@app/database/entities/learner-progress.entity';
 
 @Module({
   imports: [
@@ -183,6 +184,7 @@ import { FeedbackService } from './services/feedback.service';
       Attendance,
       WalletTransaction,
       Feedback,
+      LearnerProgress,
     ]),
     ErrorModule,
     GraphQLModule.forRootAsync<ApolloDriverConfig>({

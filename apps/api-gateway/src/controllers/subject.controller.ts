@@ -7,7 +7,9 @@ import {
   Param,
   Post,
   Put,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { SubjectService } from '../services/subject.service';
 import { ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
@@ -26,7 +28,7 @@ import { SortingParams } from '@app/shared/decorators/sorting-params.decorator';
 import { Sorting } from '@app/shared/interfaces/sorting.interface';
 import { FilteringParams } from '@app/shared/decorators/filtering-params.decorator';
 import { Filtering } from '@app/shared/interfaces/filtering.interface';
-import { PaginatedSubject } from '@app/database/entities/subject.entity';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('subjects')
 export class SubjectController {
@@ -73,8 +75,12 @@ export class SubjectController {
   })
   @CheckRoles(UserRole.COACH)
   @UseGuards(AuthGuard, RoleGuard)
-  async create(@Body() data: CreateSubjectDto) {
-    return this.subjectService.create(data);
+  @UseInterceptors(FileInterceptor('image'))
+  async create(
+    @Body() data: CreateSubjectDto,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    return this.subjectService.create(data, file);
   }
 
   @Put(':id')
@@ -89,6 +95,8 @@ export class SubjectController {
     status: HttpStatus.OK,
     description: 'Subject updated successfully',
   })
+  @CheckRoles(UserRole.COACH)
+  @UseGuards(AuthGuard, RoleGuard)
   async update(@Body() data: UpdateSubjectDto, @Param('id') id: number) {
     return this.subjectService.update(id, data);
   }

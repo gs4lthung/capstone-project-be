@@ -1,3 +1,4 @@
+import { AwsService } from '@app/aws';
 import {
   PaginatedSubject,
   Subject,
@@ -29,6 +30,7 @@ export class SubjectService extends BaseTypeOrmService<Subject> {
     @Inject(REQUEST) private readonly request: CustomApiRequest,
     @InjectRepository(Subject)
     private readonly subjectRepository: Repository<Subject>,
+    private readonly awsService: AwsService,
   ) {
     super(subjectRepository);
   }
@@ -49,11 +51,26 @@ export class SubjectService extends BaseTypeOrmService<Subject> {
     return subject;
   }
 
-  async create(data: CreateSubjectDto): Promise<CustomApiResponse<void>> {
+  async create(
+    data: CreateSubjectDto,
+    file: Express.Multer.File,
+  ): Promise<CustomApiResponse<void>> {
+    let publicUrl: string | undefined = undefined;
+    if (file) {
+      publicUrl = await this.awsService
+        .uploadFileToPublicBucket({
+          file: {
+            buffer: file.buffer,
+            ...file,
+          },
+        })
+        .then((res) => res.url);
+    }
     const newSubject = this.subjectRepository.create({
       ...data,
       createdBy: this.request.user as User,
       status: SubjectStatus.DRAFT,
+      publicUrl: publicUrl,
     } as Subject);
 
     await this.subjectRepository.save(newSubject);

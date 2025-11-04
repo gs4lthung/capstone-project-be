@@ -31,6 +31,7 @@ import { WalletService } from './wallet.service';
 import { ConfigurationService } from './configuration.service';
 import { SessionEarning } from '@app/database/entities/session-earning.entity';
 import { CourseStatus } from '@app/shared/enums/course.enum';
+import { LearnerProgress } from '@app/database/entities/learner-progress.entity';
 
 @Injectable({ scope: Scope.REQUEST })
 export class SessionService extends BaseTypeOrmService<Session> {
@@ -46,6 +47,8 @@ export class SessionService extends BaseTypeOrmService<Session> {
     private readonly courseRepository: Repository<Course>,
     @InjectRepository(Attendance)
     private readonly attendanceRepository: Repository<Attendance>,
+    @InjectRepository(LearnerProgress)
+    private readonly learnerProgressRepository: Repository<LearnerProgress>,
     private readonly walletService: WalletService,
     private readonly configurationService: ConfigurationService,
   ) {
@@ -126,6 +129,18 @@ export class SessionService extends BaseTypeOrmService<Session> {
       status: SessionStatus.COMPLETED,
       completedAt: new Date(),
     });
+
+    const learnerProgress = await this.learnerProgressRepository.findOne({
+      where: {
+        course: course,
+        user: this.request.user as User,
+      },
+      withDeleted: false,
+    });
+    if (learnerProgress) {
+      learnerProgress.sessionsCompleted += 1;
+      await this.learnerProgressRepository.save(learnerProgress);
+    }
 
     for (const attendanceDto of data.attendances) {
       const attendance = this.attendanceRepository.create({

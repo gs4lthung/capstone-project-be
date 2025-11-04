@@ -1,4 +1,5 @@
 import { LearnerAnswer } from '@app/database/entities/learner-answer.entity';
+import { LearnerProgress } from '@app/database/entities/learner-progress.entity';
 import { Lesson } from '@app/database/entities/lesson.entity';
 import { Quiz } from '@app/database/entities/quiz.entity';
 import { QuizAttempt } from '@app/database/entities/quiz_attempt.entity';
@@ -35,6 +36,8 @@ export class QuizService extends BaseTypeOrmService<Quiz> {
     private readonly quizAttemptRepository: Repository<QuizAttempt>,
     @InjectRepository(Session)
     private readonly sessionRepository: Repository<Session>,
+    @InjectRepository(LearnerProgress)
+    private readonly learnerProgressRepository: Repository<LearnerProgress>,
   ) {
     super(quizRepository);
   }
@@ -137,6 +140,21 @@ export class QuizService extends BaseTypeOrmService<Quiz> {
       ),
     });
     await this.quizAttemptRepository.save(quizAttempt);
+
+    const learnerProgress = await this.learnerProgressRepository.findOne({
+      where: {
+        user: this.request.user as User,
+        course: session.course,
+      },
+      withDeleted: false,
+    });
+    if (learnerProgress) {
+      learnerProgress.avgQuizScore = Math.round(
+        (learnerProgress.avgQuizScore + score) /
+          learnerProgress.sessionsCompleted,
+      );
+      await this.learnerProgressRepository.save(learnerProgress);
+    }
 
     return new CustomApiResponse<void>(
       HttpStatus.CREATED,
