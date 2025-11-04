@@ -1,6 +1,7 @@
 import {
   Check,
   Column,
+  DeleteDateColumn,
   Entity,
   JoinColumn,
   ManyToOne,
@@ -47,6 +48,9 @@ export class Quiz {
     eager: true,
   })
   createdBy: User;
+
+  @DeleteDateColumn({ name: 'deleted_at' })
+  deletedAt?: Date;
 
   @Field(() => Lesson, { nullable: true })
   @ManyToOne(() => Lesson, (lesson) => lesson.quizzes, { nullable: true })

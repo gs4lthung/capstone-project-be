@@ -29,6 +29,8 @@ import {
   MaxLength,
 } from 'class-validator';
 import { Lesson } from './lesson.entity';
+import { Quiz } from './quiz.entity';
+import { Video } from './video.entity';
 
 @ObjectType()
 @Entity('sessions')
@@ -161,8 +163,6 @@ export class Session {
 }
 
 import { PaginatedResource } from '@app/shared/graphql/paginated-resource';
-import { Quiz } from './quiz.entity';
-import { Video } from './video.entity';
 
 @ObjectType()
 export class PaginatedSession extends PaginatedResource(Session) {}
