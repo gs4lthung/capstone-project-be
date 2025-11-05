@@ -23,7 +23,7 @@ import {
 } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 
 @Injectable({ scope: Scope.REQUEST })
 export class SubjectService extends BaseTypeOrmService<Subject> {
@@ -32,6 +32,7 @@ export class SubjectService extends BaseTypeOrmService<Subject> {
     @InjectRepository(Subject)
     private readonly subjectRepository: Repository<Subject>,
     private readonly awsService: AwsService,
+    private readonly datasource: DataSource,
   ) {
     super(subjectRepository);
   }
@@ -56,93 +57,104 @@ export class SubjectService extends BaseTypeOrmService<Subject> {
     data: CreateSubjectDto,
     file: Express.Multer.File,
   ): Promise<CustomApiResponse<void>> {
-    let publicUrl: string | undefined = undefined;
-    if (file) {
-      publicUrl = await this.awsService
-        .uploadFileToPublicBucket({
-          file: {
-            buffer: file.buffer,
-            ...file,
-          },
-        })
-        .then((res) => res.url);
-    }
-    const newSubject = this.subjectRepository.create({
-      ...data,
-      createdBy: this.request.user as User,
-      status: SubjectStatus.DRAFT,
-      publicUrl: publicUrl,
-    } as Subject);
+    return await this.datasource.transaction(async (manager) => {
+      let publicUrl: string | undefined = undefined;
+      if (file) {
+        publicUrl = await this.awsService
+          .uploadFileToPublicBucket({
+            file: {
+              buffer: file.buffer,
+              ...file,
+            },
+          })
+          .then((res) => res.url);
+      }
+      const newSubject = this.subjectRepository.create({
+        ...data,
+        createdBy: this.request.user as User,
+        status: SubjectStatus.DRAFT,
+        publicUrl: publicUrl,
+      } as Subject);
 
-    await this.subjectRepository.save(newSubject);
+      await manager.getRepository(Subject).save(newSubject);
 
-    return new CustomApiResponse<void>(
-      HttpStatus.CREATED,
-      'SUBJECT.CREATE_SUCCESS',
-    );
+      return new CustomApiResponse<void>(
+        HttpStatus.CREATED,
+        'SUBJECT.CREATE_SUCCESS',
+      );
+    });
   }
 
   async update(
     id: number,
     data: UpdateSubjectDto,
   ): Promise<CustomApiResponse<void>> {
-    const subject = await this.subjectRepository.findOne({
-      where: { id: id },
-      withDeleted: false,
-      relations: ['createdBy'],
-    });
-    if (!subject) throw new BadRequestException('Không tìm thấy khóa học');
-    if (subject.createdBy.id !== this.request.user.id)
-      throw new ForbiddenException('Không có quyền truy cập chủ đề này');
+    return await this.datasource.transaction(async (manager) => {
+      const subject = await this.subjectRepository.findOne({
+        where: { id: id },
+        withDeleted: false,
+        relations: ['createdBy'],
+      });
+      if (!subject) throw new BadRequestException('Không tìm thấy khóa học');
+      if (subject.createdBy.id !== this.request.user.id)
+        throw new ForbiddenException('Không có quyền truy cập chủ đề này');
 
-    if (data.status === SubjectStatus.PUBLISHED) {
-      for (const lesson of subject.lessons) {
-        if (
-          !lesson.videos ||
-          lesson.videos.length === 0 ||
-          !lesson.quizzes ||
-          lesson.quizzes.length === 0
-        ) {
-          throw new BadRequestException(
-            'Không thể xuất bản chủ đề khi còn bài học chưa có video hoặc quiz',
-          );
+      if (data.status === SubjectStatus.PUBLISHED) {
+        for (const lesson of subject.lessons) {
+          if (
+            !lesson.videos ||
+            lesson.videos.length === 0 ||
+            !lesson.quizzes ||
+            lesson.quizzes.length === 0
+          ) {
+            throw new BadRequestException(
+              'Không thể xuất bản chủ đề khi còn bài học chưa có video hoặc quiz',
+            );
+          }
         }
+
+        await manager.getRepository(Subject).update(subject.id, data);
+
+        return new CustomApiResponse<void>(
+          HttpStatus.OK,
+          'SUBJECT.UPDATE_SUCCESS',
+        );
       }
-
-      await this.subjectRepository.update(subject.id, data);
-
-      return new CustomApiResponse<void>(
-        HttpStatus.OK,
-        'SUBJECT.UPDATE_SUCCESS',
-      );
-    }
+    });
   }
 
   async delete(id: number): Promise<CustomApiResponse<void>> {
-    const subject = await this.subjectRepository.findOne({
-      where: { id: id },
-      relations: ['createdBy'],
-      withDeleted: false,
+    return await this.datasource.transaction(async (manager) => {
+      const subject = await this.subjectRepository.findOne({
+        where: { id: id },
+        relations: ['createdBy'],
+        withDeleted: false,
+      });
+      if (!subject) throw new BadRequestException('Subject not found');
+      if (subject.createdBy.id !== this.request.user.id)
+        throw new ForbiddenException('Không có quyền truy cập chủ đề này');
+
+      await manager.getRepository(Subject).softDelete(subject.id);
+
+      return new CustomApiResponse<void>(
+        HttpStatus.OK,
+        'SUBJECT.DELETE_SUCCESS',
+      );
     });
-    if (!subject) throw new BadRequestException('Subject not found');
-    if (subject.createdBy.id !== this.request.user.id)
-      throw new ForbiddenException('Không có quyền truy cập chủ đề này');
-
-    await this.subjectRepository.softDelete(subject.id);
-
-    return new CustomApiResponse<void>(HttpStatus.OK, 'SUBJECT.DELETE_SUCCESS');
   }
 
   async restore(id: number): Promise<CustomApiResponse<void>> {
-    const subject = await this.subjectRepository.findOne({
-      where: { id: id },
-      withDeleted: true,
+    return await this.datasource.transaction(async (manager) => {
+      const subject = await this.subjectRepository.findOne({
+        where: { id: id },
+        withDeleted: true,
+      });
+      if (!subject) throw new BadRequestException('Subject not found');
+      await manager.getRepository(Subject).restore(subject.id);
+      return new CustomApiResponse<void>(
+        HttpStatus.OK,
+        'SUBJECT.RESTORE_SUCCESS',
+      );
     });
-    if (!subject) throw new BadRequestException('Subject not found');
-    await this.subjectRepository.restore(subject.id);
-    return new CustomApiResponse<void>(
-      HttpStatus.OK,
-      'SUBJECT.RESTORE_SUCCESS',
-    );
   }
 }

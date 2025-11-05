@@ -16,7 +16,7 @@ import {
 } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { BaseTypeOrmService } from '@app/shared/helpers/typeorm.helper';
 import { FindOptions } from '@app/shared/interfaces/find-options.interface';
 import { WalletTransactionType } from '@app/shared/enums/payment.enum';
@@ -32,6 +32,7 @@ export class WalletService extends BaseTypeOrmService<Wallet> {
     private readonly bankRepository: Repository<Bank>,
     @InjectRepository(WalletTransaction)
     private readonly walletTransactionRepository: Repository<WalletTransaction>,
+    private readonly datasource: DataSource,
   ) {
     super(walletRepository);
   }
@@ -53,54 +54,66 @@ export class WalletService extends BaseTypeOrmService<Wallet> {
   }
 
   async create(data: CreateWalletDto): Promise<CustomApiResponse<void>> {
-    const bank = await this.bankRepository.findOne({
-      where: { id: data.bankId },
-    });
-    const newWallet = this.walletRepository.create({
-      user: { id: this.request.user.id as User['id'] },
-      bank: bank,
-      bankAccountNumber: data.bankAccountNumber,
-    });
-    await this.walletRepository.save(newWallet);
+    return await this.datasource.transaction(async (manager) => {
+      const bank = await this.bankRepository.findOne({
+        where: { id: data.bankId },
+      });
+      const newWallet = this.walletRepository.create({
+        user: { id: this.request.user.id as User['id'] },
+        bank: bank,
+        bankAccountNumber: data.bankAccountNumber,
+      });
+      await manager.getRepository(Wallet).save(newWallet);
 
-    return new CustomApiResponse<void>(HttpStatus.CREATED, 'Tạo ví thành công');
+      return new CustomApiResponse<void>(
+        HttpStatus.CREATED,
+        'Tạo ví thành công',
+      );
+    });
   }
 
   async update(
     id: number,
     data: UpdateWalletDto,
   ): Promise<CustomApiResponse<void>> {
-    const wallet = await this.walletRepository.findOne({
-      where: { id: id },
-      withDeleted: false,
-    });
-    if (!wallet) throw new InternalServerErrorException('Wallet not found');
-    await this.walletRepository.update(wallet.id, data);
+    return await this.datasource.transaction(async (manager) => {
+      const wallet = await this.walletRepository.findOne({
+        where: { id: id },
+        withDeleted: false,
+      });
+      if (!wallet) throw new InternalServerErrorException('Wallet not found');
+      await manager.getRepository(Wallet).update(wallet.id, data);
 
-    return new CustomApiResponse<void>(HttpStatus.OK, 'Cập nhật ví thành công');
+      return new CustomApiResponse<void>(
+        HttpStatus.OK,
+        'Cập nhật ví thành công',
+      );
+    });
   }
 
   async handleWalletTopUp(userId: User['id'], amount: number): Promise<void> {
-    const wallet = await this.walletRepository.findOne({
-      where: { user: { id: userId } },
-      withDeleted: false,
+    return await this.datasource.transaction(async (manager) => {
+      const wallet = await this.walletRepository.findOne({
+        where: { user: { id: userId } },
+        withDeleted: false,
+      });
+      if (!wallet) throw new InternalServerErrorException('Wallet not found');
+
+      const currentBalance = Number(wallet.currentBalance ?? 0);
+      const totalIncome = Number(wallet.totalIncome ?? 0);
+      const newCurrent = currentBalance + amount;
+      const newTotal = totalIncome + amount;
+
+      wallet.currentBalance = newCurrent;
+      wallet.totalIncome = newTotal;
+      await manager.getRepository(Wallet).save(wallet);
+
+      const newTransaction = this.walletTransactionRepository.create({
+        wallet: wallet,
+        type: WalletTransactionType.CREDIT,
+        amount: amount,
+      });
+      await manager.getRepository(WalletTransaction).save(newTransaction);
     });
-    if (!wallet) throw new InternalServerErrorException('Wallet not found');
-
-    const currentBalance = Number(wallet.currentBalance ?? 0);
-    const totalIncome = Number(wallet.totalIncome ?? 0);
-    const newCurrent = currentBalance + amount;
-    const newTotal = totalIncome + amount;
-
-    wallet.currentBalance = newCurrent;
-    wallet.totalIncome = newTotal;
-    await this.walletRepository.save(wallet);
-
-    const newTransaction = this.walletTransactionRepository.create({
-      wallet: wallet,
-      type: WalletTransactionType.CREDIT,
-      amount: amount,
-    });
-    await this.walletTransactionRepository.save(newTransaction);
   }
 }
