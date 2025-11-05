@@ -101,6 +101,13 @@ import { WalletTransaction } from '@app/database/entities/wallet-transaction.ent
 import { Feedback } from '@app/database/entities/feedback.entity';
 import { FeedbackController } from './controllers/feedback.controller';
 import { FeedbackService } from './services/feedback.service';
+import { LearnerProgress } from '@app/database/entities/learner-progress.entity';
+import { LearnerProgressController } from './controllers/learner-progress.controller';
+import { LearnerProgressService } from './services/learner-progress.service';
+import { VideoConference } from '@app/database/entities/video-conference.entity';
+import { AgoraModule } from '@app/agora';
+import { VideoConferenceController } from './controllers/video-conference.controller';
+import { VideoConferenceService } from './services/video-conference.service';
 
 @Module({
   imports: [
@@ -121,6 +128,7 @@ import { FeedbackService } from './services/feedback.service';
     AwsModule,
     FfmpegModule,
     PayosModule,
+    AgoraModule,
     MailerModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -183,6 +191,8 @@ import { FeedbackService } from './services/feedback.service';
       Attendance,
       WalletTransaction,
       Feedback,
+      LearnerProgress,
+      VideoConference,
     ]),
     ErrorModule,
     GraphQLModule.forRootAsync<ApolloDriverConfig>({
@@ -232,7 +242,9 @@ import { FeedbackService } from './services/feedback.service';
     ConfigurationController,
     SessionController,
     VideoController,
+    LearnerProgressController,
     FeedbackController,
+    VideoConferenceController,
   ],
   providers: [
     AppService,
@@ -265,7 +277,9 @@ import { FeedbackService } from './services/feedback.service';
     ConfigurationService,
     QuizService,
     VideoService,
+    LearnerProgressService,
     FeedbackService,
+    VideoConferenceService,
   ],
 })
 export class AppModule {}

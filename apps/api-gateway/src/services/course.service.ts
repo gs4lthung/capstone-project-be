@@ -1,10 +1,9 @@
 import { Course } from '@app/database/entities/course.entity';
-import { CustomApiRequest } from '@app/shared/customs/custom-api-request';
-import { CreateCourseRequestDto } from '@app/shared/dtos/course/course.dto';
 import { BaseTypeOrmService } from '@app/shared/helpers/typeorm.helper';
 import { FindOptions } from '@app/shared/interfaces/find-options.interface';
 import {
   BadRequestException,
+  ForbiddenException,
   HttpStatus,
   Inject,
   Injectable,
@@ -36,6 +35,15 @@ import { SubjectStatus } from '@app/shared/enums/subject.enum';
 import { Wallet } from '@app/database/entities/wallet.entity';
 import { WalletService } from './wallet.service';
 import { PaginateObject } from '@app/shared/dtos/paginate.dto';
+import { Configuration } from '@app/database/entities/configuration.entity';
+import {
+  CreateCourseRequestDto,
+  UpdateCourseDto,
+} from '@app/shared/dtos/course/course.dto';
+import { Province } from '@app/database/entities/province.entity';
+import { District } from '@app/database/entities/district.entity';
+import { CustomApiRequest } from '@app/shared/customs/custom-api-request';
+import { VideoConference } from '@app/database/entities/video-conference.entity';
 
 @Injectable({ scope: Scope.REQUEST })
 export class CourseService extends BaseTypeOrmService<Course> {
@@ -55,6 +63,10 @@ export class CourseService extends BaseTypeOrmService<Course> {
     private readonly subjectRepository: Repository<Subject>,
     @InjectRepository(Wallet)
     private readonly walletRepository: Repository<Wallet>,
+    @InjectRepository(Configuration)
+    private readonly configurationRepository: Repository<Configuration>,
+    @InjectRepository(VideoConference)
+    private readonly videoConferenceRepository: Repository<VideoConference>,
     private readonly sessionService: SessionService,
     private readonly walletService: WalletService,
   ) {
@@ -129,6 +141,34 @@ export class CourseService extends BaseTypeOrmService<Course> {
     );
   }
 
+  async update(
+    id: number,
+    data: UpdateCourseDto,
+  ): Promise<CustomApiResponse<void>> {
+    const course = await this.courseRepository.findOne({
+      where: { id: id },
+      relations: ['createdBy'],
+      withDeleted: false,
+    });
+    if (!course) throw new BadRequestException('Không tìm thấy khóa học');
+    if (course.createdBy.id !== this.request.user.id)
+      throw new ForbiddenException('Không có quyền truy cập khóa học này');
+    if (course.status !== CourseStatus.REJECTED)
+      throw new BadRequestException('Không thể cập nhật khóa học');
+
+    await this.courseRepository.update(course.id, {
+      ...data,
+      province: data.province
+        ? ({ id: data.province } as Province)
+        : course.province,
+      district: data.district
+        ? ({ id: data.district } as District)
+        : course.district,
+    });
+
+    return new CustomApiResponse<void>(HttpStatus.OK, 'COURSE.UPDATE_SUCCESS');
+  }
+
   async approveCourseCreationRequest(
     id: number,
   ): Promise<CustomApiResponse<void>> {
@@ -137,12 +177,13 @@ export class CourseService extends BaseTypeOrmService<Course> {
       relations: ['createdBy', 'actions'],
     });
     if (!request) throw new BadRequestException('Không tìm thấy yêu cầu');
-    if (request.status !== RequestStatus.PENDING)
+    if (request.status === RequestStatus.APPROVED)
       throw new BadRequestException('Yêu cầu không được chờ duyệt');
 
     const course = await this.courseRepository.findOne({
       where: { id: request.metadata.id },
       withDeleted: false,
+      relations: ['subject', 'subject.lessons'],
     });
     if (!course) throw new BadRequestException('Không tìm thấy khóa học');
 
@@ -160,10 +201,47 @@ export class CourseService extends BaseTypeOrmService<Course> {
         course,
         request.metadata.details.schedules,
       );
-      await this.sessionRepository.insert(sessions);
+      for (const lesson of course.subject.lessons) {
+        const session = sessions.find((ses) => ses.lesson.id === lesson.id);
+        if (session) {
+          session.videos = [];
+          session.quizzes = [];
+          for (const video of lesson.videos) {
+            delete video.id;
+            session.videos.push({
+              ...video,
+              lesson: null,
+              session: session,
+            });
+          }
+          for (const quiz of lesson.quizzes) {
+            delete quiz.id;
+            for (const question of quiz.questions) {
+              delete question.id;
+              for (const option of question.options) {
+                delete option.id;
+              }
+            }
+            session.quizzes.push({
+              ...quiz,
+              lesson: null,
+              session: session,
+            });
+          }
+        }
+      }
+
+      await this.sessionRepository.save(sessions);
     }
 
+    const videoConference = this.videoConferenceRepository.create({
+      course: course,
+      channelName: `course-${course.id}-vc`,
+    });
+    await this.videoConferenceRepository.save(videoConference);
+
     course.status = CourseStatus.APPROVED;
+    course.videoConference = videoConference;
     await this.courseRepository.save(course);
 
     request.status = RequestStatus.APPROVED;
@@ -181,6 +259,44 @@ export class CourseService extends BaseTypeOrmService<Course> {
       HttpStatus.CREATED,
       'COURSE.CREATE_SUCCESS',
     );
+  }
+
+  async rejectCourseCreationRequest(
+    id: number,
+    reason: string,
+  ): Promise<CustomApiResponse<void>> {
+    const request = await this.requestRepository.findOne({
+      where: { id: id },
+      relations: ['createdBy', 'actions'],
+    });
+    if (!request) throw new BadRequestException('Không tìm thấy yêu cầu');
+    if (
+      request.status === RequestStatus.REJECTED ||
+      request.status === RequestStatus.APPROVED
+    )
+      throw new BadRequestException('Yêu cầu không được chờ duyệt');
+
+    const course = await this.courseRepository.findOne({
+      where: { id: request.metadata.id },
+      withDeleted: false,
+    });
+    if (!course) throw new BadRequestException('Không tìm thấy khóa học');
+
+    course.status = CourseStatus.REJECTED;
+    await this.courseRepository.save(course);
+
+    request.status = RequestStatus.REJECTED;
+    await this.requestRepository.save(request);
+
+    const newRequestAction = this.requestActionRepository.create({
+      type: RequestActionType.REJECTED,
+      comment: reason,
+      request: request,
+      handledBy: this.request.user as User,
+    });
+    await this.requestActionRepository.save(newRequestAction);
+
+    return new CustomApiResponse<void>(HttpStatus.OK, 'COURSE.REJECT_SUCCESS');
   }
 
   async learnerCancelCourse(id: number): Promise<CustomApiResponse<void>> {

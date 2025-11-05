@@ -124,6 +124,15 @@
       "compilerOptions": {
         "tsConfigPath": "libs/paypal/tsconfig.lib.json"
       }
+    },
+    "agora": {
+      "type": "library",
+      "root": "libs/agora",
+      "entryFile": "index",
+      "sourceRoot": "libs/agora/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/agora/tsconfig.lib.json"
+      }
     }
   }
 }

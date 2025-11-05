@@ -9,7 +9,9 @@ export const seedBanks = async (dataSourse: DataSource) => {
   // Check if banks already exist
   const existingBankCount = await bankRepository.count();
   if (existingBankCount > 0) {
-    console.log(`⚠️  Banks already exist (${existingBankCount} records). Skipping seed.`);
+    console.log(
+      `⚠️  Banks already exist (${existingBankCount} records). Skipping seed.`,
+    );
     return;
   }
 
@@ -25,7 +27,7 @@ export const seedBanks = async (dataSourse: DataSource) => {
     });
     await bankRepository.save(bank);
   }
-  
+
   console.log(`  ✅ Successfully seeded ${bankData.length} banks`);
 };
 
@@ -33,7 +35,7 @@ export const seedBanks = async (dataSourse: DataSource) => {
 // Run this file directly (optional)
 // ============================================
 // Uncomment below to run this seed file standalone
-/*
+
 async function runSeed() {
   await AppDataSource.initialize();
   await seedBanks(AppDataSource);
@@ -44,4 +46,3 @@ runSeed().catch((error) => {
   console.error('Error seeding banks:', error);
   process.exit(1);
 });
-*/

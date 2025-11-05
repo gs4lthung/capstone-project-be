@@ -1,13 +1,17 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
   Param,
+  Patch,
   Post,
   Put,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { SubjectService } from '../services/subject.service';
 import { ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
@@ -26,6 +30,7 @@ import { SortingParams } from '@app/shared/decorators/sorting-params.decorator';
 import { Sorting } from '@app/shared/interfaces/sorting.interface';
 import { FilteringParams } from '@app/shared/decorators/filtering-params.decorator';
 import { Filtering } from '@app/shared/interfaces/filtering.interface';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('subjects')
 export class SubjectController {
@@ -71,8 +76,12 @@ export class SubjectController {
   })
   @CheckRoles(UserRole.COACH)
   @UseGuards(AuthGuard, RoleGuard)
-  async create(@Body() data: CreateSubjectDto) {
-    return this.subjectService.create(data);
+  @UseInterceptors(FileInterceptor('image'))
+  async create(
+    @Body() data: CreateSubjectDto,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    return this.subjectService.create(data, file);
   }
 
   @Put(':id')
@@ -87,7 +96,45 @@ export class SubjectController {
     status: HttpStatus.OK,
     description: 'Cập nhật môn học thành công',
   })
+  @CheckRoles(UserRole.COACH)
+  @UseGuards(AuthGuard, RoleGuard)
   async update(@Body() data: UpdateSubjectDto, @Param('id') id: number) {
     return this.subjectService.update(id, data);
+  }
+
+  @Delete(':id')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiOperation({
+    tags: ['Subjects'],
+    summary: 'Delete a subject',
+    description: 'Delete a subject',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Subject deleted successfully',
+  })
+  @CheckRoles(UserRole.COACH)
+  @UseGuards(AuthGuard, RoleGuard)
+  async delete(@Param('id') id: number) {
+    return this.subjectService.delete(id);
+  }
+
+  @Patch(':id/restore')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiOperation({
+    tags: ['Subjects'],
+    summary: 'Restore a deleted subject',
+    description: 'Restore a deleted subject',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Subject restored successfully',
+  })
+  @CheckRoles(UserRole.COACH)
+  @UseGuards(AuthGuard, RoleGuard)
+  async restore(@Param('id') id: number) {
+    return this.subjectService.restore(id);
   }
 }

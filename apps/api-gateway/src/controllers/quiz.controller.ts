@@ -1,10 +1,13 @@
 import {
   Body,
   Controller,
+  Delete,
   HttpCode,
   HttpStatus,
   Param,
+  Patch,
   Post,
+  Put,
   UseGuards,
 } from '@nestjs/common';
 import { QuizService } from '../services/quiz.service';
@@ -37,7 +40,82 @@ export class QuizController {
   @CheckRoles(UserRole.COACH)
   @UseGuards(AuthGuard, RoleGuard)
   async createLessonQuiz(@Param('id') id: number, @Body() data: CreateQuizDto) {
-    return this.quizService.create(id, data);
+    return this.quizService.createLessonQuiz(id, data);
+  }
+
+  @Post('sessions/:id')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiBearerAuth()
+  @ApiOperation({
+    tags: ['Quizzes'],
+    summary: 'Create a new session quiz',
+    description: 'Create a new session quiz',
+  })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: 'Session quiz created successfully',
+  })
+  @CheckRoles(UserRole.COACH)
+  @UseGuards(AuthGuard, RoleGuard)
+  async createSessionQuiz(
+    @Param('id') id: number,
+    @Body() data: CreateQuizDto,
+  ) {
+    return this.quizService.createSessionQuiz(id, data);
+  }
+
+  @Put(':id')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiOperation({
+    tags: ['Quizzes'],
+    summary: 'Update a session quiz',
+    description: 'Update a session quiz',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Session quiz updated successfully',
+  })
+  @CheckRoles(UserRole.COACH)
+  @UseGuards(AuthGuard, RoleGuard)
+  async update(@Param('id') id: number, @Body() data: CreateQuizDto) {
+    return this.quizService.update(id, data);
+  }
+
+  @Delete(':id')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiOperation({
+    tags: ['Quizzes'],
+    summary: 'Delete a  quiz',
+    description: 'Delete a  quiz',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Quiz deleted successfully',
+  })
+  @CheckRoles(UserRole.COACH)
+  @UseGuards(AuthGuard, RoleGuard)
+  async delete(@Param('id') id: number) {
+    return this.quizService.delete(id);
+  }
+
+  @Patch(':id/restore')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiOperation({
+    tags: ['Quizzes'],
+    summary: 'Restore a deleted quiz',
+    description: 'Restore a deleted quiz',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Quiz restored successfully',
+  })
+  @CheckRoles(UserRole.COACH)
+  @UseGuards(AuthGuard, RoleGuard)
+  async restore(@Param('id') id: number) {
+    return this.quizService.restore(id);
   }
 
   @Post(':id/attempts')
@@ -56,9 +134,8 @@ export class QuizController {
   @UseGuards(AuthGuard, RoleGuard)
   async learnerAttemptQuiz(
     @Param('id') id: number,
-    @Body('sessionId') sessionId: number,
     @Body() data: LearnerAttemptQuizDto,
   ) {
-    return this.quizService.learnerAttemptQuiz(id, sessionId, data);
+    return this.quizService.learnerAttemptQuiz(id, data);
   }
 }

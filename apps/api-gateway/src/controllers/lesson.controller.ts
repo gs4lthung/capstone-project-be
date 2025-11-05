@@ -2,10 +2,13 @@ import {
   Body,
   Controller,
   Get,
+  Delete,
   HttpCode,
   HttpStatus,
   Param,
+  Patch,
   Post,
+  Put,
   UseGuards,
 } from '@nestjs/common';
 import { LessonService } from '../services/lesson.service';
@@ -14,7 +17,6 @@ import { CheckRoles } from '@app/shared/decorators/check-roles.decorator';
 import { UserRole } from '@app/shared/enums/user.enum';
 import { AuthGuard } from '../guards/auth.guard';
 import { RoleGuard } from '../guards/role.guard';
-import { CreateLessonRequestDto } from '@app/shared/dtos/lessons/lesson.dto';
 import { FindOptions } from '@app/shared/interfaces/find-options.interface';
 import { FilteringParams } from '@app/shared/decorators/filtering-params.decorator';
 import { Filtering } from '@app/shared/interfaces/filtering.interface';
@@ -22,6 +24,10 @@ import { PaginationParams } from '@app/shared/decorators/pagination-params.decor
 import { Pagination } from '@app/shared/interfaces/pagination.interface';
 import { SortingParams } from '@app/shared/decorators/sorting-params.decorator';
 import { Sorting } from '@app/shared/interfaces/sorting.interface';
+import {
+  CreateLessonRequestDto,
+  UpdateLessonDto,
+} from '@app/shared/dtos/lessons/lesson.dto';
 
 @Controller('lessons')
 export class LessonController {
@@ -72,5 +78,59 @@ export class LessonController {
     @Body() data: CreateLessonRequestDto,
   ) {
     return this.lessonService.create(id, data);
+  }
+
+  @Put(':id')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiOperation({
+    tags: ['Lessons'],
+    summary: 'Update a lesson',
+    description: 'Update a lesson',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Lesson updated successfully',
+  })
+  @CheckRoles(UserRole.COACH)
+  @UseGuards(AuthGuard, RoleGuard)
+  async updateLesson(@Param('id') id: number, @Body() data: UpdateLessonDto) {
+    return this.lessonService.update(id, data);
+  }
+
+  @Delete(':id')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiOperation({
+    tags: ['Lessons'],
+    summary: 'Delete a lesson',
+    description: 'Delete a lesson',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Lesson deleted successfully',
+  })
+  @CheckRoles(UserRole.COACH)
+  @UseGuards(AuthGuard, RoleGuard)
+  async deleteLesson(@Param('id') id: number) {
+    return this.lessonService.delete(id);
+  }
+
+  @Patch(':id/restore')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiOperation({
+    tags: ['Lessons'],
+    summary: 'Restore a deleted lesson',
+    description: 'Restore a deleted lesson',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Lesson restored successfully',
+  })
+  @CheckRoles(UserRole.COACH)
+  @UseGuards(AuthGuard, RoleGuard)
+  async restoreLesson(@Param('id') id: number) {
+    return this.lessonService.restore(id);
   }
 }

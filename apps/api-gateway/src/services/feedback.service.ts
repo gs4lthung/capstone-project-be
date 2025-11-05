@@ -32,6 +32,7 @@ export class FeedbackService {
   ): Promise<CustomApiResponse<void>> {
     const course = await this.courseRepository.findOne({
       where: { id: courseId, status: CourseStatus.COMPLETED },
+      relations: ['createdBy'],
     });
     if (!course)
       throw new BadRequestException(
@@ -44,6 +45,7 @@ export class FeedbackService {
       isAnonymous: data.isAnonymous || false,
       course: course,
       createdBy: this.request.user as User,
+      receivedBy: course.createdBy as User,
     });
     await this.feedbackRepository.save(feedback);
 

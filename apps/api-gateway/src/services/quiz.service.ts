@@ -1,4 +1,5 @@
 import { LearnerAnswer } from '@app/database/entities/learner-answer.entity';
+import { LearnerProgress } from '@app/database/entities/learner-progress.entity';
 import { Lesson } from '@app/database/entities/lesson.entity';
 import { Quiz } from '@app/database/entities/quiz.entity';
 import { QuizAttempt } from '@app/database/entities/quiz_attempt.entity';
@@ -10,10 +11,12 @@ import {
   CreateQuizDto,
   LearnerAttemptQuizDto,
 } from '@app/shared/dtos/quizzes/quiz.dto';
+import { CourseStatus } from '@app/shared/enums/course.enum';
 import { SessionStatus } from '@app/shared/enums/session.enum';
 import { BaseTypeOrmService } from '@app/shared/helpers/typeorm.helper';
 import {
   BadRequestException,
+  ForbiddenException,
   HttpStatus,
   Inject,
   Injectable,
@@ -35,11 +38,13 @@ export class QuizService extends BaseTypeOrmService<Quiz> {
     private readonly quizAttemptRepository: Repository<QuizAttempt>,
     @InjectRepository(Session)
     private readonly sessionRepository: Repository<Session>,
+    @InjectRepository(LearnerProgress)
+    private readonly learnerProgressRepository: Repository<LearnerProgress>,
   ) {
     super(quizRepository);
   }
 
-  async create(
+  async createLessonQuiz(
     lessonId: number,
     data: CreateQuizDto,
   ): Promise<CustomApiResponse<void>> {
@@ -62,20 +67,128 @@ export class QuizService extends BaseTypeOrmService<Quiz> {
     );
   }
 
-  async learnerAttemptQuiz(
-    quizId: number,
+  async createSessionQuiz(
     sessionId: number,
-    data: LearnerAttemptQuizDto,
-  ) {
+    data: CreateQuizDto,
+  ): Promise<CustomApiResponse<void>> {
+    const session = await this.sessionRepository.findOne({
+      where: { id: sessionId },
+      relations: ['course'],
+      withDeleted: false,
+    });
+    if (!session) throw new BadRequestException('Session not found');
+    if (session.course.status !== CourseStatus.ON_GOING)
+      throw new BadRequestException(
+        'Cannot create quiz for sessions whose course is not ongoing',
+      );
+    if (session.status !== SessionStatus.SCHEDULED)
+      throw new BadRequestException(
+        'Cannot create quiz for sessions that are not scheduled',
+      );
+
+    session.quizzes.push({
+      ...data,
+      totalQuestions: data.questions.length,
+      createdBy: this.request.user as User,
+    } as Quiz);
+    await this.sessionRepository.save(session);
+
+    return new CustomApiResponse<void>(
+      HttpStatus.CREATED,
+      'SESSION.QUIZ_CREATE_SUCCESS',
+    );
+  }
+
+  async update(
+    id: number,
+    data: CreateQuizDto,
+  ): Promise<CustomApiResponse<void>> {
+    const quiz = await this.quizRepository.findOne({
+      where: { id: id },
+      relations: ['session', 'session.course', 'lesson', 'createdBy'],
+      withDeleted: false,
+    });
+    if (!quiz) throw new BadRequestException('Quiz not found');
+    if (quiz.createdBy.id !== this.request.user.id)
+      throw new ForbiddenException('Không có quyền truy cập quiz này');
+
+    if (quiz.session) {
+      if (quiz.session.course.status !== CourseStatus.ON_GOING)
+        throw new BadRequestException(
+          'Cannot update quiz for sessions whose course is not ongoing',
+        );
+      if (quiz.session.status !== SessionStatus.SCHEDULED)
+        throw new BadRequestException(
+          'Cannot update quiz for sessions that are not scheduled',
+        );
+    }
+
+    await this.quizRepository.update(quiz.id, data);
+
+    return new CustomApiResponse<void>(
+      HttpStatus.OK,
+      'LESSON.QUIZ_UPDATE_SUCCESS',
+    );
+  }
+
+  async delete(id: number): Promise<CustomApiResponse<void>> {
+    const quiz = await this.quizRepository.findOne({
+      where: { id: id },
+      relations: ['session', 'session.course', 'lesson', 'createdBy'],
+      withDeleted: false,
+    });
+    if (!quiz) throw new BadRequestException('Quiz not found');
+    if (quiz.createdBy.id !== this.request.user.id)
+      throw new ForbiddenException('Không có quyền truy cập quiz này');
+
+    if (quiz.session) {
+      if (quiz.session.course.status !== CourseStatus.ON_GOING)
+        throw new BadRequestException(
+          'Cannot update quiz for sessions whose course is not ongoing',
+        );
+      if (quiz.session.status !== SessionStatus.SCHEDULED)
+        throw new BadRequestException(
+          'Cannot update quiz for sessions that are not scheduled',
+        );
+    }
+    await this.quizRepository.softDelete(quiz);
+
+    return new CustomApiResponse<void>(
+      HttpStatus.OK,
+      'LESSON.QUIZ_DELETE_SUCCESS',
+    );
+  }
+
+  async restore(id: number): Promise<CustomApiResponse<void>> {
+    const quiz = await this.quizRepository.findOne({
+      where: { id: id },
+      relations: ['createdBy'],
+      withDeleted: true,
+    });
+    if (!quiz) throw new BadRequestException('Quiz not found');
+    if (quiz.createdBy.id !== this.request.user.id)
+      throw new ForbiddenException('Không có quyền truy cập quiz này');
+
+    await this.quizRepository.restore(quiz);
+
+    return new CustomApiResponse<void>(
+      HttpStatus.OK,
+      'LESSON.QUIZ_RESTORE_SUCCESS',
+    );
+  }
+
+  async learnerAttemptQuiz(quizId: number, data: LearnerAttemptQuizDto) {
     const quiz = await this.quizRepository.findOne({
       where: { id: quizId },
       withDeleted: false,
-      relations: ['questions', 'questions.options'],
+      relations: ['questions', 'questions.options', 'session'],
     });
     if (!quiz) throw new BadRequestException('Quiz not found');
+    if (!quiz.session)
+      throw new BadRequestException('Quiz is not associated with any session');
 
     const session = await this.sessionRepository.findOne({
-      where: { id: sessionId },
+      where: { id: quiz.session.id },
       relations: ['quizAttempts', 'course', 'course.enrollments'],
       withDeleted: false,
     });
@@ -137,6 +250,21 @@ export class QuizService extends BaseTypeOrmService<Quiz> {
       ),
     });
     await this.quizAttemptRepository.save(quizAttempt);
+
+    const learnerProgress = await this.learnerProgressRepository.findOne({
+      where: {
+        user: this.request.user as User,
+        course: session.course,
+      },
+      withDeleted: false,
+    });
+    if (learnerProgress) {
+      learnerProgress.avgQuizScore = Math.round(
+        (learnerProgress.avgQuizScore + score) /
+          learnerProgress.sessionsCompleted,
+      );
+      await this.learnerProgressRepository.save(learnerProgress);
+    }
 
     return new CustomApiResponse<void>(
       HttpStatus.CREATED,

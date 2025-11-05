@@ -2,6 +2,9 @@ import {
   Injectable,
   BadRequestException,
   NotFoundException,
+  Scope,
+  Inject,
+  HttpStatus,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -19,10 +22,15 @@ import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { BaseTypeOrmService } from '@app/shared/helpers/typeorm.helper';
 import { FindOptions } from '@app/shared/interfaces/find-options.interface';
+import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
+import { Feedback } from '@app/database/entities/feedback.entity';
+import { REQUEST } from '@nestjs/core';
+import { CustomApiRequest } from '@app/shared/customs/custom-api-request';
 
-@Injectable()
+@Injectable({ scope: Scope.REQUEST })
 export class CoachService extends BaseTypeOrmService<Coach> {
   constructor(
+    @Inject(REQUEST) private readonly request: CustomApiRequest,
     @InjectRepository(Coach)
     private readonly coachRepository: Repository<Coach>,
     @InjectRepository(User) private readonly userRepository: Repository<User>,
@@ -30,6 +38,8 @@ export class CoachService extends BaseTypeOrmService<Coach> {
     private readonly credentialRepository: Repository<Credential>,
     @InjectRepository(Role)
     private readonly roleRepository: Repository<Role>,
+    @InjectRepository(Feedback)
+    private readonly feedbackRepository: Repository<Feedback>,
     private readonly configService: ConfigService,
     private readonly jwtService: JwtService,
   ) {
@@ -50,6 +60,30 @@ export class CoachService extends BaseTypeOrmService<Coach> {
     if (!coach) throw new Error('Coach not found');
 
     return coach;
+  }
+
+  async getCoachOverallRating(id: number): Promise<CustomApiResponse<number>> {
+    const feedbacks = await this.feedbackRepository.find({
+      where: {
+        receivedBy: { id: id },
+      },
+    });
+    if (feedbacks.length === 0)
+      return new CustomApiResponse<number>(
+        HttpStatus.OK,
+        'No feedbacks found',
+        0,
+      );
+    const totalRating = feedbacks.reduce(
+      (acc, feedback) => acc + feedback.rating,
+      0,
+    );
+    const overallRating = totalRating / feedbacks.length;
+    return new CustomApiResponse<number>(
+      HttpStatus.OK,
+      'Success',
+      overallRating,
+    );
   }
 
   async registerCoach(data: RegisterCoachDto): Promise<Coach> {

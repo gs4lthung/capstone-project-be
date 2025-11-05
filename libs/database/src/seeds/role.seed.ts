@@ -22,11 +22,6 @@ export const roleSeed = async (dataSource: DataSource) => {
   }
 };
 
-// ============================================
-// Run this file directly (optional)
-// ============================================
-// Uncomment below to run this seed file standalone
-/*
 async function runSeed() {
   await AppDataSource.initialize();
   await roleSeed(AppDataSource);
@@ -37,4 +32,3 @@ runSeed().catch((error) => {
   console.error('Error seeding roles:', error);
   process.exit(1);
 });
-*/

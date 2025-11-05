@@ -29,6 +29,8 @@ import {
   MaxLength,
 } from 'class-validator';
 import { Lesson } from './lesson.entity';
+import { Quiz } from './quiz.entity';
+import { Video } from './video.entity';
 
 @ObjectType()
 @Entity('sessions')
@@ -75,19 +77,6 @@ export class Session {
   @Field(() => Number, { nullable: true })
   @Column({ name: 'duration_in_minutes', type: 'int', nullable: true })
   durationInMinutes?: number;
-
-  @Field(() => String, { nullable: true })
-  @Column({
-    name: 'video_conference_channel_name',
-    type: 'varchar',
-    length: 100,
-    nullable: true,
-  })
-  videoConferenceChannelName?: string;
-
-  @Field(() => String, { nullable: true })
-  @Column({ name: 'video_conference_link', type: 'text', nullable: true })
-  videoConferenceLink?: string;
 
   @Field(() => String)
   @Column({
@@ -148,6 +137,16 @@ export class Session {
   @ManyToOne(() => Lesson, (lesson) => lesson.sessions)
   @JoinColumn({ name: 'lesson_id' })
   lesson: Lesson;
+
+  @OneToMany(() => Quiz, (quiz) => quiz.session, {
+    cascade: ['insert', 'update'],
+  })
+  quizzes: Quiz[];
+
+  @OneToMany(() => Video, (video) => video.session, {
+    cascade: ['insert', 'update'],
+  })
+  videos: Video[];
 }
 
 import { PaginatedResource } from '@app/shared/graphql/paginated-resource';

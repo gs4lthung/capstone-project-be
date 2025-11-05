@@ -1,3 +1,4 @@
+import { AwsService } from '@app/aws';
 import {
   PaginatedSubject,
   Subject,
@@ -14,6 +15,7 @@ import { BaseTypeOrmService } from '@app/shared/helpers/typeorm.helper';
 import { FindOptions } from '@app/shared/interfaces/find-options.interface';
 import {
   BadRequestException,
+  ForbiddenException,
   HttpStatus,
   Inject,
   Injectable,
@@ -29,6 +31,7 @@ export class SubjectService extends BaseTypeOrmService<Subject> {
     @Inject(REQUEST) private readonly request: CustomApiRequest,
     @InjectRepository(Subject)
     private readonly subjectRepository: Repository<Subject>,
+    private readonly awsService: AwsService,
   ) {
     super(subjectRepository);
   }
@@ -49,11 +52,26 @@ export class SubjectService extends BaseTypeOrmService<Subject> {
     return subject;
   }
 
-  async create(data: CreateSubjectDto): Promise<CustomApiResponse<void>> {
+  async create(
+    data: CreateSubjectDto,
+    file: Express.Multer.File,
+  ): Promise<CustomApiResponse<void>> {
+    let publicUrl: string | undefined = undefined;
+    if (file) {
+      publicUrl = await this.awsService
+        .uploadFileToPublicBucket({
+          file: {
+            buffer: file.buffer,
+            ...file,
+          },
+        })
+        .then((res) => res.url);
+    }
     const newSubject = this.subjectRepository.create({
       ...data,
       createdBy: this.request.user as User,
       status: SubjectStatus.DRAFT,
+      publicUrl: publicUrl,
     } as Subject);
 
     await this.subjectRepository.save(newSubject);
@@ -74,6 +92,8 @@ export class SubjectService extends BaseTypeOrmService<Subject> {
       relations: ['createdBy'],
     });
     if (!subject) throw new BadRequestException('Không tìm thấy khóa học');
+    if (subject.createdBy.id !== this.request.user.id)
+      throw new ForbiddenException('Không có quyền truy cập chủ đề này');
 
     if (data.status === SubjectStatus.PUBLISHED) {
       for (const lesson of subject.lessons) {
@@ -96,5 +116,33 @@ export class SubjectService extends BaseTypeOrmService<Subject> {
         'SUBJECT.UPDATE_SUCCESS',
       );
     }
+  }
+
+  async delete(id: number): Promise<CustomApiResponse<void>> {
+    const subject = await this.subjectRepository.findOne({
+      where: { id: id },
+      relations: ['createdBy'],
+      withDeleted: false,
+    });
+    if (!subject) throw new BadRequestException('Subject not found');
+    if (subject.createdBy.id !== this.request.user.id)
+      throw new ForbiddenException('Không có quyền truy cập chủ đề này');
+
+    await this.subjectRepository.softDelete(subject.id);
+
+    return new CustomApiResponse<void>(HttpStatus.OK, 'SUBJECT.DELETE_SUCCESS');
+  }
+
+  async restore(id: number): Promise<CustomApiResponse<void>> {
+    const subject = await this.subjectRepository.findOne({
+      where: { id: id },
+      withDeleted: true,
+    });
+    if (!subject) throw new BadRequestException('Subject not found');
+    await this.subjectRepository.restore(subject.id);
+    return new CustomApiResponse<void>(
+      HttpStatus.OK,
+      'SUBJECT.RESTORE_SUCCESS',
+    );
   }
 }

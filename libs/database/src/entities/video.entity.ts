@@ -1,5 +1,6 @@
 import { CoachVideoStatus } from '@app/shared/enums/coach.enum';
 import {
+  Check,
   Column,
   Entity,
   JoinColumn,
@@ -11,9 +12,14 @@ import { Field, ObjectType } from '@nestjs/graphql';
 import { User } from './user.entity';
 import { Lesson } from './lesson.entity';
 import { AiVideoComparisonResult } from './ai-video-comparison-result.entity';
+import { Session } from './session.entity';
+import { PaginatedResource } from '@app/shared/graphql/paginated-resource';
 
 @ObjectType()
 @Entity('videos')
+@Check(
+  `("lesson_id" IS NOT NULL AND "session_id" IS NULL) OR ("lesson_id" IS NULL AND "session_id" IS NOT NULL)`,
+)
 export class Video {
   @Field(() => Number)
   @PrimaryGeneratedColumn()
@@ -70,9 +76,13 @@ export class Video {
   uploadedBy: User;
 
   @Field(() => Lesson, { nullable: true })
-  @ManyToOne(() => Lesson, (lesson) => lesson.videos)
+  @ManyToOne(() => Lesson, (lesson) => lesson.videos, { nullable: true })
   @JoinColumn({ name: 'lesson_id' })
   lesson: Lesson;
+
+  @ManyToOne(() => Session, (session) => session.videos, { nullable: true })
+  @JoinColumn({ name: 'session_id' })
+  session: Session;
 
   @Field(() => [AiVideoComparisonResult], { nullable: true })
   @OneToMany(
@@ -81,8 +91,6 @@ export class Video {
   )
   aiVideoComparisonResults: AiVideoComparisonResult[];
 }
-
-import { PaginatedResource } from '@app/shared/graphql/paginated-resource';
 
 @ObjectType()
 export class PaginatedVideo extends PaginatedResource(Video) {}
