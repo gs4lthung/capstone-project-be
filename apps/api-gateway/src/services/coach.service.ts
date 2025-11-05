@@ -62,10 +62,10 @@ export class CoachService extends BaseTypeOrmService<Coach> {
     return coach;
   }
 
-  async getCoachOverallRating(): Promise<CustomApiResponse<number>> {
+  async getCoachOverallRating(id: number): Promise<CustomApiResponse<number>> {
     const feedbacks = await this.feedbackRepository.find({
       where: {
-        receivedBy: this.request.user as User,
+        receivedBy: { id: id },
       },
     });
     if (feedbacks.length === 0)

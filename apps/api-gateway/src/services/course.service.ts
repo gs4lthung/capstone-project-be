@@ -3,6 +3,7 @@ import { BaseTypeOrmService } from '@app/shared/helpers/typeorm.helper';
 import { FindOptions } from '@app/shared/interfaces/find-options.interface';
 import {
   BadRequestException,
+  ForbiddenException,
   HttpStatus,
   Inject,
   Injectable,
@@ -143,9 +144,14 @@ export class CourseService extends BaseTypeOrmService<Course> {
   ): Promise<CustomApiResponse<void>> {
     const course = await this.courseRepository.findOne({
       where: { id: id },
+      relations: ['createdBy'],
       withDeleted: false,
     });
     if (!course) throw new BadRequestException('Không tìm thấy khóa học');
+    if (course.createdBy.id !== this.request.user.id)
+      throw new ForbiddenException('Không có quyền truy cập khóa học này');
+    if (course.status !== CourseStatus.REJECTED)
+      throw new BadRequestException('Không thể cập nhật khóa học');
 
     await this.courseRepository.update(course.id, {
       ...data,

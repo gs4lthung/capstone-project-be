@@ -74,7 +74,7 @@ export class CoachController {
     return this.coachService.findOne(Number(id));
   }
 
-  @Get('rating/overall')
+  @Get(':id/rating/overall')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     tags: ['Coaches'],
@@ -82,8 +82,10 @@ export class CoachController {
     description: 'Get overall rating of the coach',
   })
   @ApiResponse({ status: HttpStatus.OK, description: 'Overall rating' })
-  async getOverallRating(): Promise<CustomApiResponse<number>> {
-    return this.coachService.getCoachOverallRating();
+  async getOverallRating(
+    @Param('id') id: number,
+  ): Promise<CustomApiResponse<number>> {
+    return this.coachService.getCoachOverallRating(id);
   }
 
   @Post('register')
