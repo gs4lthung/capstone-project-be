@@ -1,10 +1,12 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
   Param,
+  Patch,
   Post,
   Put,
   UploadedFile,
@@ -99,5 +101,41 @@ export class SubjectController {
   @UseGuards(AuthGuard, RoleGuard)
   async update(@Body() data: UpdateSubjectDto, @Param('id') id: number) {
     return this.subjectService.update(id, data);
+  }
+
+  @Delete(':id')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiOperation({
+    tags: ['Subjects'],
+    summary: 'Delete a subject',
+    description: 'Delete a subject',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Subject deleted successfully',
+  })
+  @CheckRoles(UserRole.COACH)
+  @UseGuards(AuthGuard, RoleGuard)
+  async delete(@Param('id') id: number) {
+    return this.subjectService.delete(id);
+  }
+
+  @Patch(':id/restore')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiOperation({
+    tags: ['Subjects'],
+    summary: 'Restore a deleted subject',
+    description: 'Restore a deleted subject',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Subject restored successfully',
+  })
+  @CheckRoles(UserRole.COACH)
+  @UseGuards(AuthGuard, RoleGuard)
+  async restore(@Param('id') id: number) {
+    return this.subjectService.restore(id);
   }
 }

@@ -2,7 +2,10 @@ import { Lesson } from '@app/database/entities/lesson.entity';
 import { Subject } from '@app/database/entities/subject.entity';
 import { CustomApiRequest } from '@app/shared/customs/custom-api-request';
 import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
-import { CreateLessonRequestDto } from '@app/shared/dtos/lessons/lesson.dto';
+import {
+  CreateLessonRequestDto,
+  UpdateLessonDto,
+} from '@app/shared/dtos/lessons/lesson.dto';
 import { BaseTypeOrmService } from '@app/shared/helpers/typeorm.helper';
 import {
   BadRequestException,
@@ -51,5 +54,51 @@ export class LessonService extends BaseTypeOrmService<Lesson> {
       HttpStatus.CREATED,
       'LESSON.CREATE_SUCCESS',
     );
+  }
+
+  async update(
+    id: number,
+    data: UpdateLessonDto,
+  ): Promise<CustomApiResponse<void>> {
+    const lesson = await this.lessonRepository.findOne({
+      where: { id: id },
+      withDeleted: false,
+      relations: ['subject', 'subject.createdBy'],
+    });
+    if (!lesson) throw new BadRequestException('Không tìm thấy bài học');
+    if (lesson.subject.createdBy.id !== this.request.user.id)
+      throw new ForbiddenException('Không có quyền truy cập bài học này');
+
+    await this.lessonRepository.update(lesson.id, { ...data });
+
+    return new CustomApiResponse<void>(HttpStatus.OK, 'LESSON.UPDATE_SUCCESS');
+  }
+
+  async delete(id: number): Promise<CustomApiResponse<void>> {
+    const lesson = await this.lessonRepository.findOne({
+      where: { id: id },
+      withDeleted: false,
+      relations: ['subject', 'subject.createdBy'],
+    });
+    if (!lesson) throw new BadRequestException('Không tìm thấy bài học');
+    if (lesson.subject.createdBy.id !== this.request.user.id)
+      throw new ForbiddenException('Không có quyền truy cập bài học này');
+    await this.lessonRepository.softDelete(lesson.id);
+
+    return new CustomApiResponse<void>(HttpStatus.OK, 'LESSON.DELETE_SUCCESS');
+  }
+
+  async restore(id: number): Promise<CustomApiResponse<void>> {
+    const lesson = await this.lessonRepository.findOne({
+      where: { id: id },
+      relations: ['subject', 'subject.createdBy'],
+      withDeleted: true,
+    });
+    if (!lesson) throw new BadRequestException('Không tìm thấy bài học');
+    if (lesson.subject.createdBy.id !== this.request.user.id)
+      throw new ForbiddenException('Không có quyền truy cập bài học này');
+    await this.lessonRepository.restore(lesson.id);
+
+    return new CustomApiResponse<void>(HttpStatus.OK, 'LESSON.RESTORE_SUCCESS');
   }
 }

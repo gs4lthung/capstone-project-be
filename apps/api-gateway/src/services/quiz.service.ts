@@ -16,6 +16,7 @@ import { SessionStatus } from '@app/shared/enums/session.enum';
 import { BaseTypeOrmService } from '@app/shared/helpers/typeorm.helper';
 import {
   BadRequestException,
+  ForbiddenException,
   HttpStatus,
   Inject,
   Injectable,
@@ -104,10 +105,12 @@ export class QuizService extends BaseTypeOrmService<Quiz> {
   ): Promise<CustomApiResponse<void>> {
     const quiz = await this.quizRepository.findOne({
       where: { id: id },
-      relations: ['session', 'session.course', 'lesson'],
+      relations: ['session', 'session.course', 'lesson', 'createdBy'],
       withDeleted: false,
     });
     if (!quiz) throw new BadRequestException('Quiz not found');
+    if (quiz.createdBy.id !== this.request.user.id)
+      throw new ForbiddenException('Không có quyền truy cập quiz này');
 
     if (quiz.session) {
       if (quiz.session.course.status !== CourseStatus.ON_GOING)
@@ -131,10 +134,12 @@ export class QuizService extends BaseTypeOrmService<Quiz> {
   async delete(id: number): Promise<CustomApiResponse<void>> {
     const quiz = await this.quizRepository.findOne({
       where: { id: id },
-      relations: ['session', 'session.course', 'lesson'],
+      relations: ['session', 'session.course', 'lesson', 'createdBy'],
       withDeleted: false,
     });
     if (!quiz) throw new BadRequestException('Quiz not found');
+    if (quiz.createdBy.id !== this.request.user.id)
+      throw new ForbiddenException('Không có quyền truy cập quiz này');
 
     if (quiz.session) {
       if (quiz.session.course.status !== CourseStatus.ON_GOING)
@@ -157,9 +162,13 @@ export class QuizService extends BaseTypeOrmService<Quiz> {
   async restore(id: number): Promise<CustomApiResponse<void>> {
     const quiz = await this.quizRepository.findOne({
       where: { id: id },
+      relations: ['createdBy'],
       withDeleted: true,
     });
     if (!quiz) throw new BadRequestException('Quiz not found');
+    if (quiz.createdBy.id !== this.request.user.id)
+      throw new ForbiddenException('Không có quyền truy cập quiz này');
+
     await this.quizRepository.restore(quiz);
 
     return new CustomApiResponse<void>(

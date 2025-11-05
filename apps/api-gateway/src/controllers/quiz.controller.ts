@@ -5,6 +5,7 @@ import {
   HttpCode,
   HttpStatus,
   Param,
+  Patch,
   Post,
   Put,
   UseGuards,
@@ -97,6 +98,24 @@ export class QuizController {
   @UseGuards(AuthGuard, RoleGuard)
   async delete(@Param('id') id: number) {
     return this.quizService.delete(id);
+  }
+
+  @Patch(':id/restore')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiOperation({
+    tags: ['Quizzes'],
+    summary: 'Restore a deleted quiz',
+    description: 'Restore a deleted quiz',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Quiz restored successfully',
+  })
+  @CheckRoles(UserRole.COACH)
+  @UseGuards(AuthGuard, RoleGuard)
+  async restore(@Param('id') id: number) {
+    return this.quizService.restore(id);
   }
 
   @Post(':id/attempts')
