@@ -104,6 +104,10 @@ import { FeedbackService } from './services/feedback.service';
 import { LearnerProgress } from '@app/database/entities/learner-progress.entity';
 import { LearnerProgressController } from './controllers/learner-progress.controller';
 import { LearnerProgressService } from './services/learner-progress.service';
+import { VideoConference } from '@app/database/entities/video-conference.entity';
+import { AgoraModule } from '@app/agora';
+import { VideoConferenceController } from './controllers/video-conference.controller';
+import { VideoConferenceService } from './services/video-conference.service';
 
 @Module({
   imports: [
@@ -124,6 +128,7 @@ import { LearnerProgressService } from './services/learner-progress.service';
     AwsModule,
     FfmpegModule,
     PayosModule,
+    AgoraModule,
     MailerModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -187,6 +192,7 @@ import { LearnerProgressService } from './services/learner-progress.service';
       WalletTransaction,
       Feedback,
       LearnerProgress,
+      VideoConference,
     ]),
     ErrorModule,
     GraphQLModule.forRootAsync<ApolloDriverConfig>({
@@ -238,6 +244,7 @@ import { LearnerProgressService } from './services/learner-progress.service';
     VideoController,
     LearnerProgressController,
     FeedbackController,
+    VideoConferenceController,
   ],
   providers: [
     AppService,
@@ -272,6 +279,7 @@ import { LearnerProgressService } from './services/learner-progress.service';
     VideoService,
     LearnerProgressService,
     FeedbackService,
+    VideoConferenceService,
   ],
 })
 export class AppModule {}

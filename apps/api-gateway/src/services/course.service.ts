@@ -43,6 +43,7 @@ import {
 import { Province } from '@app/database/entities/province.entity';
 import { District } from '@app/database/entities/district.entity';
 import { CustomApiRequest } from '@app/shared/customs/custom-api-request';
+import { VideoConference } from '@app/database/entities/video-conference.entity';
 
 @Injectable({ scope: Scope.REQUEST })
 export class CourseService extends BaseTypeOrmService<Course> {
@@ -64,6 +65,8 @@ export class CourseService extends BaseTypeOrmService<Course> {
     private readonly walletRepository: Repository<Wallet>,
     @InjectRepository(Configuration)
     private readonly configurationRepository: Repository<Configuration>,
+    @InjectRepository(VideoConference)
+    private readonly videoConferenceRepository: Repository<VideoConference>,
     private readonly sessionService: SessionService,
     private readonly walletService: WalletService,
   ) {
@@ -231,7 +234,14 @@ export class CourseService extends BaseTypeOrmService<Course> {
       await this.sessionRepository.save(sessions);
     }
 
+    const videoConference = this.videoConferenceRepository.create({
+      course: course,
+      channelName: `course-${course.id}-vc`,
+    });
+    await this.videoConferenceRepository.save(videoConference);
+
     course.status = CourseStatus.APPROVED;
+    course.videoConference = videoConference;
     await this.courseRepository.save(course);
 
     request.status = RequestStatus.APPROVED;

@@ -21,6 +21,7 @@ import {
   JoinColumn,
   ManyToOne,
   OneToMany,
+  OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
@@ -37,6 +38,7 @@ import { Province } from './province.entity';
 import { Subject } from './subject.entity';
 import { PickleballLevel } from '@app/shared/enums/pickleball.enum';
 import { PaginatedResource } from '@app/shared/graphql/paginated-resource';
+import { VideoConference } from './video-conference.entity';
 
 @ObjectType()
 @Entity('courses')
@@ -226,6 +228,10 @@ export class Course {
   })
   @JoinColumn({ name: 'district_id' })
   district: District;
+
+  @OneToOne(() => VideoConference, (vc) => vc.course)
+  @JoinColumn({ name: 'video_conference_id' })
+  videoConference: VideoConference;
 }
 
 @ObjectType()

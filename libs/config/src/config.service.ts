@@ -121,12 +121,9 @@ export interface Config {
     accountSid: string;
     authToken: string;
   };
-  paypal: {
-    mode: 'sandbox' | 'live';
-    clientId: string;
-    secretKey: string;
-    returnUrl: string;
-    cancelUrl: string;
+  agora?: {
+    appId?: string;
+    appCertificate?: string;
   };
 }
 
@@ -336,12 +333,9 @@ export class ConfigService {
         accountSid: this.nestConfigService.get('TWILIO_ACCOUNT_SID', ''),
         authToken: this.nestConfigService.get('TWILIO_AUTH_TOKEN', ''),
       },
-      paypal: {
-        mode: this.nestConfigService.get('PAYPAL_MODE', 'sandbox'),
-        clientId: this.nestConfigService.get('PAYPAL_CLIENT_ID', ''),
-        secretKey: this.nestConfigService.get('PAYPAL_SECRET_KEY', ''),
-        returnUrl: this.nestConfigService.get('PAYPAL_RETURN_URL', ''),
-        cancelUrl: this.nestConfigService.get('PAYPAL_CANCEL_URL', ''),
+      agora: {
+        appId: this.nestConfigService.get('AGORA_APP_ID', ''),
+        appCertificate: this.nestConfigService.get('AGORA_APP_CERTIFICATE', ''),
       },
     };
   }

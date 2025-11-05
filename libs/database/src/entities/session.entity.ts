@@ -78,19 +78,6 @@ export class Session {
   @Column({ name: 'duration_in_minutes', type: 'int', nullable: true })
   durationInMinutes?: number;
 
-  @Field(() => String, { nullable: true })
-  @Column({
-    name: 'video_conference_channel_name',
-    type: 'varchar',
-    length: 100,
-    nullable: true,
-  })
-  videoConferenceChannelName?: string;
-
-  @Field(() => String, { nullable: true })
-  @Column({ name: 'video_conference_link', type: 'text', nullable: true })
-  videoConferenceLink?: string;
-
   @Field(() => String)
   @Column({
     type: 'enum',
