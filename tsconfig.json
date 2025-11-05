@@ -83,6 +83,12 @@
       ],
       "@app/paypal/*": [
         "libs/paypal/src/*"
+      ],
+      "@app/agora": [
+        "libs/agora/src"
+      ],
+      "@app/agora/*": [
+        "libs/agora/src/*"
       ]
     }
   }

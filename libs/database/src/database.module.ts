@@ -45,6 +45,7 @@ import { District } from './entities/district.entity';
 import { Subject } from './entities/subject.entity';
 import { Lesson } from './entities/lesson.entity';
 import { Bank } from './entities/bank.entity';
+import { VideoConference } from './entities/video-conference.entity';
 
 @Module({
   imports: [
@@ -103,6 +104,7 @@ import { Bank } from './entities/bank.entity';
           Subject,
           Lesson,
           Bank,
+          VideoConference,
         ],
         logging: false,
         synchronize: configService.get('node_env') === 'dev',
