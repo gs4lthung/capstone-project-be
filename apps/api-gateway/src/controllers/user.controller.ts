@@ -120,9 +120,7 @@ export class UserController {
   })
   @CheckRoles(UserRole.ADMIN)
   @UseGuards(AuthGuard, RoleGuard)
-  async softDeleteUser(
-    @Param('id') id: number,
-  ): Promise<CustomApiResponse<void>> {
+  async softDelete(@Param('id') id: number): Promise<CustomApiResponse<void>> {
     return this.userService.softDelete(id);
   }
 
@@ -139,7 +137,7 @@ export class UserController {
   })
   @CheckRoles(UserRole.ADMIN)
   @UseGuards(AuthGuard, RoleGuard)
-  async deleteUser(@Param('id') id: number): Promise<CustomApiResponse<void>> {
+  async delete(@Param('id') id: number): Promise<CustomApiResponse<void>> {
     return this.userService.delete(id);
   }
 
@@ -156,7 +154,7 @@ export class UserController {
   })
   @CheckRoles(UserRole.ADMIN)
   @UseGuards(AuthGuard, RoleGuard)
-  async restoreUser(@Param('id') id: number): Promise<CustomApiResponse<void>> {
+  async restore(@Param('id') id: number): Promise<CustomApiResponse<void>> {
     return this.userService.restore(id);
   }
 }
