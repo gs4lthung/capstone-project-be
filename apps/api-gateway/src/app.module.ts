@@ -109,6 +109,7 @@ import { AgoraModule } from '@app/agora';
 import { VideoConferenceController } from './controllers/video-conference.controller';
 import { VideoConferenceService } from './services/video-conference.service';
 import { EventEmitterModule } from '@nestjs/event-emitter';
+import { NotificationService } from './services/notification.service';
 
 @Module({
   imports: [
@@ -281,6 +282,7 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
     VideoService,
     LearnerProgressService,
     FeedbackService,
+    NotificationService,
     VideoConferenceService,
   ],
 })
