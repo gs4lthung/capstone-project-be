@@ -108,6 +108,7 @@ import { VideoConference } from '@app/database/entities/video-conference.entity'
 import { AgoraModule } from '@app/agora';
 import { VideoConferenceController } from './controllers/video-conference.controller';
 import { VideoConferenceService } from './services/video-conference.service';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 
 @Module({
   imports: [
@@ -124,6 +125,7 @@ import { VideoConferenceService } from './services/video-conference.service';
       }),
     }),
     ScheduleModule.forRoot(),
+    EventEmitterModule.forRoot(),
     DatabaseModule,
     AwsModule,
     FfmpegModule,
