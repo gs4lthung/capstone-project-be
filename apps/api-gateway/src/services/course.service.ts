@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { SessionService } from './session.service';
 import { Session } from '@app/database/entities/session.entity';
 import { RequestAction } from '@app/database/entities/request-action.entity';
@@ -69,6 +69,7 @@ export class CourseService extends BaseTypeOrmService<Course> {
     private readonly videoConferenceRepository: Repository<VideoConference>,
     private readonly sessionService: SessionService,
     private readonly walletService: WalletService,
+    private readonly datasource: DataSource,
   ) {
     super(courseRepository);
   }
@@ -98,269 +99,290 @@ export class CourseService extends BaseTypeOrmService<Course> {
     subjectId: number,
     data: CreateCourseRequestDto,
   ): Promise<CustomApiResponse<void>> {
-    const subject = await this.subjectRepository.findOne({
-      where: { id: subjectId, status: SubjectStatus.PUBLISHED },
-      withDeleted: false,
+    return await this.datasource.transaction(async (manager) => {
+      const subject = await this.subjectRepository.findOne({
+        where: { id: subjectId, status: SubjectStatus.PUBLISHED },
+        withDeleted: false,
+      });
+      if (!subject) throw new BadRequestException('Không tìm thấy chủ đề');
+
+      const newCourse = this.courseRepository.create({
+        ...data,
+        name:
+          subject.name +
+          ` -  Khóa ${subject.courses ? subject.courses.length + 1 : 1}`,
+        description: subject.description ? subject.description || '' : '',
+        order: subject.courses ? subject.courses.length + 1 : 1,
+        totalSessions: subject.lessons ? subject.lessons.length : 0,
+        level: subject.level,
+        subject: subject,
+        createdBy: this.request.user as User,
+      } as unknown as Course);
+
+      const savedCourse = await manager.getRepository(Course).save(newCourse);
+
+      const newCourseCreationRequest = this.requestRepository.create({
+        description: `Tạo khóa học: ${subject.name} - Khóa ${
+          subject.courses ? subject.courses.length + 1 : 1
+        }`,
+        type: RequestType.COURSE_APPROVAL,
+        metadata: {
+          type: 'course',
+          id: savedCourse.id,
+          details: data,
+        } as RequestMetadata,
+        createdBy: this.request.user as User,
+        status: RequestStatus.PENDING,
+      } as Request);
+
+      await manager.getRepository(Request).save(newCourseCreationRequest);
+
+      return new CustomApiResponse<void>(
+        HttpStatus.CREATED,
+        'COURSE.CREATE_SUCCESS',
+      );
     });
-    if (!subject) throw new BadRequestException('Không tìm thấy chủ đề');
-
-    const newCourse = this.courseRepository.create({
-      ...data,
-      name:
-        subject.name +
-        ` -  Khóa ${subject.courses ? subject.courses.length + 1 : 1}`,
-      description: subject.description ? subject.description || '' : '',
-      order: subject.courses ? subject.courses.length + 1 : 1,
-      totalSessions: subject.lessons ? subject.lessons.length : 0,
-      level: subject.level,
-      subject: subject,
-      createdBy: this.request.user as User,
-    } as unknown as Course);
-
-    const savedCourse = await this.courseRepository.save(newCourse);
-
-    const newCourseCreationRequest = this.requestRepository.create({
-      description: `Tạo khóa học: ${subject.name} - Khóa ${
-        subject.courses ? subject.courses.length + 1 : 1
-      }`,
-      type: RequestType.COURSE_APPROVAL,
-      metadata: {
-        type: 'course',
-        id: savedCourse.id,
-        details: data,
-      } as RequestMetadata,
-      createdBy: this.request.user as User,
-      status: RequestStatus.PENDING,
-    } as Request);
-
-    await this.requestRepository.save(newCourseCreationRequest);
-
-    return new CustomApiResponse<void>(
-      HttpStatus.CREATED,
-      'COURSE.CREATE_SUCCESS',
-    );
   }
 
   async update(
     id: number,
     data: UpdateCourseDto,
   ): Promise<CustomApiResponse<void>> {
-    const course = await this.courseRepository.findOne({
-      where: { id: id },
-      relations: ['createdBy'],
-      withDeleted: false,
-    });
-    if (!course) throw new BadRequestException('Không tìm thấy khóa học');
-    if (course.createdBy.id !== this.request.user.id)
-      throw new ForbiddenException('Không có quyền truy cập khóa học này');
-    if (course.status !== CourseStatus.REJECTED)
-      throw new BadRequestException('Không thể cập nhật khóa học');
+    return await this.datasource.transaction(async (manager) => {
+      const course = await this.courseRepository.findOne({
+        where: { id: id },
+        relations: ['createdBy'],
+        withDeleted: false,
+      });
+      if (!course) throw new BadRequestException('Không tìm thấy khóa học');
+      if (course.createdBy.id !== this.request.user.id)
+        throw new ForbiddenException('Không có quyền truy cập khóa học này');
+      if (course.status !== CourseStatus.REJECTED)
+        throw new BadRequestException('Không thể cập nhật khóa học');
 
-    await this.courseRepository.update(course.id, {
-      ...data,
-      province: data.province
-        ? ({ id: data.province } as Province)
-        : course.province,
-      district: data.district
-        ? ({ id: data.district } as District)
-        : course.district,
-    });
+      await manager.getRepository(Course).update(course.id, {
+        ...data,
+        province: data.province
+          ? ({ id: data.province } as Province)
+          : course.province,
+        district: data.district
+          ? ({ id: data.district } as District)
+          : course.district,
+      });
 
-    return new CustomApiResponse<void>(HttpStatus.OK, 'COURSE.UPDATE_SUCCESS');
+      return new CustomApiResponse<void>(
+        HttpStatus.OK,
+        'COURSE.UPDATE_SUCCESS',
+      );
+    });
   }
 
   async approveCourseCreationRequest(
     id: number,
   ): Promise<CustomApiResponse<void>> {
-    const request = await this.requestRepository.findOne({
-      where: { id: id },
-      relations: ['createdBy', 'actions'],
-    });
-    if (!request) throw new BadRequestException('Không tìm thấy yêu cầu');
-    if (request.status === RequestStatus.APPROVED)
-      throw new BadRequestException('Yêu cầu không được chờ duyệt');
+    return await this.datasource.transaction(async (manager) => {
+      const request = await this.requestRepository.findOne({
+        where: { id: id },
+        relations: ['createdBy', 'actions'],
+      });
+      if (!request) throw new BadRequestException('Không tìm thấy yêu cầu');
+      if (request.status === RequestStatus.APPROVED)
+        throw new BadRequestException('Yêu cầu không được chờ duyệt');
 
-    const course = await this.courseRepository.findOne({
-      where: { id: request.metadata.id },
-      withDeleted: false,
-      relations: ['subject', 'subject.lessons'],
-    });
-    if (!course) throw new BadRequestException('Không tìm thấy khóa học');
+      const course = await this.courseRepository.findOne({
+        where: { id: request.metadata.id },
+        withDeleted: false,
+        relations: ['subject', 'subject.lessons'],
+      });
+      if (!course) throw new BadRequestException('Không tìm thấy khóa học');
 
-    if (
-      request.metadata.details.schedules &&
-      request.metadata.details.schedules.length > 0
-    ) {
-      course.endDate = this.calculateCourseEndDate(
-        course.startDate,
-        course.totalSessions,
-        request.metadata.details.schedules,
-      );
+      if (
+        request.metadata.details.schedules &&
+        request.metadata.details.schedules.length > 0
+      ) {
+        course.endDate = this.calculateCourseEndDate(
+          course.startDate,
+          course.totalSessions,
+          request.metadata.details.schedules,
+        );
 
-      const sessions = await this.sessionService.generateSessionsFromSchedules(
-        course,
-        request.metadata.details.schedules,
-      );
-      for (const lesson of course.subject.lessons) {
-        const session = sessions.find((ses) => ses.lesson.id === lesson.id);
-        if (session) {
-          session.videos = [];
-          session.quizzes = [];
-          for (const video of lesson.videos) {
-            delete video.id;
-            session.videos.push({
-              ...video,
-              lesson: null,
-              session: session,
-            });
-          }
-          for (const quiz of lesson.quizzes) {
-            delete quiz.id;
-            for (const question of quiz.questions) {
-              delete question.id;
-              for (const option of question.options) {
-                delete option.id;
-              }
+        const sessions =
+          await this.sessionService.generateSessionsFromSchedules(
+            course,
+            request.metadata.details.schedules,
+          );
+        for (const lesson of course.subject.lessons) {
+          const session = sessions.find((ses) => ses.lesson.id === lesson.id);
+          if (session) {
+            session.videos = [];
+            session.quizzes = [];
+            for (const video of lesson.videos) {
+              delete video.id;
+              session.videos.push({
+                ...video,
+                lesson: null,
+                session: session,
+              });
             }
-            session.quizzes.push({
-              ...quiz,
-              lesson: null,
-              session: session,
-            });
+            for (const quiz of lesson.quizzes) {
+              delete quiz.id;
+              for (const question of quiz.questions) {
+                delete question.id;
+                for (const option of question.options) {
+                  delete option.id;
+                }
+              }
+              session.quizzes.push({
+                ...quiz,
+                lesson: null,
+                session: session,
+              });
+            }
           }
         }
+
+        await manager.getRepository(Session).save(sessions);
       }
 
-      await this.sessionRepository.save(sessions);
-    }
+      const videoConference = this.videoConferenceRepository.create({
+        course: course,
+        channelName: `course-${course.id}-vc`,
+      });
+      await manager.getRepository(VideoConference).save(videoConference);
 
-    const videoConference = this.videoConferenceRepository.create({
-      course: course,
-      channelName: `course-${course.id}-vc`,
+      course.status = CourseStatus.APPROVED;
+      course.videoConference = videoConference;
+      await manager.getRepository(Course).save(course);
+
+      request.status = RequestStatus.APPROVED;
+      await manager.getRepository(Request).save(request);
+
+      const newRequestAction = this.requestActionRepository.create({
+        type: RequestActionType.APPROVED,
+        comment: 'Yêu cầu đã được duyệt',
+        request: request,
+        handledBy: this.request.user as User,
+      });
+      await manager.getRepository(RequestAction).save(newRequestAction);
+
+      return new CustomApiResponse<void>(
+        HttpStatus.CREATED,
+        'COURSE.CREATE_SUCCESS',
+      );
     });
-    await this.videoConferenceRepository.save(videoConference);
-
-    course.status = CourseStatus.APPROVED;
-    course.videoConference = videoConference;
-    await this.courseRepository.save(course);
-
-    request.status = RequestStatus.APPROVED;
-    await this.requestRepository.save(request);
-
-    const newRequestAction = this.requestActionRepository.create({
-      type: RequestActionType.APPROVED,
-      comment: 'Yêu cầu đã được duyệt',
-      request: request,
-      handledBy: this.request.user as User,
-    });
-    await this.requestActionRepository.save(newRequestAction);
-
-    return new CustomApiResponse<void>(
-      HttpStatus.CREATED,
-      'COURSE.CREATE_SUCCESS',
-    );
   }
 
   async rejectCourseCreationRequest(
     id: number,
     reason: string,
   ): Promise<CustomApiResponse<void>> {
-    const request = await this.requestRepository.findOne({
-      where: { id: id },
-      relations: ['createdBy', 'actions'],
+    return await this.datasource.transaction(async (manager) => {
+      const request = await this.requestRepository.findOne({
+        where: { id: id },
+        relations: ['createdBy', 'actions'],
+      });
+      if (!request) throw new BadRequestException('Không tìm thấy yêu cầu');
+      if (
+        request.status === RequestStatus.REJECTED ||
+        request.status === RequestStatus.APPROVED
+      )
+        throw new BadRequestException('Yêu cầu không được chờ duyệt');
+
+      const course = await this.courseRepository.findOne({
+        where: { id: request.metadata.id },
+        withDeleted: false,
+      });
+      if (!course) throw new BadRequestException('Không tìm thấy khóa học');
+
+      course.status = CourseStatus.REJECTED;
+      await manager.getRepository(Course).save(course);
+
+      request.status = RequestStatus.REJECTED;
+      await manager.getRepository(Request).save(request);
+
+      const newRequestAction = this.requestActionRepository.create({
+        type: RequestActionType.REJECTED,
+        comment: reason,
+        request: request,
+        handledBy: this.request.user as User,
+      });
+      await manager.getRepository(RequestAction).save(newRequestAction);
+
+      return new CustomApiResponse<void>(
+        HttpStatus.OK,
+        'COURSE.REJECT_SUCCESS',
+      );
     });
-    if (!request) throw new BadRequestException('Không tìm thấy yêu cầu');
-    if (
-      request.status === RequestStatus.REJECTED ||
-      request.status === RequestStatus.APPROVED
-    )
-      throw new BadRequestException('Yêu cầu không được chờ duyệt');
-
-    const course = await this.courseRepository.findOne({
-      where: { id: request.metadata.id },
-      withDeleted: false,
-    });
-    if (!course) throw new BadRequestException('Không tìm thấy khóa học');
-
-    course.status = CourseStatus.REJECTED;
-    await this.courseRepository.save(course);
-
-    request.status = RequestStatus.REJECTED;
-    await this.requestRepository.save(request);
-
-    const newRequestAction = this.requestActionRepository.create({
-      type: RequestActionType.REJECTED,
-      comment: reason,
-      request: request,
-      handledBy: this.request.user as User,
-    });
-    await this.requestActionRepository.save(newRequestAction);
-
-    return new CustomApiResponse<void>(HttpStatus.OK, 'COURSE.REJECT_SUCCESS');
   }
 
   async learnerCancelCourse(id: number): Promise<CustomApiResponse<void>> {
-    const course = await this.courseRepository.findOne({
-      where: { id: id },
-      withDeleted: false,
-    });
-    if (!course) throw new BadRequestException('Không tìm thấy khóa học');
-    if (
-      course.status !== CourseStatus.APPROVED &&
-      course.status !== CourseStatus.READY_OPENED &&
-      course.status !== CourseStatus.FULL
-    ) {
-      throw new BadRequestException('Khóa học không thể hủy');
-    }
+    return await this.datasource.transaction(async (manager) => {
+      const course = await this.courseRepository.findOne({
+        where: { id: id },
+        withDeleted: false,
+      });
+      if (!course) throw new BadRequestException('Không tìm thấy khóa học');
+      if (
+        course.status !== CourseStatus.APPROVED &&
+        course.status !== CourseStatus.READY_OPENED &&
+        course.status !== CourseStatus.FULL
+      ) {
+        throw new BadRequestException('Khóa học không thể hủy');
+      }
 
-    const enrollment = await this.enrollmentRepository.findOne({
-      where: {
-        course: { id: course.id },
-        user: { id: this.request.user.id as User['id'] },
-      },
-      withDeleted: false,
-    });
-    if (!enrollment) throw new BadRequestException('Không tìm thấy đăng ký');
-    if (
-      enrollment.status !== EnrollmentStatus.UNPAID &&
-      enrollment.status !== EnrollmentStatus.PENDING_GROUP &&
-      enrollment.status !== EnrollmentStatus.CONFIRMED
-    ) {
-      throw new BadRequestException('Trạng thái đăng ký không hợp lệ');
-    }
+      const enrollment = await this.enrollmentRepository.findOne({
+        where: {
+          course: { id: course.id },
+          user: { id: this.request.user.id as User['id'] },
+        },
+        withDeleted: false,
+      });
+      if (!enrollment) throw new BadRequestException('Không tìm thấy đăng ký');
+      if (
+        enrollment.status !== EnrollmentStatus.UNPAID &&
+        enrollment.status !== EnrollmentStatus.PENDING_GROUP &&
+        enrollment.status !== EnrollmentStatus.CONFIRMED
+      ) {
+        throw new BadRequestException('Trạng thái đăng ký không hợp lệ');
+      }
 
-    if (
-      enrollment.status === EnrollmentStatus.PENDING_GROUP ||
-      enrollment.status === EnrollmentStatus.CONFIRMED
-    ) {
-      await this.walletService.handleWalletTopUp(
-        this.request.user.id as User['id'],
-        enrollment.paymentAmount,
+      if (
+        enrollment.status === EnrollmentStatus.PENDING_GROUP ||
+        enrollment.status === EnrollmentStatus.CONFIRMED
+      ) {
+        await this.walletService.handleWalletTopUp(
+          this.request.user.id as User['id'],
+          enrollment.paymentAmount,
+        );
+      }
+      enrollment.status = EnrollmentStatus.CANCELLED;
+      await this.enrollmentRepository.save(enrollment);
+
+      course.currentParticipants -= 1;
+
+      const enrollmentsToUpdate = course.enrollments.filter(
+        (e) => e.status === EnrollmentStatus.PENDING_GROUP,
       );
-    }
-    enrollment.status = EnrollmentStatus.CANCELLED;
-    await this.enrollmentRepository.save(enrollment);
+      enrollmentsToUpdate.forEach(
+        (e) => (e.status = EnrollmentStatus.CONFIRMED),
+      );
+      await manager.getRepository(Enrollment).save(enrollmentsToUpdate);
 
-    course.currentParticipants -= 1;
-    if (
-      course.currentParticipants >= course.minParticipants &&
-      course.currentParticipants < course.maxParticipants
-    ) {
-      for (const enr of course.enrollments) {
-        if (enr.status === EnrollmentStatus.PENDING_GROUP)
-          enr.status = EnrollmentStatus.CONFIRMED;
+      if (
+        course.currentParticipants >= course.minParticipants &&
+        course.currentParticipants < course.maxParticipants
+      ) {
+        course.status = CourseStatus.READY_OPENED;
+      } else if (course.currentParticipants >= course.maxParticipants) {
+        course.status = CourseStatus.FULL;
       }
-      course.status = CourseStatus.READY_OPENED;
-    } else if (course.currentParticipants >= course.maxParticipants) {
-      for (const enr of course.enrollments) {
-        if (enr.status === EnrollmentStatus.PENDING_GROUP)
-          enr.status = EnrollmentStatus.CONFIRMED;
-      }
-      course.status = CourseStatus.FULL;
-    }
-    await this.courseRepository.save(course);
+      await manager.getRepository(Course).save(course);
 
-    return new CustomApiResponse<void>(HttpStatus.OK, 'COURSE.CANCEL_SUCCESS');
+      return new CustomApiResponse<void>(
+        HttpStatus.OK,
+        'COURSE.CANCEL_SUCCESS',
+      );
+    });
   }
 
   calculateCourseEndDate(

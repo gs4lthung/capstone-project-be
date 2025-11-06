@@ -1,4 +1,3 @@
-import { NotificationStatusEnum } from '@app/shared/enums/notification.enum';
 import {
   Column,
   CreateDateColumn,
@@ -11,6 +10,7 @@ import { Field, ObjectType } from '@nestjs/graphql';
 import { GqlCustomDateTime } from '@app/shared/graphql/scalars/gql-custom-datetime.scalar';
 import { User } from './user.entity';
 import { PaginatedResource } from '@app/shared/graphql/paginated-resource';
+import { NotificationType } from '@app/shared/enums/notification.enum';
 
 @ObjectType()
 @Entity('notifications')
@@ -27,13 +27,21 @@ export class Notification {
   @Column({ type: 'text' })
   body: string;
 
-  @Field(() => String)
+  @Column({ type: 'varchar', length: 20, nullable: true })
+  navigateTo?: string;
+
   @Column({
     type: 'enum',
-    enum: NotificationStatusEnum,
-    default: NotificationStatusEnum.PENDING,
+    enum: NotificationType,
+    default: NotificationType.INFO,
   })
-  status: NotificationStatusEnum;
+  type: NotificationType;
+
+  @Column({
+    type: 'boolean',
+    default: false,
+  })
+  isRead: boolean;
 
   @Field(() => User)
   @ManyToOne(() => User, (user) => user, { nullable: false })

@@ -16,7 +16,7 @@ import { AwsService } from '@app/aws';
 import { FfmpegService } from '@app/ffmpeg';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Lesson } from '@app/database/entities/lesson.entity';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { CoachVideoStatus } from '@app/shared/enums/coach.enum';
 import { Video } from '@app/database/entities/video.entity';
 import { User } from '@app/database/entities/user.entity';
@@ -28,6 +28,7 @@ export class VideoService {
     private readonly lessonRepository: Repository<Lesson>,
     private readonly awsService: AwsService,
     private readonly ffmpegService: FfmpegService,
+    private readonly datasource: DataSource,
   ) {}
 
   async createLessonVideo(
@@ -35,58 +36,61 @@ export class VideoService {
     data: CreateVideoDto,
     videoFile: Express.Multer.File,
   ): Promise<CustomApiResponse<void>> {
-    const lesson = await this.lessonRepository.findOne({
-      where: { id: id },
-      withDeleted: false,
-    });
-    if (!lesson) throw new BadRequestException('Không tìm thấy bài học');
+    return await this.datasource.transaction(async (manager) => {
+      const lesson = await this.lessonRepository.findOne({
+        where: { id: id },
+        withDeleted: false,
+      });
+      if (!lesson) throw new BadRequestException('Không tìm thấy bài học');
 
-    const videoThumbnail = await this.ffmpegService.createVideoThumbnail(
-      videoFile.path,
-      FileUtils.excludeFileFromPath(videoFile.path),
-    );
+      const videoThumbnail = await this.ffmpegService.createVideoThumbnail(
+        videoFile.path,
+        FileUtils.excludeFileFromPath(videoFile.path),
+      );
 
-    const filePath = FileUtils.convertFilePathToExpressFilePath(videoThumbnail);
+      const filePath =
+        FileUtils.convertFilePathToExpressFilePath(videoThumbnail);
 
-    if (typeof filePath !== 'string') {
-      throw new BadRequestException('Invalid thumbnail file path');
-    }
+      if (typeof filePath !== 'string') {
+        throw new BadRequestException('Invalid thumbnail file path');
+      }
 
-    const videoThumbnailPublicUrl =
-      await this.awsService.uploadFileToPublicBucket({
+      const videoThumbnailPublicUrl =
+        await this.awsService.uploadFileToPublicBucket({
+          file: {
+            buffer: fs.readFileSync(filePath),
+            path: filePath,
+            originalname: path.basename(filePath),
+            mimetype: 'image/jpeg',
+            size: fs.statSync(filePath).size,
+            fieldname: 'video_thumbnail',
+            destination: '',
+            filename: '',
+            encoding: '7bit',
+          } as Express.Multer.File,
+        });
+
+      const videoPublicUrl = await this.awsService.uploadFileToPublicBucket({
         file: {
-          buffer: fs.readFileSync(filePath),
-          path: filePath,
-          originalname: path.basename(filePath),
-          mimetype: 'image/jpeg',
-          size: fs.statSync(filePath).size,
-          fieldname: 'video_thumbnail',
-          destination: '',
-          filename: '',
-          encoding: '7bit',
-        } as Express.Multer.File,
+          buffer: fs.readFileSync(videoFile.path),
+          ...videoFile,
+        },
       });
 
-    const videoPublicUrl = await this.awsService.uploadFileToPublicBucket({
-      file: {
-        buffer: fs.readFileSync(videoFile.path),
-        ...videoFile,
-      },
+      lesson.videos.push({
+        ...data,
+        publicUrl: videoPublicUrl.url,
+        thumbnailUrl: videoThumbnailPublicUrl.url,
+        status: CoachVideoStatus.READY,
+        uploadedBy: this.request.user as User,
+      } as Video);
+
+      await manager.getRepository(Lesson).save(lesson);
+
+      return new CustomApiResponse<void>(
+        HttpStatus.CREATED,
+        'LESSON.VIDEO_CREATE_SUCCESS',
+      );
     });
-
-    lesson.videos.push({
-      ...data,
-      publicUrl: videoPublicUrl.url,
-      thumbnailUrl: videoThumbnailPublicUrl.url,
-      status: CoachVideoStatus.READY,
-      uploadedBy: this.request.user as User,
-    } as Video);
-
-    await this.lessonRepository.save(lesson);
-
-    return new CustomApiResponse<void>(
-      HttpStatus.CREATED,
-      'LESSON.VIDEO_CREATE_SUCCESS',
-    );
   }
 }

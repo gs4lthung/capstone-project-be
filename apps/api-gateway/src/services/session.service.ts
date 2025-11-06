@@ -26,7 +26,7 @@ import {
 } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { WalletService } from './wallet.service';
 import { ConfigurationService } from './configuration.service';
 import { SessionEarning } from '@app/database/entities/session-earning.entity';
@@ -51,6 +51,7 @@ export class SessionService extends BaseTypeOrmService<Session> {
     private readonly learnerProgressRepository: Repository<LearnerProgress>,
     private readonly walletService: WalletService,
     private readonly configurationService: ConfigurationService,
+    private readonly datasource: DataSource,
   ) {
     super(sessionRepository);
   }
@@ -75,106 +76,108 @@ export class SessionService extends BaseTypeOrmService<Session> {
     id: number,
     data: CompleteSessionDto,
   ): Promise<CustomApiResponse<void>> {
-    const session = await this.sessionRepository.findOne({
-      where: { id: id },
-      relations: ['course'],
-      withDeleted: false,
-    });
-    if (!session) throw new BadRequestException('Session not found');
-    if (session.status !== SessionStatus.SCHEDULED) {
-      throw new BadRequestException('Session is not in scheduled status');
-    }
+    return await this.datasource.transaction(async (manager) => {
+      const session = await this.sessionRepository.findOne({
+        where: { id: id },
+        relations: ['course'],
+        withDeleted: false,
+      });
+      if (!session) throw new BadRequestException('Session not found');
+      if (session.status !== SessionStatus.SCHEDULED) {
+        throw new BadRequestException('Session is not in scheduled status');
+      }
 
-    if (this.getSessionTimeStatus(session) !== 'finished') {
-      throw new BadRequestException('Session is not finished yet');
-    }
+      if (this.getSessionTimeStatus(session) !== 'finished') {
+        throw new BadRequestException('Session is not finished yet');
+      }
 
-    const course = await this.courseRepository.findOne({
-      where: { id: session.course.id },
-      relations: ['enrollments'],
-      withDeleted: false,
-    });
-    if (!course) throw new InternalServerErrorException('Lỗi server');
-    if (!course.totalEarnings)
-      throw new InternalServerErrorException('Lỗi server');
+      const course = await this.courseRepository.findOne({
+        where: { id: session.course.id },
+        relations: ['enrollments'],
+        withDeleted: false,
+      });
+      if (!course) throw new InternalServerErrorException('Lỗi server');
+      if (!course.totalEarnings)
+        throw new InternalServerErrorException('Lỗi server');
 
-    const isCheckAllLearnerAttendance =
-      data.attendances.length === course.enrollments.length;
-    if (!isCheckAllLearnerAttendance) {
-      throw new BadRequestException(
-        'Attendance for all enrolled learners must be checked',
+      const isCheckAllLearnerAttendance =
+        data.attendances.length === course.enrollments.length;
+      if (!isCheckAllLearnerAttendance) {
+        throw new BadRequestException(
+          'Attendance for all enrolled learners must be checked',
+        );
+      }
+
+      const feeConfig = await this.configurationService.findByKey(
+        'platform_fee_per_percentage',
       );
-    }
+      const feePercentage = Number(feeConfig?.value);
+      if (Number.isNaN(feePercentage))
+        throw new InternalServerErrorException('Invalid configuration value');
 
-    const feeConfig = await this.configurationService.findByKey(
-      'platform_fee_per_percentage',
-    );
-    const feePercentage = Number(feeConfig?.value);
-    if (Number.isNaN(feePercentage))
-      throw new InternalServerErrorException('Invalid configuration value');
-
-    const sessionEarning =
-      (course.totalEarnings * (100 - feePercentage)) /
-      100 /
-      course.totalSessions;
-    const sessionEarningRecord = this.sessionEarningRepository.create({
-      sessionPrice: Number(sessionEarning),
-      coachEarningTotal: Number(sessionEarning),
-      status: SessionEarningStatus.PAID,
-      paidAt: new Date(),
-      session: session,
-    });
-    await this.sessionEarningRepository.save(sessionEarningRecord);
-    await this.sessionRepository.update(id, {
-      status: SessionStatus.COMPLETED,
-      completedAt: new Date(),
-    });
-
-    const learnerProgress = await this.learnerProgressRepository.findOne({
-      where: {
-        course: course,
-        user: this.request.user as User,
-      },
-      withDeleted: false,
-    });
-    if (learnerProgress) {
-      learnerProgress.sessionsCompleted += 1;
-      await this.learnerProgressRepository.save(learnerProgress);
-    }
-
-    for (const attendanceDto of data.attendances) {
-      const attendance = this.attendanceRepository.create({
-        user: { id: attendanceDto.userId as User['id'] },
+      const sessionEarning =
+        (course.totalEarnings * (100 - feePercentage)) /
+        100 /
+        course.totalSessions;
+      const sessionEarningRecord = this.sessionEarningRepository.create({
+        sessionPrice: Number(sessionEarning),
+        coachEarningTotal: Number(sessionEarning),
+        status: SessionEarningStatus.PAID,
+        paidAt: new Date(),
         session: session,
-        status: attendanceDto.status,
       });
-      await this.attendanceRepository.save(attendance);
-    }
-
-    await this.walletService.handleWalletTopUp(
-      this.request.user.id as User['id'],
-      sessionEarning,
-    );
-
-    const totalSessions = await this.sessionRepository.count({
-      where: { course: { id: course.id } },
-    });
-    const completedSessions = await this.sessionRepository.count({
-      where: {
-        course: { id: course.id },
+      await manager.getRepository(SessionEarning).save(sessionEarningRecord);
+      await manager.getRepository(Session).update(id, {
         status: SessionStatus.COMPLETED,
-      },
-    });
-    if (totalSessions === completedSessions) {
-      await this.courseRepository.update(course.id, {
-        status: CourseStatus.COMPLETED,
+        completedAt: new Date(),
       });
-    }
 
-    return new CustomApiResponse<void>(
-      HttpStatus.OK,
-      'Session completed and attendance recorded successfully',
-    );
+      const learnerProgress = await this.learnerProgressRepository.findOne({
+        where: {
+          course: course,
+          user: this.request.user as User,
+        },
+        withDeleted: false,
+      });
+      if (learnerProgress) {
+        learnerProgress.sessionsCompleted += 1;
+        await manager.getRepository(LearnerProgress).save(learnerProgress);
+      }
+
+      for (const attendanceDto of data.attendances) {
+        const attendance = this.attendanceRepository.create({
+          user: { id: attendanceDto.userId as User['id'] },
+          session: session,
+          status: attendanceDto.status,
+        });
+        await manager.getRepository(Attendance).save(attendance);
+      }
+
+      await this.walletService.handleWalletTopUp(
+        this.request.user.id as User['id'],
+        sessionEarning,
+      );
+
+      const totalSessions = await this.sessionRepository.count({
+        where: { course: { id: course.id } },
+      });
+      const completedSessions = await this.sessionRepository.count({
+        where: {
+          course: { id: course.id },
+          status: SessionStatus.COMPLETED,
+        },
+      });
+      if (totalSessions === completedSessions) {
+        await manager.getRepository(Course).update(course.id, {
+          status: CourseStatus.COMPLETED,
+        });
+      }
+
+      return new CustomApiResponse<void>(
+        HttpStatus.OK,
+        'Session completed and attendance recorded successfully',
+      );
+    });
   }
 
   async generateSessionsFromSchedules(

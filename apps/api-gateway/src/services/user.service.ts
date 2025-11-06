@@ -1,4 +1,4 @@
-import { PaginatedUser, User } from '@app/database/entities/user.entity';
+import { User } from '@app/database/entities/user.entity';
 import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
 import { HttpStatus, Inject, Injectable, Scope } from '@nestjs/common';
 
@@ -17,6 +17,7 @@ import * as bcrypt from 'bcrypt';
 import { CustomRpcException } from '@app/shared/customs/custom-rpc-exception';
 import { ExceptionUtils } from '@app/shared/utils/exception.util';
 import * as fs from 'fs';
+import { PaginateObject } from '@app/shared/dtos/paginate.dto';
 @Injectable({ scope: Scope.REQUEST })
 export class UserService extends BaseTypeOrmService<User> {
   constructor(
@@ -70,8 +71,8 @@ export class UserService extends BaseTypeOrmService<User> {
     }
   }
 
-  async findAll(findOptions: FindOptions): Promise<PaginatedUser> {
-    return super.find(findOptions, 'user', PaginatedUser);
+  async findAll(findOptions: FindOptions): Promise<PaginateObject<User>> {
+    return super.find(findOptions, 'user', PaginateObject<User>);
   }
 
   async findOne(id: number): Promise<User> {

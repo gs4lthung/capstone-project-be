@@ -9,7 +9,7 @@ import {
 import { HttpStatus, Inject, Injectable, Scope } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 
 @Injectable({ scope: Scope.REQUEST })
 export class ConfigurationService {
@@ -17,6 +17,7 @@ export class ConfigurationService {
     @Inject(REQUEST) private readonly request: CustomApiRequest,
     @InjectRepository(Configuration)
     private readonly configurationRepository: Repository<Configuration>,
+    private readonly datasource: DataSource,
   ) {}
 
   async findByKey(key: string): Promise<Configuration | null> {
@@ -28,38 +29,42 @@ export class ConfigurationService {
   async createConfiguration(
     data: CreateConfigurationDto,
   ): Promise<CustomApiResponse<void>> {
-    const newConfiguration = this.configurationRepository.create({
-      ...data,
-      createdBy: { id: this.request.user.id as User['id'] },
-      updatedBy: { id: this.request.user.id as User['id'] },
+    return await this.datasource.transaction(async (manager) => {
+      const newConfiguration = this.configurationRepository.create({
+        ...data,
+        createdBy: { id: this.request.user.id as User['id'] },
+        updatedBy: { id: this.request.user.id as User['id'] },
+      });
+      await manager.getRepository(Configuration).save(newConfiguration);
+      return new CustomApiResponse<void>(
+        HttpStatus.CREATED,
+        'Configuration created successfully',
+      );
     });
-    await this.configurationRepository.save(newConfiguration);
-    return new CustomApiResponse<void>(
-      HttpStatus.CREATED,
-      'Configuration created successfully',
-    );
   }
 
   async updateConfiguration(
     id: number,
     data: UpdateConfigurationDto,
   ): Promise<CustomApiResponse<void>> {
-    const configuration = await this.configurationRepository.findOne({
-      where: { id },
-    });
-    if (!configuration) {
+    return await this.datasource.transaction(async (manager) => {
+      const configuration = await this.configurationRepository.findOne({
+        where: { id },
+      });
+      if (!configuration) {
+        return new CustomApiResponse<void>(
+          HttpStatus.NOT_FOUND,
+          'Configuration not found',
+        );
+      }
+      await manager.getRepository(Configuration).update(id, {
+        ...data,
+        updatedBy: { id: this.request.user.id as User['id'] },
+      });
       return new CustomApiResponse<void>(
-        HttpStatus.NOT_FOUND,
-        'Configuration not found',
+        HttpStatus.OK,
+        'Configuration updated successfully',
       );
-    }
-    await this.configurationRepository.update(id, {
-      ...data,
-      updatedBy: { id: this.request.user.id as User['id'] },
     });
-    return new CustomApiResponse<void>(
-      HttpStatus.OK,
-      'Configuration updated successfully',
-    );
   }
 }
