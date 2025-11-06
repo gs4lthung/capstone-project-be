@@ -26,9 +26,8 @@ import {
   UpdateEventCountAchievementDto,
   UpdateStreakAchievementDto,
   UpdatePropertyCheckAchievementDto,
-  PaginatedAchievement,
-  AchievementType,
 } from '@app/shared/dtos/achievements/achievement.dto';
+import { PaginateObject } from '@app/shared/dtos/paginate.dto';
 
 /**
  * ============================================
@@ -206,8 +205,10 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
    * 3. Count total records
    * 4. Return paginated result
    */
-  async findAll(findOptions: FindOptions): Promise<PaginatedAchievement> {
-    return super.find(findOptions, 'achievement', PaginatedAchievement);
+  async findAll(
+    findOptions: FindOptions,
+  ): Promise<PaginateObject<Achievement>> {
+    return super.find(findOptions, 'achievement', PaginateObject<Achievement>);
   }
 
   /**
@@ -690,7 +691,7 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
       });
 
       const totalInProgress = progressRecords.filter(
-        p => p.currentProgress > 0 && p.currentProgress < 100,
+        (p) => p.currentProgress > 0 && p.currentProgress < 100,
       ).length;
 
       // Tính completion rate
@@ -698,9 +699,10 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
         where: { isActive: true },
       });
 
-      const completionRate = totalActiveAchievements > 0 
-        ? Math.round((totalEarned / totalActiveAchievements) * 100) 
-        : 0;
+      const completionRate =
+        totalActiveAchievements > 0
+          ? Math.round((totalEarned / totalActiveAchievements) * 100)
+          : 0;
 
       // Lấy achievement được earned gần nhất
       const lastEarnedRecord = await this.learnerAchievementRepository.findOne({
@@ -737,7 +739,7 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
     try {
       // Check if table has any data first
       const hasData = await this.learnerAchievementRepository.count();
-      
+
       if (hasData === 0) {
         // Return empty leaderboard if no achievements earned yet
         return {

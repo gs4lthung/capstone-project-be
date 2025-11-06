@@ -12,8 +12,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Error } from '@app/database/entities/error.entity';
 import { ConfigService } from '@app/config';
 import { CustomApiRequest } from '@app/shared/customs/custom-api-request';
-import { GqlArgumentsHost } from '@nestjs/graphql';
-import { GraphQLError } from 'graphql';
 import { ContextUtils } from '@app/shared/utils/context.util';
 import { ProtocolEnum } from '@app/shared/enums/protocol.enum';
 import { User } from '@app/database/entities/user.entity';
@@ -45,12 +43,6 @@ export class ErrorLoggingFilter implements ExceptionFilter {
         response = ctx.getResponse<Response>();
         request = ctx.getRequest<CustomApiRequest>();
         requestUrl = request.url;
-        break;
-      case ProtocolEnum.GRAPHQL:
-        const gqlCtx = GqlArgumentsHost.create(host);
-        response = gqlCtx.getContext().res;
-        request = gqlCtx.getContext().req;
-        requestUrl = `${ProtocolEnum.GRAPHQL}`;
         break;
       case ProtocolEnum.WS:
         const wsCtx = host.switchToWs();
@@ -135,12 +127,6 @@ export class ErrorLoggingFilter implements ExceptionFilter {
           path: request.url,
         });
         break;
-      case ProtocolEnum.GRAPHQL:
-        throw new GraphQLError(responseMessage, {
-          extensions: {
-            code: statusCode,
-          },
-        });
       case ProtocolEnum.WS:
         response.emit('exception', {
           message: responseMessage,

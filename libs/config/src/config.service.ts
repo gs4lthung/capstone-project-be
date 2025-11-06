@@ -48,11 +48,6 @@ export interface Config {
     time?: number;
   };
   password_salt_rounds?: number;
-  cache?: {
-    ttl?: number;
-    max?: number;
-    negative_ttl?: number; // TTL for negative cache entries
-  };
   mail?: {
     host?: string;
     port?: number;
@@ -60,46 +55,11 @@ export interface Config {
     pass?: string;
     secure?: boolean;
   };
-  redis: {
-    username?: string;
-    password?: string;
-    host?: string;
-    port?: number;
-  };
-  graphql?: {
-    playground?: boolean;
-    introspection?: boolean;
-  };
-  rabbitmq?: {
-    host?: string;
-    port?: number;
-    username?: string;
-    password?: string;
-    durable?: boolean;
-    autoDelete?: boolean;
-  };
   google?: {
     oauth?: {
       clientId?: string;
       clientSecret?: string;
     };
-  };
-  firebase?: {
-    type?: string;
-    project_id?: string;
-    private_key_id?: string;
-    private_key?: string;
-    client_email?: string;
-    client_id?: string;
-    auth_uri?: string;
-    token_uri?: string;
-    auth_provider_x509_cert_url?: string;
-    universe_domain?: string;
-  };
-  cloudinary?: {
-    name?: string;
-    api_key?: string;
-    api_secret?: string;
   };
   payos: {
     client_id?: string;
@@ -229,13 +189,6 @@ export class ConfigService {
       password_salt_rounds: Number(
         this.nestConfigService.get('PASSWORD_SALT_ROUNDS', 10),
       ),
-      cache: {
-        ttl: Number(this.nestConfigService.get('CACHE_TTL', 60000)),
-        negative_ttl: Number(
-          this.nestConfigService.get('CACHE_NEGATIVE_TTL', 86400),
-        ), // TTL for negative cache entries
-        max: Number(this.nestConfigService.get('CACHE_MAX', 1000)),
-      },
       mail: {
         host: this.nestConfigService.get('MAIL_HOST', 'smtp.gmail.com'),
         port: Number(this.nestConfigService.get('MAIL_PORT', 587)),
@@ -245,29 +198,6 @@ export class ConfigService {
           'xxxx xxxx xxxx xxxx',
         ),
         secure: this.nestConfigService.get('MAIL_SECURE', false) === 'true',
-      },
-      redis: {
-        username: this.nestConfigService.get('REDIS_USERNAME', 'default'),
-        password: this.nestConfigService.get('REDIS_PASSWORD', ''),
-        host: this.nestConfigService.get('REDIS_HOST', 'localhost'),
-        port: Number(this.nestConfigService.get('REDIS_PORT', 17454)),
-      },
-      graphql: {
-        playground: this.nestConfigService.get('GRAPHQL_PLAYGROUND', true),
-        introspection: this.nestConfigService.get(
-          'GRAPHQL_INTROSPECTION',
-          true,
-        ),
-      },
-      rabbitmq: {
-        host: this.nestConfigService.get('RABBITMQ_HOST', 'localhost'),
-        port: Number(this.nestConfigService.get('RABBITMQ_PORT', 5672)),
-        username: this.nestConfigService.get('RABBITMQ_USERNAME', 'guest'),
-        password: this.nestConfigService.get('RABBITMQ_PASSWORD', 'guest'),
-        durable:
-          this.nestConfigService.get('RABBITMQ_DURABLE', true) === 'true',
-        autoDelete:
-          this.nestConfigService.get('RABBITMQ_AUTO_DELETE', false) === 'true',
       },
       google: {
         oauth: {
@@ -280,32 +210,6 @@ export class ConfigService {
             'default-client-secret',
           ),
         },
-      },
-      firebase: {
-        type: this.nestConfigService.get('FIREBASE_TYPE', 'service_account'),
-        project_id: this.nestConfigService.get('FIREBASE_PROJECT_ID', ''),
-        private_key_id: this.nestConfigService.get(
-          'FIREBASE_PRIVATE_KEY_ID',
-          '',
-        ),
-        private_key: this.nestConfigService.get('FIREBASE_PRIVATE_KEY', ''),
-        client_email: this.nestConfigService.get('FIREBASE_CLIENT_EMAIL', ''),
-        client_id: this.nestConfigService.get('FIREBASE_CLIENT_ID', ''),
-        auth_uri: this.nestConfigService.get('FIREBASE_AUTH_URI', ''),
-        token_uri: this.nestConfigService.get('FIREBASE_TOKEN_URI', ''),
-        auth_provider_x509_cert_url: this.nestConfigService.get(
-          'FIREBASE_AUTH_PROVIDER_X509_CERT_URL',
-          '',
-        ),
-        universe_domain: this.nestConfigService.get(
-          'FIREBASE_UNIVERSE_DOMAIN',
-          '',
-        ),
-      },
-      cloudinary: {
-        name: this.nestConfigService.get('CLOUDINARY_NAME', ''),
-        api_key: this.nestConfigService.get('CLOUDINARY_API_KEY', ''),
-        api_secret: this.nestConfigService.get('CLOUDINARY_API_SECRET', ''),
       },
       payos: {
         client_id: this.nestConfigService.get('PAYOS_CLIENT_ID', ''),

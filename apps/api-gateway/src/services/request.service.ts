@@ -1,7 +1,4 @@
-import {
-  PaginatedRequest,
-  Request,
-} from '@app/database/entities/request.entity';
+import { Request } from '@app/database/entities/request.entity';
 import { CustomApiRequest } from '@app/shared/customs/custom-api-request';
 import { BaseTypeOrmService } from '@app/shared/helpers/typeorm.helper';
 import { Inject, Injectable, Scope } from '@nestjs/common';
@@ -9,6 +6,7 @@ import { REQUEST } from '@nestjs/core';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { FindOptions } from '@app/shared/interfaces/find-options.interface';
+import { PaginateObject } from '@app/shared/dtos/paginate.dto';
 
 @Injectable({ scope: Scope.REQUEST })
 export class RequestService extends BaseTypeOrmService<Request> {
@@ -20,8 +18,8 @@ export class RequestService extends BaseTypeOrmService<Request> {
     super(requestRepository);
   }
 
-  async findAll(findOptions: FindOptions): Promise<PaginatedRequest> {
-    return super.find(findOptions, 'request', PaginatedRequest);
+  async findAll(findOptions: FindOptions): Promise<PaginateObject<Request>> {
+    return super.find(findOptions, 'request', PaginateObject<Request>);
   }
 
   async findOne(id: number): Promise<Request> {

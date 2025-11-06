@@ -11,11 +11,7 @@ import {
 import { RequestStatus, RequestType } from '@app/shared/enums/request.enum';
 import { RequestAction } from './request-action.entity';
 import { User } from './user.entity';
-import { Field, ObjectType } from '@nestjs/graphql';
 import { IsEnum, IsString } from 'class-validator';
-import { GqlCustomDateTime } from '@app/shared/graphql/scalars/gql-custom-datetime.scalar';
-import { JSONScalar } from '@app/shared/graphql/scalars/json.scalar';
-import { PaginatedResource } from '@app/shared/graphql/paginated-resource';
 
 export interface RequestMetadata {
   type: 'course' | 'quiz' | 'coach' | 'video';
@@ -23,19 +19,15 @@ export interface RequestMetadata {
   details: any;
 }
 
-@ObjectType()
 @Entity('requests')
 export class Request {
-  @Field(() => Number)
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Field(() => String)
   @Column({ type: 'text' })
   @IsString()
   description: string;
 
-  @Field(() => String)
   @Column({
     type: 'enum',
     enum: RequestType,
@@ -43,20 +35,16 @@ export class Request {
   @IsEnum(RequestType)
   type: RequestType;
 
-  @Field(() => String)
   @Column({ type: 'enum', enum: RequestStatus, default: RequestStatus.PENDING })
   @IsEnum(RequestStatus)
   status: RequestStatus;
 
-  @Field(() => JSONScalar, { nullable: true })
   @Column({ type: 'jsonb', nullable: true })
   metadata: RequestMetadata;
 
-  @Field(() => GqlCustomDateTime)
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
-  @Field(() => GqlCustomDateTime)
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 
@@ -72,6 +60,3 @@ export class Request {
   })
   actions: RequestAction[];
 }
-
-@ObjectType()
-export class PaginatedRequest extends PaginatedResource(Request) {}

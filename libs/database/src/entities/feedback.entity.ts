@@ -8,16 +8,11 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { Field, ObjectType } from '@nestjs/graphql';
-import { GqlCustomDateTime } from '@app/shared/graphql/scalars/gql-custom-datetime.scalar';
 import { Course } from './course.entity';
 import { User } from './user.entity';
-import { PaginatedResource } from '@app/shared/graphql/paginated-resource';
 
-@ObjectType()
 @Entity('feedbacks')
 export class Feedback {
-  @Field(() => Number)
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -33,15 +28,12 @@ export class Feedback {
   @Max(5)
   rating: number;
 
-  @Field(() => Boolean)
   @Column({ type: 'boolean', default: false })
   isAnonymous: boolean;
 
-  @Field(() => GqlCustomDateTime)
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
-  @Field(() => GqlCustomDateTime, { nullable: true })
   @DeleteDateColumn({ name: 'deleted_at' })
   deletedAt?: Date;
 
@@ -57,6 +49,3 @@ export class Feedback {
   @JoinColumn({ name: 'course_id' })
   course: Course;
 }
-
-@ObjectType()
-export class PaginatedFeedback extends PaginatedResource(Feedback) {}

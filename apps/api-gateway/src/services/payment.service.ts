@@ -1,9 +1,6 @@
 import { Course } from '@app/database/entities/course.entity';
 import { Enrollment } from '@app/database/entities/enrollment.entity';
-import {
-  Payment,
-  PaginatedPayment,
-} from '@app/database/entities/payment.entity';
+import { Payment } from '@app/database/entities/payment.entity';
 import { User } from '@app/database/entities/user.entity';
 import { PayosService } from '@app/payos';
 import { CustomApiRequest } from '@app/shared/customs/custom-api-request';
@@ -31,6 +28,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { BaseTypeOrmService } from '@app/shared/helpers/typeorm.helper';
 import { FindOptions } from '@app/shared/interfaces/find-options.interface';
+import { PaginateObject } from '@app/shared/dtos/paginate.dto';
 
 @Injectable({ scope: Scope.REQUEST })
 export class PaymentService extends BaseTypeOrmService<Payment> {
@@ -48,8 +46,8 @@ export class PaymentService extends BaseTypeOrmService<Payment> {
     super(paymentRepository);
   }
 
-  async findAll(findOptions: FindOptions): Promise<PaginatedPayment> {
-    return super.find(findOptions, 'payment', PaginatedPayment);
+  async findAll(findOptions: FindOptions): Promise<PaginateObject<Payment>> {
+    return super.find(findOptions, 'payment', PaginateObject<Payment>);
   }
 
   async findOne(id: number): Promise<Payment> {

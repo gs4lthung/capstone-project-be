@@ -1,10 +1,7 @@
 import { Attendance } from '@app/database/entities/attendance.entity';
 import { Course } from '@app/database/entities/course.entity';
 import { Schedule } from '@app/database/entities/schedule.entity';
-import {
-  Session,
-  PaginatedSession,
-} from '@app/database/entities/session.entity';
+import { Session } from '@app/database/entities/session.entity';
 import { Subject } from '@app/database/entities/subject.entity';
 import { User } from '@app/database/entities/user.entity';
 import { CustomApiRequest } from '@app/shared/customs/custom-api-request';
@@ -32,6 +29,7 @@ import { ConfigurationService } from './configuration.service';
 import { SessionEarning } from '@app/database/entities/session-earning.entity';
 import { CourseStatus } from '@app/shared/enums/course.enum';
 import { LearnerProgress } from '@app/database/entities/learner-progress.entity';
+import { PaginateObject } from '@app/shared/dtos/paginate.dto';
 
 @Injectable({ scope: Scope.REQUEST })
 export class SessionService extends BaseTypeOrmService<Session> {
@@ -56,8 +54,8 @@ export class SessionService extends BaseTypeOrmService<Session> {
     super(sessionRepository);
   }
 
-  async findAll(findOptions: FindOptions): Promise<PaginatedSession> {
-    return super.find(findOptions, 'session', PaginatedSession);
+  async findAll(findOptions: FindOptions): Promise<PaginateObject<Session>> {
+    return super.find(findOptions, 'session', PaginateObject<Session>);
   }
 
   async findOne(id: number): Promise<Session> {

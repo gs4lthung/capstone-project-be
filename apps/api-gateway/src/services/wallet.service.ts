@@ -1,6 +1,6 @@
 import { Bank } from '@app/database/entities/bank.entity';
 import { User } from '@app/database/entities/user.entity';
-import { Wallet, PaginatedWallet } from '@app/database/entities/wallet.entity';
+import { Wallet } from '@app/database/entities/wallet.entity';
 import { CustomApiRequest } from '@app/shared/customs/custom-api-request';
 import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
 import {
@@ -21,6 +21,7 @@ import { BaseTypeOrmService } from '@app/shared/helpers/typeorm.helper';
 import { FindOptions } from '@app/shared/interfaces/find-options.interface';
 import { WalletTransactionType } from '@app/shared/enums/payment.enum';
 import { WalletTransaction } from '@app/database/entities/wallet-transaction.entity';
+import { PaginateObject } from '@app/shared/dtos/paginate.dto';
 
 @Injectable({ scope: Scope.REQUEST })
 export class WalletService extends BaseTypeOrmService<Wallet> {
@@ -37,8 +38,8 @@ export class WalletService extends BaseTypeOrmService<Wallet> {
     super(walletRepository);
   }
 
-  async findAll(findOptions: FindOptions): Promise<PaginatedWallet> {
-    return super.find(findOptions, 'wallet', PaginatedWallet);
+  async findAll(findOptions: FindOptions): Promise<PaginateObject<Wallet>> {
+    return super.find(findOptions, 'wallet', PaginateObject<Wallet>);
   }
 
   async findOne(id: number): Promise<Wallet> {
