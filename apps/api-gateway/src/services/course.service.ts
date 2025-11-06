@@ -55,8 +55,6 @@ export class CourseService extends BaseTypeOrmService<Course> {
     private readonly requestRepository: Repository<Request>,
     @InjectRepository(RequestAction)
     private readonly requestActionRepository: Repository<RequestAction>,
-    @InjectRepository(Session)
-    private readonly sessionRepository: Repository<Session>,
     @InjectRepository(Enrollment)
     private readonly enrollmentRepository: Repository<Enrollment>,
     @InjectRepository(Subject)
@@ -67,6 +65,10 @@ export class CourseService extends BaseTypeOrmService<Course> {
     private readonly notificationService: NotificationService,
     private readonly walletService: WalletService,
     private readonly datasource: DataSource,
+    @InjectRepository(Province)
+    private readonly provinceRepository: Repository<Province>,
+    @InjectRepository(District)
+    private readonly districtRepository: Repository<District>,
   ) {
     super(courseRepository);
   }
@@ -118,6 +120,14 @@ export class CourseService extends BaseTypeOrmService<Course> {
 
       const savedCourse = await manager.getRepository(Course).save(newCourse);
 
+      const courseMetadata = { ...savedCourse };
+      courseMetadata.province = await this.provinceRepository.findOne({
+        where: { id: data.province },
+      });
+      courseMetadata.district = await this.districtRepository.findOne({
+        where: { id: data.district },
+      });
+
       const newCourseCreationRequest = this.requestRepository.create({
         description: `Tạo khóa học: ${subject.name} - Khóa ${
           subject.courses ? subject.courses.length + 1 : 1
@@ -126,7 +136,7 @@ export class CourseService extends BaseTypeOrmService<Course> {
         metadata: {
           type: 'course',
           id: savedCourse.id,
-          details: data,
+          details: courseMetadata,
         } as RequestMetadata,
         createdBy: this.request.user as User,
         status: RequestStatus.PENDING,

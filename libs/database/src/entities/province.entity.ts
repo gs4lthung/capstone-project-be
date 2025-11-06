@@ -12,7 +12,6 @@ export class Province {
   name: string;
 
   @OneToMany(() => District, (district) => district.province, {
-    eager: true,
     cascade: ['insert'],
   })
   districts: District[];
