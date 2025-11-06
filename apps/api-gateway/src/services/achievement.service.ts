@@ -205,7 +205,17 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
   async findAll(
     findOptions: FindOptions,
   ): Promise<PaginateObject<Achievement>> {
-    return super.find(findOptions, 'achievement', PaginateObject<Achievement>);
+    // Override sort option để luôn sắp xếp theo created_at DESC
+    // Đảm bảo thứ tự không thay đổi khi update/activate/deactivate achievement
+    const modifiedOptions = {
+      ...findOptions,
+      sort: {
+        property: 'created_at',
+        direction: 'DESC' as const,
+      },
+    };
+    
+    return super.find(modifiedOptions, 'achievement', PaginateObject<Achievement>);
   }
 
   /**
@@ -399,13 +409,23 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
     }
 
     /**
-     * remove() vs delete():
-     * - remove(): Load entity trước, trigger cascade, hooks
-     * - delete(): Direct SQL DELETE, nhanh hơn nhưng không trigger hooks
-     *
-     * Dùng remove() để CASCADE DELETE hoạt động đúng
+     * MANUAL CASCADE DELETE
+     * Vì foreign key constraint không có ON DELETE CASCADE,
+     * phải xóa tất cả records liên quan trước
      */
-    await this.achievementRepository.remove(achievement);
+    
+    // 1. Xóa tất cả learner_achievements (achievements đã earned)
+    await this.learnerAchievementRepository.delete({
+      achievement: { id },
+    });
+
+    // 2. Xóa tất cả achievement_progresses (tiến độ của users)
+    await this.achievementProgressRepository.delete({
+      achievement: { id },
+    });
+
+    // 3. Cuối cùng mới xóa achievement
+    await this.achievementRepository.delete(id);
 
     return new CustomApiResponse<void>(
       HttpStatus.OK,
