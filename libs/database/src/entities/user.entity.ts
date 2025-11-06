@@ -11,8 +11,7 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { Field, ObjectType } from '@nestjs/graphql';
-import { GqlCustomDateTime } from '@app/shared/graphql/scalars/gql-custom-datetime.scalar';
+
 import { Error } from './error.entity';
 import { Role } from './role.entity';
 import { AuthProvider } from './auth-provider.entity';
@@ -46,29 +45,23 @@ import { Attendance } from './attendance.entity';
 import { Quiz } from './quiz.entity';
 import { Video } from './video.entity';
 import { Subject } from './subject.entity';
-import { PaginatedResource } from '@app/shared/graphql/paginated-resource';
 
-@ObjectType()
 @Entity('users')
 export class User {
-  @Field(() => Number)
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Field(() => String)
   @Column({ name: 'full_name', type: 'varchar', length: 50 })
   @IsString()
   @Min(2)
   @Max(50)
   fullName: string;
 
-  @Field(() => String, { nullable: true })
   @Column({ type: 'varchar', length: 50, unique: true, nullable: true })
   @Index({ unique: true })
   @IsEmail()
   email: string;
 
-  @Field(() => String, { nullable: true })
   @Column({ name: 'phone_number', type: 'varchar', length: 25, nullable: true })
   @IsOptional()
   @IsPhoneNumber('VN')
@@ -80,7 +73,6 @@ export class User {
   @IsString()
   password?: string;
 
-  @Field(() => String, { nullable: true })
   @Column({ name: 'profile_picture', type: 'text', nullable: true })
   @IsOptional()
   @IsUrl()
@@ -90,7 +82,6 @@ export class User {
   @Column({ name: 'refresh_token', type: 'text', nullable: true })
   refreshToken?: string;
 
-  @Field(() => Boolean)
   @Column({ name: 'is_email_verified', type: 'boolean', default: false })
   @Index()
   isEmailVerified: boolean;
@@ -113,20 +104,16 @@ export class User {
   })
   resetPasswordToken?: string;
 
-  @Field(() => Boolean)
   @Column({ name: 'is_active', type: 'boolean', default: false })
   @Index()
   isActive: boolean;
 
-  @Field(() => GqlCustomDateTime)
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
-  @Field(() => GqlCustomDateTime)
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 
-  @Field(() => GqlCustomDateTime, { nullable: true })
   @DeleteDateColumn({ name: 'deleted_at' })
   deletedAt: Date;
 
@@ -220,6 +207,3 @@ export class User {
   @OneToMany(() => Subject, (subject) => subject.createdBy)
   subjects: Subject[];
 }
-
-@ObjectType()
-export class PaginatedUser extends PaginatedResource(User) {}

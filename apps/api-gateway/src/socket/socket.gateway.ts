@@ -1,12 +1,5 @@
-import { Logger, OnModuleInit, UseFilters, UseGuards } from '@nestjs/common';
-import {
-  MessageBody,
-  OnGatewayConnection,
-  OnGatewayDisconnect,
-  SubscribeMessage,
-  WebSocketGateway,
-  WebSocketServer,
-} from '@nestjs/websockets';
+import { Logger, UseFilters, UseGuards } from '@nestjs/common';
+import { WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { ErrorLoggingFilter } from '../filters/error.filter';
 import { AuthGuard } from '../guards/auth.guard';
@@ -15,30 +8,29 @@ import { ConfigService } from '@app/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Notification } from '@app/database/entities/notification.entity';
 import { Repository } from 'typeorm';
-import { NotificationStatusEnum } from '@app/shared/enums/notification.enum';
 import { JwtPayloadDto } from '@app/shared/dtos/auth/jwt.payload.dto';
+import { NotificationService } from '../services/notification.service';
+import { OnEvent } from '@nestjs/event-emitter';
+import { SendNotification } from '@app/shared/interfaces/send-notification.interface';
 
 @WebSocketGateway({
   namespace: '/ws',
 })
 @UseGuards(AuthGuard)
 @UseFilters(ErrorLoggingFilter)
-export class SocketGateway
-  implements OnGatewayConnection, OnGatewayDisconnect, OnModuleInit
-{
+export class SocketGateway {
   constructor(
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     @InjectRepository(Notification)
     private readonly notificationRepository: Repository<Notification>,
+    private readonly notificationService: NotificationService,
   ) {}
   @WebSocketServer() server: Server;
 
   private readonly logger = new Logger(SocketGateway.name);
 
-  onModuleInit() {
-    this.handleNotificationEvent();
-  }
+  private onlineUsers = new Map();
 
   async handleConnection(client: Socket) {
     try {
@@ -52,6 +44,26 @@ export class SocketGateway
       });
 
       (client as any).userId = payload.id;
+
+      this.onlineUsers.set(payload.id, client.id);
+
+      const unreadNotifications =
+        await this.notificationService.getUserUnreadNotifications(payload.id);
+      for (const notification of unreadNotifications) {
+        client.emit('notification.send', notification);
+      }
+
+      client.on('notification.read', async (notificationId: number) => {
+        await this.notificationService.markNotificationAsRead(notificationId);
+      });
+
+      client.on('disconnect', () => {
+        this.onlineUsers.forEach((value, key) => {
+          if (value === client.id) {
+            this.onlineUsers.delete(key);
+          }
+        });
+      });
     } catch {
       client.disconnect();
     }
@@ -63,29 +75,11 @@ export class SocketGateway
     }
   }
 
-  @SubscribeMessage('heartbeat')
-  handleHeartbeat(client: Socket): void {
-    const userId = (client as any).userId;
-    if (userId) {
-    }
-  }
-
-  handleNotificationEvent() {}
-
-  @SubscribeMessage('notification:delivered')
-  async handleNotificationDelivered(
-    client: Socket,
-    @MessageBody() payload: { notificationId: string },
-  ): Promise<void> {
-    try {
-      await this.notificationRepository.update(payload.notificationId, {
-        status: NotificationStatusEnum.DELIVERED,
-      });
-    } catch (error) {
-      await this.notificationRepository.update(payload.notificationId, {
-        status: NotificationStatusEnum.ERROR,
-      });
-      this.logger.error('Error updating notification status:', error);
+  @OnEvent('notification.send')
+  async handleSendNotificationEvent(payload: SendNotification) {
+    const clientId = this.onlineUsers.get(payload.userId);
+    if (clientId) {
+      this.server.to(clientId).emit('notification.send', payload);
     }
   }
 }

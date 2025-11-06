@@ -10,25 +10,18 @@ import {
 import { Achievement } from './achievement.entity';
 import { IsInt, Max, Min } from 'class-validator';
 import { User } from './user.entity';
-import { Field, ObjectType } from '@nestjs/graphql';
-import { GqlCustomDateTime } from '@app/shared/graphql/scalars/gql-custom-datetime.scalar';
-import { PaginatedResource } from '@app/shared/graphql/paginated-resource';
 
-@ObjectType()
 @Entity('achievement_progresses')
 export class AchievementProgress {
-  @Field(() => Number)
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Field(() => Number)
   @Column({ name: 'current_progress', type: 'int' })
   @IsInt()
   @Min(0)
   @Max(100)
   currentProgress: number;
 
-  @Field(() => GqlCustomDateTime)
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 
@@ -45,6 +38,3 @@ export class AchievementProgress {
   @Index()
   user: User;
 }
-
-@ObjectType()
-export class PaginatedAchievementProgress extends PaginatedResource(AchievementProgress) {}

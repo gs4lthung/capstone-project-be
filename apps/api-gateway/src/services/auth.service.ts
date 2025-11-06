@@ -21,13 +21,14 @@ import {
 } from '@nestjs/common';
 import { JwtService, TokenExpiredError } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { ExceptionUtils } from '@app/shared/utils/exception.util';
 import { AuthProviderEnum } from '@app/shared/enums/auth.enum';
 import { MailSendDto } from '@app/shared/dtos/mails/mail-send.dto';
 import { UserRole } from '@app/shared/enums/user.enum';
 import { MailService } from './mail.service';
+import { Learner } from '@app/database/entities/learner.entity';
 
 @Injectable({ scope: Scope.REQUEST })
 export class AuthService {
@@ -36,11 +37,10 @@ export class AuthService {
   constructor(
     @InjectRepository(User) private readonly userRepository: Repository<User>,
     @InjectRepository(Role) private readonly roleRepository: Repository<Role>,
-    @InjectRepository(AuthProvider)
-    private readonly authProviderRepository: Repository<AuthProvider>,
     private readonly mailService: MailService,
     private readonly configService: ConfigService,
     private readonly jwtService: JwtService,
+    private readonly dataSource: DataSource,
   ) {}
 
   //#region Login
@@ -191,7 +191,7 @@ export class AuthService {
       });
 
       if (!existingUser) {
-        const roleId = await this.getCustomerRoleId();
+        const roleId = await this.getLearnerRoleId();
         const newUser = this.userRepository.create({
           fullName: `${data.firstName} ${data.lastName}`,
           email: data.email,
@@ -242,7 +242,7 @@ export class AuthService {
 
   //#region Register
   async register(data: RegisterRequestDto): Promise<CustomApiResponse<void>> {
-    try {
+    return await this.dataSource.transaction(async (manager) => {
       const existingUser = await this.userRepository.findOne({
         where: { email: data.email },
       });
@@ -257,7 +257,7 @@ export class AuthService {
         this.configService.get('password_salt_rounds'),
       );
 
-      const roleId = await this.getCustomerRoleId();
+      const roleId = await this.getLearnerRoleId();
 
       const newUser = this.userRepository.create({
         fullName: data.fullName,
@@ -272,6 +272,14 @@ export class AuthService {
             providerId: data.email,
           } as AuthProvider,
         ],
+        learner: [
+          {
+            skillLevel: data.learner.skillLevel,
+            learningGoal: data.learner.learningGoal,
+            province: { id: data.learner.province },
+            district: { id: data.learner.district },
+          } as Learner,
+        ],
       });
 
       const payload: JwtPayloadDto = {
@@ -284,7 +292,7 @@ export class AuthService {
 
       newUser.emailVerificationToken = emailVerificationToken;
 
-      await this.userRepository.save(newUser);
+      await manager.getRepository(User).save(newUser);
 
       await this.sendVerificationEmail(newUser.email, emailVerificationToken);
 
@@ -292,9 +300,7 @@ export class AuthService {
         HttpStatus.CREATED,
         'AUTH.REGISTER_SUCCESS',
       );
-    } catch (error) {
-      throw ExceptionUtils.wrapAsRpcException(error);
-    }
+    });
   }
 
   //#endregion
@@ -465,7 +471,7 @@ export class AuthService {
 
   //#endregion
 
-  private async getCustomerRoleId(): Promise<number> {
+  private async getLearnerRoleId(): Promise<number> {
     if (this.customerRoleId !== null) return this.customerRoleId;
 
     const role = await this.roleRepository.findOne({

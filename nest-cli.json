@@ -1,14 +1,11 @@
 {
   "$schema": "https://json.schemastore.org/nest-cli",
   "collection": "@nestjs/schematics",
-  "sourceRoot": "apps/api-gateway/src",
+  "sourceRoot": "src",
   "compilerOptions": {
-    "deleteOutDir": true,
-    "webpack": true,
-    "tsConfigPath": "apps/api-gateway/tsconfig.app.json"
+    "deleteOutDir": true
   },
   "monorepo": true,
-  "root": "apps/api-gateway",
   "projects": {
     "api-gateway": {
       "type": "application",
@@ -16,15 +13,16 @@
       "entryFile": "main",
       "sourceRoot": "apps/api-gateway/src",
       "compilerOptions": {
-        "tsConfigPath": "apps/api-gateway/tsconfig.app.json",
-        "assets": [
-          {
-            "include": "src/mail-templates/**/*",
-            "outDir": "dist/apps/api-gateway",
-            "watchAssets": true
-          }
-        ]
-      }
+        "webpack": false,
+        "tsConfigPath": "apps/api-gateway/tsconfig.app.json"
+      },
+      "assets": [
+        {
+          "include": "src/mail-templates/**/*",
+          "outDir": "dist/apps/api-gateway/src",
+          "watchAssets": true
+        }
+      ]
     },
     "config": {
       "type": "library",
@@ -51,33 +49,6 @@
       "sourceRoot": "libs/shared/src",
       "compilerOptions": {
         "tsConfigPath": "libs/shared/tsconfig.lib.json"
-      }
-    },
-    "firebase": {
-      "type": "library",
-      "root": "libs/firebase",
-      "entryFile": "index",
-      "sourceRoot": "libs/firebase/src",
-      "compilerOptions": {
-        "tsConfigPath": "libs/firebase/tsconfig.lib.json"
-      }
-    },
-    "redis": {
-      "type": "library",
-      "root": "libs/redis",
-      "entryFile": "index",
-      "sourceRoot": "libs/redis/src",
-      "compilerOptions": {
-        "tsConfigPath": "libs/redis/tsconfig.lib.json"
-      }
-    },
-    "cloudinary": {
-      "type": "library",
-      "root": "libs/cloudinary",
-      "entryFile": "index",
-      "sourceRoot": "libs/cloudinary/src",
-      "compilerOptions": {
-        "tsConfigPath": "libs/cloudinary/tsconfig.lib.json"
       }
     },
     "payos": {

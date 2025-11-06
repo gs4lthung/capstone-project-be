@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Delete,
+  Get,
   HttpCode,
   HttpStatus,
   Param,
@@ -21,10 +22,46 @@ import { UserService } from '../services/user.service';
 import { AuthGuard } from '../guards/auth.guard';
 import { RoleGuard } from '../guards/role.guard';
 import { CreateUserDto } from '@app/shared/dtos/users/create-user.dto';
+import { PaginateObject } from '@app/shared/dtos/paginate.dto';
+import { User } from '@app/database/entities/user.entity';
+import { PaginationParams } from '@app/shared/decorators/pagination-params.decorator';
+import { Pagination } from '@app/shared/interfaces/pagination.interface';
+import { Sorting } from '@app/shared/interfaces/sorting.interface';
+import { SortingParams } from '@app/shared/decorators/sorting-params.decorator';
+import { FilteringParams } from '@app/shared/decorators/filtering-params.decorator';
+import { Filtering } from '@app/shared/interfaces/filtering.interface';
+import { FindOptions } from '@app/shared/interfaces/find-options.interface';
 
 @Controller('users')
 export class UserController {
   constructor(private readonly userService: UserService) {}
+
+  @Get()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    tags: ['Users'],
+    summary: 'Get all users',
+    description: 'Retrieve a list of all users',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'List of users retrieved successfully',
+  })
+  @CheckRoles(UserRole.ADMIN)
+  @UseGuards(AuthGuard, RoleGuard)
+  async finAll(
+    @PaginationParams()
+    pagination: Pagination,
+    @SortingParams() sort: Sorting,
+    @FilteringParams() filter: Filtering,
+  ): Promise<PaginateObject<User>> {
+    return this.userService.findAll({
+      pagination,
+      sort,
+      filter,
+    } as FindOptions);
+  }
+
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
@@ -83,9 +120,7 @@ export class UserController {
   })
   @CheckRoles(UserRole.ADMIN)
   @UseGuards(AuthGuard, RoleGuard)
-  async softDeleteUser(
-    @Param('id') id: number,
-  ): Promise<CustomApiResponse<void>> {
+  async softDelete(@Param('id') id: number): Promise<CustomApiResponse<void>> {
     return this.userService.softDelete(id);
   }
 
@@ -102,7 +137,7 @@ export class UserController {
   })
   @CheckRoles(UserRole.ADMIN)
   @UseGuards(AuthGuard, RoleGuard)
-  async deleteUser(@Param('id') id: number): Promise<CustomApiResponse<void>> {
+  async delete(@Param('id') id: number): Promise<CustomApiResponse<void>> {
     return this.userService.delete(id);
   }
 
@@ -119,7 +154,7 @@ export class UserController {
   })
   @CheckRoles(UserRole.ADMIN)
   @UseGuards(AuthGuard, RoleGuard)
-  async restoreUser(@Param('id') id: number): Promise<CustomApiResponse<void>> {
+  async restore(@Param('id') id: number): Promise<CustomApiResponse<void>> {
     return this.userService.restore(id);
   }
 }

@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   Delete,
+  Get,
   HttpCode,
   HttpStatus,
   Param,
@@ -28,6 +29,13 @@ import {
   CreateLessonRequestDto,
   UpdateLessonDto,
 } from '@app/shared/dtos/lessons/lesson.dto';
+import { PaginationParams } from '@app/shared/decorators/pagination-params.decorator';
+import { Pagination } from '@app/shared/interfaces/pagination.interface';
+import { Sorting } from '@app/shared/interfaces/sorting.interface';
+import { SortingParams } from '@app/shared/decorators/sorting-params.decorator';
+import { FilteringParams } from '@app/shared/decorators/filtering-params.decorator';
+import { Filtering } from '@app/shared/interfaces/filtering.interface';
+import { FindOptions } from '@app/shared/interfaces/find-options.interface';
 
 @Controller('lessons')
 export class LessonController {
@@ -39,11 +47,11 @@ export class LessonController {
   @ApiOperation({
     tags: ['Lessons'],
     summary: 'Get all lessons',
-    description: 'Get all lessons',
+    description: 'Retrieve a list of all available lessons',
   })
   @ApiResponse({
     status: HttpStatus.OK,
-    description: 'Lessons',
+    description: 'List of lessons retrieved successfully',
   })
   @UseGuards(AuthGuard)
   async findAll(
@@ -51,8 +59,8 @@ export class LessonController {
     pagination: Pagination,
     @SortingParams() sort: Sorting,
     @FilteringParams() filter: Filtering,
-  ): Promise<any> {
-    return this.lessonService.findAll({
+  ) {
+    return await this.lessonService.findAll({
       pagination,
       sort,
       filter,

@@ -5,10 +5,9 @@ import { ErrorLoggingFilter } from './error.filter';
 import { ConfigModule } from '@app/config';
 import { APP_FILTER } from '@nestjs/core';
 import { User } from '@app/database/entities/user.entity';
-import { RedisModule } from '@app/redis';
 
 @Module({
-  imports: [ConfigModule, RedisModule, TypeOrmModule.forFeature([Error, User])],
+  imports: [ConfigModule, TypeOrmModule.forFeature([Error, User])],
   providers: [
     {
       provide: APP_FILTER,

@@ -8,8 +8,6 @@ import { CustomApiRequest } from '../customs/custom-api-request';
 import { ProtocolEnum } from '../enums/protocol.enum';
 import { Filtering } from '../interfaces/filtering.interface';
 import { ContextUtils } from '../utils/context.util';
-import { GqlArgumentsHost } from '@nestjs/graphql';
-import { DtoUtils } from '../utils/dto.util';
 
 export const FilteringParams = createParamDecorator(
   (data, host: ArgumentsHost): Filtering[] => {
@@ -23,11 +21,6 @@ export const FilteringParams = createParamDecorator(
         const ctx = host.switchToHttp();
         request = ctx.getRequest<CustomApiRequest>();
         filter = request.query.filter as string;
-        break;
-      case ProtocolEnum.GRAPHQL:
-        const gqlCtx = GqlArgumentsHost.create(host);
-        request = gqlCtx.getContext().req;
-        filter = DtoUtils.getGqlArgs(request.body.query, 'filter');
         break;
     }
 

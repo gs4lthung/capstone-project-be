@@ -1,8 +1,6 @@
-import {
-  Enrollment,
-  PaginatedEnrollment,
-} from '@app/database/entities/enrollment.entity';
+import { Enrollment } from '@app/database/entities/enrollment.entity';
 import { CustomApiRequest } from '@app/shared/customs/custom-api-request';
+import { PaginateObject } from '@app/shared/dtos/paginate.dto';
 import { BaseTypeOrmService } from '@app/shared/helpers/typeorm.helper';
 import { FindOptions } from '@app/shared/interfaces/find-options.interface';
 import { Inject, Injectable, Scope } from '@nestjs/common';
@@ -20,8 +18,8 @@ export class EnrollmentService extends BaseTypeOrmService<Enrollment> {
     super(enrollmentRepository);
   }
 
-  async findAll(findOptions: FindOptions): Promise<PaginatedEnrollment> {
-    return super.find(findOptions, 'enrollment', PaginatedEnrollment);
+  async findAll(findOptions: FindOptions): Promise<PaginateObject<Enrollment>> {
+    return super.find(findOptions, 'enrollment', PaginateObject<Enrollment>);
   }
 
   async findOne(id: number): Promise<Enrollment> {

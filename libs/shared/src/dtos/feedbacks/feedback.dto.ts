@@ -1,3 +1,4 @@
+import { PartialType } from '@nestjs/mapped-types';
 import { ApiProperty } from '@nestjs/swagger';
 import {
   IsBoolean,
@@ -37,3 +38,5 @@ export class CreateFeedbackDto {
   @IsBoolean()
   isAnonymous?: boolean;
 }
+
+export class UpdateFeedbackDto extends PartialType(CreateFeedbackDto) {}

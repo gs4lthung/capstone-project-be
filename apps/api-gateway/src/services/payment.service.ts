@@ -1,9 +1,6 @@
 import { Course } from '@app/database/entities/course.entity';
 import { Enrollment } from '@app/database/entities/enrollment.entity';
-import {
-  Payment,
-  PaginatedPayment,
-} from '@app/database/entities/payment.entity';
+import { Payment } from '@app/database/entities/payment.entity';
 import { User } from '@app/database/entities/user.entity';
 import { PayosService } from '@app/payos';
 import { CustomApiRequest } from '@app/shared/customs/custom-api-request';
@@ -28,11 +25,10 @@ import {
 } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { BaseTypeOrmService } from '@app/shared/helpers/typeorm.helper';
 import { FindOptions } from '@app/shared/interfaces/find-options.interface';
-import { Wallet } from '@app/database/entities/wallet.entity';
-import { Bank } from '@app/database/entities/bank.entity';
+import { PaginateObject } from '@app/shared/dtos/paginate.dto';
 
 @Injectable({ scope: Scope.REQUEST })
 export class PaymentService extends BaseTypeOrmService<Payment> {
@@ -44,19 +40,14 @@ export class PaymentService extends BaseTypeOrmService<Payment> {
     private readonly courseRepository: Repository<Course>,
     @InjectRepository(Enrollment)
     private readonly enrollmentRepository: Repository<Enrollment>,
-    @InjectRepository(Wallet)
-    private readonly walletRepository: Repository<Wallet>,
-    @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
-    @InjectRepository(Bank)
-    private readonly bankRepository: Repository<Bank>,
     private readonly payosService: PayosService,
+    private readonly datasource: DataSource,
   ) {
     super(paymentRepository);
   }
 
-  async findAll(findOptions: FindOptions): Promise<PaginatedPayment> {
-    return super.find(findOptions, 'payment', PaginatedPayment);
+  async findAll(findOptions: FindOptions): Promise<PaginateObject<Payment>> {
+    return super.find(findOptions, 'payment', PaginateObject<Payment>);
   }
 
   async findOne(id: number): Promise<Payment> {
@@ -74,170 +65,176 @@ export class PaymentService extends BaseTypeOrmService<Payment> {
   async createCoursePaymentLink(
     id: number,
   ): Promise<CustomApiResponse<Payment>> {
-    const course = await this.courseRepository.findOne({
-      where: { id: id },
-      withDeleted: false,
-      relations: ['enrollments', 'createdBy'],
-    });
-    if (!course) throw new BadRequestException('Không tìm thấy khóa học');
-    if (
-      course.status !== CourseStatus.APPROVED &&
-      course.status !== CourseStatus.READY_OPENED
-    )
-      throw new BadRequestException('Khóa học chưa sẵn sàng để đăng ký');
-
-    const hasLearnerEnrolled = course.enrollments.find(
-      (enrollment) => enrollment.user.id === this.request.user.id,
-    );
-
-    let enrollment: Enrollment, newEnrollment: Enrollment;
-    if (hasLearnerEnrolled) {
-      enrollment = await this.enrollmentRepository.findOne({
-        where: {
-          user: { id: this.request.user.id } as User,
-          course: { id: course.id } as Course,
-        },
+    return await this.datasource.transaction(async (manager) => {
+      const course = await this.courseRepository.findOne({
+        where: { id: id },
         withDeleted: false,
+        relations: ['enrollments', 'createdBy'],
       });
+      if (!course) throw new BadRequestException('Không tìm thấy khóa học');
       if (
-        enrollment.status !== EnrollmentStatus.CANCELLED &&
-        enrollment.status !== EnrollmentStatus.UNPAID
-      ) {
-        throw new BadRequestException('Bạn đã đăng ký khóa học này rồi');
+        course.status !== CourseStatus.APPROVED &&
+        course.status !== CourseStatus.READY_OPENED
+      )
+        throw new BadRequestException('Khóa học chưa sẵn sàng để đăng ký');
+
+      const hasLearnerEnrolled = course.enrollments.find(
+        (enrollment) => enrollment.user.id === this.request.user.id,
+      );
+
+      let enrollment: Enrollment, newEnrollment: Enrollment;
+      if (hasLearnerEnrolled) {
+        enrollment = await this.enrollmentRepository.findOne({
+          where: {
+            user: { id: this.request.user.id } as User,
+            course: { id: course.id } as Course,
+          },
+          withDeleted: false,
+        });
+        if (
+          enrollment.status !== EnrollmentStatus.CANCELLED &&
+          enrollment.status !== EnrollmentStatus.UNPAID
+        ) {
+          throw new BadRequestException('Bạn đã đăng ký khóa học này rồi');
+        }
+        enrollment.status = EnrollmentStatus.UNPAID;
+        await manager.getRepository(Enrollment).save(enrollment);
+      } else {
+        newEnrollment = this.enrollmentRepository.create({
+          user: { id: this.request.user.id } as User,
+          course: course as Course,
+          status: EnrollmentStatus.UNPAID,
+        });
+        await manager.getRepository(Enrollment).save(newEnrollment);
       }
-      enrollment.status = EnrollmentStatus.UNPAID;
-      await this.enrollmentRepository.save(enrollment);
-    } else {
-      newEnrollment = this.enrollmentRepository.create({
-        user: { id: this.request.user.id } as User,
-        course: course as Course,
-        status: EnrollmentStatus.UNPAID,
+
+      const payosResponse = await this.payosService.createPaymentLink({
+        orderCode: CryptoUtils.generateRandomNumber(10000, 99999),
+        amount: parseInt((course.pricePerParticipant / 1000).toString()), /////////
+        description: 'Thanh toán khóa học',
+        expiredAt: new Date(Date.now() + 1000 * 60 * 60 * 24),
       });
-      await this.enrollmentRepository.save(newEnrollment);
-    }
 
-    const payosResponse = await this.payosService.createPaymentLink({
-      orderCode: CryptoUtils.generateRandomNumber(10000, 99999),
-      amount: parseInt((course.pricePerParticipant / 1000).toString()), /////////
-      description: 'Thanh toán khóa học',
-      expiredAt: new Date(Date.now() + 1000 * 60 * 60 * 24),
+      const payment = this.paymentRepository.create({
+        amount: payosResponse.amount,
+        description: payosResponse.description,
+        orderCode: payosResponse.orderCode,
+        paymentLinkId: payosResponse.paymentLinkId,
+        checkoutUrl: payosResponse.checkoutUrl,
+        qrCode: payosResponse.qrCode,
+        status: PaymentStatus.PENDING,
+        enrollment: enrollment ? enrollment : newEnrollment,
+      });
+      await manager.getRepository(Payment).save(payment);
+
+      delete payment.enrollment;
+
+      return new CustomApiResponse<Payment>(
+        HttpStatus.CREATED,
+        'PAYMENT.CREATE_SUCCESS',
+        payment,
+      );
     });
-
-    const payment = this.paymentRepository.create({
-      amount: payosResponse.amount,
-      description: payosResponse.description,
-      orderCode: payosResponse.orderCode,
-      paymentLinkId: payosResponse.paymentLinkId,
-      checkoutUrl: payosResponse.checkoutUrl,
-      qrCode: payosResponse.qrCode,
-      status: PaymentStatus.PENDING,
-      enrollment: enrollment ? enrollment : newEnrollment,
-    });
-    await this.paymentRepository.save(payment);
-
-    delete payment.enrollment;
-
-    return new CustomApiResponse<Payment>(
-      HttpStatus.CREATED,
-      'PAYMENT.CREATE_SUCCESS',
-      payment,
-    );
   }
 
   async handlePaymentSuccess(data: CheckoutResponseDataType): Promise<void> {
-    if (data.status !== 'PAID') {
-      return;
-    }
-
-    const payment = await this.paymentRepository.findOne({
-      where: { orderCode: data.orderCode },
-      relations: ['enrollment'],
-    });
-    if (!payment) {
-      return;
-    }
-
-    const hasSuccessfulPayment = await this.paymentRepository.findOne({
-      where: {
-        enrollment: { id: payment.enrollment.id },
-        status: PaymentStatus.PAID,
-      },
-    });
-    if (hasSuccessfulPayment) {
-      return;
-    }
-
-    const course = await this.courseRepository.findOne({
-      where: { id: payment.enrollment.course.id },
-      relations: ['enrollments'],
-    });
-
-    course.enrollments.map((enr) => {
-      if (enr.id === payment.enrollment.id) {
-        enr.paymentAmount = payment.amount * 1000; /////////
+    return await this.datasource.transaction(async (manager) => {
+      if (data.status !== 'PAID') {
+        return;
       }
-      return enr;
-    });
 
-    course.currentParticipants += 1;
-    course.totalEarnings =
-      Number(course.totalEarnings) + Number(payment.amount) * 1000;
+      const payment = await this.paymentRepository.findOne({
+        where: { orderCode: data.orderCode },
+        relations: ['enrollment'],
+      });
+      if (!payment) {
+        return;
+      }
 
-    switch (course.learningFormat) {
-      case CourseLearningFormat.INDIVIDUAL:
-        course.status = CourseStatus.FULL;
-        course.enrollments.map((enr) => {
-          if (enr.id === payment.enrollment.id) {
-            enr.status = EnrollmentStatus.CONFIRMED;
-          }
-        });
-        break;
-      case CourseLearningFormat.GROUP:
-        course.enrollments = course.enrollments.map((enr) => {
-          if (enr.id === payment.enrollment.id) {
-            enr.status = EnrollmentStatus.PENDING_GROUP;
-          }
-          return enr;
-        });
-        if (
-          course.currentParticipants >= course.minParticipants &&
-          course.currentParticipants < course.maxParticipants
-        ) {
-          for (const enr of course.enrollments) {
-            if (enr.status === EnrollmentStatus.PENDING_GROUP)
-              enr.status = EnrollmentStatus.CONFIRMED;
-          }
-          course.status = CourseStatus.READY_OPENED;
-        } else if (course.currentParticipants >= course.maxParticipants) {
-          for (const enr of course.enrollments) {
-            if (enr.status === EnrollmentStatus.PENDING_GROUP)
-              enr.status = EnrollmentStatus.CONFIRMED;
-          }
-          course.status = CourseStatus.FULL;
+      const hasSuccessfulPayment = await this.paymentRepository.findOne({
+        where: {
+          enrollment: { id: payment.enrollment.id },
+          status: PaymentStatus.PAID,
+        },
+      });
+      if (hasSuccessfulPayment) {
+        return;
+      }
+
+      const course = await this.courseRepository.findOne({
+        where: { id: payment.enrollment.course.id },
+        relations: ['enrollments'],
+      });
+
+      course.enrollments.map((enr) => {
+        if (enr.id === payment.enrollment.id) {
+          enr.paymentAmount = payment.amount * 1000; /////////
         }
-        break;
-    }
+        return enr;
+      });
 
-    payment.status = PaymentStatus.PAID;
-    await this.paymentRepository.save(payment);
+      course.currentParticipants += 1;
+      course.totalEarnings =
+        Number(course.totalEarnings) + Number(payment.amount) * 1000;
 
-    await this.courseRepository.save(course);
+      switch (course.learningFormat) {
+        case CourseLearningFormat.INDIVIDUAL:
+          course.status = CourseStatus.FULL;
+          course.enrollments.map((enr) => {
+            if (enr.id === payment.enrollment.id) {
+              enr.status = EnrollmentStatus.CONFIRMED;
+            }
+          });
+          break;
+        case CourseLearningFormat.GROUP:
+          course.enrollments = course.enrollments.map((enr) => {
+            if (enr.id === payment.enrollment.id) {
+              enr.status = EnrollmentStatus.PENDING_GROUP;
+            }
+            return enr;
+          });
+          if (
+            course.currentParticipants >= course.minParticipants &&
+            course.currentParticipants < course.maxParticipants
+          ) {
+            for (const enr of course.enrollments) {
+              if (enr.status === EnrollmentStatus.PENDING_GROUP)
+                enr.status = EnrollmentStatus.CONFIRMED;
+            }
+            course.status = CourseStatus.READY_OPENED;
+          } else if (course.currentParticipants >= course.maxParticipants) {
+            for (const enr of course.enrollments) {
+              if (enr.status === EnrollmentStatus.PENDING_GROUP)
+                enr.status = EnrollmentStatus.CONFIRMED;
+            }
+            course.status = CourseStatus.FULL;
+          }
+          break;
+      }
+
+      payment.status = PaymentStatus.PAID;
+      await manager.getRepository(Payment).save(payment);
+
+      await manager.getRepository(Course).save(course);
+    });
   }
 
   async handlePaymentCancel(data: CheckoutResponseDataType): Promise<void> {
-    if (data.status !== 'CANCELLED') {
-      return;
-    }
+    return await this.datasource.transaction(async (manager) => {
+      if (data.status !== 'CANCELLED') {
+        return;
+      }
 
-    const payment = await this.paymentRepository.findOne({
-      where: { orderCode: data.orderCode },
-      relations: ['enrollment'],
+      const payment = await this.paymentRepository.findOne({
+        where: { orderCode: data.orderCode },
+        relations: ['enrollment'],
+      });
+      if (!payment) {
+        return;
+      }
+      payment.status = PaymentStatus.CANCELLED;
+      await manager.getRepository(Payment).save(payment);
     });
-    if (!payment) {
-      return;
-    }
-    payment.status = PaymentStatus.CANCELLED;
-    await this.paymentRepository.save(payment);
   }
 
   async createPayoutRequest(data: CreatePayoutRequestDto) {

@@ -24,7 +24,9 @@ import {
 } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
+import { NotificationService } from './notification.service';
+import { NotificationType } from '@app/shared/enums/notification.enum';
 
 @Injectable({ scope: Scope.REQUEST })
 export class QuizService extends BaseTypeOrmService<Quiz> {
@@ -38,8 +40,8 @@ export class QuizService extends BaseTypeOrmService<Quiz> {
     private readonly quizAttemptRepository: Repository<QuizAttempt>,
     @InjectRepository(Session)
     private readonly sessionRepository: Repository<Session>,
-    @InjectRepository(LearnerProgress)
-    private readonly learnerProgressRepository: Repository<LearnerProgress>,
+    private readonly notificationService: NotificationService,
+    private readonly datasource: DataSource,
   ) {
     super(quizRepository);
   }
@@ -48,227 +50,258 @@ export class QuizService extends BaseTypeOrmService<Quiz> {
     lessonId: number,
     data: CreateQuizDto,
   ): Promise<CustomApiResponse<void>> {
-    const lesson = await this.lessonRepository.findOne({
-      where: { id: lessonId },
-      withDeleted: false,
+    return await this.datasource.transaction(async (manager) => {
+      const lesson = await this.lessonRepository.findOne({
+        where: { id: lessonId },
+        withDeleted: false,
+      });
+      if (!lesson) throw new BadRequestException('Không tìm thấy bài học');
+
+      lesson.quizzes.push({
+        ...data,
+        totalQuestions: data.questions.length,
+        createdBy: this.request.user as User,
+      } as Quiz);
+      await manager.getRepository(Lesson).save(lesson);
+
+      return new CustomApiResponse<void>(
+        HttpStatus.CREATED,
+        'LESSON.QUIZ_CREATE_SUCCESS',
+      );
     });
-    if (!lesson) throw new BadRequestException('Không tìm thấy bài học');
-
-    lesson.quizzes.push({
-      ...data,
-      totalQuestions: data.questions.length,
-      createdBy: this.request.user as User,
-    } as Quiz);
-    await this.lessonRepository.save(lesson);
-
-    return new CustomApiResponse<void>(
-      HttpStatus.CREATED,
-      'LESSON.QUIZ_CREATE_SUCCESS',
-    );
   }
 
   async createSessionQuiz(
     sessionId: number,
     data: CreateQuizDto,
   ): Promise<CustomApiResponse<void>> {
-    const session = await this.sessionRepository.findOne({
-      where: { id: sessionId },
-      relations: ['course'],
-      withDeleted: false,
+    return await this.datasource.transaction(async (manager) => {
+      const session = await this.sessionRepository.findOne({
+        where: { id: sessionId },
+        relations: ['course'],
+        withDeleted: false,
+      });
+      if (!session) throw new BadRequestException('Session not found');
+      if (session.course.status !== CourseStatus.ON_GOING)
+        throw new BadRequestException(
+          'Cannot create quiz for sessions whose course is not ongoing',
+        );
+      if (session.status !== SessionStatus.SCHEDULED)
+        throw new BadRequestException(
+          'Cannot create quiz for sessions that are not scheduled',
+        );
+
+      session.quizzes.push({
+        ...data,
+        totalQuestions: data.questions.length,
+        createdBy: this.request.user as User,
+      } as Quiz);
+      await manager.getRepository(Session).save(session);
+
+      return new CustomApiResponse<void>(
+        HttpStatus.CREATED,
+        'SESSION.QUIZ_CREATE_SUCCESS',
+      );
     });
-    if (!session) throw new BadRequestException('Session not found');
-    if (session.course.status !== CourseStatus.ON_GOING)
-      throw new BadRequestException(
-        'Cannot create quiz for sessions whose course is not ongoing',
-      );
-    if (session.status !== SessionStatus.SCHEDULED)
-      throw new BadRequestException(
-        'Cannot create quiz for sessions that are not scheduled',
-      );
-
-    session.quizzes.push({
-      ...data,
-      totalQuestions: data.questions.length,
-      createdBy: this.request.user as User,
-    } as Quiz);
-    await this.sessionRepository.save(session);
-
-    return new CustomApiResponse<void>(
-      HttpStatus.CREATED,
-      'SESSION.QUIZ_CREATE_SUCCESS',
-    );
   }
 
   async update(
     id: number,
     data: CreateQuizDto,
   ): Promise<CustomApiResponse<void>> {
-    const quiz = await this.quizRepository.findOne({
-      where: { id: id },
-      relations: ['session', 'session.course', 'lesson', 'createdBy'],
-      withDeleted: false,
+    return await this.datasource.transaction(async (manager) => {
+      const quiz = await this.quizRepository.findOne({
+        where: { id: id },
+        relations: ['session', 'session.course', 'lesson', 'createdBy'],
+        withDeleted: false,
+      });
+      if (!quiz) throw new BadRequestException('Quiz not found');
+      if (quiz.createdBy.id !== this.request.user.id)
+        throw new ForbiddenException('Không có quyền truy cập quiz này');
+
+      if (quiz.session) {
+        if (quiz.session.course.status !== CourseStatus.ON_GOING)
+          throw new BadRequestException(
+            'Cannot update quiz for sessions whose course is not ongoing',
+          );
+        if (quiz.session.status !== SessionStatus.SCHEDULED)
+          throw new BadRequestException(
+            'Cannot update quiz for sessions that are not scheduled',
+          );
+      }
+
+      await manager.getRepository(Quiz).update(quiz.id, data);
+
+      return new CustomApiResponse<void>(
+        HttpStatus.OK,
+        'LESSON.QUIZ_UPDATE_SUCCESS',
+      );
     });
-    if (!quiz) throw new BadRequestException('Quiz not found');
-    if (quiz.createdBy.id !== this.request.user.id)
-      throw new ForbiddenException('Không có quyền truy cập quiz này');
-
-    if (quiz.session) {
-      if (quiz.session.course.status !== CourseStatus.ON_GOING)
-        throw new BadRequestException(
-          'Cannot update quiz for sessions whose course is not ongoing',
-        );
-      if (quiz.session.status !== SessionStatus.SCHEDULED)
-        throw new BadRequestException(
-          'Cannot update quiz for sessions that are not scheduled',
-        );
-    }
-
-    await this.quizRepository.update(quiz.id, data);
-
-    return new CustomApiResponse<void>(
-      HttpStatus.OK,
-      'LESSON.QUIZ_UPDATE_SUCCESS',
-    );
   }
 
   async delete(id: number): Promise<CustomApiResponse<void>> {
-    const quiz = await this.quizRepository.findOne({
-      where: { id: id },
-      relations: ['session', 'session.course', 'lesson', 'createdBy'],
-      withDeleted: false,
+    return await this.datasource.transaction(async (manager) => {
+      const quiz = await this.quizRepository.findOne({
+        where: { id: id },
+        relations: ['session', 'session.course', 'lesson', 'createdBy'],
+        withDeleted: false,
+      });
+      if (!quiz) throw new BadRequestException('Quiz not found');
+      if (quiz.createdBy.id !== this.request.user.id)
+        throw new ForbiddenException('Không có quyền truy cập quiz này');
+
+      if (quiz.session) {
+        if (quiz.session.course.status !== CourseStatus.ON_GOING)
+          throw new BadRequestException(
+            'Cannot update quiz for sessions whose course is not ongoing',
+          );
+        if (quiz.session.status !== SessionStatus.SCHEDULED)
+          throw new BadRequestException(
+            'Cannot update quiz for sessions that are not scheduled',
+          );
+      }
+      await manager.getRepository(Quiz).softDelete(quiz);
+
+      return new CustomApiResponse<void>(
+        HttpStatus.OK,
+        'LESSON.QUIZ_DELETE_SUCCESS',
+      );
     });
-    if (!quiz) throw new BadRequestException('Quiz not found');
-    if (quiz.createdBy.id !== this.request.user.id)
-      throw new ForbiddenException('Không có quyền truy cập quiz này');
-
-    if (quiz.session) {
-      if (quiz.session.course.status !== CourseStatus.ON_GOING)
-        throw new BadRequestException(
-          'Cannot update quiz for sessions whose course is not ongoing',
-        );
-      if (quiz.session.status !== SessionStatus.SCHEDULED)
-        throw new BadRequestException(
-          'Cannot update quiz for sessions that are not scheduled',
-        );
-    }
-    await this.quizRepository.softDelete(quiz);
-
-    return new CustomApiResponse<void>(
-      HttpStatus.OK,
-      'LESSON.QUIZ_DELETE_SUCCESS',
-    );
   }
 
   async restore(id: number): Promise<CustomApiResponse<void>> {
-    const quiz = await this.quizRepository.findOne({
-      where: { id: id },
-      relations: ['createdBy'],
-      withDeleted: true,
+    return await this.datasource.transaction(async (manager) => {
+      const quiz = await this.quizRepository.findOne({
+        where: { id: id },
+        relations: ['createdBy'],
+        withDeleted: true,
+      });
+      if (!quiz) throw new BadRequestException('Quiz not found');
+      if (quiz.createdBy.id !== this.request.user.id)
+        throw new ForbiddenException('Không có quyền truy cập quiz này');
+
+      await manager.getRepository(Quiz).restore(quiz);
+
+      return new CustomApiResponse<void>(
+        HttpStatus.OK,
+        'LESSON.QUIZ_RESTORE_SUCCESS',
+      );
     });
-    if (!quiz) throw new BadRequestException('Quiz not found');
-    if (quiz.createdBy.id !== this.request.user.id)
-      throw new ForbiddenException('Không có quyền truy cập quiz này');
-
-    await this.quizRepository.restore(quiz);
-
-    return new CustomApiResponse<void>(
-      HttpStatus.OK,
-      'LESSON.QUIZ_RESTORE_SUCCESS',
-    );
   }
 
   async learnerAttemptQuiz(quizId: number, data: LearnerAttemptQuizDto) {
-    const quiz = await this.quizRepository.findOne({
-      where: { id: quizId },
-      withDeleted: false,
-      relations: ['questions', 'questions.options', 'session'],
-    });
-    if (!quiz) throw new BadRequestException('Quiz not found');
-    if (!quiz.session)
-      throw new BadRequestException('Quiz is not associated with any session');
-
-    const session = await this.sessionRepository.findOne({
-      where: { id: quiz.session.id },
-      relations: ['quizAttempts', 'course', 'course.enrollments'],
-      withDeleted: false,
-    });
-    if (!session)
-      throw new BadRequestException(
-        'Session not found or you are not enrolled in this session',
-      );
-    if (session.status !== SessionStatus.COMPLETED) {
-      throw new BadRequestException(
-        'You can only attempt the quiz for completed sessions',
-      );
-    }
-    if (
-      !session.course.enrollments.some(
-        (enrollment) => enrollment.user.id === (this.request.user as User).id,
-      )
-    ) {
-      throw new BadRequestException(
-        'You are not enrolled in the course for this session',
-      );
-    }
-
-    let correctAnswers = 0;
-    for (const answer of data.learnerAnswers) {
-      const question = quiz.questions.find((q) => q.id === answer.question);
-      if (!question) {
+    return await this.datasource.transaction(async (manager) => {
+      const quiz = await this.quizRepository.findOne({
+        where: { id: quizId },
+        withDeleted: false,
+        relations: ['questions', 'questions.options', 'session'],
+      });
+      if (!quiz) throw new BadRequestException('Quiz not found');
+      if (!quiz.session)
         throw new BadRequestException(
-          `Question with ID ${answer.question} not found in the quiz`,
+          'Quiz is not associated with any session',
+        );
+
+      const session = await this.sessionRepository.findOne({
+        where: { id: quiz.session.id },
+        relations: [
+          'quizAttempts',
+          'course',
+          'course.enrollments',
+          'course.createdBy',
+        ],
+        withDeleted: false,
+      });
+      if (!session)
+        throw new BadRequestException(
+          'Session not found or you are not enrolled in this session',
+        );
+      if (session.status !== SessionStatus.COMPLETED) {
+        throw new BadRequestException(
+          'You can only attempt the quiz for completed sessions',
         );
       }
-      const selectedOption = question.options.find(
-        (opt) => opt.id === answer.questionOption,
-      );
-      if (!selectedOption) {
+      if (
+        !session.course.enrollments.some(
+          (enrollment) => enrollment.user.id === (this.request.user as User).id,
+        )
+      ) {
         throw new BadRequestException(
-          `Option with ID ${answer.questionOption} not found in question ${answer.question}`,
+          'You are not enrolled in the course for this session',
         );
       }
-      if (selectedOption.isCorrect) {
-        correctAnswers++;
-        answer['isCorrect'] = true;
+
+      let correctAnswers = 0;
+      for (const answer of data.learnerAnswers) {
+        const question = quiz.questions.find((q) => q.id === answer.question);
+        if (!question) {
+          throw new BadRequestException(
+            `Question with ID ${answer.question} not found in the quiz`,
+          );
+        }
+        const selectedOption = question.options.find(
+          (opt) => opt.id === answer.questionOption,
+        );
+        if (!selectedOption) {
+          throw new BadRequestException(
+            `Option with ID ${answer.questionOption} not found in question ${answer.question}`,
+          );
+        }
+        if (selectedOption.isCorrect) {
+          correctAnswers++;
+          answer['isCorrect'] = true;
+        }
       }
-    }
 
-    const score = (correctAnswers / quiz.totalQuestions) * 100;
+      const score = (correctAnswers / quiz.totalQuestions) * 100;
 
-    const quizAttempt = this.quizAttemptRepository.create({
-      session,
-      attemptNumber: session.quizAttempts ? session.quizAttempts.length + 1 : 1,
-      attemptedBy: this.request.user as User,
-      score,
-      learnerAnswers: data.learnerAnswers.map(
-        (ans) =>
-          ({
-            question: { id: ans.question },
-            questionOption: { id: ans.questionOption },
-            isCorrect: ans['isCorrect'] || false,
-          }) as LearnerAnswer,
-      ),
-    });
-    await this.quizAttemptRepository.save(quizAttempt);
+      const quizAttempt = this.quizAttemptRepository.create({
+        session,
+        attemptNumber: session.quizAttempts
+          ? session.quizAttempts.length + 1
+          : 1,
+        attemptedBy: this.request.user as User,
+        score,
+        learnerAnswers: data.learnerAnswers.map(
+          (ans) =>
+            ({
+              question: { id: ans.question },
+              questionOption: { id: ans.questionOption },
+              isCorrect: ans['isCorrect'] || false,
+            }) as LearnerAnswer,
+        ),
+      });
+      await manager.getRepository(QuizAttempt).save(quizAttempt);
 
-    const learnerProgress = await this.learnerProgressRepository.findOne({
-      where: {
-        user: this.request.user as User,
-        course: session.course,
-      },
-      withDeleted: false,
-    });
-    if (learnerProgress) {
-      learnerProgress.avgQuizScore = Math.round(
-        (learnerProgress.avgQuizScore + score) /
-          learnerProgress.sessionsCompleted,
+      const learnerProgress = await manager
+        .getRepository(LearnerProgress)
+        .findOne({
+          where: {
+            user: this.request.user as User,
+            course: session.course,
+          },
+          withDeleted: false,
+        });
+      if (learnerProgress) {
+        learnerProgress.avgQuizScore = Math.round(
+          (learnerProgress.avgQuizScore + score) /
+            learnerProgress.sessionsCompleted,
+        );
+        await manager.getRepository(LearnerProgress).save(learnerProgress);
+      }
+
+      await this.notificationService.sendNotification({
+        userId: session.course.createdBy.id,
+        title: 'Học viên hoàn thành bài quiz',
+        body: `Một học viên đã hoàn thành bài quiz`,
+        navigateTo: `/coach/courses/${session.course.id}/quizzes/${quiz.id}/results`,
+        type: NotificationType.INFO,
+      });
+
+      return new CustomApiResponse<void>(
+        HttpStatus.CREATED,
+        'QUIZ.ATTEMPT_SUCCESS',
       );
-      await this.learnerProgressRepository.save(learnerProgress);
-    }
-
-    return new CustomApiResponse<void>(
-      HttpStatus.CREATED,
-      'QUIZ.ATTEMPT_SUCCESS',
-    );
+    });
   }
 }

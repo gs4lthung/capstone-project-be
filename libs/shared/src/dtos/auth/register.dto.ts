@@ -1,18 +1,48 @@
-import { User } from '@app/database/entities/user.entity';
-import { PickType } from '@nestjs/mapped-types';
+import { PickleballLevel } from '@app/shared/enums/pickleball.enum';
 import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import {
   IsEmail,
+  IsEnum,
   IsNotEmpty,
   IsString,
   IsStrongPassword,
+  ValidateNested,
 } from 'class-validator';
 
-export class RegisterRequestDto extends PickType(User, [
-  'fullName',
-  'email',
-  'password',
-]) {
+export class CreateLearnerDto {
+  @ApiProperty({
+    description: 'Skill level of the learner',
+    example: PickleballLevel.BEGINNER,
+  })
+  @IsNotEmpty({ message: 'Skill level is required' })
+  @IsEnum(PickleballLevel)
+  skillLevel: PickleballLevel;
+
+  @ApiProperty({
+    description: 'Learning goal of the learner',
+    example: PickleballLevel.INTERMEDIATE,
+  })
+  @IsNotEmpty({ message: 'Learning goal is required' })
+  @IsEnum(PickleballLevel)
+  learningGoal: PickleballLevel;
+
+  @ApiProperty({
+    description: 'Province ID of the learner',
+    example: 1,
+  })
+  @IsNotEmpty({ message: 'Province ID is required' })
+  province: number;
+
+  @ApiProperty({
+    description: 'District ID of the learner',
+    example: 10,
+  })
+  @IsNotEmpty({ message: 'District ID is required' })
+  district: number;
+}
+
+export class RegisterRequestDto {
   @ApiProperty({
     description: 'The full name of the user',
     example: 'John Doe',
@@ -48,4 +78,9 @@ export class RegisterRequestDto extends PickType(User, [
     },
   )
   password: string;
+
+  @IsNotEmpty({ each: true })
+  @ValidateNested({ each: true })
+  @Type(() => CreateLearnerDto)
+  learner: CreateLearnerDto;
 }

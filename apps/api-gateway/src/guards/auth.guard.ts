@@ -12,7 +12,6 @@ import {
   HttpStatus,
   Injectable,
 } from '@nestjs/common';
-import { GqlExecutionContext } from '@nestjs/graphql';
 import { JwtService, TokenExpiredError } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Request } from 'express';
@@ -34,10 +33,6 @@ export class AuthGuard implements CanActivate {
         case ProtocolEnum.HTTP:
           request = context.switchToHttp().getRequest();
           break;
-        case ProtocolEnum.GRAPHQL:
-          const ctx = GqlExecutionContext.create(context);
-          request = ctx.getContext().req;
-          break;
         case ProtocolEnum.WS:
           request = context.switchToWs().getClient<Request>();
           break;
@@ -52,7 +47,6 @@ export class AuthGuard implements CanActivate {
       let token = '';
       switch (contextType) {
         case ProtocolEnum.HTTP:
-        case ProtocolEnum.GRAPHQL:
           token = AuthUtils.extractTokenFromHeader(request);
           break;
         case ProtocolEnum.WS:
