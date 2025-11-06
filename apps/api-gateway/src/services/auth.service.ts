@@ -19,7 +19,7 @@ import {
   Scope,
   UnauthorizedException,
 } from '@nestjs/common';
-import { JwtService, TokenExpiredError } from '@nestjs/jwt';
+import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
@@ -313,9 +313,7 @@ export class AuthService {
       await manager.getRepository(User).save(user);
 
       return `${this.configService.get('front_end').verify_email_url}`;
-    } catch (error) {
-      throw ExceptionUtils.wrapAsRpcException(error);
-    }
+    });
   }
 
   async resendVerificationEmail(data: {
