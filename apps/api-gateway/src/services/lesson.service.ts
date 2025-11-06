@@ -8,7 +8,6 @@ import {
 } from '@app/shared/dtos/lessons/lesson.dto';
 import { PaginateObject } from '@app/shared/dtos/paginate.dto';
 import { BaseTypeOrmService } from '@app/shared/helpers/typeorm.helper';
-import { FindOptions } from '@app/shared/interfaces/find-options.interface';
 import {
   BadRequestException,
   ForbiddenException,
@@ -19,7 +18,9 @@ import {
 } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
+import { FindOptions } from '@app/shared/interfaces/find-options.interface';
+import { DataSource } from 'typeorm';
 
 @Injectable({ scope: Scope.REQUEST })
 export class LessonService extends BaseTypeOrmService<Lesson> {

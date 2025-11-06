@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-import { join } from 'path';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ConfigModule, ConfigService } from '@app/config';
@@ -100,6 +99,10 @@ import { VideoConferenceController } from './controllers/video-conference.contro
 import { VideoConferenceService } from './services/video-conference.service';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { NotificationService } from './services/notification.service';
+import { Province } from '@app/database/entities/province.entity';
+import { District } from '@app/database/entities/district.entity';
+import { ProvinceService } from './services/province.service';
+import { ProvinceController } from './controllers/province.controller';
 
 @Module({
   imports: [
@@ -186,6 +189,8 @@ import { NotificationService } from './services/notification.service';
       Feedback,
       LearnerProgress,
       VideoConference,
+      Province,
+      District,
     ]),
     ErrorModule,
     ThrottlerModule.forRootAsync({
@@ -220,6 +225,7 @@ import { NotificationService } from './services/notification.service';
     LearnerProgressController,
     FeedbackController,
     VideoConferenceController,
+    ProvinceController,
   ],
   providers: [
     AppService,
@@ -248,6 +254,7 @@ import { NotificationService } from './services/notification.service';
     FeedbackService,
     NotificationService,
     VideoConferenceService,
+    ProvinceService,
   ],
 })
 export class AppModule {}

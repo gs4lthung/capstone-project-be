@@ -1,8 +1,8 @@
 import {
   Body,
   Controller,
-  Delete,
   Get,
+  Delete,
   HttpCode,
   HttpStatus,
   Param,
@@ -17,17 +17,17 @@ import { CheckRoles } from '@app/shared/decorators/check-roles.decorator';
 import { UserRole } from '@app/shared/enums/user.enum';
 import { AuthGuard } from '../guards/auth.guard';
 import { RoleGuard } from '../guards/role.guard';
+import { FindOptions } from '@app/shared/interfaces/find-options.interface';
+import { FilteringParams } from '@app/shared/decorators/filtering-params.decorator';
+import { Filtering } from '@app/shared/interfaces/filtering.interface';
+import { PaginationParams } from '@app/shared/decorators/pagination-params.decorator';
+import { Pagination } from '@app/shared/interfaces/pagination.interface';
+import { SortingParams } from '@app/shared/decorators/sorting-params.decorator';
+import { Sorting } from '@app/shared/interfaces/sorting.interface';
 import {
   CreateLessonRequestDto,
   UpdateLessonDto,
 } from '@app/shared/dtos/lessons/lesson.dto';
-import { PaginationParams } from '@app/shared/decorators/pagination-params.decorator';
-import { Pagination } from '@app/shared/interfaces/pagination.interface';
-import { Sorting } from '@app/shared/interfaces/sorting.interface';
-import { SortingParams } from '@app/shared/decorators/sorting-params.decorator';
-import { FilteringParams } from '@app/shared/decorators/filtering-params.decorator';
-import { Filtering } from '@app/shared/interfaces/filtering.interface';
-import { FindOptions } from '@app/shared/interfaces/find-options.interface';
 
 @Controller('lessons')
 export class LessonController {
@@ -69,7 +69,7 @@ export class LessonController {
   })
   @ApiResponse({
     status: HttpStatus.CREATED,
-    description: 'Subject created successfully',
+    description: 'Lesson created successfully',
   })
   @CheckRoles(UserRole.COACH)
   @UseGuards(AuthGuard, RoleGuard)
