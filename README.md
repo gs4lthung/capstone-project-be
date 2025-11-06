@@ -14,6 +14,7 @@
 # Capstone Project Backend
 
 ## Introduction
+
 - Project using `Nestjs` framework and implemented as a microservice.
 - For interating with `PostgreSQL` database, I use `TypeORM`.
 - Fetching data with `GraphQL`.
@@ -25,18 +26,23 @@
 - Use `Docker` in building process.
 
 ## Installation
+
 ### Use `npm` package for install
+
 ```bash
 npm install
 ```
 
 ## Usage
+
 ### Run all services
+
 ```bash
 npm run start:all
 ```
 
 ### Run a **specific service** (See more in `package.json`)
+
 ```bash
 npm run start:${service}
 ```
@@ -44,26 +50,31 @@ npm run start:${service}
 ### Migration database
 
 Generate migration file
+
 ```bash
 npm run migration:generate ./libs/database/src/migrations/migration
 ```
 
 Run migration file
+
 ```bash
 npm run migration:run
 ```
 
 ### Build all services
+
 ```bash
 npm run build:all
 ```
 
 ### Build a **specific service**
+
 ```bash
 npm run build:${service}
 ```
 
 ### Docker compose
+
 ```bash
 docker compose up -d
 ```

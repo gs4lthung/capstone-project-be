@@ -17,6 +17,7 @@
     "seed:learner-achievements": "ts-node -r tsconfig-paths/register libs/database/src/seeds/seed-learner-achievements-only.ts",
     "build": "nest build",
     "build:database": "npx tsc -p ./libs/database/tsconfig.lib.json",
+    "copy:templates": "node scripts/copy-templates.js",
     "format": "prettier --write \"apps/**/*.ts\" \"libs/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
