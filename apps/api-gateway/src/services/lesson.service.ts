@@ -1,4 +1,4 @@
-import { Lesson, PaginatedLesson } from '@app/database/entities/lesson.entity';
+import { Lesson } from '@app/database/entities/lesson.entity';
 import { Subject } from '@app/database/entities/subject.entity';
 import { CustomApiRequest } from '@app/shared/customs/custom-api-request';
 import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
@@ -8,7 +8,6 @@ import {
 } from '@app/shared/dtos/lessons/lesson.dto';
 import { PaginateObject } from '@app/shared/dtos/paginate.dto';
 import { BaseTypeOrmService } from '@app/shared/helpers/typeorm.helper';
-import { FindOptions } from '@app/shared/interfaces/find-options.interface';
 import {
   BadRequestException,
   ForbiddenException,
@@ -19,12 +18,9 @@ import {
 } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { InjectRepository } from '@nestjs/typeorm';
-<<<<<<< HEAD
 import { Repository } from 'typeorm';
 import { FindOptions } from '@app/shared/interfaces/find-options.interface';
-=======
-import { DataSource, Repository } from 'typeorm';
->>>>>>> 272ac9efbf370f5c515ad481b8083a6cb085f09d
+import { DataSource } from 'typeorm';
 
 @Injectable({ scope: Scope.REQUEST })
 export class LessonService extends BaseTypeOrmService<Lesson> {
@@ -39,13 +35,8 @@ export class LessonService extends BaseTypeOrmService<Lesson> {
     super(lessonRepository);
   }
 
-<<<<<<< HEAD
-  async findAll(findOptions: FindOptions): Promise<PaginatedLesson> {
-    return super.find(findOptions, 'lesson', PaginatedLesson);
-=======
   async findAll(findOptions: FindOptions): Promise<PaginateObject<Lesson>> {
     return super.find(findOptions, 'lesson', PaginateObject<Lesson>);
->>>>>>> 272ac9efbf370f5c515ad481b8083a6cb085f09d
   }
 
   async create(

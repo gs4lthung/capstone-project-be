@@ -51,11 +51,6 @@ export class CourseController {
     @SortingParams() sort: Sorting,
     @FilteringParams() filter: Filtering,
   ): Promise<PaginateObject<Course>> {
-    console.log('Fetching all courses with params:', {
-      pagination,
-      sort,
-      filter,
-    });
     return await this.courseService.findAll({
       pagination,
       sort,
