@@ -1,6 +1,3 @@
-import { Achievement } from '@app/database/entities/achievement.entity';
-import { PaginatedResource } from '@app/shared/graphql/paginated-resource';
-import { ObjectType } from '@nestjs/graphql';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsBoolean,
@@ -410,8 +407,6 @@ export class UpdatePropertyCheckAchievementDto {
  * DTO cho pagination response (dùng cho GraphQL)
  * Kế thừa từ PaginatedResource để có sẵn fields: items, total, page, pageSize
  */
-@ObjectType()
-export class PaginatedAchievement extends PaginatedResource(Achievement) {}
 
 // =====================================================================================================================
 // ACHIEVEMENT PROGRESS DTOs (Phần 2: User Progress)
@@ -550,13 +545,19 @@ export class AchievementStatsDto {
   @ApiProperty({ description: 'Total number of achievements', example: 50 })
   totalAchievements: number;
 
-  @ApiProperty({ description: 'Number of EVENT_COUNT achievements', example: 20 })
+  @ApiProperty({
+    description: 'Number of EVENT_COUNT achievements',
+    example: 20,
+  })
   totalEventCount: number;
 
   @ApiProperty({ description: 'Number of STREAK achievements', example: 15 })
   totalStreak: number;
 
-  @ApiProperty({ description: 'Number of PROPERTY_CHECK achievements', example: 15 })
+  @ApiProperty({
+    description: 'Number of PROPERTY_CHECK achievements',
+    example: 15,
+  })
   totalPropertyCheck: number;
 
   @ApiProperty({ description: 'Number of active achievements', example: 45 })
@@ -570,7 +571,10 @@ export class LastEarnedAchievementDto {
   @ApiProperty({ description: 'Achievement name', example: 'Week Warrior' })
   name: string;
 
-  @ApiProperty({ description: 'When the achievement was earned', example: '2025-01-15T00:00:00.000Z' })
+  @ApiProperty({
+    description: 'When the achievement was earned',
+    example: '2025-01-15T00:00:00.000Z',
+  })
   earnedAt: Date;
 }
 
@@ -584,10 +588,18 @@ export class UserAchievementStatsDto {
   @ApiProperty({ description: 'Total achievements in progress', example: 8 })
   totalInProgress: number;
 
-  @ApiProperty({ description: 'Completion rate (0-100)', example: 60, minimum: 0, maximum: 100 })
+  @ApiProperty({
+    description: 'Completion rate (0-100)',
+    example: 60,
+    minimum: 0,
+    maximum: 100,
+  })
   completionRate: number;
 
-  @ApiPropertyOptional({ description: 'Last earned achievement', type: LastEarnedAchievementDto })
+  @ApiPropertyOptional({
+    description: 'Last earned achievement',
+    type: LastEarnedAchievementDto,
+  })
   lastEarned?: LastEarnedAchievementDto;
 }
 
@@ -601,7 +613,10 @@ export class LeaderboardUserDto {
   @ApiProperty({ description: 'User full name', example: 'John Doe' })
   fullName: string;
 
-  @ApiPropertyOptional({ description: 'User avatar URL', example: 'https://example.com/avatar.jpg' })
+  @ApiPropertyOptional({
+    description: 'User avatar URL',
+    example: 'https://example.com/avatar.jpg',
+  })
   avatar?: string;
 }
 
@@ -618,7 +633,10 @@ export class LeaderboardEntryDto {
   @ApiProperty({ description: 'Total achievements earned', example: 45 })
   totalEarned: number;
 
-  @ApiProperty({ description: 'Last earned achievement date', example: '2025-01-15T00:00:00.000Z' })
+  @ApiProperty({
+    description: 'Last earned achievement date',
+    example: '2025-01-15T00:00:00.000Z',
+  })
   lastEarnedAt: Date;
 }
 
@@ -626,9 +644,15 @@ export class LeaderboardEntryDto {
  * Leaderboard Response
  */
 export class LeaderboardResponseDto {
-  @ApiProperty({ description: 'Leaderboard entries', type: [LeaderboardEntryDto] })
+  @ApiProperty({
+    description: 'Leaderboard entries',
+    type: [LeaderboardEntryDto],
+  })
   items: LeaderboardEntryDto[];
 
-  @ApiProperty({ description: 'Total number of users with achievements', example: 100 })
+  @ApiProperty({
+    description: 'Total number of users with achievements',
+    example: 100,
+  })
   total: number;
 }

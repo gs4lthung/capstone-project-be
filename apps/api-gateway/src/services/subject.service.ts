@@ -1,11 +1,9 @@
 import { AwsService } from '@app/aws';
-import {
-  PaginatedSubject,
-  Subject,
-} from '@app/database/entities/subject.entity';
+import { Subject } from '@app/database/entities/subject.entity';
 import { User } from '@app/database/entities/user.entity';
 import { CustomApiRequest } from '@app/shared/customs/custom-api-request';
 import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
+import { PaginateObject } from '@app/shared/dtos/paginate.dto';
 import {
   CreateSubjectDto,
   UpdateSubjectDto,
@@ -37,8 +35,8 @@ export class SubjectService extends BaseTypeOrmService<Subject> {
     super(subjectRepository);
   }
 
-  async findAll(findOptions: FindOptions): Promise<PaginatedSubject> {
-    return super.find(findOptions, 'subject', PaginatedSubject);
+  async findAll(findOptions: FindOptions): Promise<PaginateObject<Subject>> {
+    return super.find(findOptions, 'subject', PaginateObject<Subject>);
   }
 
   async findOne(id: number): Promise<Subject> {

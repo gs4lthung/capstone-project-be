@@ -10,7 +10,6 @@ import {
   Injectable,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { GqlExecutionContext } from '@nestjs/graphql';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
@@ -39,10 +38,6 @@ export class RoleGuard implements CanActivate {
       switch (contextType) {
         case ProtocolEnum.HTTP:
           request = context.switchToHttp().getRequest();
-          break;
-        case ProtocolEnum.GRAPHQL:
-          const ctx = GqlExecutionContext.create(context);
-          request = ctx.getContext().req;
           break;
         case ProtocolEnum.WS:
           request = context.switchToWs().getClient<Request>();

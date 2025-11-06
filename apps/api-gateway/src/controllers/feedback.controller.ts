@@ -5,6 +5,7 @@ import {
   HttpStatus,
   Param,
   Post,
+  Put,
   UseGuards,
 } from '@nestjs/common';
 import { FeedbackService } from '../services/feedback.service';
@@ -36,5 +37,26 @@ export class FeedbackController {
   @UseGuards(AuthGuard, RoleGuard)
   async create(@Param('id') courseId: number, @Body() data: CreateFeedbackDto) {
     return this.feedbackService.create(courseId, data);
+  }
+
+  @Put(':id')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiOperation({
+    tags: ['Feedbacks'],
+    summary: 'Update existing feedback',
+    description: 'Update feedback comment, rating, and anonymity option',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Feedback updated successfully',
+  })
+  @CheckRoles(UserRole.LEARNER)
+  @UseGuards(AuthGuard, RoleGuard)
+  async update(
+    @Param('id') feedbackId: number,
+    @Body() data: CreateFeedbackDto,
+  ) {
+    return this.feedbackService.update(feedbackId, data);
   }
 }

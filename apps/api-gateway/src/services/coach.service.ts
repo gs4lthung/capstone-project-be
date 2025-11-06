@@ -8,7 +8,6 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Coach, PaginatedCoach } from '@app/database/entities/coach.entity';
 import { User } from '@app/database/entities/user.entity';
 import { Credential } from '@app/database/entities/credential.entity';
 import { CoachVerificationStatus } from '@app/shared/enums/coach.enum';
@@ -26,6 +25,8 @@ import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
 import { Feedback } from '@app/database/entities/feedback.entity';
 import { REQUEST } from '@nestjs/core';
 import { CustomApiRequest } from '@app/shared/customs/custom-api-request';
+import { Coach } from '@app/database/entities/coach.entity';
+import { PaginateObject } from '@app/shared/dtos/paginate.dto';
 
 @Injectable({ scope: Scope.REQUEST })
 export class CoachService extends BaseTypeOrmService<Coach> {
@@ -46,8 +47,8 @@ export class CoachService extends BaseTypeOrmService<Coach> {
     super(coachRepository);
   }
 
-  async findAll(findOptions: FindOptions): Promise<PaginatedCoach> {
-    return super.find(findOptions, 'coach', PaginatedCoach);
+  async findAll(findOptions: FindOptions): Promise<PaginateObject<Coach>> {
+    return super.find(findOptions, 'coach', PaginateObject<Coach>);
   }
 
   async findOne(id: number): Promise<Coach> {

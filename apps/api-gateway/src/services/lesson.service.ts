@@ -6,7 +6,9 @@ import {
   CreateLessonRequestDto,
   UpdateLessonDto,
 } from '@app/shared/dtos/lessons/lesson.dto';
+import { PaginateObject } from '@app/shared/dtos/paginate.dto';
 import { BaseTypeOrmService } from '@app/shared/helpers/typeorm.helper';
+import { FindOptions } from '@app/shared/interfaces/find-options.interface';
 import {
   BadRequestException,
   ForbiddenException,
@@ -30,6 +32,10 @@ export class LessonService extends BaseTypeOrmService<Lesson> {
     private readonly datasource: DataSource,
   ) {
     super(lessonRepository);
+  }
+
+  async findAll(findOptions: FindOptions): Promise<PaginateObject<Lesson>> {
+    return super.find(findOptions, 'lesson', PaginateObject<Lesson>);
   }
 
   async create(

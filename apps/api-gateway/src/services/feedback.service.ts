@@ -3,7 +3,10 @@ import { Feedback } from '@app/database/entities/feedback.entity';
 import { User } from '@app/database/entities/user.entity';
 import { CustomApiRequest } from '@app/shared/customs/custom-api-request';
 import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
-import { CreateFeedbackDto } from '@app/shared/dtos/feedbacks/feedback.dto';
+import {
+  CreateFeedbackDto,
+  UpdateFeedbackDto,
+} from '@app/shared/dtos/feedbacks/feedback.dto';
 import { CourseStatus } from '@app/shared/enums/course.enum';
 import {
   BadRequestException,
@@ -37,11 +40,30 @@ export class FeedbackService {
     return await this.datasource.transaction(async (manager) => {
       const course = await this.courseRepository.findOne({
         where: { id: courseId, status: CourseStatus.COMPLETED },
-        relations: ['createdBy'],
+        relations: ['createdBy', 'enrollments'],
       });
       if (!course)
         throw new BadRequestException(
           'Invalid course ID or course not completed',
+        );
+
+      const isEnrolledToCourse = course.enrollments.some(
+        (enrollment) => enrollment.user.id === (this.request.user as User).id,
+      );
+      if (!isEnrolledToCourse)
+        throw new BadRequestException(
+          'You must be enrolled in the course to provide feedback',
+        );
+
+      const isAlreadySubmitted = await this.feedbackRepository.findOne({
+        where: {
+          course: { id: courseId },
+          createdBy: { id: (this.request.user as User).id },
+        },
+      });
+      if (isAlreadySubmitted)
+        throw new BadRequestException(
+          'You have already submitted feedback for this course',
         );
 
       const feedback = this.feedbackRepository.create({
@@ -65,6 +87,26 @@ export class FeedbackService {
       return new CustomApiResponse<void>(
         HttpStatus.CREATED,
         'Feedback submitted successfully',
+      );
+    });
+  }
+
+  async update(
+    id: number,
+    data: UpdateFeedbackDto,
+  ): Promise<CustomApiResponse<void>> {
+    return await this.datasource.transaction(async (manager) => {
+      const feedback = await this.feedbackRepository.findOne({
+        where: { id: id, createdBy: { id: (this.request.user as User).id } },
+      });
+      if (!feedback)
+        throw new BadRequestException('Feedback not found or access denied');
+
+      manager.getRepository(Feedback).update(feedback.id, data);
+
+      return new CustomApiResponse<void>(
+        HttpStatus.OK,
+        'Feedback updated successfully',
       );
     });
   }

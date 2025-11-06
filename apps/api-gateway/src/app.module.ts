@@ -8,8 +8,6 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { SocketGateway } from './socket/socket.gateway';
 import { ErrorModule } from './filters/filter.module';
 import { JwtService } from '@nestjs/jwt';
-import { GraphQLModule } from '@nestjs/graphql';
-import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Error } from '@app/database/entities/error.entity';
 import { User } from '@app/database/entities/user.entity';
@@ -17,7 +15,6 @@ import { GoogleStrategy } from './strategies/google.strategy';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { ScheduleModule } from '@nestjs/schedule';
 import { Notification } from '@app/database/entities/notification.entity';
-import { UserResolver } from './resolvers/user.resolver';
 import { MulterModule } from '@nestjs/platform-express';
 import { FileUtils } from '@app/shared/utils/file.util';
 import { Role } from '@app/database/entities/role.entity';
@@ -38,8 +35,6 @@ import { RequestController } from './controllers/request.controller';
 import { RequestAction } from '@app/database/entities/request-action.entity';
 import { Session } from '@app/database/entities/session.entity';
 import { SessionService } from './services/session.service';
-import { RequestResolver } from './resolvers/request.resolver';
-import { CourseResolver } from './resolvers/course.resolver';
 import { CourseService } from './services/course.service';
 import { CourseController } from './controllers/course.controller';
 import { Enrollment } from '@app/database/entities/enrollment.entity';
@@ -53,7 +48,6 @@ import { Lesson } from '@app/database/entities/lesson.entity';
 import { LessonService } from './services/lesson.service';
 import { LessonController } from './controllers/lesson.controller';
 import { FfmpegModule } from '@app/ffmpeg';
-import { SubjectResolver } from './resolvers/subject.resolver';
 import { PaymentService } from './services/payment.service';
 import { PaymentController } from './controllers/payment.controller';
 import { Coach } from '@app/database/entities/coach.entity';
@@ -65,11 +59,7 @@ import { Bank } from '@app/database/entities/bank.entity';
 import { WalletController } from './controllers/wallet.controller';
 import { WalletService } from './services/wallet.service';
 import { Configuration } from '@app/database/entities/configuration.entity';
-import { SessionResolver } from './resolvers/session.resolver';
-import { WalletResolver } from './resolvers/wallet.resolver';
-import { PaymentResolver } from './resolvers/payment.resolver';
 import { EnrollmentService } from './services/enrollment.service';
-import { EnrollmentResolver } from './resolvers/enrollment.resolver';
 import { Attendance } from '@app/database/entities/attendance.entity';
 import { ConfigurationController } from './controllers/configuration.controller';
 import { ConfigurationService } from './services/configuration.service';
@@ -198,24 +188,6 @@ import { NotificationService } from './services/notification.service';
       VideoConference,
     ]),
     ErrorModule,
-    GraphQLModule.forRootAsync<ApolloDriverConfig>({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      driver: ApolloDriver,
-      useFactory: async (configService: ConfigService) => ({
-        autoSchemaFile: true,
-        context: (ctx) => ctx,
-        playground: configService.get('graphql').playground,
-        introspection: configService.get('graphql').introspection,
-        buildSchemaOptions: {
-          dateScalarMode: 'timestamp' as const,
-        },
-        subscriptions: {
-          'graphql-ws': true,
-        },
-        fieldResolverEnhancers: ['interceptors', 'guards', 'filters'],
-      }),
-    }),
     ThrottlerModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -252,9 +224,6 @@ import { NotificationService } from './services/notification.service';
   providers: [
     AppService,
     UserService,
-    UserResolver,
-    RequestResolver,
-    CourseResolver,
     CourseService,
     CoachService,
     AuthService,
@@ -265,18 +234,13 @@ import { NotificationService } from './services/notification.service';
     RequestService,
     MailService,
     SessionService,
-    SessionResolver,
     CronService,
     SubjectService,
     LessonService,
-    SubjectResolver,
     WalletService,
-    WalletResolver,
     PaymentService,
     AchievementService,
-    PaymentResolver,
     EnrollmentService,
-    EnrollmentResolver,
     ConfigurationService,
     QuizService,
     VideoService,

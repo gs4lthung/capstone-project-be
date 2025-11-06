@@ -7,8 +7,6 @@ import { CustomApiRequest } from '../customs/custom-api-request';
 import { Pagination } from '../interfaces/pagination.interface';
 import { ContextUtils } from '../utils/context.util';
 import { ProtocolEnum } from '../enums/protocol.enum';
-import { GqlArgumentsHost } from '@nestjs/graphql';
-import { DtoUtils } from '../utils/dto.util';
 
 export const PaginationParams = createParamDecorator(
   (data, host: ArgumentsHost): Pagination => {
@@ -23,13 +21,6 @@ export const PaginationParams = createParamDecorator(
         request = ctx.getRequest<CustomApiRequest>();
         page = parseFloat(String(request.query.page || '1')) || 1;
         size = parseFloat(String(request.query.size || '10')) || 10;
-        break;
-      case ProtocolEnum.GRAPHQL:
-        const gqlCtx = GqlArgumentsHost.create(host);
-        request = gqlCtx.getContext().req;
-        page = parseFloat(DtoUtils.getGqlArgs(request.body.query, 'page')) || 1;
-        size =
-          parseFloat(DtoUtils.getGqlArgs(request.body.query, 'size')) || 10;
         break;
     }
     if (page < 1 || size < 1)

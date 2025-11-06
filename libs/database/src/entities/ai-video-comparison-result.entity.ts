@@ -7,8 +7,7 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { Field, ObjectType } from '@nestjs/graphql';
-import { GqlCustomDateTime } from '@app/shared/graphql/scalars/gql-custom-datetime.scalar';
+
 import { LearnerVideo } from './learner-video.entity';
 
 import {
@@ -27,7 +26,6 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { Video } from './video.entity';
-import { PaginatedResource } from '@app/shared/graphql/paginated-resource';
 
 enum AiVideoComparisonDetailsType {
   PREPARATION = 'PREPARATION',
@@ -93,10 +91,8 @@ class AiVideoComparisonKeyDifferent {
   learnerTechnique: string;
 }
 
-@ObjectType()
 @Entity('ai_video_comparison_results')
 export class AiVideoComparisonResult {
-  @Field(() => Number)
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -134,7 +130,6 @@ export class AiVideoComparisonResult {
   @Type(() => AiVideoComparisonRecommendationDrill)
   recommendationDrills?: AiVideoComparisonRecommendationDrill[];
 
-  @Field(() => GqlCustomDateTime)
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
@@ -150,8 +145,3 @@ export class AiVideoComparisonResult {
   @JoinColumn({ name: 'video_id' })
   video: Video;
 }
-
-@ObjectType()
-export class PaginatedAiVideoComparisonResult extends PaginatedResource(
-  AiVideoComparisonResult,
-) {}

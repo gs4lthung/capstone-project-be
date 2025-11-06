@@ -53,33 +53,6 @@
         "tsConfigPath": "libs/shared/tsconfig.lib.json"
       }
     },
-    "firebase": {
-      "type": "library",
-      "root": "libs/firebase",
-      "entryFile": "index",
-      "sourceRoot": "libs/firebase/src",
-      "compilerOptions": {
-        "tsConfigPath": "libs/firebase/tsconfig.lib.json"
-      }
-    },
-    "redis": {
-      "type": "library",
-      "root": "libs/redis",
-      "entryFile": "index",
-      "sourceRoot": "libs/redis/src",
-      "compilerOptions": {
-        "tsConfigPath": "libs/redis/tsconfig.lib.json"
-      }
-    },
-    "cloudinary": {
-      "type": "library",
-      "root": "libs/cloudinary",
-      "entryFile": "index",
-      "sourceRoot": "libs/cloudinary/src",
-      "compilerOptions": {
-        "tsConfigPath": "libs/cloudinary/tsconfig.lib.json"
-      }
-    },
     "payos": {
       "type": "library",
       "root": "libs/payos",

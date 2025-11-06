@@ -8,8 +8,7 @@ import {
   PrimaryGeneratedColumn,
   TableInheritance,
 } from 'typeorm';
-import { Field, ObjectType } from '@nestjs/graphql';
-import { GqlCustomDateTime } from '@app/shared/graphql/scalars/gql-custom-datetime.scalar';
+
 import { AchievementProgress } from './achievement-progress.entity';
 import { LearnerAchievement } from './learner-achievement.entity';
 import {
@@ -21,7 +20,6 @@ import {
   MinLength,
 } from 'class-validator';
 import { User } from './user.entity';
-import { PaginatedResource } from '@app/shared/graphql/paginated-resource';
 
 enum AchievementType {
   EVENT_COUNT = 'EVENT_COUNT',
@@ -29,11 +27,9 @@ enum AchievementType {
   STREAK = 'STREAK',
 }
 
-@ObjectType()
 @Entity('achievements')
 @TableInheritance({ column: { type: 'enum', enum: AchievementType } })
 export class Achievement {
-  @Field(() => Number)
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -54,11 +50,9 @@ export class Achievement {
   @IsUrl()
   iconUrl?: string;
 
-  @Field(() => Boolean)
   @Column({ name: 'is_active', type: 'boolean', default: true })
   isActive: boolean;
 
-  @Field(() => GqlCustomDateTime)
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
@@ -75,6 +69,3 @@ export class Achievement {
   @JoinColumn({ name: 'created_by' })
   createdBy: User;
 }
-
-@ObjectType()
-export class PaginatedAchievement extends PaginatedResource(Achievement) {}
