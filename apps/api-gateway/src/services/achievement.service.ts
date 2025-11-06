@@ -199,11 +199,8 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
    *   sort: { property: 'createdAt', direction: 'DESC' }
    * }
    *
-   * super.find() từ BaseTypeOrmService sẽ:
-   * 1. Build query với WHERE, ORDER BY, LIMIT, OFFSET
-   * 2. Execute query
-   * 3. Count total records
-   * 4. Return paginated result
+   * NOTE: Luôn sắp xếp theo createdAt DESC để đảm bảo thứ tự không thay đổi
+   * khi update/activate/deactivate achievement
    */
   async findAll(
     findOptions: FindOptions,
