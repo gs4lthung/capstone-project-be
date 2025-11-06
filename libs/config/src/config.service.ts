@@ -10,6 +10,7 @@ export interface Config {
   };
   front_end?: {
     url?: string;
+    verify_email_url?: string;
   };
   api_gateway: TcpServiceConfig;
   auth_service: TcpServiceConfig;
@@ -106,6 +107,10 @@ export class ConfigService {
         url: this.nestConfigService.get(
           'FRONT_END_URL',
           'http://localhost:3000',
+        ),
+        verify_email_url: this.nestConfigService.get(
+          'FRONT_END_VERIFY_EMAIL_URL',
+          'http://localhost:3000/verify-email',
         ),
       },
       node_env: this.nestConfigService.get('NODE_ENV', 'dev'),

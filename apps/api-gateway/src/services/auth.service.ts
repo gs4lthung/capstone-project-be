@@ -327,7 +327,7 @@ export class AuthService {
       user.emailVerificationToken = null;
       await this.userRepository.save(user);
 
-      return `${this.configService.get('front_end').url}`;
+      return `${this.configService.get('front_end').verify_email_url}`;
     } catch (error) {
       throw ExceptionUtils.wrapAsRpcException(error);
     }
