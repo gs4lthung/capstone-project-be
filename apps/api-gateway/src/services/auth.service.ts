@@ -47,63 +47,58 @@ export class AuthService {
   async login(
     data: LoginRequestDto,
   ): Promise<CustomApiResponse<LoginResponseDto>> {
-    return await this.dataSource.transaction(async (manager) => {
-      const user = await this.userRepository.findOne({
-        where: { email: data.email },
-        withDeleted: false,
-        select: ['id', 'fullName', 'email', 'password'],
-      });
-      if (!user) throw new UnauthorizedException('Không tìm thấy tài khoản');
-
-      const isPasswordValid = await bcrypt.compare(
-        data.password,
-        user.password,
-      );
-      if (!isPasswordValid)
-        throw new UnauthorizedException('Mật khẩu không chính xác');
-
-      const payload: JwtPayloadDto = {
-        id: user.id,
-      };
-
-      const accessToken = await this.jwtService.signAsync(payload, {
-        secret: this.configService.get('jwt').access_token.secret,
-        expiresIn: this.configService.get('jwt').access_token.expiration,
-      });
-
-      const refreshToken = await this.jwtService.signAsync(payload, {
-        secret: this.configService.get('jwt').refresh_token.secret,
-        expiresIn: this.configService.get('jwt').refresh_token.expiration,
-      });
-
-      const refreshTokenHash = await bcrypt.hash(
-        refreshToken,
-        this.configService.get('password_salt_rounds'),
-      );
-      user.refreshToken = refreshTokenHash;
-      await manager.getRepository(User).save(user);
-
-      return new CustomApiResponse<LoginResponseDto>(
-        HttpStatus.OK,
-        'AUTH.LOGIN_SUCCESS',
-        {
-          accessToken: accessToken,
-          refreshToken: refreshToken,
-          user: {
-            id: user.id,
-            fullName: user.fullName,
-            email: user.email,
-            role: user.role,
-          },
-        },
-      );
+    const user = await this.userRepository.findOne({
+      where: { email: data.email },
+      withDeleted: false,
+      select: ['id', 'fullName', 'email', 'password'],
     });
+    if (!user) throw new UnauthorizedException('Không tìm thấy tài khoản');
+
+    const isPasswordValid = await bcrypt.compare(data.password, user.password);
+    if (!isPasswordValid)
+      throw new UnauthorizedException('Mật khẩu không chính xác');
+
+    const payload: JwtPayloadDto = {
+      id: user.id,
+    };
+
+    const accessToken = await this.jwtService.signAsync(payload, {
+      secret: this.configService.get('jwt').access_token.secret,
+      expiresIn: this.configService.get('jwt').access_token.expiration,
+    });
+
+    const refreshToken = await this.jwtService.signAsync(payload, {
+      secret: this.configService.get('jwt').refresh_token.secret,
+      expiresIn: this.configService.get('jwt').refresh_token.expiration,
+    });
+
+    const refreshTokenHash = await bcrypt.hash(
+      refreshToken,
+      this.configService.get('password_salt_rounds'),
+    );
+    user.refreshToken = refreshTokenHash;
+    await this.userRepository.save(user);
+
+    return new CustomApiResponse<LoginResponseDto>(
+      HttpStatus.OK,
+      'AUTH.LOGIN_SUCCESS',
+      {
+        accessToken: accessToken,
+        refreshToken: refreshToken,
+        user: {
+          id: user.id,
+          fullName: user.fullName,
+          email: user.email,
+          role: user.role,
+        },
+      },
+    );
   }
 
   async getCurrentUser(
     userId: number,
   ): Promise<CustomApiResponse<CurrentUserResponseDto>> {
-    return await this.dataSource.transaction(async (manager) => {
+    try {
       const user = await this.userRepository.findOne({
         where: { id: userId },
         withDeleted: false,
@@ -111,7 +106,7 @@ export class AuthService {
         select: ['id', 'fullName', 'email', 'role'],
       });
 
-      await manager.getRepository(User).save(user);
+      await this.userRepository.save(user);
       const role = user.role;
       return new CustomApiResponse<CurrentUserResponseDto>(
         HttpStatus.OK,
@@ -129,48 +124,66 @@ export class AuthService {
           },
         },
       );
-    });
+    } catch {
+      throw new CustomRpcException(
+        'AUTH.INVALID_TOKEN',
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
   }
 
   async refreshNewAccessToken(data: {
     refreshToken: string;
   }): Promise<CustomApiResponse<{ accessToken: string }>> {
-    const payload: JwtPayloadDto = await this.jwtService.verifyAsync(
-      data.refreshToken,
-      {
-        secret: this.configService.get('jwt').refresh_token.secret,
-      },
-    );
+    try {
+      const payload: JwtPayloadDto = await this.jwtService.verifyAsync(
+        data.refreshToken,
+        {
+          secret: this.configService.get('jwt').refresh_token.secret,
+        },
+      );
 
-    const user = await this.userRepository.findOne({
-      where: { id: payload.id },
-      select: ['id', 'fullName', 'email', 'refreshToken'],
-    });
+      const user = await this.userRepository.findOne({
+        where: { id: payload.id },
+        select: ['id', 'fullName', 'email', 'refreshToken'],
+      });
 
-    if (!user)
-      throw new CustomRpcException('INVALID.TOKEN', HttpStatus.UNAUTHORIZED);
+      if (!user)
+        throw new CustomRpcException('INVALID.TOKEN', HttpStatus.UNAUTHORIZED);
 
-    const isMatch = await bcrypt.compare(data.refreshToken, user.refreshToken);
-    if (!isMatch)
-      throw new CustomRpcException('INVALID.TOKEN', HttpStatus.UNAUTHORIZED);
+      const isMatch = await bcrypt.compare(
+        data.refreshToken,
+        user.refreshToken,
+      );
+      if (!isMatch)
+        throw new CustomRpcException('INVALID.TOKEN', HttpStatus.UNAUTHORIZED);
 
-    const newAccessToken = await this.jwtService.signAsync(
-      { id: user.id },
-      {
-        secret: this.configService.get('jwt').access_token.secret,
-        expiresIn: this.configService.get('jwt').access_token.expiration,
-      },
-    );
+      const newAccessToken = await this.jwtService.signAsync(
+        { id: user.id },
+        {
+          secret: this.configService.get('jwt').access_token.secret,
+          expiresIn: this.configService.get('jwt').access_token.expiration,
+        },
+      );
 
-    return new CustomApiResponse<{ accessToken: string }>(
-      HttpStatus.OK,
-      'AUTH.LOGIN',
-      { accessToken: newAccessToken },
-    );
+      return new CustomApiResponse<{ accessToken: string }>(
+        HttpStatus.OK,
+        'AUTH.LOGIN',
+        { accessToken: newAccessToken },
+      );
+    } catch (error) {
+      if (error instanceof TokenExpiredError) {
+        throw new CustomRpcException(
+          'AUTH.INVALID_TOKEN',
+          HttpStatus.UNAUTHORIZED,
+        );
+      }
+      throw ExceptionUtils.wrapAsRpcException(error);
+    }
   }
 
   async loginWithGoogle(data: GoogleUserDto): Promise<string> {
-    return await this.dataSource.transaction(async (manager) => {
+    try {
       const existingUser = await this.userRepository.findOne({
         where: { email: data.email },
         withDeleted: false,
@@ -214,14 +227,16 @@ export class AuthService {
           provider: AuthProviderEnum.GOOGLE,
           providerId: data.id,
         } as AuthProvider);
-        await manager.getRepository(User).save(existingUser);
+        await this.userRepository.save(existingUser);
       }
 
       const payload: JwtPayloadDto = {
         id: existingUser.id,
       };
       return `${this.configService.get('front_end').url}/login?accessToken=${await this.jwtService.signAsync(payload)}`;
-    });
+    } catch (error) {
+      throw ExceptionUtils.wrapAsRpcException(error);
+    }
   }
   //#endregion
 
@@ -293,7 +308,7 @@ export class AuthService {
   //#region Email Verification
 
   async verifyEmail(data: { token: string }): Promise<string> {
-    return await this.dataSource.transaction(async (manager) => {
+    try {
       const payload = await this.jwtService.verifyAsync(data.token, {
         secret: this.configService.get('jwt').verify_email_token.secret,
       });
@@ -310,16 +325,18 @@ export class AuthService {
 
       user.isEmailVerified = true;
       user.emailVerificationToken = null;
-      await manager.getRepository(User).save(user);
+      await this.userRepository.save(user);
 
       return `${this.configService.get('front_end').url}`;
-    });
+    } catch (error) {
+      throw ExceptionUtils.wrapAsRpcException(error);
+    }
   }
 
   async resendVerificationEmail(data: {
     email: string;
   }): Promise<CustomApiResponse<void>> {
-    return await this.dataSource.transaction(async (manager) => {
+    try {
       const user = await this.userRepository.findOne({
         where: { email: data.email, isEmailVerified: false },
       });
@@ -340,7 +357,7 @@ export class AuthService {
       });
 
       user.emailVerificationToken = emailVerificationToken;
-      await manager.getRepository(User).save(user);
+      await this.userRepository.save(user);
 
       await this.sendVerificationEmail(user.email, emailVerificationToken);
 
@@ -348,7 +365,9 @@ export class AuthService {
         HttpStatus.OK,
         'AUTH.EMAIL_SEND_SUCCESS',
       );
-    });
+    } catch (error) {
+      throw ExceptionUtils.wrapAsRpcException(error);
+    }
   }
 
   private async sendVerificationEmail(
