@@ -10,6 +10,8 @@ import { EnrollmentStatus } from '@app/shared/enums/enrollment.enum';
 import { LearnerProgress } from '@app/database/entities/learner-progress.entity';
 import { LearnerProgressStatus } from '@app/shared/enums/learner.enum';
 import { Configuration } from '@app/database/entities/configuration.entity';
+import { NotificationService } from './notification.service';
+import { NotificationType } from '@app/shared/enums/notification.enum';
 
 @Injectable()
 export class CronService {
@@ -22,6 +24,7 @@ export class CronService {
     private readonly learnerProgressRepository: Repository<LearnerProgress>,
     @InjectRepository(Configuration)
     private readonly configurationRepository: Repository<Configuration>,
+    private readonly notificationService: NotificationService,
   ) {}
 
   private readonly logger = new Logger(CronService.name);
@@ -34,7 +37,7 @@ export class CronService {
     const courses = await this.courseRepository.find({
       where: { status: In([CourseStatus.FULL, CourseStatus.READY_OPENED]) },
       withDeleted: false,
-      relations: ['enrollments'],
+      relations: ['enrollments', 'createdBy'],
     });
     let checkCourseBeforeDays = await this.configurationRepository.findOne({
       where: { key: 'course_start_before_days' },
@@ -75,9 +78,25 @@ export class CronService {
           await this.learnerProgressRepository.save(learnerProgress);
 
           courseTotalEarnings += enrollment.paymentAmount;
+
+          await this.notificationService.sendNotification({
+            userId: enrollment.user.id,
+            title: 'Khởi động khóa học',
+            body: `Khóa học ${course.name} đã bắt đầu.`,
+            navigateTo: `/coach/courses/${course.id}`,
+            type: NotificationType.INFO,
+          });
         }
         course.totalEarnings = courseTotalEarnings;
         await this.courseRepository.save(course);
+
+        await this.notificationService.sendNotification({
+          userId: course.createdBy.id,
+          title: 'Khóa học đã bắt đầu',
+          body: `Khóa học ${course.name} của bạn đã chính thức bắt đầu.`,
+          navigateTo: `/coach/courses/${course.id}`,
+          type: NotificationType.INFO,
+        });
       }
     }
   }

@@ -36,8 +36,6 @@ export class AuthService {
   constructor(
     @InjectRepository(User) private readonly userRepository: Repository<User>,
     @InjectRepository(Role) private readonly roleRepository: Repository<Role>,
-    @InjectRepository(AuthProvider)
-    private readonly authProviderRepository: Repository<AuthProvider>,
     private readonly mailService: MailService,
     private readonly configService: ConfigService,
     private readonly jwtService: JwtService,

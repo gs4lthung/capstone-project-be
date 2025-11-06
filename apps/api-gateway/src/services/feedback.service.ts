@@ -15,6 +15,8 @@ import {
 import { REQUEST } from '@nestjs/core';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
+import { NotificationService } from './notification.service';
+import { NotificationType } from '@app/shared/enums/notification.enum';
 
 @Injectable({ scope: Scope.REQUEST })
 export class FeedbackService {
@@ -24,6 +26,7 @@ export class FeedbackService {
     private readonly feedbackRepository: Repository<Feedback>,
     @InjectRepository(Course)
     private readonly courseRepository: Repository<Course>,
+    private readonly notificationService: NotificationService,
     private readonly datasource: DataSource,
   ) {}
 
@@ -50,6 +53,14 @@ export class FeedbackService {
         receivedBy: course.createdBy as User,
       });
       await manager.getRepository(Feedback).save(feedback);
+
+      await this.notificationService.sendNotification({
+        userId: course.createdBy.id,
+        title: 'Feedback mới nhận được',
+        body: `Khóa học ${course.name} vừa nhận được một phản hồi mới.`,
+        navigateTo: `/coach/courses/${course.id}/feedbacks`,
+        type: NotificationType.INFO,
+      });
 
       return new CustomApiResponse<void>(
         HttpStatus.CREATED,
