@@ -69,7 +69,7 @@ export class NotificationService {
     } as SendNotification);
   }
 
-  async sendNotificationToAdmins({ title, body }: SendNotification) {
+  async sendNotificationToAdmins(payload: SendNotification) {
     const admins = await this.userRepository.find({
       where: {
         role: {
@@ -78,7 +78,7 @@ export class NotificationService {
       },
     });
     for (const admin of admins) {
-      await this.sendNotification({ userId: admin.id, title, body });
+      await this.sendNotification({ userId: admin.id, ...payload });
     }
   }
 }

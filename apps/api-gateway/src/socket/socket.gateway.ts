@@ -45,15 +45,13 @@ export class SocketGateway {
 
       (client as any).userId = payload.id;
 
-      client.on('login', async (userId: number) => {
-        this.onlineUsers.set(userId, client.id);
+      this.onlineUsers.set(payload.id, client.id);
 
-        const unreadNotifications =
-          await this.notificationService.getUserUnreadNotifications(userId);
-        for (const notification of unreadNotifications) {
-          client.emit('notification.send', notification);
-        }
-      });
+      const unreadNotifications =
+        await this.notificationService.getUserUnreadNotifications(payload.id);
+      for (const notification of unreadNotifications) {
+        client.emit('notification.send', notification);
+      }
 
       client.on('notification.read', async (notificationId: number) => {
         await this.notificationService.markNotificationAsRead(notificationId);
@@ -81,10 +79,7 @@ export class SocketGateway {
   async handleSendNotificationEvent(payload: SendNotification) {
     const clientId = this.onlineUsers.get(payload.userId);
     if (clientId) {
-      const clientSocket = this.server.sockets.sockets.get(clientId);
-      if (clientSocket) {
-        clientSocket.emit('notification.send', payload);
-      }
+      this.server.to(clientId).emit('notification.send', payload);
     }
   }
 }

@@ -32,10 +32,8 @@ import { EnrollmentStatus } from '@app/shared/enums/enrollment.enum';
 import { Schedule } from '@app/database/entities/schedule.entity';
 import { Subject } from '@app/database/entities/subject.entity';
 import { SubjectStatus } from '@app/shared/enums/subject.enum';
-import { Wallet } from '@app/database/entities/wallet.entity';
 import { WalletService } from './wallet.service';
 import { PaginateObject } from '@app/shared/dtos/paginate.dto';
-import { Configuration } from '@app/database/entities/configuration.entity';
 import {
   CreateCourseRequestDto,
   UpdateCourseDto,
@@ -44,6 +42,8 @@ import { Province } from '@app/database/entities/province.entity';
 import { District } from '@app/database/entities/district.entity';
 import { CustomApiRequest } from '@app/shared/customs/custom-api-request';
 import { VideoConference } from '@app/database/entities/video-conference.entity';
+import { NotificationService } from './notification.service';
+import { NotificationType } from '@app/shared/enums/notification.enum';
 
 @Injectable({ scope: Scope.REQUEST })
 export class CourseService extends BaseTypeOrmService<Course> {
@@ -61,13 +61,10 @@ export class CourseService extends BaseTypeOrmService<Course> {
     private readonly enrollmentRepository: Repository<Enrollment>,
     @InjectRepository(Subject)
     private readonly subjectRepository: Repository<Subject>,
-    @InjectRepository(Wallet)
-    private readonly walletRepository: Repository<Wallet>,
-    @InjectRepository(Configuration)
-    private readonly configurationRepository: Repository<Configuration>,
     @InjectRepository(VideoConference)
     private readonly videoConferenceRepository: Repository<VideoConference>,
     private readonly sessionService: SessionService,
+    private readonly notificationService: NotificationService,
     private readonly walletService: WalletService,
     private readonly datasource: DataSource,
   ) {
@@ -137,6 +134,13 @@ export class CourseService extends BaseTypeOrmService<Course> {
 
       await manager.getRepository(Request).save(newCourseCreationRequest);
 
+      await this.notificationService.sendNotificationToAdmins({
+        title: 'Yêu cầu tạo khóa học mới',
+        body: `Một HLV đã gửi yêu cầu tạo khóa học mới.`,
+        navigateTo: `/admin/requests/${newCourseCreationRequest.id}`,
+        type: NotificationType.INFO,
+      });
+
       return new CustomApiResponse<void>(
         HttpStatus.CREATED,
         'COURSE.CREATE_SUCCESS',
@@ -168,6 +172,13 @@ export class CourseService extends BaseTypeOrmService<Course> {
         district: data.district
           ? ({ id: data.district } as District)
           : course.district,
+      });
+
+      await this.notificationService.sendNotificationToAdmins({
+        title: ' Cập nhật yêu cầu tạo khóa học',
+        body: `Một HLV đã cập nhật yêu cầu tạo khóa học.`,
+        navigateTo: `/admin/requests/${course.id}`,
+        type: NotificationType.INFO,
       });
 
       return new CustomApiResponse<void>(
@@ -265,6 +276,14 @@ export class CourseService extends BaseTypeOrmService<Course> {
       });
       await manager.getRepository(RequestAction).save(newRequestAction);
 
+      await this.notificationService.sendNotification({
+        userId: request.createdBy.id,
+        title: 'Yêu cầu tạo khóa học được duyệt',
+        body: `Yêu cầu tạo khóa học của bạn đã được duyệt.`,
+        navigateTo: `/coach/courses/${course.id}`,
+        type: NotificationType.SUCCESS,
+      });
+
       return new CustomApiResponse<void>(
         HttpStatus.CREATED,
         'COURSE.CREATE_SUCCESS',
@@ -308,6 +327,14 @@ export class CourseService extends BaseTypeOrmService<Course> {
       });
       await manager.getRepository(RequestAction).save(newRequestAction);
 
+      await this.notificationService.sendNotification({
+        userId: request.createdBy.id,
+        title: 'Yêu cầu tạo khóa học bị từ chối',
+        body: `Yêu cầu tạo khóa học của bạn đã bị từ chối.`,
+        navigateTo: `/coach/courses/${course.id}`,
+        type: NotificationType.ERROR,
+      });
+
       return new CustomApiResponse<void>(
         HttpStatus.OK,
         'COURSE.REJECT_SUCCESS',
@@ -319,6 +346,7 @@ export class CourseService extends BaseTypeOrmService<Course> {
     return await this.datasource.transaction(async (manager) => {
       const course = await this.courseRepository.findOne({
         where: { id: id },
+        relations: ['createdBy', 'enrollments'],
         withDeleted: false,
       });
       if (!course) throw new BadRequestException('Không tìm thấy khóa học');
@@ -377,6 +405,14 @@ export class CourseService extends BaseTypeOrmService<Course> {
         course.status = CourseStatus.FULL;
       }
       await manager.getRepository(Course).save(course);
+
+      await this.notificationService.sendNotification({
+        userId: course.createdBy.id,
+        title: 'Học viên hủy đăng ký khóa học',
+        body: `Một học viên đã hủy đăng ký khóa học của bạn.`,
+        navigateTo: `/coach/courses/${course.id}`,
+        type: NotificationType.WARNING,
+      });
 
       return new CustomApiResponse<void>(
         HttpStatus.OK,

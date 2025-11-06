@@ -2,6 +2,7 @@ import { LearnerProgressStatus } from '@app/shared/enums/learner.enum';
 import {
   Check,
   Column,
+  CreateDateColumn,
   Entity,
   JoinColumn,
   ManyToOne,
@@ -49,6 +50,9 @@ export class LearnerProgress {
   })
   @IsEnum(LearnerProgressStatus)
   status: LearnerProgressStatus;
+
+  @CreateDateColumn({ name: 'created_at' })
+  createdAt: Date;
 
   @Field(() => GqlCustomDateTime)
   @UpdateDateColumn({ name: 'updated_at' })

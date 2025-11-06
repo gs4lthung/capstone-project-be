@@ -25,6 +25,8 @@ import {
 import { REQUEST } from '@nestjs/core';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
+import { NotificationService } from './notification.service';
+import { NotificationType } from '@app/shared/enums/notification.enum';
 
 @Injectable({ scope: Scope.REQUEST })
 export class QuizService extends BaseTypeOrmService<Quiz> {
@@ -38,8 +40,7 @@ export class QuizService extends BaseTypeOrmService<Quiz> {
     private readonly quizAttemptRepository: Repository<QuizAttempt>,
     @InjectRepository(Session)
     private readonly sessionRepository: Repository<Session>,
-    @InjectRepository(LearnerProgress)
-    private readonly learnerProgressRepository: Repository<LearnerProgress>,
+    private readonly notificationService: NotificationService,
     private readonly datasource: DataSource,
   ) {
     super(quizRepository);
@@ -203,7 +204,12 @@ export class QuizService extends BaseTypeOrmService<Quiz> {
 
       const session = await this.sessionRepository.findOne({
         where: { id: quiz.session.id },
-        relations: ['quizAttempts', 'course', 'course.enrollments'],
+        relations: [
+          'quizAttempts',
+          'course',
+          'course.enrollments',
+          'course.createdBy',
+        ],
         withDeleted: false,
       });
       if (!session)
@@ -283,6 +289,14 @@ export class QuizService extends BaseTypeOrmService<Quiz> {
         );
         await manager.getRepository(LearnerProgress).save(learnerProgress);
       }
+
+      await this.notificationService.sendNotification({
+        userId: session.course.createdBy.id,
+        title: 'Học viên hoàn thành bài quiz',
+        body: `Một học viên đã hoàn thành bài quiz`,
+        navigateTo: `/coach/courses/${session.course.id}/quizzes/${quiz.id}/results`,
+        type: NotificationType.INFO,
+      });
 
       return new CustomApiResponse<void>(
         HttpStatus.CREATED,
