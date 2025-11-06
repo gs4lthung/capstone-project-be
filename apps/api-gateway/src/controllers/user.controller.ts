@@ -12,7 +12,7 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiQuery, ApiResponse } from '@nestjs/swagger';
 import { UserRole } from '@app/shared/enums/user.enum';
 import { CheckRoles } from '@app/shared/decorators/check-roles.decorator';
 import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
@@ -26,8 +26,6 @@ import { PaginateObject } from '@app/shared/dtos/paginate.dto';
 import { User } from '@app/database/entities/user.entity';
 import { PaginationParams } from '@app/shared/decorators/pagination-params.decorator';
 import { Pagination } from '@app/shared/interfaces/pagination.interface';
-import { Sorting } from '@app/shared/interfaces/sorting.interface';
-import { SortingParams } from '@app/shared/decorators/sorting-params.decorator';
 import { FilteringParams } from '@app/shared/decorators/filtering-params.decorator';
 import { Filtering } from '@app/shared/interfaces/filtering.interface';
 import { FindOptions } from '@app/shared/interfaces/find-options.interface';
@@ -38,6 +36,7 @@ export class UserController {
 
   @Get()
   @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
   @ApiOperation({
     tags: ['Users'],
     summary: 'Get all users',
@@ -47,17 +46,36 @@ export class UserController {
     status: HttpStatus.OK,
     description: 'List of users retrieved successfully',
   })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: 'Page number (default: 1)',
+    example: 1,
+  })
+  @ApiQuery({
+    name: 'size',
+    required: false,
+    type: Number,
+    description: 'Number of items per page (default: 10, max: 100)',
+    example: 10,
+  })
+  @ApiQuery({
+    name: 'filter',
+    required: false,
+    type: String,
+    description: 'Filter by field: {field}_{rule}_{value}. Rules: eq, neq, gt, gte, lt, lte, like, nlike, in, nin, isnull, isnotnull. Multiple filters separated by comma. Example: email_like_@gmail.com,isEmailVerified_eq_true',
+    example: 'email_like_@gmail.com',
+  })
   @CheckRoles(UserRole.ADMIN)
   @UseGuards(AuthGuard, RoleGuard)
   async finAll(
     @PaginationParams()
     pagination: Pagination,
-    @SortingParams() sort: Sorting,
     @FilteringParams() filter: Filtering,
   ): Promise<PaginateObject<User>> {
     return this.userService.findAll({
       pagination,
-      sort,
       filter,
     } as FindOptions);
   }
