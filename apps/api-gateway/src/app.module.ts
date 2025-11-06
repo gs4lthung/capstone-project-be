@@ -139,7 +139,7 @@ import { NotificationService } from './services/notification.service';
           from: `"No Reply" <Hello>`,
         },
         template: {
-          dir: join(__dirname, 'mail-templates'),
+          dir: 'dist/apps/api-gateway/src/mail-templates',
           adapter: new HandlebarsAdapter(undefined, {
             inlineCssEnabled: true,
           }),
