@@ -104,7 +104,7 @@ export class User {
   })
   resetPasswordToken?: string;
 
-  @Column({ name: 'is_active', type: 'boolean', default: false })
+  @Column({ name: 'is_active', type: 'boolean', default: true })
   @Index()
   isActive: boolean;
 

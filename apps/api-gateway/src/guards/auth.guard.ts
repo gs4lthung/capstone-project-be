@@ -68,7 +68,7 @@ export class AuthGuard implements CanActivate {
       });
 
       const isUserExists = await this.userRepository.findOne({
-        where: { id: payload.id },
+        where: { id: payload.id, isActive: true },
         withDeleted: false,
       });
       if (!isUserExists) {
