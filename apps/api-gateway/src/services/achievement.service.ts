@@ -205,10 +205,11 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
    */
   async findAll(findOptions: FindOptions): Promise<PaginatedAchievement> {
     // Override sort option để luôn sắp xếp theo createdAt DESC
+    // Sử dụng tên column thực tế trong database (created_at) thay vì property name (createdAt)
     const modifiedOptions = {
       ...findOptions,
       sort: {
-        property: 'createdAt',
+        property: 'created_at',
         direction: 'DESC' as const,
       },
     };
