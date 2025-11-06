@@ -3,6 +3,7 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Param,
   UseGuards,
 } from '@nestjs/common';
 import { RequestService } from '../services/request.service';
@@ -58,7 +59,7 @@ export class RequestController {
   })
   @CheckRoles(UserRole.ADMIN)
   @UseGuards(AuthGuard, RoleGuard)
-  async findOne(id: number): Promise<Request> {
+  async findOne(@Param('id') id: number): Promise<Request> {
     return await this.requestService.findOne(id);
   }
 }
