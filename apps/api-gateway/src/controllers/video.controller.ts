@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Get,
   HttpCode,
   HttpStatus,
   Param,
@@ -21,6 +22,23 @@ import { ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
 @Controller('videos')
 export class VideoController {
   constructor(private readonly videoService: VideoService) {}
+
+  @Get('lessons/:id')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiOperation({
+    tags: ['Videos'],
+    summary: 'Get videos by lesson id',
+    description: 'Get all videos of a lesson',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'List of videos',
+  })
+  @UseGuards(AuthGuard)
+  async getVideosByLesson(@Param('id') id: number) {
+    return this.videoService.getVideosByLesson(id);
+  }
 
   @Post('lessons/:id')
   @HttpCode(HttpStatus.CREATED)
