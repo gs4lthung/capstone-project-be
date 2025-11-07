@@ -46,6 +46,20 @@ export class QuizService extends BaseTypeOrmService<Quiz> {
     super(quizRepository);
   }
 
+  async getQuizzesByLesson(lessonId: number): Promise<Quiz[]> {
+    const lesson = await this.lessonRepository.findOne({
+      where: { id: lessonId },
+      withDeleted: false,
+    });
+    if (!lesson) throw new BadRequestException('Không tìm thấy bài học');
+
+    return this.quizRepository.find({
+      where: { lesson: { id: lessonId } },
+      relations: ['questions', 'questions.options', 'createdBy'],
+      withDeleted: false,
+    });
+  }
+
   async createLessonQuiz(
     lessonId: number,
     data: CreateQuizDto,
