@@ -72,7 +72,16 @@ export class UserService extends BaseTypeOrmService<User> {
   }
 
   async findAll(findOptions: FindOptions): Promise<PaginateObject<User>> {
-    return super.find(findOptions, 'user', PaginateObject<User>);
+    // Override sort option để luôn sắp xếp theo created_at DESC (mới nhất đến cũ nhất)
+    const modifiedOptions = {
+      ...findOptions,
+      sort: {
+        property: 'created_at',
+        direction: 'DESC' as const,
+      },
+    };
+    
+    return super.find(modifiedOptions, 'user', PaginateObject<User>);
   }
 
   async findOne(id: number): Promise<User> {

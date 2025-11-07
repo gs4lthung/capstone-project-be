@@ -14,6 +14,7 @@
     "migration:revert:prod": "node ./node_modules/typeorm/cli.js migration:revert -d dist/libs/database/src/data-source.js",
     "seed": "ts-node -r tsconfig-paths/register",
     "seed:prod": "node dist/libs/database/src/seeds/seed.js",
+    "seed:achievements": "ts-node -r tsconfig-paths/register libs/database/src/seeds/seed-achievements-only.ts",
     "seed:learner-achievements": "ts-node -r tsconfig-paths/register libs/database/src/seeds/seed-learner-achievements-only.ts",
     "build": "nest build && npm run copy:templates",
     "build:database": "npx tsc -p ./libs/database/tsconfig.lib.json",

@@ -2,7 +2,7 @@ import { ChildEntity, Column } from 'typeorm';
 import { Achievement } from './achievement.entity';
 import { IsNotEmpty, IsString, MaxLength, MinLength } from 'class-validator';
 
-@ChildEntity()
+@ChildEntity('PROPERTY_CHECK')
 export class PropertyCheckAchievement extends Achievement {
   @Column({ name: 'event_name', type: 'varchar', length: 25 })
   @IsString()

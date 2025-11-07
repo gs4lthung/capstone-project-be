@@ -12,11 +12,11 @@ import { User } from '../entities/user.entity';
  * Seed này tạo các achievement mẫu cho hệ thống
  * 
  * Bao gồm:
- * - 5 EVENT_COUNT achievements (đếm số lần)
- * - 3 STREAK achievements (chuỗi liên tiếp)
- * - 2 PROPERTY_CHECK achievements (kiểm tra điều kiện)
+ * - 7 EVENT_COUNT achievements (đếm số lần)
+ * - 7 STREAK achievements (chuỗi liên tiếp)
+ * - 7 PROPERTY_CHECK achievements (kiểm tra điều kiện)
  * 
- * Total: 10 achievements
+ * Total: 21 achievements
  */
 export const achievementSeed = async (dataSource: DataSource) => {
   const achievementRepository = dataSource.getRepository(Achievement);
@@ -53,53 +53,71 @@ export const achievementSeed = async (dataSource: DataSource) => {
   }
 
   // ============================================
-  // EVENT COUNT ACHIEVEMENTS (5 achievements)
+  // EVENT COUNT ACHIEVEMENTS (7 achievements)
   // ============================================
   console.log('\n📊 Creating EVENT_COUNT achievements...');
 
   const eventCountAchievements = [
     {
-      name: 'First Steps',
+      name: 'Bước Đầu Tiên',
       description: 'Hoàn thành bài học đầu tiên của bạn',
-      iconUrl: 'https://api.dicebear.com/7.x/shapes/svg?seed=first-steps',
+      iconUrl: 'https://api.dicebear.com/7.x/icons/svg?seed=first-step',
       eventName: 'LESSON_COMPLETED',
       targetCount: 1,
       isActive: true,
       createdBy: adminUser,
     },
     {
-      name: 'Learning Enthusiast',
+      name: 'Người Học Chăm Chỉ',
       description: 'Hoàn thành 10 bài học',
-      iconUrl: 'https://api.dicebear.com/7.x/shapes/svg?seed=enthusiast',
+      iconUrl: 'https://api.dicebear.com/7.x/icons/svg?seed=hard-worker',
       eventName: 'LESSON_COMPLETED',
       targetCount: 10,
       isActive: true,
       createdBy: adminUser,
     },
     {
-      name: 'Lesson Master',
+      name: 'Học Giả',
       description: 'Hoàn thành 50 bài học',
-      iconUrl: 'https://api.dicebear.com/7.x/shapes/svg?seed=master',
+      iconUrl: 'https://api.dicebear.com/7.x/icons/svg?seed=scholar',
       eventName: 'LESSON_COMPLETED',
       targetCount: 50,
       isActive: true,
       createdBy: adminUser,
     },
     {
-      name: 'Social Butterfly',
-      description: 'Tham gia 10 buổi học',
-      iconUrl: 'https://api.dicebear.com/7.x/shapes/svg?seed=social',
-      eventName: 'SESSION_ATTENDED',
-      targetCount: 10,
+      name: 'Bậc Thầy Kiến Thức',
+      description: 'Hoàn thành 100 bài học',
+      iconUrl: 'https://api.dicebear.com/7.x/icons/svg?seed=master',
+      eventName: 'LESSON_COMPLETED',
+      targetCount: 100,
       isActive: true,
       createdBy: adminUser,
     },
     {
-      name: 'Quiz Champion',
-      description: 'Hoàn thành 20 bài kiểm tra',
-      iconUrl: 'https://api.dicebear.com/7.x/shapes/svg?seed=quiz',
-      eventName: 'QUIZ_COMPLETED',
+      name: 'Người Tham Gia Tích Cực',
+      description: 'Tham gia 5 buổi học trực tuyến',
+      iconUrl: 'https://api.dicebear.com/7.x/icons/svg?seed=active-participant',
+      eventName: 'SESSION_ATTENDED',
+      targetCount: 5,
+      isActive: true,
+      createdBy: adminUser,
+    },
+    {
+      name: 'Chiến Binh Video',
+      description: 'Xem 20 video bài giảng',
+      iconUrl: 'https://api.dicebear.com/7.x/icons/svg?seed=video-warrior',
+      eventName: 'VIDEO_WATCHED',
       targetCount: 20,
+      isActive: true,
+      createdBy: adminUser,
+    },
+    {
+      name: 'Người Hoàn Thành Khóa Học',
+      description: 'Hoàn thành 3 khóa học',
+      iconUrl: 'https://api.dicebear.com/7.x/icons/svg?seed=course-finisher',
+      eventName: 'COURSE_COMPLETED',
+      targetCount: 3,
       isActive: true,
       createdBy: adminUser,
     },
@@ -112,15 +130,25 @@ export const achievementSeed = async (dataSource: DataSource) => {
   }
 
   // ============================================
-  // STREAK ACHIEVEMENTS (3 achievements)
+  // STREAK ACHIEVEMENTS (7 achievements)
   // ============================================
   console.log('\n🔥 Creating STREAK achievements...');
 
   const streakAchievements = [
     {
-      name: 'Week Warrior',
+      name: 'Đăng Nhập Hàng Ngày',
+      description: 'Đăng nhập 3 ngày liên tiếp',
+      iconUrl: 'https://api.dicebear.com/7.x/icons/svg?seed=daily-login',
+      eventName: 'DAILY_LOGIN',
+      targetStreakLength: 3,
+      streakUnit: 'days',
+      isActive: true,
+      createdBy: adminUser,
+    },
+    {
+      name: 'Chiến Binh Tuần',
       description: 'Đăng nhập 7 ngày liên tiếp',
-      iconUrl: 'https://api.dicebear.com/7.x/shapes/svg?seed=week-warrior',
+      iconUrl: 'https://api.dicebear.com/7.x/icons/svg?seed=week-warrior',
       eventName: 'DAILY_LOGIN',
       targetStreakLength: 7,
       streakUnit: 'days',
@@ -128,9 +156,9 @@ export const achievementSeed = async (dataSource: DataSource) => {
       createdBy: adminUser,
     },
     {
-      name: 'Monthly Champion',
+      name: 'Người Kiên Trì Tháng',
       description: 'Đăng nhập 30 ngày liên tiếp',
-      iconUrl: 'https://api.dicebear.com/7.x/shapes/svg?seed=monthly',
+      iconUrl: 'https://api.dicebear.com/7.x/icons/svg?seed=month-dedication',
       eventName: 'DAILY_LOGIN',
       targetStreakLength: 30,
       streakUnit: 'days',
@@ -138,12 +166,42 @@ export const achievementSeed = async (dataSource: DataSource) => {
       createdBy: adminUser,
     },
     {
-      name: 'Attendance Star',
-      description: 'Tham gia 5 buổi học liên tiếp',
-      iconUrl: 'https://api.dicebear.com/7.x/shapes/svg?seed=attendance',
-      eventName: 'SESSION_ATTENDED',
+      name: 'Học Mỗi Ngày',
+      description: 'Hoàn thành bài học 5 ngày liên tiếp',
+      iconUrl: 'https://api.dicebear.com/7.x/icons/svg?seed=daily-study',
+      eventName: 'DAILY_LESSON',
       targetStreakLength: 5,
-      streakUnit: 'sessions',
+      streakUnit: 'days',
+      isActive: true,
+      createdBy: adminUser,
+    },
+    {
+      name: 'Luyện Tập Đều Đặn',
+      description: 'Làm quiz 7 ngày liên tiếp',
+      iconUrl: 'https://api.dicebear.com/7.x/icons/svg?seed=daily-practice',
+      eventName: 'DAILY_QUIZ',
+      targetStreakLength: 7,
+      streakUnit: 'days',
+      isActive: true,
+      createdBy: adminUser,
+    },
+    {
+      name: 'Tham Gia Tích Cực',
+      description: 'Tham gia session 3 tuần liên tiếp',
+      iconUrl: 'https://api.dicebear.com/7.x/icons/svg?seed=active-attendance',
+      eventName: 'WEEKLY_SESSION',
+      targetStreakLength: 3,
+      streakUnit: 'weeks',
+      isActive: true,
+      createdBy: adminUser,
+    },
+    {
+      name: 'Video Hàng Ngày',
+      description: 'Xem video 10 ngày liên tiếp',
+      iconUrl: 'https://api.dicebear.com/7.x/icons/svg?seed=daily-video',
+      eventName: 'DAILY_VIDEO',
+      targetStreakLength: 10,
+      streakUnit: 'days',
       isActive: true,
       createdBy: adminUser,
     },
@@ -156,15 +214,15 @@ export const achievementSeed = async (dataSource: DataSource) => {
   }
 
   // ============================================
-  // PROPERTY CHECK ACHIEVEMENTS (2 achievements)
+  // PROPERTY CHECK ACHIEVEMENTS (7 achievements)
   // ============================================
   console.log('\n⭐ Creating PROPERTY_CHECK achievements...');
 
   const propertyCheckAchievements = [
     {
-      name: 'Top Performer',
-      description: 'Đạt điểm trung bình >= 80 trong các bài kiểm tra',
-      iconUrl: 'https://api.dicebear.com/7.x/shapes/svg?seed=performer',
+      name: 'Học Sinh Giỏi',
+      description: 'Đạt điểm trung bình quiz >= 80%',
+      iconUrl: 'https://api.dicebear.com/7.x/icons/svg?seed=excellent-student',
       eventName: 'QUIZ_COMPLETED',
       entityName: 'LearnerProgress',
       propertyName: 'avgQuizScore',
@@ -174,14 +232,74 @@ export const achievementSeed = async (dataSource: DataSource) => {
       createdBy: adminUser,
     },
     {
-      name: 'Perfect Score',
-      description: 'Đạt điểm 100 trong một bài kiểm tra',
-      iconUrl: 'https://api.dicebear.com/7.x/shapes/svg?seed=perfect',
+      name: 'Học Sinh Xuất Sắc',
+      description: 'Đạt điểm trung bình quiz >= 90%',
+      iconUrl: 'https://api.dicebear.com/7.x/icons/svg?seed=outstanding-student',
       eventName: 'QUIZ_COMPLETED',
-      entityName: 'QuizAttempt',
+      entityName: 'LearnerProgress',
+      propertyName: 'avgQuizScore',
+      comparisonOperator: '>=',
+      targetValue: '90',
+      isActive: true,
+      createdBy: adminUser,
+    },
+    {
+      name: 'Hoàn Hảo',
+      description: 'Đạt điểm quiz 100%',
+      iconUrl: 'https://api.dicebear.com/7.x/icons/svg?seed=perfect-score',
+      eventName: 'QUIZ_COMPLETED',
+      entityName: 'Quiz',
       propertyName: 'score',
       comparisonOperator: '==',
       targetValue: '100',
+      isActive: true,
+      createdBy: adminUser,
+    },
+    {
+      name: 'Giáo Viên Được Yêu Thích',
+      description: 'Coach đạt rating trung bình >= 4.5 sao',
+      iconUrl: 'https://api.dicebear.com/7.x/icons/svg?seed=beloved-coach',
+      eventName: 'FEEDBACK_RECEIVED',
+      entityName: 'Coach',
+      propertyName: 'averageRating',
+      comparisonOperator: '>=',
+      targetValue: '4.5',
+      isActive: true,
+      createdBy: adminUser,
+    },
+    {
+      name: 'Tiến Độ Vững Chắc',
+      description: 'Đạt tiến độ khóa học >= 50%',
+      iconUrl: 'https://api.dicebear.com/7.x/icons/svg?seed=solid-progress',
+      eventName: 'LESSON_COMPLETED',
+      entityName: 'LearnerProgress',
+      propertyName: 'progress',
+      comparisonOperator: '>=',
+      targetValue: '50',
+      isActive: true,
+      createdBy: adminUser,
+    },
+    {
+      name: 'Sắp Hoàn Thành',
+      description: 'Đạt tiến độ khóa học >= 80%',
+      iconUrl: 'https://api.dicebear.com/7.x/icons/svg?seed=almost-done',
+      eventName: 'LESSON_COMPLETED',
+      entityName: 'LearnerProgress',
+      propertyName: 'progress',
+      comparisonOperator: '>=',
+      targetValue: '80',
+      isActive: true,
+      createdBy: adminUser,
+    },
+    {
+      name: 'Người Tham Gia Tích Cực',
+      description: 'Tham dự ít nhất 5 buổi session',
+      iconUrl: 'https://api.dicebear.com/7.x/icons/svg?seed=active-attendee',
+      eventName: 'SESSION_ATTENDED',
+      entityName: 'Enrollment',
+      propertyName: 'sessionCount',
+      comparisonOperator: '>=',
+      targetValue: '5',
       isActive: true,
       createdBy: adminUser,
     },
@@ -200,9 +318,9 @@ export const achievementSeed = async (dataSource: DataSource) => {
   console.log('\n' + '='.repeat(50));
   console.log('✅ Achievement seed completed!');
   console.log(`📊 Total achievements created: ${totalCount}`);
-  console.log('   - EVENT_COUNT: 5 achievements');
-  console.log('   - STREAK: 3 achievements');
-  console.log('   - PROPERTY_CHECK: 2 achievements');
+  console.log('   - EVENT_COUNT: 7 achievements');
+  console.log('   - STREAK: 7 achievements');
+  console.log('   - PROPERTY_CHECK: 7 achievements');
   console.log('='.repeat(50) + '\n');
 };
 
