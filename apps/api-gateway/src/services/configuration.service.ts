@@ -6,19 +6,34 @@ import {
   CreateConfigurationDto,
   UpdateConfigurationDto,
 } from '@app/shared/dtos/configurations/configuration.dto';
+import { PaginateObject } from '@app/shared/dtos/paginate.dto';
+import { BaseTypeOrmService } from '@app/shared/helpers/typeorm.helper';
+import { FindOptions } from '@app/shared/interfaces/find-options.interface';
 import { HttpStatus, Inject, Injectable, Scope } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 
 @Injectable({ scope: Scope.REQUEST })
-export class ConfigurationService {
+export class ConfigurationService extends BaseTypeOrmService<Configuration> {
   constructor(
     @Inject(REQUEST) private readonly request: CustomApiRequest,
     @InjectRepository(Configuration)
     private readonly configurationRepository: Repository<Configuration>,
     private readonly datasource: DataSource,
-  ) {}
+  ) {
+    super(configurationRepository);
+  }
+
+  async findAll(
+    findOptions: FindOptions,
+  ): Promise<PaginateObject<Configuration>> {
+    return super.find(
+      findOptions,
+      'configuration',
+      PaginateObject<Configuration>,
+    );
+  }
 
   async findByKey(key: string): Promise<Configuration | null> {
     return this.configurationRepository.findOne({
