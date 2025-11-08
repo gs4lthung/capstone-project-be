@@ -352,6 +352,33 @@ export class CourseService extends BaseTypeOrmService<Course> {
     });
   }
 
+  async coachCancelCourse(id: number): Promise<CustomApiResponse<void>> {
+    return await this.datasource.transaction(async (manager) => {
+      const course = await this.courseRepository.findOne({
+        where: { id: id },
+        relations: ['createdBy', 'enrollments'],
+        withDeleted: false,
+      });
+      if (!course) throw new BadRequestException('Không tìm thấy khóa học');
+
+      const isHasEnrollment =
+        course.enrollments && course.enrollments.length > 0;
+      if (isHasEnrollment) {
+        throw new BadRequestException(
+          'Khóa học đã có học viên đăng ký, không thể hủy',
+        );
+      }
+
+      course.status = CourseStatus.CANCELLED;
+      await manager.getRepository(Course).save(course);
+
+      return new CustomApiResponse<void>(
+        HttpStatus.OK,
+        'COURSE.CANCEL_SUCCESS',
+      );
+    });
+  }
+
   async learnerCancelCourse(id: number): Promise<CustomApiResponse<void>> {
     return await this.datasource.transaction(async (manager) => {
       const course = await this.courseRepository.findOne({

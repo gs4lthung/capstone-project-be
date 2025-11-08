@@ -111,7 +111,10 @@ export class Session {
   @OneToMany(() => LearnerVideo, (learnerVideo) => learnerVideo.session)
   learnerVideos: LearnerVideo[];
 
-  @ManyToOne(() => Lesson, (lesson) => lesson.sessions)
+  @ManyToOne(() => Lesson, (lesson) => lesson.sessions, {
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
   @JoinColumn({ name: 'lesson_id' })
   lesson: Lesson;
 
