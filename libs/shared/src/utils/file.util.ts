@@ -61,6 +61,9 @@ export class FileUtils {
         case 'credential_image':
           destination = `uploads/users/${customReq.user.id}/credentials`;
           break;
+        case 'icon':
+          destination = `uploads/icons`;
+          break;
       }
 
       fs.mkdir(destination, { recursive: true }, (err) => {
@@ -91,6 +94,9 @@ export class FileUtils {
           break;
         case 'credential_image':
           fileName = `credential_image_${baseName}${extension}`;
+          break;
+        case 'icon':
+          fileName = `icon_${baseName}${extension}`;
           break;
       }
 
