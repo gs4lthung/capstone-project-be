@@ -6,6 +6,7 @@ import {
   HttpCode,
   HttpStatus,
   Param,
+  ParseIntPipe,
   Patch,
   Post,
   Put,
@@ -60,6 +61,23 @@ export class SubjectController {
       sort,
       filter,
     } as FindOptions);
+  }
+
+  @Get(':id')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiOperation({
+    tags: ['Subjects'],
+    summary: 'Get subject by id',
+    description: 'Get a subject by its id',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Subject details',
+  })
+  @UseGuards(AuthGuard)
+  async findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.subjectService.findOne(id);
   }
 
   @Post()

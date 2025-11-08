@@ -20,6 +20,7 @@ import { REQUEST } from '@nestjs/core';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { FindOptions } from '@app/shared/interfaces/find-options.interface';
+import { Filtering } from '@app/shared/interfaces/filtering.interface';
 import { DataSource } from 'typeorm';
 
 @Injectable({ scope: Scope.REQUEST })
@@ -37,6 +38,30 @@ export class LessonService extends BaseTypeOrmService<Lesson> {
 
   async findAll(findOptions: FindOptions): Promise<PaginateObject<Lesson>> {
     return super.find(findOptions, 'lesson', PaginateObject<Lesson>);
+  }
+
+  async findAllBySubjectId(
+    findOptions: FindOptions,
+    subjectId: number,
+  ): Promise<PaginateObject<Lesson>> {
+    // Add filter for subject.id
+    const subjectFilter: Filtering = {
+      property: 'subject.id',
+      rule: 'eq',
+      value: subjectId.toString(),
+    };
+
+    const filters: Filtering[] = Array.isArray(findOptions.filter)
+      ? [...findOptions.filter, subjectFilter]
+      : findOptions.filter
+        ? [findOptions.filter, subjectFilter]
+        : [subjectFilter];
+
+    return super.find(
+      { ...findOptions, filter: filters as any },
+      'lesson',
+      PaginateObject<Lesson>,
+    );
   }
 
   async create(
