@@ -80,7 +80,7 @@ export class UserService extends BaseTypeOrmService<User> {
         direction: 'DESC' as const,
       },
     };
-    
+
     return super.find(modifiedOptions, 'user', PaginateObject<User>);
   }
 

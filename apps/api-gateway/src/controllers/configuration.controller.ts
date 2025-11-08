@@ -72,7 +72,7 @@ export class ConfigurationController {
   @CheckRoles(UserRole.ADMIN)
   @UseGuards(AuthGuard, RoleGuard)
   async createConfiguration(@Body() data: CreateConfigurationDto) {
-    return this.configurationService.createConfiguration(data);
+    return this.configurationService.create(data);
   }
 
   @Put(':id')
@@ -89,6 +89,6 @@ export class ConfigurationController {
     @Param('id') id: number,
     @Body() data: UpdateConfigurationDto,
   ) {
-    return this.configurationService.updateConfiguration(id, data);
+    return this.configurationService.update(id, data);
   }
 }
