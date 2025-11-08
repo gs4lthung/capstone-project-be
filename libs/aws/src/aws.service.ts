@@ -3,6 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { S3Client, PutObjectCommand, ListBucketsCommand } from '@aws-sdk/client-s3';
 import { FileUtils } from '@app/shared/utils/file.util';
 import { UploadFileDto } from '@app/shared/dtos/files/file.dto';
+import * as fs from 'fs';
 
 @Injectable()
 export class AwsService {
@@ -83,16 +84,31 @@ export class AwsService {
     }
     
     console.log('  - S3 Key:', key);
+    console.log('🔷 [AWS] Preparing file body...');
+    
+    // ĐỌC BUFFER TỪ FILE
+    let fileBody: Buffer;
+    if (data.file.buffer) {
+      console.log('  - Using existing buffer');
+      fileBody = data.file.buffer;
+    } else if (data.file.path) {
+      console.log('  - Reading buffer from disk:', data.file.path);
+      fileBody = fs.readFileSync(data.file.path);
+      console.log('  - Buffer read successfully, size:', fileBody.length);
+    } else {
+      throw new Error('No buffer or path available for file upload');
+    }
+    
     console.log('🔷 [AWS] Sending PutObjectCommand to S3...');
     
     try {
       const command = new PutObjectCommand({
         Bucket: bucketName,
         Key: key,
-        Body: data.file.buffer,
+        Body: fileBody, // ← Dùng fileBody đã đọc
         ContentType: data.file.mimetype,
         // ACL: 'public-read', // ← Tạm bỏ ACL để test
-        ContentLength: data.file.size,
+        ContentLength: fileBody.length,
       });
       
       await this.s3_client.send(command);
