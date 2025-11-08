@@ -41,9 +41,7 @@ export class ConfigurationService extends BaseTypeOrmService<Configuration> {
     });
   }
 
-  async createConfiguration(
-    data: CreateConfigurationDto,
-  ): Promise<CustomApiResponse<void>> {
+  async create(data: CreateConfigurationDto): Promise<CustomApiResponse<void>> {
     return await this.datasource.transaction(async (manager) => {
       const newConfiguration = this.configurationRepository.create({
         ...data,
@@ -58,7 +56,7 @@ export class ConfigurationService extends BaseTypeOrmService<Configuration> {
     });
   }
 
-  async updateConfiguration(
+  async update(
     id: number,
     data: UpdateConfigurationDto,
   ): Promise<CustomApiResponse<void>> {
