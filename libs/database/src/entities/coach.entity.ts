@@ -54,7 +54,6 @@ export class Coach {
   deletedAt?: Date;
 
   @ManyToOne(() => User, (user) => user.coach, {
-    eager: true,
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'user_id' })
