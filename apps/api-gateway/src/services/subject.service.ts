@@ -87,6 +87,7 @@ export class SubjectService extends BaseTypeOrmService<Subject> {
     id: number,
     data: UpdateSubjectDto,
   ): Promise<CustomApiResponse<void>> {
+    console.log('Update subject called with id:', id, 'and data:', data);
     return await this.datasource.transaction(async (manager) => {
       const subject = await this.subjectRepository.findOne({
         where: { id: id },
@@ -110,14 +111,13 @@ export class SubjectService extends BaseTypeOrmService<Subject> {
             );
           }
         }
-
-        await manager.getRepository(Subject).update(subject.id, data);
-
-        return new CustomApiResponse<void>(
-          HttpStatus.OK,
-          'SUBJECT.UPDATE_SUCCESS',
-        );
       }
+      await manager.getRepository(Subject).update(subject.id, data);
+
+      return new CustomApiResponse<void>(
+        HttpStatus.OK,
+        'SUBJECT.UPDATE_SUCCESS',
+      );
     });
   }
 
