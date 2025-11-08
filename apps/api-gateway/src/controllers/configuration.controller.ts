@@ -50,6 +50,17 @@ export class ConfigurationController {
     });
   }
 
+  @Get(':key')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    tags: ['Configurations'],
+    summary: 'Get a specific configuration by key',
+    description: 'Retrieve details of a specific configuration by its key',
+  })
+  async findOne(@Param('key') key: string) {
+    return this.configurationService.findByKey(key);
+  }
+
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @ApiBearerAuth()

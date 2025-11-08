@@ -14,15 +14,15 @@
       "sourceRoot": "apps/api-gateway/src",
       "compilerOptions": {
         "webpack": false,
-        "tsConfigPath": "apps/api-gateway/tsconfig.app.json"
-      },
-      "assets": [
-        {
-          "include": "src/mail-templates/**/*",
-          "outDir": "dist/apps/api-gateway/src",
-          "watchAssets": true
-        }
-      ]
+        "tsConfigPath": "apps/api-gateway/tsconfig.app.json",
+        "assets": [
+          {
+            "include": "src/mail-templates/**/*",
+            "outDir": "dist/apps/api-gateway/src",
+            "watchAssets": true
+          }
+        ]
+      }
     },
     "config": {
       "type": "library",

@@ -28,3 +28,17 @@ export class CreateAttendanceDto {
   @IsEnum(AttendanceStatus)
   status: AttendanceStatus;
 }
+
+export class GetSessionForWeeklyCalendarRequestDto {
+  @ApiProperty({
+    description: 'The start date of the week',
+    example: '2024-06-05',
+  })
+  startDate: string;
+
+  @ApiProperty({
+    description: 'The end date of the week',
+    example: '2024-06-11',
+  })
+  endDate: string;
+}

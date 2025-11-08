@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Get,
   HttpCode,
   HttpStatus,
   Param,
@@ -8,7 +9,10 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { SessionService } from '../services/session.service';
-import { CompleteSessionDto } from '@app/shared/dtos/sessions/session.dto';
+import {
+  CompleteSessionDto,
+  GetSessionForWeeklyCalendarRequestDto,
+} from '@app/shared/dtos/sessions/session.dto';
 import { ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { UserRole } from '@app/shared/enums/user.enum';
 import { CheckRoles } from '@app/shared/decorators/check-roles.decorator';
@@ -18,6 +22,26 @@ import { RoleGuard } from '../guards/role.guard';
 @Controller('sessions')
 export class SessionController {
   constructor(private readonly sessionService: SessionService) {}
+
+  @Get('calendar/weekly')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiOperation({
+    tags: ['Sessions'],
+    summary: 'Get weekly calendar sessions',
+    description: 'Retrieve weekly calendar sessions for the authenticated user',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Weekly calendar sessions retrieved successfully',
+  })
+  @CheckRoles(UserRole.COACH, UserRole.LEARNER)
+  @UseGuards(AuthGuard, RoleGuard)
+  async getWeeklyCalendarSessions(
+    @Body() data: GetSessionForWeeklyCalendarRequestDto,
+  ) {
+    return this.sessionService.getSessionsForWeeklyCalendar(data);
+  }
 
   @Patch(':id/complete')
   @HttpCode(HttpStatus.OK)
