@@ -24,6 +24,7 @@ export class FileUtils {
       allowedTypes = allowedVideoTypes;
       formatMessage = 'Allowed formats: mp3, mp4, avi, flv, wmv, mov, mkv';
     } else {
+      // Default: image types cho avatar, icon, image, credential_image, video_thumbnail
       allowedTypes = allowedImageTypes;
       formatMessage = 'Allowed formats: jpeg, jpg, png, gif';
     }
