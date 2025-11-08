@@ -33,8 +33,14 @@ import { SortingParams } from '@app/shared/decorators/sorting-params.decorator';
 import { FindOptions } from '@app/shared/interfaces/find-options.interface';
 import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
 import {
+  CoachMonthlyCourseRequestDto,
+  CoachMonthlyCourseResponseDto,
+  CoachMonthlyLearnerRequestDto,
+  CoachMonthlyLearnerResponseDto,
   CoachMonthlyRevenueRequestDto,
   CoachMonthlyRevenueResponseDto,
+  CoachMonthlySessionRequestDto,
+  CoachMonthlySessionResponseDto,
 } from '@app/shared/dtos/coaches/coach.dto';
 
 @ApiTags('Coaches')
@@ -89,7 +95,7 @@ export class CoachController {
   async getOverallRating(
     @Param('id') id: number,
   ): Promise<CustomApiResponse<number>> {
-    return this.coachService.getCoachOverallRating(id);
+    return this.coachService.getOverallRating(id);
   }
 
   @Get(':id/revenue/monthly')
@@ -106,7 +112,58 @@ export class CoachController {
     @Param('id') id: number,
     @Body() data: CoachMonthlyRevenueRequestDto,
   ): Promise<CustomApiResponse<CoachMonthlyRevenueResponseDto>> {
-    return this.coachService.getCoachMonthlyRevenue(id, data);
+    return this.coachService.getMonthlyRevenue(id, data);
+  }
+
+  @Get(':id/learners/monthly')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    tags: ['Coaches'],
+    summary: 'Get monthly learner count of the coach',
+    description: 'Get monthly learner count of the coach',
+  })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Monthly learner count' })
+  @CheckRoles(UserRole.COACH)
+  @UseGuards(AuthGuard, RoleGuard)
+  async getMonthlyLearners(
+    @Param('id') id: number,
+    @Body() data: CoachMonthlyLearnerRequestDto,
+  ): Promise<CustomApiResponse<CoachMonthlyLearnerResponseDto>> {
+    return this.coachService.getMonthlyLearnerCount(id, data);
+  }
+
+  @Get(':id/courses/monthly')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    tags: ['Coaches'],
+    summary: 'Get monthly course count of the coach',
+    description: 'Get monthly course count of the coach',
+  })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Monthly course count' })
+  @CheckRoles(UserRole.COACH)
+  @UseGuards(AuthGuard, RoleGuard)
+  async getMonthlyCourses(
+    @Param('id') id: number,
+    @Body() data: CoachMonthlyCourseRequestDto,
+  ): Promise<CustomApiResponse<CoachMonthlyCourseResponseDto>> {
+    return this.coachService.getMonthlyCourseCount(id, data);
+  }
+
+  @Get(':id/sessions/monthly')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    tags: ['Coaches'],
+    summary: 'Get monthly session count of the coach',
+    description: 'Get monthly session count of the coach',
+  })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Monthly session count' })
+  @CheckRoles(UserRole.COACH)
+  @UseGuards(AuthGuard, RoleGuard)
+  async getMonthlySessions(
+    @Param('id') id: number,
+    @Body() data: CoachMonthlySessionRequestDto,
+  ): Promise<CustomApiResponse<CoachMonthlySessionResponseDto>> {
+    return this.coachService.getMonthlySessionCount(id, data);
   }
 
   @Post('register')

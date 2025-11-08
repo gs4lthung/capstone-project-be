@@ -34,6 +34,8 @@ import { CourseStatus } from '@app/shared/enums/course.enum';
 import { LearnerProgress } from '@app/database/entities/learner-progress.entity';
 import { PaginateObject } from '@app/shared/dtos/paginate.dto';
 import { UserRole } from '@app/shared/enums/user.enum';
+import { NotificationService } from './notification.service';
+import { NotificationType } from '@app/shared/enums/notification.enum';
 
 @Injectable({ scope: Scope.REQUEST })
 export class SessionService extends BaseTypeOrmService<Session> {
@@ -56,6 +58,7 @@ export class SessionService extends BaseTypeOrmService<Session> {
     private readonly walletService: WalletService,
     private readonly configurationService: ConfigurationService,
     private readonly datasource: DataSource,
+    private readonly notificationService: NotificationService,
   ) {
     super(sessionRepository);
   }
@@ -216,6 +219,16 @@ export class SessionService extends BaseTypeOrmService<Session> {
       if (totalSessions === completedSessions) {
         await manager.getRepository(Course).update(course.id, {
           status: CourseStatus.COMPLETED,
+        });
+      }
+
+      for (const enrollment of course.enrollments) {
+        await this.notificationService.sendNotification({
+          userId: enrollment.user.id,
+          title: 'Buổi học đã hoàn thành',
+          body: `Buổi học ${session.name} của khóa học ${course.name} đã được hoàn thành. Bạn có thể bắt đầu làm các bài tập liên quan.`,
+          navigateTo: `/learner/courses/${course.id}/sessions/${session.id}`,
+          type: NotificationType.SUCCESS,
         });
       }
 
