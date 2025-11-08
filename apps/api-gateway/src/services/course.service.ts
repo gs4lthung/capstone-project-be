@@ -216,6 +216,8 @@ export class CourseService extends BaseTypeOrmService<Course> {
         relations: ['subject', 'subject.lessons'],
       });
       if (!course) throw new BadRequestException('Không tìm thấy khóa học');
+      if (course.totalSessions <= 0)
+        throw new BadRequestException('Khóa học chưa có buổi học nào');
 
       if (
         request.metadata.details.schedules &&

@@ -103,6 +103,8 @@ import { Province } from '@app/database/entities/province.entity';
 import { District } from '@app/database/entities/district.entity';
 import { ProvinceService } from './services/province.service';
 import { ProvinceController } from './controllers/province.controller';
+import { StudentAnalysisController } from './controllers/student-analysis.controller';
+import { StudentAnalysisService } from './services/student-analysis.service';
 
 @Module({
   imports: [
@@ -226,6 +228,7 @@ import { ProvinceController } from './controllers/province.controller';
     FeedbackController,
     VideoConferenceController,
     ProvinceController,
+    StudentAnalysisController,
   ],
   providers: [
     AppService,
@@ -255,6 +258,7 @@ import { ProvinceController } from './controllers/province.controller';
     NotificationService,
     VideoConferenceService,
     ProvinceService,
+    StudentAnalysisService,
   ],
 })
 export class AppModule {}
