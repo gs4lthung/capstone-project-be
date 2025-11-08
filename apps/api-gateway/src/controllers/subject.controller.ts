@@ -76,7 +76,7 @@ export class SubjectController {
   })
   @CheckRoles(UserRole.COACH)
   @UseGuards(AuthGuard, RoleGuard)
-  @UseInterceptors(FileInterceptor('image'))
+  @UseInterceptors(FileInterceptor('subject_image'))
   async create(
     @Body() data: CreateSubjectDto,
     @UploadedFile() file: Express.Multer.File,

@@ -64,6 +64,9 @@ export class FileUtils {
         case 'icon':
           destination = `uploads/icons`;
           break;
+        case 'subject_image':
+          destination = `uploads/subjects/images`;
+          break;
       }
 
       fs.mkdir(destination, { recursive: true }, (err) => {
@@ -97,6 +100,9 @@ export class FileUtils {
           break;
         case 'icon':
           fileName = `icon_${baseName}${extension}`;
+          break;
+        case 'subject_image':
+          fileName = `subject_image_${baseName}${extension}`;
           break;
       }
 
