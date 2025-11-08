@@ -24,6 +24,7 @@ export class FileUtils {
       allowedTypes = allowedVideoTypes;
       formatMessage = 'Allowed formats: mp3, mp4, avi, flv, wmv, mov, mkv';
     } else {
+      // Default: image types cho avatar, icon, image, credential_image, video_thumbnail
       allowedTypes = allowedImageTypes;
       formatMessage = 'Allowed formats: jpeg, jpg, png, gif';
     }
@@ -61,6 +62,12 @@ export class FileUtils {
         case 'credential_image':
           destination = `uploads/users/${customReq.user.id}/credentials`;
           break;
+        case 'icon':
+          destination = `uploads/achievements/icons`;
+          break;
+        case 'image':
+          destination = `uploads/subjects/images`;
+          break;
       }
 
       fs.mkdir(destination, { recursive: true }, (err) => {
@@ -91,6 +98,12 @@ export class FileUtils {
           break;
         case 'credential_image':
           fileName = `credential_image_${baseName}${extension}`;
+          break;
+        case 'icon':
+          fileName = `icon_${baseName}${extension}`;
+          break;
+        case 'image':
+          fileName = `image_${baseName}${extension}`;
           break;
       }
 
