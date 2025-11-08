@@ -33,30 +33,34 @@ import {
 export class LessonController {
   constructor(private readonly lessonService: LessonService) {}
 
-  @Get()
+  @Get('subjects/:id')
   @HttpCode(HttpStatus.OK)
   @ApiBearerAuth()
   @ApiOperation({
     tags: ['Lessons'],
-    summary: 'Get all lessons',
-    description: 'Retrieve a list of all available lessons',
+    summary: 'Get all lessons by subject id',
+    description: 'Retrieve a list of all available lessons by subject id',
   })
   @ApiResponse({
     status: HttpStatus.OK,
-    description: 'List of lessons retrieved successfully',
+    description: 'Danh sách các bài học',
   })
   @UseGuards(AuthGuard)
-  async findAll(
+  async findAllBySubjectId(
     @PaginationParams()
     pagination: Pagination,
     @SortingParams() sort: Sorting,
     @FilteringParams() filter: Filtering,
+    @Param('id') id: number,
   ) {
-    return await this.lessonService.findAll({
-      pagination,
-      sort,
-      filter,
-    } as FindOptions);
+    return await this.lessonService.findAllBySubjectId(
+      {
+        pagination,
+        sort,
+        filter,
+      } as FindOptions,
+      id,
+    );
   }
 
   @Post('subjects/:id')

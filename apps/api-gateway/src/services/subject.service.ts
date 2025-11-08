@@ -43,10 +43,10 @@ export class SubjectService extends BaseTypeOrmService<Subject> {
     const subject = await this.subjectRepository.findOne({
       where: { id: id },
       withDeleted: false,
-      relations: ['courses', 'lessons'],
+      relations: ['courses', 'lessons', 'createdBy'],
     });
 
-    if (!subject) throw new Error('Subject not found');
+    if (!subject) throw new BadRequestException('Không tìm thấy chủ đề');
 
     return subject;
   }
