@@ -470,7 +470,7 @@ export class CourseService extends BaseTypeOrmService<Course> {
     }
 
     if (totalSessions <= 0) {
-      throw new BadRequestException('Total sessions must be greater than 0');
+      throw new BadRequestException('Bạn phải có ít nhất 1 buổi học');
     }
 
     const dayMap: { [key: string]: number } = {
