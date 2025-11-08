@@ -31,10 +31,10 @@ export class StudentAnalysisController {
     private readonly studentAnalysisService: StudentAnalysisService,
   ) {}
 
-  @Get(':id/revenue/monthly')
+  @Get(':userId/revenue/monthly')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    tags: ['Coaches'],
+    tags: ['Student Analysis'],
     summary: 'Get monthly revenue of the coach',
     description: 'Get monthly revenue of the coach',
   })
@@ -42,16 +42,16 @@ export class StudentAnalysisController {
   @CheckRoles(UserRole.COACH)
   @UseGuards(AuthGuard, RoleGuard)
   async getMonthlyRevenue(
-    @Param('id') id: number,
+    @Param('userId') userId: number,
     @Body() data: CoachMonthlyRevenueRequestDto,
   ): Promise<CustomApiResponse<CoachMonthlyRevenueResponseDto>> {
-    return this.studentAnalysisService.getMonthlyRevenue(id, data);
+    return this.studentAnalysisService.getMonthlyRevenue(userId, data);
   }
 
-  @Get(':id/learners/monthly')
+  @Get(':userId/learners/monthly')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    tags: ['Coaches'],
+    tags: ['Student Analysis'],
     summary: 'Get monthly learner count of the coach',
     description: 'Get monthly learner count of the coach',
   })
@@ -59,16 +59,16 @@ export class StudentAnalysisController {
   @CheckRoles(UserRole.COACH)
   @UseGuards(AuthGuard, RoleGuard)
   async getMonthlyLearners(
-    @Param('id') id: number,
+    @Param('userId') userId: number,
     @Body() data: CoachMonthlyLearnerRequestDto,
   ): Promise<CustomApiResponse<CoachMonthlyLearnerResponseDto>> {
-    return this.studentAnalysisService.getMonthlyLearnerCount(id, data);
+    return this.studentAnalysisService.getMonthlyLearnerCount(userId, data);
   }
 
-  @Get(':id/courses/monthly')
+  @Get(':userId/courses/monthly')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    tags: ['Coaches'],
+    tags: ['Student Analysis'],
     summary: 'Get monthly course count of the coach',
     description: 'Get monthly course count of the coach',
   })
@@ -76,16 +76,16 @@ export class StudentAnalysisController {
   @CheckRoles(UserRole.COACH)
   @UseGuards(AuthGuard, RoleGuard)
   async getMonthlyCourses(
-    @Param('id') id: number,
+    @Param('userId') userId: number,
     @Body() data: CoachMonthlyCourseRequestDto,
   ): Promise<CustomApiResponse<CoachMonthlyCourseResponseDto>> {
-    return this.studentAnalysisService.getMonthlyCourseCount(id, data);
+    return this.studentAnalysisService.getMonthlyCourseCount(userId, data);
   }
 
-  @Get(':id/sessions/monthly')
+  @Get(':userId/sessions/monthly')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    tags: ['Coaches'],
+    tags: ['Student Analysis'],
     summary: 'Get monthly session count of the coach',
     description: 'Get monthly session count of the coach',
   })
@@ -93,9 +93,9 @@ export class StudentAnalysisController {
   @CheckRoles(UserRole.COACH)
   @UseGuards(AuthGuard, RoleGuard)
   async getMonthlySessions(
-    @Param('id') id: number,
+    @Param('userId') userId: number,
     @Body() data: CoachMonthlySessionRequestDto,
   ): Promise<CustomApiResponse<CoachMonthlySessionResponseDto>> {
-    return this.studentAnalysisService.getMonthlySessionCount(id, data);
+    return this.studentAnalysisService.getMonthlySessionCount(userId, data);
   }
 }

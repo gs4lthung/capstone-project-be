@@ -42,11 +42,11 @@ export class StudentAnalysisService {
     private readonly sessionRepository: Repository<Session>,
   ) {}
   async getMonthlyRevenue(
-    id: number,
+    userId: number,
     data: CoachMonthlyRevenueRequestDto,
   ): Promise<CustomApiResponse<CoachMonthlyRevenueResponseDto>> {
     const user = await this.userRepository.findOne({
-      where: { id: id },
+      where: { id: userId },
     });
     if (!user) throw new NotFoundException('User not found');
 
@@ -138,11 +138,11 @@ export class StudentAnalysisService {
   }
 
   async getMonthlyLearnerCount(
-    id: number,
+    userId: number,
     data: CoachMonthlyLearnerRequestDto,
   ): Promise<CustomApiResponse<CoachMonthlyLearnerResponseDto>> {
     const user = await this.userRepository.findOne({
-      where: { id: id },
+      where: { id: userId },
     });
     if (!user) throw new NotFoundException('User not found');
 
@@ -327,11 +327,11 @@ export class StudentAnalysisService {
   }
 
   async getMonthlySessionCount(
-    id: number,
+    userId: number,
     data: CoachMonthlySessionRequestDto,
   ): Promise<CustomApiResponse<CoachMonthlySessionResponseDto>> {
     const user = await this.userRepository.findOne({
-      where: { id: id },
+      where: { id: userId },
     });
     if (!user) throw new NotFoundException('User not found');
 
