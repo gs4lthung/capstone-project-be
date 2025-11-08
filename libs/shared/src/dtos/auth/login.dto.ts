@@ -27,7 +27,10 @@ export class LoginResponseDto {
   constructor(
     accessToken: string,
     refreshToken: string,
-    user: Pick<User, 'id' | 'fullName' | 'email' | 'role'>,
+    user: Pick<
+      User,
+      'id' | 'fullName' | 'email' | 'role' | 'learner' | 'coach'
+    >,
   ) {
     this.accessToken = accessToken;
     this.refreshToken = refreshToken;
@@ -61,11 +64,16 @@ export class LoginResponseDto {
     required: true,
   })
   @IsNotEmpty({ message: 'User information is required' })
-  user: Pick<User, 'id' | 'fullName' | 'email' | 'role'>;
+  user: Pick<User, 'id' | 'fullName' | 'email' | 'role' | 'learner' | 'coach'>;
 }
 
 export class CurrentUserResponseDto {
-  constructor(user: Pick<User, 'id' | 'fullName' | 'email' | 'role'>) {
+  constructor(
+    user: Pick<
+      User,
+      'id' | 'fullName' | 'email' | 'role' | 'learner' | 'coach'
+    >,
+  ) {
     this.user = user;
   }
 
@@ -76,5 +84,5 @@ export class CurrentUserResponseDto {
     required: true,
   })
   @IsNotEmpty({ message: 'User information is required' })
-  user: Pick<User, 'id' | 'fullName' | 'email' | 'role'>;
+  user: Pick<User, 'id' | 'fullName' | 'email' | 'role' | 'learner' | 'coach'>;
 }

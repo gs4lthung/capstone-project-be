@@ -51,6 +51,7 @@ export class AuthService {
       where: { email: data.email },
       withDeleted: false,
       select: ['id', 'fullName', 'email', 'password'],
+      relations: ['role', 'learner', 'coach'],
     });
     if (!user) throw new UnauthorizedException('Không tìm thấy tài khoản');
 
@@ -90,6 +91,8 @@ export class AuthService {
           fullName: user.fullName,
           email: user.email,
           role: user.role,
+          learner: user.learner,
+          coach: user.coach,
         },
       },
     );
@@ -121,6 +124,8 @@ export class AuthService {
               name: role.name,
               users: role.users,
             },
+            coach: user.coach,
+            learner: user.learner,
           },
         },
       );
