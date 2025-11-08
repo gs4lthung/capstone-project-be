@@ -105,7 +105,10 @@ export class CourseService extends BaseTypeOrmService<Course> {
         withDeleted: false,
       });
       if (!subject) throw new BadRequestException('Không tìm thấy chủ đề');
-      if (subject.lessons && subject.lessons.length === 0) {
+      if (
+        (subject.lessons && subject.lessons.length === 0) ||
+        !subject.lessons
+      ) {
         throw new BadRequestException('Tài liệu khóa học chưa đầy đủ');
       }
 
