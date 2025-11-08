@@ -26,10 +26,26 @@ export class VideoService {
     @Inject(REQUEST) private readonly request: CustomApiRequest,
     @InjectRepository(Lesson)
     private readonly lessonRepository: Repository<Lesson>,
+    @InjectRepository(Video)
+    private readonly videoRepository: Repository<Video>,
     private readonly awsService: AwsService,
     private readonly ffmpegService: FfmpegService,
     private readonly datasource: DataSource,
   ) {}
+
+  async getVideosByLesson(lessonId: number): Promise<Video[]> {
+    const lesson = await this.lessonRepository.findOne({
+      where: { id: lessonId },
+      withDeleted: false,
+    });
+    if (!lesson) throw new BadRequestException('Không tìm thấy bài học');
+
+    return this.videoRepository.find({
+      where: { lesson: { id: lessonId } },
+      relations: ['uploadedBy'],
+      withDeleted: false,
+    });
+  }
 
   async createLessonVideo(
     id: number,

@@ -7,7 +7,7 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { User } from '@app/database/entities/user.entity';
 import { Credential } from '@app/database/entities/credential.entity';
 import { CoachVerificationStatus } from '@app/shared/enums/coach.enum';
@@ -27,6 +27,10 @@ import { REQUEST } from '@nestjs/core';
 import { CustomApiRequest } from '@app/shared/customs/custom-api-request';
 import { Coach } from '@app/database/entities/coach.entity';
 import { PaginateObject } from '@app/shared/dtos/paginate.dto';
+import { WalletTransaction } from '@app/database/entities/wallet-transaction.entity';
+import { Enrollment } from '@app/database/entities/enrollment.entity';
+import { Session } from '@app/database/entities/session.entity';
+import { Course } from '@app/database/entities/course.entity';
 
 @Injectable({ scope: Scope.REQUEST })
 export class CoachService extends BaseTypeOrmService<Coach> {
@@ -41,8 +45,17 @@ export class CoachService extends BaseTypeOrmService<Coach> {
     private readonly roleRepository: Repository<Role>,
     @InjectRepository(Feedback)
     private readonly feedbackRepository: Repository<Feedback>,
+    @InjectRepository(WalletTransaction)
+    private readonly walletTransactionRepository: Repository<WalletTransaction>,
     private readonly configService: ConfigService,
+    @InjectRepository(Enrollment)
+    private readonly enrollmentRepository: Repository<Enrollment>,
+    @InjectRepository(Session)
+    private readonly sessionRepository: Repository<Session>,
+    @InjectRepository(Course)
+    private readonly courseRepository: Repository<Course>,
     private readonly jwtService: JwtService,
+    private readonly datasource: DataSource,
   ) {
     super(coachRepository);
   }
@@ -63,7 +76,7 @@ export class CoachService extends BaseTypeOrmService<Coach> {
     return coach;
   }
 
-  async getCoachOverallRating(id: number): Promise<CustomApiResponse<number>> {
+  async getOverallRating(id: number): Promise<CustomApiResponse<number>> {
     const feedbacks = await this.feedbackRepository.find({
       where: {
         receivedBy: { id: id },

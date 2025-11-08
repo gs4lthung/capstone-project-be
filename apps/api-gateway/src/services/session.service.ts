@@ -6,7 +6,10 @@ import { Subject } from '@app/database/entities/subject.entity';
 import { User } from '@app/database/entities/user.entity';
 import { CustomApiRequest } from '@app/shared/customs/custom-api-request';
 import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
-import { CompleteSessionDto } from '@app/shared/dtos/sessions/session.dto';
+import {
+  CompleteSessionDto,
+  GetSessionForWeeklyCalendarRequestDto,
+} from '@app/shared/dtos/sessions/session.dto';
 import {
   SessionEarningStatus,
   SessionStatus,
@@ -23,13 +26,16 @@ import {
 } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Repository } from 'typeorm';
+import { Between, DataSource, Repository } from 'typeorm';
 import { WalletService } from './wallet.service';
 import { ConfigurationService } from './configuration.service';
 import { SessionEarning } from '@app/database/entities/session-earning.entity';
 import { CourseStatus } from '@app/shared/enums/course.enum';
 import { LearnerProgress } from '@app/database/entities/learner-progress.entity';
 import { PaginateObject } from '@app/shared/dtos/paginate.dto';
+import { UserRole } from '@app/shared/enums/user.enum';
+import { NotificationService } from './notification.service';
+import { NotificationType } from '@app/shared/enums/notification.enum';
 
 @Injectable({ scope: Scope.REQUEST })
 export class SessionService extends BaseTypeOrmService<Session> {
@@ -47,9 +53,12 @@ export class SessionService extends BaseTypeOrmService<Session> {
     private readonly attendanceRepository: Repository<Attendance>,
     @InjectRepository(LearnerProgress)
     private readonly learnerProgressRepository: Repository<LearnerProgress>,
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
     private readonly walletService: WalletService,
     private readonly configurationService: ConfigurationService,
     private readonly datasource: DataSource,
+    private readonly notificationService: NotificationService,
   ) {
     super(sessionRepository);
   }
@@ -68,6 +77,48 @@ export class SessionService extends BaseTypeOrmService<Session> {
     if (!session) throw new Error('Session not found');
 
     return session;
+  }
+
+  async getSessionsForWeeklyCalendar(
+    data: GetSessionForWeeklyCalendarRequestDto,
+  ): Promise<Session[]> {
+    const startOfWeek = new Date(data.startDate);
+    const endOfWeek = new Date(data.endDate);
+
+    const user = await this.userRepository.findOne({
+      where: { id: this.request.user.id as User['id'] },
+      withDeleted: false,
+      relations: ['roles'],
+    });
+    if (!user) throw new InternalServerErrorException('Lỗi server');
+
+    switch (user.role.name) {
+      case UserRole.COACH:
+        const sessions = await this.sessionRepository.find({
+          where: {
+            course: {
+              createdBy: { id: this.request.user.id as User['id'] },
+            },
+            scheduleDate: Between(startOfWeek, endOfWeek),
+          },
+        });
+
+        return sessions;
+      case UserRole.LEARNER:
+        const learnerSessions = await this.sessionRepository.find({
+          where: {
+            course: {
+              enrollments: {
+                user: { id: this.request.user.id as User['id'] },
+              },
+            },
+            scheduleDate: Between(startOfWeek, endOfWeek),
+          },
+        });
+        return learnerSessions;
+      default:
+        throw new BadRequestException('Invalid user role for sessions');
+    }
   }
 
   async completeAndCheckAttendance(
@@ -168,6 +219,16 @@ export class SessionService extends BaseTypeOrmService<Session> {
       if (totalSessions === completedSessions) {
         await manager.getRepository(Course).update(course.id, {
           status: CourseStatus.COMPLETED,
+        });
+      }
+
+      for (const enrollment of course.enrollments) {
+        await this.notificationService.sendNotification({
+          userId: enrollment.user.id,
+          title: 'Buổi học đã hoàn thành',
+          body: `Buổi học ${session.name} của khóa học ${course.name} đã được hoàn thành. Bạn có thể bắt đầu làm các bài tập liên quan.`,
+          navigateTo: `/learner/courses/${course.id}/sessions/${session.id}`,
+          type: NotificationType.SUCCESS,
         });
       }
 

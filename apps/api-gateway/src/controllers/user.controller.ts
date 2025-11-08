@@ -12,7 +12,12 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiQuery, ApiResponse } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiQuery,
+  ApiResponse,
+} from '@nestjs/swagger';
 import { UserRole } from '@app/shared/enums/user.enum';
 import { CheckRoles } from '@app/shared/decorators/check-roles.decorator';
 import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
@@ -64,7 +69,8 @@ export class UserController {
     name: 'filter',
     required: false,
     type: String,
-    description: 'Filter by field: {field}_{rule}_{value}. Rules: eq, neq, gt, gte, lt, lte, like, nlike, in, nin, isnull, isnotnull. Multiple filters separated by comma. Example: email_like_@gmail.com,isEmailVerified_eq_true',
+    description:
+      'Filter by field: {field}_{rule}_{value}. Rules: eq, neq, gt, gte, lt, lte, like, nlike, in, nin, isnull, isnotnull. Multiple filters separated by comma. Example: email_like_@gmail.com,isEmailVerified_eq_true',
     example: 'email_like_@gmail.com',
   })
   @CheckRoles(UserRole.ADMIN)

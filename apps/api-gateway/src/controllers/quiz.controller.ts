@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Delete,
+  Get,
   HttpCode,
   HttpStatus,
   Param,
@@ -24,6 +25,23 @@ import {
 @Controller('quizzes')
 export class QuizController {
   constructor(private readonly quizService: QuizService) {}
+
+  @Get('lessons/:id')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiOperation({
+    tags: ['Quizzes'],
+    summary: 'Get quizzes by lesson id',
+    description: 'Get all quizzes of a lesson',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'List of quizzes',
+  })
+  @UseGuards(AuthGuard)
+  async getQuizzesByLesson(@Param('id') id: number) {
+    return this.quizService.getQuizzesByLesson(id);
+  }
 
   @Post('lessons/:id')
   @HttpCode(HttpStatus.CREATED)

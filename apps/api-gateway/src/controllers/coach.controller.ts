@@ -85,7 +85,7 @@ export class CoachController {
   async getOverallRating(
     @Param('id') id: number,
   ): Promise<CustomApiResponse<number>> {
-    return this.coachService.getCoachOverallRating(id);
+    return this.coachService.getOverallRating(id);
   }
 
   @Post('register')
@@ -105,7 +105,10 @@ export class CoachController {
   @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Verify coach profile (admin)' })
-  @ApiResponse({ status: HttpStatus.OK, description: 'Coach verified' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Xác minh hồ sơ huấn luyện viên thành công',
+  })
   @CheckRoles(UserRole.ADMIN)
   @UseGuards(AuthGuard, RoleGuard)
   @ApiBody({
@@ -117,21 +120,26 @@ export class CoachController {
       required: ['approvedSubjectIds'],
     },
   })
-  async verify(@Param('id') id: number): Promise<void> {
-    return this.coachService.verifyCoach(Number(id));
+  async verify(@Param('id') id: number): Promise<{ message: string }> {
+    await this.coachService.verifyCoach(Number(id));
+    return { message: 'Xác minh hồ sơ huấn luyện viên thành công' };
   }
 
   @Put(':id/reject')
   @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Reject coach profile (admin)' })
-  @ApiResponse({ status: HttpStatus.OK, description: 'Coach rejected' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Từ chối hồ sơ huấn luyện viên thành công',
+  })
   @CheckRoles(UserRole.ADMIN)
   @UseGuards(AuthGuard, RoleGuard)
   async reject(
     @Param('id') id: number,
     @Body() body: RejectCoachDto,
-  ): Promise<void> {
-    return this.coachService.rejectCoach(Number(id), body?.reason);
+  ): Promise<{ message: string }> {
+    await this.coachService.rejectCoach(Number(id), body?.reason);
+    return { message: 'Từ chối hồ sơ huấn luyện viên thành công' };
   }
 }

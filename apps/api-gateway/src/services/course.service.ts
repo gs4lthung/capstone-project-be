@@ -55,8 +55,6 @@ export class CourseService extends BaseTypeOrmService<Course> {
     private readonly requestRepository: Repository<Request>,
     @InjectRepository(RequestAction)
     private readonly requestActionRepository: Repository<RequestAction>,
-    @InjectRepository(Session)
-    private readonly sessionRepository: Repository<Session>,
     @InjectRepository(Enrollment)
     private readonly enrollmentRepository: Repository<Enrollment>,
     @InjectRepository(Subject)
@@ -67,6 +65,10 @@ export class CourseService extends BaseTypeOrmService<Course> {
     private readonly notificationService: NotificationService,
     private readonly walletService: WalletService,
     private readonly datasource: DataSource,
+    @InjectRepository(Province)
+    private readonly provinceRepository: Repository<Province>,
+    @InjectRepository(District)
+    private readonly districtRepository: Repository<District>,
   ) {
     super(courseRepository);
   }
@@ -99,9 +101,16 @@ export class CourseService extends BaseTypeOrmService<Course> {
     return await this.datasource.transaction(async (manager) => {
       const subject = await this.subjectRepository.findOne({
         where: { id: subjectId, status: SubjectStatus.PUBLISHED },
+        relations: ['lessons'],
         withDeleted: false,
       });
       if (!subject) throw new BadRequestException('Không tìm thấy chủ đề');
+      if (
+        (subject.lessons && subject.lessons.length === 0) ||
+        !subject.lessons
+      ) {
+        throw new BadRequestException('Tài liệu khóa học chưa đầy đủ');
+      }
 
       const newCourse = this.courseRepository.create({
         ...data,
@@ -118,6 +127,14 @@ export class CourseService extends BaseTypeOrmService<Course> {
 
       const savedCourse = await manager.getRepository(Course).save(newCourse);
 
+      const courseMetadata = { ...savedCourse };
+      courseMetadata.province = await this.provinceRepository.findOne({
+        where: { id: data.province },
+      });
+      courseMetadata.district = await this.districtRepository.findOne({
+        where: { id: data.district },
+      });
+
       const newCourseCreationRequest = this.requestRepository.create({
         description: `Tạo khóa học: ${subject.name} - Khóa ${
           subject.courses ? subject.courses.length + 1 : 1
@@ -126,7 +143,7 @@ export class CourseService extends BaseTypeOrmService<Course> {
         metadata: {
           type: 'course',
           id: savedCourse.id,
-          details: data,
+          details: courseMetadata,
         } as RequestMetadata,
         createdBy: this.request.user as User,
         status: RequestStatus.PENDING,
@@ -206,6 +223,8 @@ export class CourseService extends BaseTypeOrmService<Course> {
         relations: ['subject', 'subject.lessons'],
       });
       if (!course) throw new BadRequestException('Không tìm thấy khóa học');
+      if (course.totalSessions <= 0)
+        throw new BadRequestException('Khóa học chưa có buổi học nào');
 
       if (
         request.metadata.details.schedules &&
@@ -338,6 +357,33 @@ export class CourseService extends BaseTypeOrmService<Course> {
       return new CustomApiResponse<void>(
         HttpStatus.OK,
         'COURSE.REJECT_SUCCESS',
+      );
+    });
+  }
+
+  async coachCancelCourse(id: number): Promise<CustomApiResponse<void>> {
+    return await this.datasource.transaction(async (manager) => {
+      const course = await this.courseRepository.findOne({
+        where: { id: id },
+        relations: ['createdBy', 'enrollments'],
+        withDeleted: false,
+      });
+      if (!course) throw new BadRequestException('Không tìm thấy khóa học');
+
+      const isHasEnrollment =
+        course.enrollments && course.enrollments.length > 0;
+      if (isHasEnrollment) {
+        throw new BadRequestException(
+          'Khóa học đã có học viên đăng ký, không thể hủy',
+        );
+      }
+
+      course.status = CourseStatus.CANCELLED;
+      await manager.getRepository(Course).save(course);
+
+      return new CustomApiResponse<void>(
+        HttpStatus.OK,
+        'COURSE.CANCEL_SUCCESS',
       );
     });
   }

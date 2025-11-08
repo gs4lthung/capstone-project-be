@@ -6,6 +6,7 @@ import {
   HttpCode,
   HttpStatus,
   Param,
+  ParseIntPipe,
   Patch,
   Post,
   Put,
@@ -48,8 +49,7 @@ export class SubjectController {
     status: HttpStatus.OK,
     description: 'Subjects',
   })
-  @CheckRoles(UserRole.COACH)
-  @UseGuards(AuthGuard, RoleGuard)
+  @UseGuards(AuthGuard)
   async findAll(
     @PaginationParams()
     pagination: Pagination,
@@ -63,6 +63,23 @@ export class SubjectController {
     } as FindOptions);
   }
 
+  @Get(':id')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiOperation({
+    tags: ['Subjects'],
+    summary: 'Get subject by id',
+    description: 'Get a subject by its id',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Subject details',
+  })
+  @UseGuards(AuthGuard)
+  async findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.subjectService.findOne(id);
+  }
+
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @ApiBearerAuth()
@@ -73,7 +90,7 @@ export class SubjectController {
   })
   @ApiResponse({
     status: HttpStatus.CREATED,
-    description: 'Subject created successfully',
+    description: 'Tạo môn học thành công',
   })
   @CheckRoles(UserRole.COACH)
   @UseGuards(AuthGuard, RoleGuard)
@@ -95,7 +112,7 @@ export class SubjectController {
   })
   @ApiResponse({
     status: HttpStatus.OK,
-    description: 'Subject updated successfully',
+    description: 'Cập nhật môn học thành công',
   })
   @CheckRoles(UserRole.COACH)
   @UseGuards(AuthGuard, RoleGuard)

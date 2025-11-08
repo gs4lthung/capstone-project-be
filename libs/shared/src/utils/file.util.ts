@@ -63,10 +63,7 @@ export class FileUtils {
           destination = `uploads/users/${customReq.user.id}/credentials`;
           break;
         case 'icon':
-          destination = `uploads/achievements/icons`;
-          break;
-        case 'image':
-          destination = `uploads/subjects/images`;
+          destination = `uploads/icons`;
           break;
       }
 
@@ -101,9 +98,6 @@ export class FileUtils {
           break;
         case 'icon':
           fileName = `icon_${baseName}${extension}`;
-          break;
-        case 'image':
-          fileName = `image_${baseName}${extension}`;
           break;
       }
 

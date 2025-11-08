@@ -21,7 +21,7 @@ import {
 } from '@nestjs/common';
 import { JwtService, TokenExpiredError } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { ExceptionUtils } from '@app/shared/utils/exception.util';
 import { AuthProviderEnum } from '@app/shared/enums/auth.enum';
@@ -40,6 +40,7 @@ export class AuthService {
     private readonly mailService: MailService,
     private readonly configService: ConfigService,
     private readonly jwtService: JwtService,
+    private readonly dataSource: DataSource,
   ) {}
 
   //#region Login
@@ -50,6 +51,7 @@ export class AuthService {
       where: { email: data.email },
       withDeleted: false,
       select: ['id', 'fullName', 'email', 'password'],
+      relations: ['role', 'learner', 'coach'],
     });
     if (!user) throw new UnauthorizedException('Không tìm thấy tài khoản');
 
@@ -89,6 +91,8 @@ export class AuthService {
           fullName: user.fullName,
           email: user.email,
           role: user.role,
+          learner: user.learner,
+          coach: user.coach,
         },
       },
     );
@@ -120,6 +124,8 @@ export class AuthService {
               name: role.name,
               users: role.users,
             },
+            coach: user.coach,
+            learner: user.learner,
           },
         },
       );
@@ -241,7 +247,7 @@ export class AuthService {
 
   //#region Register
   async register(data: RegisterRequestDto): Promise<CustomApiResponse<void>> {
-    try {
+    return await this.dataSource.transaction(async (manager) => {
       const existingUser = await this.userRepository.findOne({
         where: { email: data.email },
       });
@@ -291,7 +297,7 @@ export class AuthService {
 
       newUser.emailVerificationToken = emailVerificationToken;
 
-      await this.userRepository.save(newUser);
+      await manager.getRepository(User).save(newUser);
 
       await this.sendVerificationEmail(newUser.email, emailVerificationToken);
 
@@ -299,9 +305,7 @@ export class AuthService {
         HttpStatus.CREATED,
         'AUTH.REGISTER_SUCCESS',
       );
-    } catch (error) {
-      throw ExceptionUtils.wrapAsRpcException(error);
-    }
+    });
   }
 
   //#endregion
@@ -328,7 +332,7 @@ export class AuthService {
       user.emailVerificationToken = null;
       await this.userRepository.save(user);
 
-      return `${this.configService.get('front_end').url}`;
+      return `${this.configService.get('front_end').verify_email_url}`;
     } catch (error) {
       throw ExceptionUtils.wrapAsRpcException(error);
     }
