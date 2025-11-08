@@ -32,6 +32,10 @@ import { Pagination } from '@app/shared/interfaces/pagination.interface';
 import { SortingParams } from '@app/shared/decorators/sorting-params.decorator';
 import { FindOptions } from '@app/shared/interfaces/find-options.interface';
 import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
+import {
+  CoachMonthlyRevenueRequestDto,
+  CoachMonthlyRevenueResponseDto,
+} from '@app/shared/dtos/coaches/coach.dto';
 
 @ApiTags('Coaches')
 @Controller('coaches')
@@ -86,6 +90,23 @@ export class CoachController {
     @Param('id') id: number,
   ): Promise<CustomApiResponse<number>> {
     return this.coachService.getCoachOverallRating(id);
+  }
+
+  @Get(':id/revenue/monthly')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    tags: ['Coaches'],
+    summary: 'Get monthly revenue of the coach',
+    description: 'Get monthly revenue of the coach',
+  })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Monthly revenue' })
+  @CheckRoles(UserRole.COACH)
+  @UseGuards(AuthGuard, RoleGuard)
+  async getMonthlyRevenue(
+    @Param('id') id: number,
+    @Body() data: CoachMonthlyRevenueRequestDto,
+  ): Promise<CustomApiResponse<CoachMonthlyRevenueResponseDto>> {
+    return this.coachService.getCoachMonthlyRevenue(id, data);
   }
 
   @Post('register')

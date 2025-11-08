@@ -7,7 +7,7 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { User } from '@app/database/entities/user.entity';
 import { Credential } from '@app/database/entities/credential.entity';
 import { CoachVerificationStatus } from '@app/shared/enums/coach.enum';
@@ -27,6 +27,12 @@ import { REQUEST } from '@nestjs/core';
 import { CustomApiRequest } from '@app/shared/customs/custom-api-request';
 import { Coach } from '@app/database/entities/coach.entity';
 import { PaginateObject } from '@app/shared/dtos/paginate.dto';
+import {
+  CoachMonthlyRevenueRequestDto,
+  CoachMonthlyRevenueResponseDto,
+} from '@app/shared/dtos/coaches/coach.dto';
+import { WalletTransaction } from '@app/database/entities/wallet-transaction.entity';
+import { WalletTransactionType } from '@app/shared/enums/payment.enum';
 
 @Injectable({ scope: Scope.REQUEST })
 export class CoachService extends BaseTypeOrmService<Coach> {
@@ -41,8 +47,11 @@ export class CoachService extends BaseTypeOrmService<Coach> {
     private readonly roleRepository: Repository<Role>,
     @InjectRepository(Feedback)
     private readonly feedbackRepository: Repository<Feedback>,
+    @InjectRepository(WalletTransaction)
+    private readonly walletTransactionRepository: Repository<WalletTransaction>,
     private readonly configService: ConfigService,
     private readonly jwtService: JwtService,
+    private readonly datasource: DataSource,
   ) {
     super(coachRepository);
   }
@@ -85,6 +94,77 @@ export class CoachService extends BaseTypeOrmService<Coach> {
       'Success',
       overallRating,
     );
+  }
+
+  async getCoachMonthlyRevenue(
+    id: number,
+    data: CoachMonthlyRevenueRequestDto,
+  ): Promise<CustomApiResponse<CoachMonthlyRevenueResponseDto>> {
+    const user = await this.userRepository.findOne({
+      where: { id: id },
+    });
+    if (!user) throw new NotFoundException('User not found');
+
+    const walletTransaction = await this.walletTransactionRepository.find({
+      where: {
+        wallet: {
+          user: { id: user.id },
+        },
+        type: WalletTransactionType.CREDIT,
+      },
+    });
+
+    const isGetSingleMonthRevenue =
+      data.month !== undefined && data.year !== undefined;
+
+    let totalRevenue = 0;
+
+    if (isGetSingleMonthRevenue) {
+      totalRevenue = walletTransaction
+        .filter(
+          (transaction) =>
+            transaction.createdAt.getMonth() + 1 === data.month &&
+            transaction.createdAt.getFullYear() === data.year,
+        )
+        .reduce((acc, transaction) => acc + Number(transaction.amount), 0);
+
+      return new CustomApiResponse<CoachMonthlyRevenueResponseDto>(
+        HttpStatus.OK,
+        'Success',
+        {
+          data: [
+            {
+              month: `${data.month}/${data.year}`,
+              revenue: totalRevenue,
+            },
+          ],
+        },
+      );
+    } else {
+      const currentYear = data.year || new Date().getFullYear();
+      const months = Array.from({ length: 12 }, (_, i) => i + 1);
+
+      const monthlyData = months.map((month) => {
+        const revenue = walletTransaction
+          .filter(
+            (transaction) =>
+              transaction.createdAt.getMonth() + 1 === month &&
+              transaction.createdAt.getFullYear() === currentYear,
+          )
+          .reduce((acc, transaction) => acc + Number(transaction.amount), 0);
+
+        return {
+          month: `${month}/${currentYear}`,
+          revenue,
+        };
+      });
+
+      return new CustomApiResponse<CoachMonthlyRevenueResponseDto>(
+        HttpStatus.OK,
+        'Success',
+        { data: monthlyData },
+      );
+    }
   }
 
   async registerCoach(data: RegisterCoachDto): Promise<Coach> {
