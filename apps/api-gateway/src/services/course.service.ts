@@ -101,9 +101,13 @@ export class CourseService extends BaseTypeOrmService<Course> {
     return await this.datasource.transaction(async (manager) => {
       const subject = await this.subjectRepository.findOne({
         where: { id: subjectId, status: SubjectStatus.PUBLISHED },
+        relations: ['lessons'],
         withDeleted: false,
       });
       if (!subject) throw new BadRequestException('Không tìm thấy chủ đề');
+      if (subject.lessons && subject.lessons.length === 0) {
+        throw new BadRequestException('Tài liệu khóa học chưa đầy đủ');
+      }
 
       const newCourse = this.courseRepository.create({
         ...data,
