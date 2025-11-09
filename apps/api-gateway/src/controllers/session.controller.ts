@@ -6,6 +6,7 @@ import {
   HttpStatus,
   Param,
   Patch,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { SessionService } from '../services/session.service';
@@ -38,8 +39,9 @@ export class SessionController {
   @CheckRoles(UserRole.COACH, UserRole.LEARNER)
   @UseGuards(AuthGuard, RoleGuard)
   async getWeeklyCalendarSessions(
-    @Body() data: GetSessionForWeeklyCalendarRequestDto,
+    @Query() data: GetSessionForWeeklyCalendarRequestDto,
   ) {
+    console.log('Get weekly calendar sessions called with data:', data);
     return this.sessionService.getSessionsForWeeklyCalendar(data);
   }
 
