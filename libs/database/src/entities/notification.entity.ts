@@ -21,7 +21,7 @@ export class Notification {
   @Column({ type: 'text' })
   body: string;
 
-  @Column({ type: 'varchar', length: 20, nullable: true })
+  @Column({ type: 'varchar', length: 50, nullable: true })
   navigateTo?: string;
 
   @Column({
