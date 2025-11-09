@@ -23,7 +23,10 @@ import { GoogleUserDto } from '@app/shared/dtos/auth/google-user.dto';
 import { AuthService } from '../services/auth.service';
 import { GoogleOAuthGuard } from '../guards/google-auth.guard';
 import { AuthGuard } from '../guards/auth.guard';
-import { RegisterRequestDto } from '@app/shared/dtos/auth/register.dto';
+import {
+  RegisterRequestDto,
+  VerifyPhoneDto,
+} from '@app/shared/dtos/auth/register.dto';
 import { RefreshNewAccessTokenDto } from '@app/shared/dtos/auth/refresh-new-access-token.dto';
 import { ResetPasswordDto } from '@app/shared/dtos/auth/reset-password.dto';
 import {
@@ -105,6 +108,21 @@ export class AuthController {
   async verifyEmail(@Query('token') token: string, @Res() res: Response) {
     const redirectUrl = await this.authService.verifyEmail({ token });
     return res.redirect(redirectUrl);
+  }
+
+  @Post('verify-phone')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    tags: ['Authentication'],
+    summary: 'Verify Phone Number',
+    description: 'Verify user phone number using the token sent via SMS',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Phone number successfully verified',
+  })
+  async verifyPhone(@Body() data: VerifyPhoneDto) {
+    return this.authService.verifyPhone(data);
   }
 
   @Get('google')

@@ -11,7 +11,10 @@ import {
   LoginRequestDto,
   LoginResponseDto,
 } from '@app/shared/dtos/auth/login.dto';
-import { RegisterRequestDto } from '@app/shared/dtos/auth/register.dto';
+import {
+  RegisterRequestDto,
+  VerifyPhoneDto,
+} from '@app/shared/dtos/auth/register.dto';
 import { ResetPasswordDto } from '@app/shared/dtos/auth/reset-password.dto';
 import {
   HttpStatus,
@@ -29,6 +32,7 @@ import { MailSendDto } from '@app/shared/dtos/mails/mail-send.dto';
 import { UserRole } from '@app/shared/enums/user.enum';
 import { MailService } from './mail.service';
 import { Learner } from '@app/database/entities/learner.entity';
+import { TwilioService } from '@app/twilio/twilio.service';
 
 @Injectable({ scope: Scope.REQUEST })
 export class AuthService {
@@ -39,6 +43,7 @@ export class AuthService {
     @InjectRepository(Role) private readonly roleRepository: Repository<Role>,
     private readonly mailService: MailService,
     private readonly configService: ConfigService,
+    private readonly twilioService: TwilioService,
     private readonly jwtService: JwtService,
     private readonly dataSource: DataSource,
   ) {}
@@ -248,14 +253,28 @@ export class AuthService {
   //#region Register
   async register(data: RegisterRequestDto): Promise<CustomApiResponse<void>> {
     return await this.dataSource.transaction(async (manager) => {
-      const existingUser = await this.userRepository.findOne({
-        where: { email: data.email },
-      });
-      if (existingUser)
-        throw new CustomRpcException(
-          'USER.ALREADY_EXISTS',
-          HttpStatus.CONFLICT,
-        );
+      console.log(data);
+      if (data.email) {
+        const isEmailExists = await this.userRepository.findOne({
+          where: { email: data.email },
+        });
+        if (isEmailExists)
+          throw new CustomRpcException(
+            'AUTH.EMAIL_ALREADY_EXISTS',
+            HttpStatus.CONFLICT,
+          );
+      }
+
+      if (data.phoneNumber) {
+        const isPhoneExists = await this.userRepository.findOne({
+          where: { phoneNumber: data.phoneNumber },
+        });
+        if (isPhoneExists)
+          throw new CustomRpcException(
+            'AUTH.PHONE_ALREADY_EXISTS',
+            HttpStatus.CONFLICT,
+          );
+      }
 
       const passwordHashed = await bcrypt.hash(
         data.password,
@@ -266,7 +285,8 @@ export class AuthService {
 
       const newUser = this.userRepository.create({
         fullName: data.fullName,
-        email: data.email,
+        email: data.email ? data.email : null,
+        phoneNumber: data.phoneNumber ? data.phoneNumber : null,
         password: passwordHashed,
         role: {
           id: roleId,
@@ -274,7 +294,7 @@ export class AuthService {
         authProviders: [
           {
             provider: AuthProviderEnum.LOCAL,
-            providerId: data.email,
+            providerId: data.email ? data.email : data.phoneNumber,
           } as AuthProvider,
         ],
         learner: [
@@ -287,19 +307,31 @@ export class AuthService {
         ],
       });
 
-      const payload: JwtPayloadDto = {
-        id: newUser.id,
-      };
-      const emailVerificationToken = await this.jwtService.signAsync(payload, {
-        secret: this.configService.get('jwt').verify_email_token.secret,
-        expiresIn: this.configService.get('jwt').verify_email_token.expiration,
-      });
+      console.log(newUser);
 
-      newUser.emailVerificationToken = emailVerificationToken;
+      if (data.email) {
+        const payload: JwtPayloadDto = {
+          id: newUser.id,
+        };
+        const emailVerificationToken = await this.jwtService.signAsync(
+          payload,
+          {
+            secret: this.configService.get('jwt').verify_email_token.secret,
+            expiresIn:
+              this.configService.get('jwt').verify_email_token.expiration,
+          },
+        );
+
+        newUser.emailVerificationToken = emailVerificationToken;
+
+        await this.sendVerificationEmail(newUser.email, emailVerificationToken);
+      }
+
+      if (data.phoneNumber) {
+        await this.twilioService.sendSMS(data.phoneNumber);
+      }
 
       await manager.getRepository(User).save(newUser);
-
-      await this.sendVerificationEmail(newUser.email, emailVerificationToken);
 
       return new CustomApiResponse<void>(
         HttpStatus.CREATED,
@@ -330,6 +362,7 @@ export class AuthService {
 
       user.isEmailVerified = true;
       user.emailVerificationToken = null;
+      user.isActive = true;
       await this.userRepository.save(user);
 
       return `${this.configService.get('front_end').verify_email_url}`;
@@ -388,6 +421,44 @@ export class AuthService {
         verificationLink: `${this.configService.get('app').url}/api/${this.configService.get('app').version}/auth/verify-email?token=${emailVerificationToken}`,
       },
     } as MailSendDto);
+  }
+
+  //#endregion
+
+  //#region Phone Verification
+
+  async verifyPhone(data: VerifyPhoneDto): Promise<CustomApiResponse<void>> {
+    const user = await this.userRepository.findOne({
+      where: { phoneNumber: data.phoneNumber },
+    });
+    if (!user) {
+      throw new CustomRpcException('AUTH.USER_NOT_FOUND', HttpStatus.NOT_FOUND);
+    }
+    if (user.isPhoneVerified) {
+      throw new CustomRpcException(
+        'AUTH.PHONE_ALREADY_VERIFIED',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const isVerificationValid = await this.twilioService.verifyPhoneNumber(
+      data.phoneNumber,
+      data.code,
+    );
+    if (!isVerificationValid) {
+      throw new CustomRpcException(
+        'AUTH.INVALID_VERIFICATION_CODE',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    user.isPhoneVerified = true;
+    user.isActive = true;
+    await this.userRepository.save(user);
+
+    return new CustomApiResponse<void>(
+      HttpStatus.OK,
+      'AUTH.PHONE_VERIFIED_SUCCESS',
+    );
   }
 
   //#endregion

@@ -81,6 +81,8 @@ export interface Config {
   twilio: {
     accountSid: string;
     authToken: string;
+    verifyServiceSid: string;
+    phoneNumber?: string;
   };
   agora?: {
     appId?: string;
@@ -241,6 +243,11 @@ export class ConfigService {
       twilio: {
         accountSid: this.nestConfigService.get('TWILIO_ACCOUNT_SID', ''),
         authToken: this.nestConfigService.get('TWILIO_AUTH_TOKEN', ''),
+        verifyServiceSid: this.nestConfigService.get(
+          'TWILIO_VERIFY_SERVICE_SID',
+          '',
+        ),
+        phoneNumber: this.nestConfigService.get('TWILIO_PHONE_NUMBER', ''),
       },
       agora: {
         appId: this.nestConfigService.get('AGORA_APP_ID', ''),

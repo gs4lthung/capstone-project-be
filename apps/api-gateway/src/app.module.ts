@@ -105,6 +105,7 @@ import { ProvinceService } from './services/province.service';
 import { ProvinceController } from './controllers/province.controller';
 import { StudentAnalysisController } from './controllers/student-analysis.controller';
 import { StudentAnalysisService } from './services/student-analysis.service';
+import { TwilioModule } from '@app/twilio';
 
 @Module({
   imports: [
@@ -126,6 +127,7 @@ import { StudentAnalysisService } from './services/student-analysis.service';
     AwsModule,
     FfmpegModule,
     PayosModule,
+    TwilioModule,
     AgoraModule,
     MailerModule.forRootAsync({
       imports: [ConfigModule],
