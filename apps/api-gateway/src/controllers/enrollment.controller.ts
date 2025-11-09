@@ -1,4 +1,4 @@
-import { Controller, Get, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Get, HttpCode, HttpStatus, Param } from '@nestjs/common';
 import { EnrollmentService } from '../services/enrollment.service';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { PaginationParams } from '@app/shared/decorators/pagination-params.decorator';
@@ -36,5 +36,24 @@ export class EnrollmentController {
       sort,
       filter,
     });
+  }
+
+  @Get(':id')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    tags: ['Enrollments'],
+    summary: 'Get enrollment by ID',
+    description: 'Retrieve a specific enrollment by its ID',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Enrollment retrieved successfully',
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Enrollment not found',
+  })
+  async findOne(@Param('id') id: number): Promise<Enrollment> {
+    return await this.enrollmentService.findOne(id);
   }
 }

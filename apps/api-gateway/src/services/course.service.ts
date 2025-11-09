@@ -179,7 +179,9 @@ export class CourseService extends BaseTypeOrmService<Course> {
       if (course.createdBy.id !== this.request.user.id)
         throw new ForbiddenException('Không có quyền truy cập khóa học này');
       if (course.status !== CourseStatus.REJECTED)
-        throw new BadRequestException('Không thể cập nhật khóa học');
+        throw new BadRequestException(
+          'Khoá học đã được duyệt, không thể cập nhật',
+        );
 
       await manager.getRepository(Course).update(course.id, {
         ...data,
@@ -479,7 +481,7 @@ export class CourseService extends BaseTypeOrmService<Course> {
     }
 
     if (totalSessions <= 0) {
-      throw new BadRequestException('Total sessions must be greater than 0');
+      throw new BadRequestException('Bạn phải có ít nhất 1 buổi học');
     }
 
     const dayMap: { [key: string]: number } = {

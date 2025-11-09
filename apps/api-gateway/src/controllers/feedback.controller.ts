@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Get,
   HttpCode,
   HttpStatus,
   Param,
@@ -19,6 +20,24 @@ import { RoleGuard } from '../guards/role.guard';
 @Controller('feedbacks')
 export class FeedbackController {
   constructor(private readonly feedbackService: FeedbackService) {}
+
+  @Get('courses/:id')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiOperation({
+    tags: ['Feedbacks'],
+    summary: 'Get feedbacks by course ID',
+    description: 'Retrieve all feedbacks for a specific course',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Feedbacks retrieved successfully',
+  })
+  @CheckRoles(UserRole.LEARNER, UserRole.COACH)
+  @UseGuards(AuthGuard, RoleGuard)
+  async getByCourseId(@Param('id') courseId: number) {
+    return this.feedbackService.findByCourseId(courseId);
+  }
 
   @Post('courses/:id')
   @HttpCode(HttpStatus.CREATED)

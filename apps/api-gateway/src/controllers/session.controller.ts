@@ -23,6 +23,23 @@ import { RoleGuard } from '../guards/role.guard';
 @Controller('sessions')
 export class SessionController {
   constructor(private readonly sessionService: SessionService) {}
+  @Get('courses/:id')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiOperation({
+    tags: ['Sessions'],
+    summary: 'Get sessions by course ID',
+    description: 'Retrieve all sessions for a specific course',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Sessions retrieved successfully',
+  })
+  @CheckRoles(UserRole.COACH, UserRole.LEARNER)
+  @UseGuards(AuthGuard, RoleGuard)
+  async getSessionsByCourseId(@Param('id') courseId: number) {
+    return this.sessionService.findByCourseId(courseId);
+  }
 
   @Get(':id')
   @HttpCode(HttpStatus.OK)

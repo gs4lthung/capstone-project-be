@@ -93,6 +93,20 @@ export class SessionService extends BaseTypeOrmService<Session> {
     return session;
   }
 
+  async findByCourseId(courseId: number): Promise<Session[]> {
+    const sessions = await this.sessionRepository.find({
+      where: { course: { id: courseId } },
+      withDeleted: false,
+      relations: ['course', 'lesson', 'attendances', 'quizzes', 'videos'],
+      order: {
+        scheduleDate: 'ASC',
+        startTime: 'ASC',
+      },
+    });
+
+    return sessions;
+  }
+
   async getSessionsForWeeklyCalendar(
     data: GetSessionForWeeklyCalendarRequestDto,
   ): Promise<CustomApiResponse<Session[]>> {
