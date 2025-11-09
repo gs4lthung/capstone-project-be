@@ -106,6 +106,9 @@ import { ProvinceController } from './controllers/province.controller';
 import { StudentAnalysisController } from './controllers/student-analysis.controller';
 import { StudentAnalysisService } from './services/student-analysis.service';
 import { TwilioModule } from '@app/twilio';
+import { AttendanceController } from './controllers/attendance.controller';
+import { AttendanceService } from './services/attendance.service';
+import { EnrollmentController } from './controllers/enrollment.controller';
 
 @Module({
   imports: [
@@ -231,6 +234,8 @@ import { TwilioModule } from '@app/twilio';
     VideoConferenceController,
     ProvinceController,
     StudentAnalysisController,
+    AttendanceController,
+    EnrollmentController,
   ],
   providers: [
     AppService,
@@ -261,6 +266,7 @@ import { TwilioModule } from '@app/twilio';
     VideoConferenceService,
     ProvinceService,
     StudentAnalysisService,
+    AttendanceService,
   ],
 })
 export class AppModule {}

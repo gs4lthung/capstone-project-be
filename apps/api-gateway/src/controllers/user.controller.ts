@@ -86,6 +86,23 @@ export class UserController {
     } as FindOptions);
   }
 
+  @Get(':id')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiOperation({
+    tags: ['Users'],
+    summary: 'Get User by ID',
+    description: 'Retrieve a user by their ID',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'User retrieved successfully',
+  })
+  @UseGuards(AuthGuard)
+  async findOne(@Param('id') id: number): Promise<User> {
+    return this.userService.findOne(id);
+  }
+
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
