@@ -58,6 +58,25 @@ export class CourseController {
     } as FindOptions);
   }
 
+  @Get(':id')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    tags: ['Courses'],
+    summary: 'Get course by ID',
+    description: 'Retrieve a specific course by its ID',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Course retrieved successfully',
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Course not found',
+  })
+  async findOne(@Param('id') id: number): Promise<Course> {
+    return await this.courseService.findOne(id);
+  }
+
   @Post('subjects/:id')
   @HttpCode(HttpStatus.CREATED)
   @ApiBearerAuth()
