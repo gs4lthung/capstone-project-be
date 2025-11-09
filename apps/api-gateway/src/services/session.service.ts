@@ -141,8 +141,6 @@ export class SessionService extends BaseTypeOrmService<Session> {
             'quizzes.questions',
             'quizzes.questions.options',
             'videos',
-            'attendances',
-            'attendances.user',
           ],
         });
 
