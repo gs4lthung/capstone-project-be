@@ -36,6 +36,7 @@ import { PaginateObject } from '@app/shared/dtos/paginate.dto';
 import { UserRole } from '@app/shared/enums/user.enum';
 import { NotificationService } from './notification.service';
 import { NotificationType } from '@app/shared/enums/notification.enum';
+import { Configuration } from '@app/database/entities/configuration.entity';
 
 @Injectable({ scope: Scope.REQUEST })
 export class SessionService extends BaseTypeOrmService<Session> {
@@ -55,6 +56,8 @@ export class SessionService extends BaseTypeOrmService<Session> {
     private readonly learnerProgressRepository: Repository<LearnerProgress>,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    @InjectRepository(Configuration)
+    private readonly configurationRepository: Repository<Configuration>,
     private readonly walletService: WalletService,
     private readonly configurationService: ConfigurationService,
     private readonly datasource: DataSource,
@@ -71,7 +74,18 @@ export class SessionService extends BaseTypeOrmService<Session> {
     const session = await this.sessionRepository.findOne({
       where: { id: id },
       withDeleted: false,
-      relations: ['course', 'lesson', 'attendances', 'notes'],
+      relations: [
+        'course',
+        'course.enrollments',
+        'course.enrollments.user',
+        'lesson',
+        'attendances',
+        'notes',
+        'quizzes',
+        'quizzes.questions',
+        'quizzes.questions.options',
+        'videos',
+      ],
     });
 
     if (!session) throw new Error('Session not found');
@@ -81,14 +95,33 @@ export class SessionService extends BaseTypeOrmService<Session> {
 
   async getSessionsForWeeklyCalendar(
     data: GetSessionForWeeklyCalendarRequestDto,
-  ): Promise<Session[]> {
+  ): Promise<CustomApiResponse<Session[]>> {
+    // validate input dates
+    if (!data?.startDate || !data?.endDate) {
+      throw new BadRequestException('startDate and endDate are required');
+    }
+
     const startOfWeek = new Date(data.startDate);
     const endOfWeek = new Date(data.endDate);
+
+    if (isNaN(startOfWeek.getTime()) || isNaN(endOfWeek.getTime())) {
+      throw new BadRequestException('Invalid startDate or endDate');
+    }
+
+    if (endOfWeek < startOfWeek) {
+      throw new BadRequestException(
+        'endDate must be the same or after startDate',
+      );
+    }
+
+    // normalize to include full days
+    startOfWeek.setHours(0, 0, 0, 0);
+    endOfWeek.setHours(23, 59, 59, 999);
 
     const user = await this.userRepository.findOne({
       where: { id: this.request.user.id as User['id'] },
       withDeleted: false,
-      relations: ['roles'],
+      relations: ['role'],
     });
     if (!user) throw new InternalServerErrorException('Lỗi server');
 
@@ -101,9 +134,21 @@ export class SessionService extends BaseTypeOrmService<Session> {
             },
             scheduleDate: Between(startOfWeek, endOfWeek),
           },
+          relations: [
+            'course',
+            'course.enrollments',
+            'quizzes',
+            'quizzes.questions',
+            'quizzes.questions.options',
+            'videos',
+          ],
         });
 
-        return sessions;
+        return new CustomApiResponse<Session[]>(
+          HttpStatus.OK,
+          'Sessions retrieved successfully',
+          sessions,
+        );
       case UserRole.LEARNER:
         const learnerSessions = await this.sessionRepository.find({
           where: {
@@ -114,8 +159,13 @@ export class SessionService extends BaseTypeOrmService<Session> {
             },
             scheduleDate: Between(startOfWeek, endOfWeek),
           },
+          relations: ['course'],
         });
-        return learnerSessions;
+        return new CustomApiResponse<Session[]>(
+          HttpStatus.OK,
+          'Sessions retrieved successfully',
+          learnerSessions,
+        );
       default:
         throw new BadRequestException('Invalid user role for sessions');
     }
@@ -142,7 +192,7 @@ export class SessionService extends BaseTypeOrmService<Session> {
 
       const course = await this.courseRepository.findOne({
         where: { id: session.course.id },
-        relations: ['enrollments'],
+        relations: ['enrollments', 'enrollments.user'],
         withDeleted: false,
       });
       if (!course) throw new InternalServerErrorException('Lỗi server');
@@ -202,10 +252,23 @@ export class SessionService extends BaseTypeOrmService<Session> {
         await manager.getRepository(Attendance).save(attendance);
       }
 
-      await this.walletService.handleWalletTopUp(
-        this.request.user.id as User['id'],
-        sessionEarning,
+      const completeBefourHours = await this.configurationRepository.findOne({
+        where: { key: 'complete_session_before_hours' },
+      });
+      const hoursBefore = completeBefourHours
+        ? Number(completeBefourHours.value)
+        : 0;
+      const sessionEndTime = new Date(session.scheduleDate);
+      const [eh, em] = session.endTime.split(':').map(Number);
+      sessionEndTime.setHours(eh, em, 0, 0);
+      const allowedCompleteTime = new Date(
+        sessionEndTime.getTime() + hoursBefore * 60 * 60 * 1000,
       );
+      if (new Date() <= allowedCompleteTime)
+        await this.walletService.handleWalletTopUp(
+          this.request.user.id as User['id'],
+          sessionEarning,
+        );
 
       const totalSessions = await this.sessionRepository.count({
         where: { course: { id: course.id } },
@@ -234,7 +297,10 @@ export class SessionService extends BaseTypeOrmService<Session> {
 
       return new CustomApiResponse<void>(
         HttpStatus.OK,
-        'Session completed and attendance recorded successfully',
+        `Điểm danh và hoàn thành buổi học thành công` +
+          (new Date() <= allowedCompleteTime
+            ? ', bạn đã nhận được ' + sessionEarning + ' vào ví của mình.'
+            : ', nhưng buổi học đã hoàn thành quá thời gian quy định để nhận tiền.'),
       );
     });
   }

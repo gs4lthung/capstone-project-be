@@ -17,7 +17,10 @@ import { CheckRoles } from '@app/shared/decorators/check-roles.decorator';
 import { UserRole } from '@app/shared/enums/user.enum';
 import { AuthGuard } from '../guards/auth.guard';
 import { RoleGuard } from '../guards/role.guard';
-import { CreateCourseRequestDto } from '@app/shared/dtos/course/course.dto';
+import {
+  CreateCourseRequestDto,
+  UpdateCourseDto,
+} from '@app/shared/dtos/course/course.dto';
 import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
 import { Course } from '@app/database/entities/course.entity';
 import { PaginationParams } from '@app/shared/decorators/pagination-params.decorator';
@@ -114,7 +117,7 @@ export class CourseController {
   @UseGuards(AuthGuard, RoleGuard)
   async updateCourseCreationRequest(
     @Param('id') id: number,
-    @Body() data: CreateCourseRequestDto,
+    @Body() data: UpdateCourseDto,
   ) {
     return this.courseService.update(id, data);
   }

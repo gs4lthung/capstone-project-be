@@ -10,10 +10,15 @@ import {
   Post,
   Put,
   Query,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import {
   ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
   ApiOperation,
   ApiResponse,
   ApiTags,
@@ -43,6 +48,8 @@ import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
 import { Achievement } from '@app/database/entities/achievement.entity';
 import { FindOptions } from '@app/shared/interfaces/find-options.interface';
 import { Pagination } from '@app/shared/interfaces/pagination.interface';
+import { FilteringParams } from '@app/shared/decorators/filtering-params.decorator';
+import { Filtering } from '@app/shared/interfaces/filtering.interface';
 
 /**
  * ============================================
@@ -96,6 +103,24 @@ export class AchievementController {
   // ============================================
 
   /**
+   * TEST AWS CONNECTION
+   * ────────────────────────────────────────────
+   * GET /api/v1/achievements/test-aws
+   */
+  @Get('test-aws')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Test AWS S3 connection',
+    description: 'Test if AWS credentials are working',
+  })
+  @CheckRoles(UserRole.ADMIN)
+  @UseGuards(AuthGuard, RoleGuard)
+  async testAws() {
+    return this.achievementService.testAws();
+  }
+
+  /**
    * CREATE EVENT COUNT ACHIEVEMENT
    * ────────────────────────────────────────────
    * POST /api/v1/achievements/event-count
@@ -140,6 +165,37 @@ export class AchievementController {
    */
   @ApiBearerAuth()
 
+  /**
+   * @ApiConsumes('multipart/form-data')
+   * → Báo cho Swagger biết endpoint này nhận multipart/form-data
+   * → Swagger sẽ hiển thị UI upload file
+   */
+  @ApiConsumes('multipart/form-data')
+  
+  /**
+   * @ApiBody()
+   * → Định nghĩa schema cho request body với file upload
+   * → Field 'icon' sẽ hiển thị nút "Choose File"
+   */
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        name: { type: 'string', description: 'Tên achievement' },
+        description: { type: 'string', description: 'Mô tả achievement' },
+        eventName: { type: 'string', description: 'Tên sự kiện (VD: LESSON_COMPLETED)' },
+        targetCount: { type: 'number', description: 'Số lần cần đạt' },
+        isActive: { type: 'boolean', description: 'Trạng thái active' },
+        icon: { 
+          type: 'string', 
+          format: 'binary',
+          description: 'File icon (upload ảnh từ device)' 
+        },
+      },
+      required: ['name', 'eventName', 'targetCount'],
+    },
+  })
+  
   /**
    * @ApiOperation()
    * → Mô tả endpoint trong Swagger documentation
@@ -187,24 +243,37 @@ export class AchievementController {
   @UseGuards(AuthGuard, RoleGuard)
 
   /**
-   * async createEventCount(@Body() data)
-   *
+   * @UseInterceptors(FileInterceptor('icon'))
+   * → Interceptor để xử lý file upload
+   * → Field name: 'icon' (phải match với form-data key)
+   * → File sẽ được extract và truyền vào @UploadedFile()
+   */
+  @UseInterceptors(FileInterceptor('icon'))
+  
+  /**
+   * async createEventCount(@Body() data, @UploadedFile() icon)
+   * 
    * @Body() decorator:
-   * → Extract request body và validate theo DTO
-   * → Nếu validation fail → tự động return 400 Bad Request
-   *
-   * Validation flow:
-   * 1. Client gửi JSON body
-   * 2. NestJS parse JSON → object
-   * 3. Validate theo decorators trong DTO (@IsString, @MinLength, etc.)
-   * 4. Nếu pass → gọi method này
-   * 5. Nếu fail → throw ValidationError
+   * → Extract request body (form-data fields) và validate theo DTO
+   * 
+   * @UploadedFile() decorator:
+   * → Extract file từ form-data field 'icon'
+   * → File optional - có thể không upload
+   * 
+   * Request format: multipart/form-data
+   * - name: string
+   * - description: string
+   * - eventName: string
+   * - targetCount: number
+   * - isActive: boolean
+   * - icon: file (optional)
    */
   async createEventCount(
     @Body() data: CreateEventCountAchievementDto,
+    @UploadedFile() icon: Express.Multer.File,
   ): Promise<CustomApiResponse<void>> {
-    // Gọi service method để xử lý business logic
-    return this.achievementService.createEventCount(data);
+    // Gọi service method với data và icon file
+    return this.achievementService.createEventCount(data, icon);
   }
 
   /**
@@ -218,6 +287,25 @@ export class AchievementController {
   @Post('streak')
   @HttpCode(HttpStatus.CREATED)
   @ApiBearerAuth()
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        name: { type: 'string', description: 'Tên achievement' },
+        description: { type: 'string', description: 'Mô tả achievement' },
+        eventName: { type: 'string', description: 'Tên sự kiện (VD: DAILY_LOGIN)' },
+        targetDays: { type: 'number', description: 'Số ngày streak cần đạt' },
+        isActive: { type: 'boolean', description: 'Trạng thái active' },
+        icon: { 
+          type: 'string', 
+          format: 'binary',
+          description: 'File icon (upload ảnh từ device)' 
+        },
+      },
+      required: ['name', 'eventName', 'targetDays'],
+    },
+  })
   @ApiOperation({
     summary: 'Create STREAK achievement',
     description:
@@ -229,10 +317,12 @@ export class AchievementController {
   })
   @CheckRoles(UserRole.ADMIN)
   @UseGuards(AuthGuard, RoleGuard)
+  @UseInterceptors(FileInterceptor('icon'))
   async createStreak(
     @Body() data: CreateStreakAchievementDto,
+    @UploadedFile() icon: Express.Multer.File,
   ): Promise<CustomApiResponse<void>> {
-    return this.achievementService.createStreak(data);
+    return this.achievementService.createStreak(data, icon);
   }
 
   /**
@@ -246,6 +336,26 @@ export class AchievementController {
   @Post('property-check')
   @HttpCode(HttpStatus.CREATED)
   @ApiBearerAuth()
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        name: { type: 'string', description: 'Tên achievement' },
+        description: { type: 'string', description: 'Mô tả achievement' },
+        propertyName: { type: 'string', description: 'Tên thuộc tính (VD: averageScore)' },
+        comparisonOperator: { type: 'string', description: 'Toán tử so sánh (VD: >=, <=, ==)' },
+        targetValue: { type: 'string', description: 'Giá trị mục tiêu' },
+        isActive: { type: 'boolean', description: 'Trạng thái active' },
+        icon: { 
+          type: 'string', 
+          format: 'binary',
+          description: 'File icon (upload ảnh từ device)' 
+        },
+      },
+      required: ['name', 'propertyName', 'comparisonOperator', 'targetValue'],
+    },
+  })
   @ApiOperation({
     summary: 'Create PROPERTY_CHECK achievement',
     description:
@@ -257,10 +367,12 @@ export class AchievementController {
   })
   @CheckRoles(UserRole.ADMIN)
   @UseGuards(AuthGuard, RoleGuard)
+  @UseInterceptors(FileInterceptor('icon'))
   async createPropertyCheck(
     @Body() data: CreatePropertyCheckAchievementDto,
+    @UploadedFile() icon: Express.Multer.File,
   ): Promise<CustomApiResponse<void>> {
-    return this.achievementService.createPropertyCheck(data);
+    return this.achievementService.createPropertyCheck(data, icon);
   }
 
   // ============================================
@@ -331,11 +443,11 @@ export class AchievementController {
     example: 10,
   })
   @ApiQuery({
-    name: 'isActive',
+    name: 'filter',
     required: false,
-    type: Boolean,
-    description: 'Filter by active status',
-    example: true,
+    type: String,
+    description: 'Filter by field: {field}_{rule}_{value}. Rules: eq, neq. Multiple filters separated by comma. Examples: type_eq_EVENT_COUNT, isActive_eq_true, type_eq_STREAK,isActive_eq_true',
+    example: 'type_eq_EVENT_COUNT',
   })
   @ApiOperation({
     summary: 'Get all achievements',
@@ -348,35 +460,37 @@ export class AchievementController {
   })
 
   /**
-   * async findAll(@Query() page, @Query() pageSize)
-   *
+   * async findAll(@Query() page, @Query() pageSize, @FilteringParams() filter)
+   * 
    * @Query() decorator:
    * → Extract query parameters từ URL
-   * → VD: /achievements?page=2&pageSize=20
-   * → @Query('page') → 2
-   * → @Query('pageSize') → 20
-   *
-   * Default values:
-   * → page = 1 nếu không truyền
-   * → pageSize = 10 nếu không truyền
-   *
-   * ⚠️ AUTHENTICATION REQUIRED
-   * → User phải login (có JWT token)
+   * → VD: /achievements?page=2&pageSize=20&filter=type_eq_EVENT_COUNT
+   * 
+   * @FilteringParams() decorator:
+   * → Parse filter string theo format: {field}_{rule}_{value}
+   * → VD: type_eq_EVENT_COUNT → { property: 'type', rule: 'eq', value: 'EVENT_COUNT' }
+   * 
+   * Filter examples:
+   * - ?filter=type_eq_EVENT_COUNT → Lọc achievements kiểu EVENT_COUNT
+   * - ?filter=isActive_eq_true → Lọc achievements đang active
+   * - ?filter=type_eq_STREAK,isActive_eq_true → Lọc STREAK + active
    */
   async findAll(
     @Query('page') page: number = 1,
     @Query('pageSize') pageSize: number = 10,
+    @FilteringParams() filter: Filtering,
   ) {
     // Validate pageSize không vượt quá 100
     const validatedPageSize = Math.min(pageSize, 100);
 
     // Build findOptions object
-    const findOptions = {
+    const findOptions: FindOptions = {
       pagination: {
         page: Number(page),
         size: Number(validatedPageSize),
         offset: (Number(page) - 1) * Number(validatedPageSize),
       },
+      filter,
     };
 
     return this.achievementService.findAll(findOptions);
@@ -661,6 +775,24 @@ export class AchievementController {
     type: Number,
     description: 'Achievement ID',
   })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        name: { type: 'string', description: 'Tên achievement' },
+        description: { type: 'string', description: 'Mô tả achievement' },
+        eventName: { type: 'string', description: 'Tên sự kiện' },
+        targetCount: { type: 'number', description: 'Số lần cần đạt' },
+        isActive: { type: 'boolean', description: 'Trạng thái active' },
+        icon: { 
+          type: 'string', 
+          format: 'binary',
+          description: 'File icon mới (upload ảnh từ device)' 
+        },
+      },
+    },
+  })
   @ApiOperation({
     summary: 'Update EVENT_COUNT achievement',
     description:
@@ -676,11 +808,13 @@ export class AchievementController {
   })
   @CheckRoles(UserRole.ADMIN)
   @UseGuards(AuthGuard, RoleGuard)
+  @UseInterceptors(FileInterceptor('icon'))
   async updateEventCount(
     @Param('id') id: number,
     @Body() data: UpdateEventCountAchievementDto,
+    @UploadedFile() icon: Express.Multer.File,
   ): Promise<CustomApiResponse<void>> {
-    return this.achievementService.updateEventCount(id, data);
+    return this.achievementService.updateEventCount(id, data, icon);
   }
 
   /**
@@ -692,6 +826,24 @@ export class AchievementController {
   @HttpCode(HttpStatus.OK)
   @ApiBearerAuth()
   @ApiParam({ name: 'id', type: Number })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        name: { type: 'string', description: 'Tên achievement' },
+        description: { type: 'string', description: 'Mô tả achievement' },
+        eventName: { type: 'string', description: 'Tên sự kiện' },
+        targetDays: { type: 'number', description: 'Số ngày streak cần đạt' },
+        isActive: { type: 'boolean', description: 'Trạng thái active' },
+        icon: { 
+          type: 'string', 
+          format: 'binary',
+          description: 'File icon mới (upload ảnh từ device)' 
+        },
+      },
+    },
+  })
   @ApiOperation({
     summary: 'Update STREAK achievement',
     description: 'Update an existing STREAK achievement',
@@ -702,11 +854,13 @@ export class AchievementController {
   })
   @CheckRoles(UserRole.ADMIN)
   @UseGuards(AuthGuard, RoleGuard)
+  @UseInterceptors(FileInterceptor('icon'))
   async updateStreak(
     @Param('id') id: number,
     @Body() data: UpdateStreakAchievementDto,
+    @UploadedFile() icon: Express.Multer.File,
   ): Promise<CustomApiResponse<void>> {
-    return this.achievementService.updateStreak(id, data);
+    return this.achievementService.updateStreak(id, data, icon);
   }
 
   /**
@@ -718,6 +872,25 @@ export class AchievementController {
   @HttpCode(HttpStatus.OK)
   @ApiBearerAuth()
   @ApiParam({ name: 'id', type: Number })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        name: { type: 'string', description: 'Tên achievement' },
+        description: { type: 'string', description: 'Mô tả achievement' },
+        propertyName: { type: 'string', description: 'Tên thuộc tính' },
+        comparisonOperator: { type: 'string', description: 'Toán tử so sánh' },
+        targetValue: { type: 'string', description: 'Giá trị mục tiêu' },
+        isActive: { type: 'boolean', description: 'Trạng thái active' },
+        icon: { 
+          type: 'string', 
+          format: 'binary',
+          description: 'File icon mới (upload ảnh từ device)' 
+        },
+      },
+    },
+  })
   @ApiOperation({
     summary: 'Update PROPERTY_CHECK achievement',
     description: 'Update an existing PROPERTY_CHECK achievement',
@@ -728,11 +901,13 @@ export class AchievementController {
   })
   @CheckRoles(UserRole.ADMIN)
   @UseGuards(AuthGuard, RoleGuard)
+  @UseInterceptors(FileInterceptor('icon'))
   async updatePropertyCheck(
     @Param('id') id: number,
     @Body() data: UpdatePropertyCheckAchievementDto,
+    @UploadedFile() icon: Express.Multer.File,
   ): Promise<CustomApiResponse<void>> {
-    return this.achievementService.updatePropertyCheck(id, data);
+    return this.achievementService.updatePropertyCheck(id, data, icon);
   }
 
   // ============================================

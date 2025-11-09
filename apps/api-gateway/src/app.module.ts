@@ -105,6 +105,10 @@ import { ProvinceService } from './services/province.service';
 import { ProvinceController } from './controllers/province.controller';
 import { StudentAnalysisController } from './controllers/student-analysis.controller';
 import { StudentAnalysisService } from './services/student-analysis.service';
+import { TwilioModule } from '@app/twilio';
+import { AttendanceController } from './controllers/attendance.controller';
+import { AttendanceService } from './services/attendance.service';
+import { EnrollmentController } from './controllers/enrollment.controller';
 
 @Module({
   imports: [
@@ -126,6 +130,7 @@ import { StudentAnalysisService } from './services/student-analysis.service';
     AwsModule,
     FfmpegModule,
     PayosModule,
+    TwilioModule,
     AgoraModule,
     MailerModule.forRootAsync({
       imports: [ConfigModule],
@@ -229,6 +234,8 @@ import { StudentAnalysisService } from './services/student-analysis.service';
     VideoConferenceController,
     ProvinceController,
     StudentAnalysisController,
+    AttendanceController,
+    EnrollmentController,
   ],
   providers: [
     AppService,
@@ -259,6 +266,7 @@ import { StudentAnalysisService } from './services/student-analysis.service';
     VideoConferenceService,
     ProvinceService,
     StudentAnalysisService,
+    AttendanceService,
   ],
 })
 export class AppModule {}

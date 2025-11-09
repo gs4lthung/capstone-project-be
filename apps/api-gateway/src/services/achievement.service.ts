@@ -8,6 +8,7 @@ import { CustomRpcException } from '@app/shared/customs/custom-rpc-exception';
 import { ExceptionUtils } from '@app/shared/utils/exception.util';
 import { BaseTypeOrmService } from '@app/shared/helpers/typeorm.helper';
 import { FindOptions } from '@app/shared/interfaces/find-options.interface';
+import { AwsService } from '@app/aws';
 
 // Import Entities
 import { Achievement } from '@app/database/entities/achievement.entity';
@@ -77,6 +78,13 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
 
     @InjectRepository(LearnerAchievement)
     private readonly learnerAchievementRepository: Repository<LearnerAchievement>,
+
+    /**
+     * AwsService
+     * → Service để upload files lên AWS S3
+     * → Dùng cho upload icon của achievement
+     */
+    private readonly awsService: AwsService,
   ) {
     /**
      * super(achievementRepository)
@@ -91,33 +99,93 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
   // ============================================
 
   /**
+   * TEST AWS CONNECTION
+   * ─────────────────────────────────────
+   */
+  async testAws(): Promise<any> {
+    console.log('🔷 [TEST] Starting AWS connection test...');
+    const result = await this.awsService.testConnection();
+    console.log('🔷 [TEST] Result:', result);
+    return result;
+  }
+
+  /**
    * CREATE EVENT COUNT ACHIEVEMENT
    * ─────────────────────────────────────
    * Tạo achievement kiểu "đếm số lần sự kiện"
    * VD: "Hoàn thành 50 bài học", "Tham gia 10 buổi học"
    *
    * @param data - DTO chứa thông tin achievement
+   * @param icon - File icon (optional) - sẽ upload lên S3
    * @returns CustomApiResponse với status 201 CREATED
    *
    * Flow:
-   * 1. Tạo entity mới từ DTO
-   * 2. Gán createdBy = user hiện tại (từ JWT)
-   * 3. Save vào database
-   * 4. Trả về response thành công
+   * 1. Upload icon lên S3 (nếu có)
+   * 2. Tạo entity mới từ DTO + iconUrl từ S3
+   * 3. Gán createdBy = user hiện tại (từ JWT)
+   * 4. Save vào database
+   * 5. Trả về response thành công
    */
   async createEventCount(
     data: CreateEventCountAchievementDto,
+    icon?: Express.Multer.File,
   ): Promise<CustomApiResponse<void>> {
+    console.log('🔷 [CREATE EVENT COUNT] Start');
+    console.log('🔷 Data:', JSON.stringify(data, null, 2));
+    console.log('🔷 Icon file:', icon ? { 
+      filename: icon.filename, 
+      originalname: icon.originalname, 
+      mimetype: icon.mimetype, 
+      size: icon.size,
+      path: icon.path,
+      hasBuffer: !!icon.buffer, // Check có buffer không
+      bufferLength: icon.buffer?.length || 0, // Độ dài buffer
+    } : 'No icon');
+
+    // Upload icon lên S3 nếu có file
+    let iconUrl: string | undefined = undefined;
+    if (icon) {
+      try {
+        console.log('🔷 [AWS] Starting upload to S3...');
+        const uploadPromise = this.awsService.uploadFileToPublicBucket({
+          file: {
+            buffer: icon.buffer,
+            ...icon,
+          },
+        });
+        
+        // Timeout sau 10 giây
+        const timeoutPromise = new Promise<never>((_, reject) => {
+          setTimeout(() => reject(new Error('AWS S3 upload timeout after 10s')), 10000);
+        });
+        
+        iconUrl = await Promise.race([uploadPromise, timeoutPromise])
+          .then((res) => {
+            console.log('🔷 [AWS] Upload success:', res.url);
+            return res.url;
+          });
+      } catch (error) {
+        console.error('🔷 [AWS] Upload failed:', error.message);
+        console.warn('⚠️  [WARNING] Skipping icon upload, creating achievement without icon');
+        // KHÔNG throw error, chỉ warning và tiếp tục
+        // iconUrl sẽ là undefined
+      }
+    }
+
+    console.log('🔷 [DB] Creating achievement entity...');
     // Tạo entity mới (chưa save DB)
     const achievement = this.eventCountRepository.create({
       ...data, // Spread all fields từ DTO
+      iconUrl: iconUrl || data.iconUrl, // Ưu tiên iconUrl từ S3, fallback sang data.iconUrl
       createdBy: this.request.user as User, // Lấy user từ JWT token
       isActive: data.isActive ?? true, // Default true nếu không truyền
     });
 
+    console.log('🔷 [DB] Saving achievement to database...');
     // Save vào database
     await this.eventCountRepository.save(achievement);
 
+    console.log('🔷 [SUCCESS] Achievement created successfully');
     // Trả về response success
     return new CustomApiResponse<void>(
       HttpStatus.CREATED,
@@ -133,9 +201,38 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
    */
   async createStreak(
     data: CreateStreakAchievementDto,
+    icon?: Express.Multer.File,
   ): Promise<CustomApiResponse<void>> {
+    // Upload icon lên S3 nếu có file
+    let iconUrl: string | undefined = undefined;
+    if (icon) {
+      try {
+        console.log('🔷 [AWS] Starting upload to S3 (Streak)...');
+        const uploadPromise = this.awsService.uploadFileToPublicBucket({
+          file: {
+            buffer: icon.buffer,
+            ...icon,
+          },
+        });
+        
+        const timeoutPromise = new Promise<never>((_, reject) => {
+          setTimeout(() => reject(new Error('AWS S3 upload timeout after 10s')), 10000);
+        });
+        
+        iconUrl = await Promise.race([uploadPromise, timeoutPromise])
+          .then((res) => {
+            console.log('🔷 [AWS] Upload success:', res.url);
+            return res.url;
+          });
+      } catch (error) {
+        console.error('🔷 [AWS] Upload failed:', error.message);
+        console.warn('⚠️  [WARNING] Skipping icon upload, creating achievement without icon');
+      }
+    }
+
     const achievement = this.streakRepository.create({
       ...data,
+      iconUrl: iconUrl || data.iconUrl,
       createdBy: this.request.user as User,
       isActive: data.isActive ?? true,
     });
@@ -156,6 +253,7 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
    */
   async createPropertyCheck(
     data: CreatePropertyCheckAchievementDto,
+    icon?: Express.Multer.File,
   ): Promise<CustomApiResponse<void>> {
     // Validate comparison operator
     const validOperators = ['==', '!=', '>', '<', '>=', '<='];
@@ -166,8 +264,36 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
       );
     }
 
+    // Upload icon lên S3 nếu có file
+    let iconUrl: string | undefined = undefined;
+    if (icon) {
+      try {
+        console.log('🔷 [AWS] Starting upload to S3 (Property Check)...');
+        const uploadPromise = this.awsService.uploadFileToPublicBucket({
+          file: {
+            buffer: icon.buffer,
+            ...icon,
+          },
+        });
+        
+        const timeoutPromise = new Promise<never>((_, reject) => {
+          setTimeout(() => reject(new Error('AWS S3 upload timeout after 10s')), 10000);
+        });
+        
+        iconUrl = await Promise.race([uploadPromise, timeoutPromise])
+          .then((res) => {
+            console.log('🔷 [AWS] Upload success:', res.url);
+            return res.url;
+          });
+      } catch (error) {
+        console.error('🔷 [AWS] Upload failed:', error.message);
+        console.warn('⚠️  [WARNING] Skipping icon upload, creating achievement without icon');
+      }
+    }
+
     const achievement = this.propertyCheckRepository.create({
       ...data,
+      iconUrl: iconUrl || data.iconUrl,
       createdBy: this.request.user as User,
       isActive: data.isActive ?? true,
     });
@@ -261,12 +387,13 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
    *
    * @param id - Achievement ID
    * @param data - UpdateEventCountAchievementDto (partial fields)
+   * @param icon - File icon (optional) - sẽ upload lên S3
    * @returns Success response
    *
    * Flow:
    * 1. Tìm achievement theo ID
-   * 2. Validate type === EVENT_COUNT
-   * 3. Update fields từ DTO
+   * 2. Upload icon mới lên S3 (nếu có)
+   * 3. Update fields từ DTO + iconUrl mới
    * 4. Save vào DB
    *
    * NOTE: Chỉ update fields được truyền trong DTO
@@ -275,6 +402,7 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
   async updateEventCount(
     id: number,
     data: UpdateEventCountAchievementDto,
+    icon?: Express.Multer.File,
   ): Promise<CustomApiResponse<void>> {
     // Tìm achievement
     const achievement = await this.eventCountRepository.findOne({
@@ -287,6 +415,35 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
         'Achievement not found',
         HttpStatus.NOT_FOUND,
       );
+    }
+
+    // Upload icon mới lên S3 nếu có file
+    if (icon) {
+      try {
+        console.log('🔷 [AWS] Starting upload to S3 (Update Event Count)...');
+        const uploadPromise = this.awsService.uploadFileToPublicBucket({
+          file: {
+            buffer: icon.buffer,
+            ...icon,
+          },
+        });
+        
+        const timeoutPromise = new Promise<never>((_, reject) => {
+          setTimeout(() => reject(new Error('AWS S3 upload timeout after 10s')), 10000);
+        });
+        
+        const iconUrl = await Promise.race([uploadPromise, timeoutPromise])
+          .then((res) => {
+            console.log('🔷 [AWS] Upload success:', res.url);
+            return res.url;
+          });
+        
+        data.iconUrl = iconUrl; // Override iconUrl trong data
+      } catch (error) {
+        console.error('🔷 [AWS] Upload failed:', error.message);
+        console.warn('⚠️  [WARNING] Skipping icon upload, keeping old icon');
+        // Không throw error, giữ icon cũ
+      }
     }
 
     /**
@@ -313,6 +470,7 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
   async updateStreak(
     id: number,
     data: UpdateStreakAchievementDto,
+    icon?: Express.Multer.File,
   ): Promise<CustomApiResponse<void>> {
     const achievement = await this.streakRepository.findOne({
       where: { id },
@@ -324,6 +482,35 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
         'Achievement not found',
         HttpStatus.NOT_FOUND,
       );
+    }
+
+    // Upload icon mới lên S3 nếu có file
+    if (icon) {
+      try {
+        console.log('🔷 [AWS] Starting upload to S3 (Update Streak)...');
+        const uploadPromise = this.awsService.uploadFileToPublicBucket({
+          file: {
+            buffer: icon.buffer,
+            ...icon,
+          },
+        });
+        
+        const timeoutPromise = new Promise<never>((_, reject) => {
+          setTimeout(() => reject(new Error('AWS S3 upload timeout after 10s')), 10000);
+        });
+        
+        const iconUrl = await Promise.race([uploadPromise, timeoutPromise])
+          .then((res) => {
+            console.log('🔷 [AWS] Upload success:', res.url);
+            return res.url;
+          });
+        
+        data.iconUrl = iconUrl;
+      } catch (error) {
+        console.error('🔷 [AWS] Upload failed:', error.message);
+        console.warn('⚠️  [WARNING] Skipping icon upload, keeping old icon');
+        // Không throw error, giữ icon cũ
+      }
     }
 
     Object.assign(achievement, data);
@@ -343,6 +530,7 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
   async updatePropertyCheck(
     id: number,
     data: UpdatePropertyCheckAchievementDto,
+    icon?: Express.Multer.File,
   ): Promise<CustomApiResponse<void>> {
     // Validate comparison operator nếu có update
     if (data.comparisonOperator) {
@@ -365,6 +553,35 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
         'Achievement not found',
         HttpStatus.NOT_FOUND,
       );
+    }
+
+    // Upload icon mới lên S3 nếu có file
+    if (icon) {
+      try {
+        console.log('🔷 [AWS] Starting upload to S3 (Update Property Check)...');
+        const uploadPromise = this.awsService.uploadFileToPublicBucket({
+          file: {
+            buffer: icon.buffer,
+            ...icon,
+          },
+        });
+        
+        const timeoutPromise = new Promise<never>((_, reject) => {
+          setTimeout(() => reject(new Error('AWS S3 upload timeout after 10s')), 10000);
+        });
+        
+        const iconUrl = await Promise.race([uploadPromise, timeoutPromise])
+          .then((res) => {
+            console.log('🔷 [AWS] Upload success:', res.url);
+            return res.url;
+          });
+        
+        data.iconUrl = iconUrl;
+      } catch (error) {
+        console.error('🔷 [AWS] Upload failed:', error.message);
+        console.warn('⚠️  [WARNING] Skipping icon upload, keeping old icon');
+        // Không throw error, giữ icon cũ
+      }
     }
 
     Object.assign(achievement, data);

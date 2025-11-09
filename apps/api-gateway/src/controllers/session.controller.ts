@@ -6,6 +6,7 @@ import {
   HttpStatus,
   Param,
   Patch,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { SessionService } from '../services/session.service';
@@ -23,6 +24,24 @@ import { RoleGuard } from '../guards/role.guard';
 export class SessionController {
   constructor(private readonly sessionService: SessionService) {}
 
+  @Get(':id')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiOperation({
+    tags: ['Sessions'],
+    summary: 'Get session by ID',
+    description: 'Retrieve a session by its ID',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Session retrieved successfully',
+  })
+  @CheckRoles(UserRole.COACH, UserRole.LEARNER)
+  @UseGuards(AuthGuard, RoleGuard)
+  async getSessionById(@Param('id') id: number) {
+    return this.sessionService.findOne(id);
+  }
+
   @Get('calendar/weekly')
   @HttpCode(HttpStatus.OK)
   @ApiBearerAuth()
@@ -38,8 +57,9 @@ export class SessionController {
   @CheckRoles(UserRole.COACH, UserRole.LEARNER)
   @UseGuards(AuthGuard, RoleGuard)
   async getWeeklyCalendarSessions(
-    @Body() data: GetSessionForWeeklyCalendarRequestDto,
+    @Query() data: GetSessionForWeeklyCalendarRequestDto,
   ) {
+    console.log('Get weekly calendar sessions called with data:', data);
     return this.sessionService.getSessionsForWeeklyCalendar(data);
   }
 

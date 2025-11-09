@@ -5,6 +5,8 @@ import {
   IsEmail,
   IsEnum,
   IsNotEmpty,
+  ValidateIf,
+  IsPhoneNumber,
   IsString,
   IsStrongPassword,
   ValidateNested,
@@ -54,10 +56,24 @@ export class RegisterRequestDto {
   @ApiProperty({
     description: 'The email of the user',
     example: 'user@example.com',
+    required: false,
   })
-  @IsNotEmpty({ message: 'Email is required' })
+  @ValidateIf((o) => o.email != null || !o.phoneNumber)
+  @IsNotEmpty({ message: 'Email or phone is required' })
   @IsEmail({}, { message: 'Email must be a valid email address' })
-  email: string;
+  email?: string;
+
+  @ApiProperty({
+    description: 'The phone number of the user',
+    example: '+84123456789',
+    required: false,
+  })
+  @ValidateIf((o) => o.phoneNumber != null || !o.email)
+  @IsNotEmpty({ message: 'Email or phone is required' })
+  @IsPhoneNumber('VN', {
+    message: 'Phone number must be a valid Vietnamese phone number',
+  })
+  phoneNumber?: string;
 
   @ApiProperty({
     description: 'The password of the user',
@@ -83,4 +99,23 @@ export class RegisterRequestDto {
   @ValidateNested({ each: true })
   @Type(() => CreateLearnerDto)
   learner: CreateLearnerDto;
+}
+
+export class VerifyPhoneDto {
+  @ApiProperty({
+    description: 'The phone number of the user',
+    example: '+84123456789',
+  })
+  @IsNotEmpty({ message: 'Phone number is required' })
+  @IsPhoneNumber('VN', {
+    message: 'Phone number must be a valid Vietnamese phone number',
+  })
+  phoneNumber: string;
+  @ApiProperty({
+    description: 'The verification code sent to the phone number',
+    example: '123456',
+  })
+  @IsNotEmpty({ message: 'Verification code is required' })
+  @IsString({ message: 'Verification code must be a string' })
+  code: string;
 }

@@ -1,4 +1,5 @@
 import {
+  Check,
   Column,
   CreateDateColumn,
   DeleteDateColumn,
@@ -47,6 +48,10 @@ import { Video } from './video.entity';
 import { Subject } from './subject.entity';
 
 @Entity('users')
+@Check(
+  'CHK_USERS_EMAIL_PHONE_HAVE_AT_LEAST_ONE',
+  '"email" IS NOT NULL OR "phone_number" IS NOT NULL',
+)
 export class User {
   @PrimaryGeneratedColumn()
   id: number;
@@ -59,15 +64,22 @@ export class User {
 
   @Column({ type: 'varchar', length: 50, unique: true, nullable: true })
   @Index({ unique: true })
+  @IsOptional()
   @IsEmail()
-  email: string;
+  email?: string;
 
-  @Column({ name: 'phone_number', type: 'varchar', length: 25, nullable: true })
+  @Column({
+    name: 'phone_number',
+    type: 'varchar',
+    length: 25,
+    nullable: true,
+    unique: true,
+  })
+  @Index({ unique: true })
   @IsOptional()
   @IsPhoneNumber('VN')
   phoneNumber?: string;
 
-  // password intentionally not exposed to GraphQL
   @Column({ type: 'varchar', length: 255, select: false, nullable: true })
   @IsOptional()
   @IsString()
@@ -78,7 +90,6 @@ export class User {
   @IsUrl()
   profilePicture?: string;
 
-  // refreshToken intentionally not exposed to GraphQL
   @Column({ name: 'refresh_token', type: 'text', nullable: true })
   refreshToken?: string;
 
@@ -86,7 +97,10 @@ export class User {
   @Index()
   isEmailVerified: boolean;
 
-  // emailVerificationToken not exposed
+  @Column({ name: 'is_phone_verified', type: 'boolean', default: false })
+  @Index()
+  isPhoneVerified: boolean;
+
   @Column({
     name: 'email_verification_token',
     type: 'varchar',
@@ -95,7 +109,6 @@ export class User {
   })
   emailVerificationToken?: string;
 
-  // resetPasswordToken not exposed
   @Column({
     name: 'reset_password_token',
     type: 'varchar',
@@ -104,7 +117,7 @@ export class User {
   })
   resetPasswordToken?: string;
 
-  @Column({ name: 'is_active', type: 'boolean', default: true })
+  @Column({ name: 'is_active', type: 'boolean', default: false })
   @Index()
   isActive: boolean;
 

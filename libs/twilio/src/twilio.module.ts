@@ -7,6 +7,7 @@ import { TwilioModule as BaseTwilioModule } from 'nestjs-twilio';
   imports: [
     ConfigModule,
     BaseTwilioModule.forRootAsync({
+      imports: [ConfigModule],
       useFactory: async (config: ConfigService) => ({
         accountSid: config.get('twilio').accountSid,
         authToken: config.get('twilio').authToken,
