@@ -27,6 +27,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { NotificationService } from './notification.service';
 import { NotificationType } from '@app/shared/enums/notification.enum';
+import { AttendanceStatus } from '@app/shared/enums/attendance.enum';
 
 @Injectable({ scope: Scope.REQUEST })
 export class QuizService extends BaseTypeOrmService<Quiz> {
@@ -212,9 +213,7 @@ export class QuizService extends BaseTypeOrmService<Quiz> {
       });
       if (!quiz) throw new BadRequestException('Quiz not found');
       if (!quiz.session)
-        throw new BadRequestException(
-          'Quiz is not associated with any session',
-        );
+        throw new BadRequestException('Quiz không thuộc về buổi học nào');
 
       const session = await this.sessionRepository.findOne({
         where: { id: quiz.session.id },
@@ -223,16 +222,17 @@ export class QuizService extends BaseTypeOrmService<Quiz> {
           'course',
           'course.enrollments',
           'course.createdBy',
+          'attendances',
         ],
         withDeleted: false,
       });
       if (!session)
         throw new BadRequestException(
-          'Session not found or you are not enrolled in this session',
+          'Buổi học không tồn tại hoặc bạn không được đăng ký buổi học này',
         );
       if (session.status !== SessionStatus.COMPLETED) {
         throw new BadRequestException(
-          'You can only attempt the quiz for completed sessions',
+          'Bạn chỉ có thể làm bài quiz cho các buổi học đã hoàn thành',
         );
       }
       if (
@@ -241,7 +241,19 @@ export class QuizService extends BaseTypeOrmService<Quiz> {
         )
       ) {
         throw new BadRequestException(
-          'You are not enrolled in the course for this session',
+          'Bạn không được đăng ký khóa học cho buổi học này',
+        );
+      }
+      if (
+        session.attendances &&
+        !session.attendances.some(
+          (att) =>
+            att.user.id === (this.request.user as User).id &&
+            att.status !== AttendanceStatus.ABSENT,
+        )
+      ) {
+        throw new BadRequestException(
+          'Bạn không thể làm bài quiz vì đã vắng mặt trong buổi học này',
         );
       }
 
@@ -250,7 +262,7 @@ export class QuizService extends BaseTypeOrmService<Quiz> {
         const question = quiz.questions.find((q) => q.id === answer.question);
         if (!question) {
           throw new BadRequestException(
-            `Question with ID ${answer.question} not found in the quiz`,
+            `Câu hỏi với ID ${answer.question} không tồn tại trong bài quiz`,
           );
         }
         const selectedOption = question.options.find(
@@ -258,7 +270,7 @@ export class QuizService extends BaseTypeOrmService<Quiz> {
         );
         if (!selectedOption) {
           throw new BadRequestException(
-            `Option with ID ${answer.questionOption} not found in question ${answer.question}`,
+            `Lựa chọn với ID ${answer.questionOption} không tồn tại trong câu hỏi ${answer.question}`,
           );
         }
         if (selectedOption.isCorrect) {
