@@ -110,4 +110,16 @@ export class FeedbackService {
       );
     });
   }
+
+  async findByCourseId(courseId: number): Promise<Feedback[]> {
+    const feedbacks = await this.feedbackRepository.find({
+      where: { course: { id: courseId } },
+      relations: ['createdBy', 'course', 'receivedBy'],
+      order: {
+        createdAt: 'DESC',
+      },
+    });
+
+    return feedbacks;
+  }
 }
