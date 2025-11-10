@@ -148,6 +148,11 @@ export class Course {
   @DeleteDateColumn({ name: 'deleted_at' })
   deletedAt?: Date;
 
+  @Column({ name: 'cancelling_reason', type: 'text', nullable: true })
+  @IsOptional()
+  @IsString()
+  cancellingReason?: string;
+
   @Index()
   @ManyToOne(() => User, (user) => user.courses, {
     onDelete: 'SET NULL',
