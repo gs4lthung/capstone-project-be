@@ -122,4 +122,19 @@ export class FeedbackService {
 
     return feedbacks;
   }
+
+  async findForCoach(): Promise<CustomApiResponse<Feedback[]>> {
+    const feedbacks = await this.feedbackRepository.find({
+      where: { receivedBy: { id: this.request.user.id as User['id'] } },
+      relations: ['createdBy', 'course', 'receivedBy'],
+      order: {
+        createdAt: 'DESC',
+      },
+    });
+    return new CustomApiResponse<Feedback[]>(
+      HttpStatus.OK,
+      'Feedbacks retrieved successfully',
+      feedbacks,
+    );
+  }
 }

@@ -78,4 +78,21 @@ export class FeedbackController {
   ) {
     return this.feedbackService.update(feedbackId, data);
   }
+
+  @Get('coaches')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    tags: ['Feedbacks'],
+    summary: 'Get overall rating for a coach by user ID',
+    description: 'Retrieve the overall rating score for a specific coach',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Overall rating retrieved successfully',
+  })
+  @CheckRoles(UserRole.COACH)
+  @UseGuards(AuthGuard, RoleGuard)
+  async findUserFeedback() {
+    return this.feedbackService.findForCoach();
+  }
 }
