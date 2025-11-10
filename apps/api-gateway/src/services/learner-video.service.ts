@@ -113,12 +113,13 @@ export class LearnerVideoService {
       where: { id: learnerVideoId },
       relations: ['session', 'session.lesson', 'session.lesson.videos'],
     });
-    if (!learnerVideo) throw new Error('LearnerVideo not found');
+    if (!learnerVideo) throw new BadRequestException('LearnerVideo not found');
     const coachVideo = learnerVideo.session?.lesson?.videos?.[0] as Video;
     const aiResultRecord = this.aiVideoComparisonResultRepo.create({
       learnerVideo,
       video: coachVideo,
       summary: aiText.summary,
+      coachNote: aiText.coachNote,
       learnerScore: aiText.overallScoreForPlayer2,
       keyDifferents: aiText.keyDifferences,
       recommendationDrills: aiText.recommendationsForPlayer2?.map((r: any) => ({

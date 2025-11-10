@@ -130,6 +130,12 @@ export class AiVideoComparisonResult {
   @Type(() => AiVideoComparisonRecommendationDrill)
   recommendationDrills?: AiVideoComparisonRecommendationDrill[];
 
+  @Column({ name: 'coach_note', type: 'text', nullable: true })
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  coachNote?: string;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
