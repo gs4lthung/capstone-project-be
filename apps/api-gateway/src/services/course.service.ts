@@ -129,7 +129,7 @@ export class CourseService extends BaseTypeOrmService<Course> {
           data.startDate,
           courseEndDate,
         );
-        if (isValid) {
+        if (!isValid) {
           throw new BadRequestException(
             `Lịch vào ${schedule.dayOfWeek} ${schedule.startTime} - ${schedule.endTime} bị trùng với lịch đã có`,
           );
