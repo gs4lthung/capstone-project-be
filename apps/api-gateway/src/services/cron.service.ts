@@ -69,7 +69,7 @@ export class CronService {
       for (const course of courses) {
         if (
           new Date(course.startDate).getTime() +
-            Number(checkCourseBeforeDays.value) * 24 * 60 * 60 * 1000 >=
+            Number(checkCourseBeforeDays.value) * 24 * 60 * 60 * 1000 <=
           Date.now()
         ) {
           this.logger.log(`Start course ${course.id}`);
@@ -157,7 +157,7 @@ export class CronService {
       for (const course of courses) {
         if (
           new Date(course.startDate).getTime() +
-            Number(checkCourseBeforeDays.value) * 24 * 60 * 60 * 1000 >=
+            Number(checkCourseBeforeDays.value) * 24 * 60 * 60 * 1000 <=
           Date.now()
         ) {
           this.logger.log(`Cancel course ${course.id}`);
