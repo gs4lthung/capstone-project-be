@@ -111,6 +111,10 @@ import { AttendanceService } from './services/attendance.service';
 import { EnrollmentController } from './controllers/enrollment.controller';
 import { ScheduleService } from './services/schedule.service';
 import { ScheduleController } from './controllers/schedule.controller';
+import { LearnerVideoController } from './controllers/learner-video.controller';
+import { LearnerVideoService } from './services/learner-video.service';
+import { LearnerVideo } from '@app/database/entities/learner-video.entity';
+import { AiVideoComparisonResult } from '@app/database/entities/ai-video-comparison-result.entity';
 
 @Module({
   imports: [
@@ -200,6 +204,8 @@ import { ScheduleController } from './controllers/schedule.controller';
       VideoConference,
       Province,
       District,
+      LearnerVideo,
+      AiVideoComparisonResult,
     ]),
     ErrorModule,
     ThrottlerModule.forRootAsync({
@@ -239,6 +245,7 @@ import { ScheduleController } from './controllers/schedule.controller';
     AttendanceController,
     ScheduleController,
     EnrollmentController,
+    LearnerVideoController,
   ],
   providers: [
     AppService,
@@ -271,6 +278,7 @@ import { ScheduleController } from './controllers/schedule.controller';
     StudentAnalysisService,
     ScheduleService,
     AttendanceService,
+    LearnerVideoService,
   ],
 })
 export class AppModule {}

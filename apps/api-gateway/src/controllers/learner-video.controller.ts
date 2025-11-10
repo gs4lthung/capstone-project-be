@@ -7,6 +7,7 @@ import {
   Body,
   Req,
   HttpStatus,
+  HttpCode,
   Get,
   Query,
   Param,
@@ -19,13 +20,26 @@ import { UploadLearnerVideoDto } from '@app/shared/dtos/files/file.dto';
 import { CheckRoles } from '@app/shared/decorators/check-roles.decorator';
 import { RoleGuard } from '../guards/role.guard';
 import { UserRole } from '@app/shared/enums/user.enum';
+import { ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
 @Controller('learner-videos')
 export class LearnerVideoController {
   constructor(private readonly learnerVideoService: LearnerVideoService) {}
 
   @Post()
-  @UseGuards(AuthGuard)
+  @HttpCode(HttpStatus.CREATED)
+  @ApiBearerAuth()
+  @ApiOperation({
+    tags: ['Learner Videos'],
+    summary: 'Upload a learner video',
+    description: 'Upload a video for learner practice',
+  })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: 'Learner video uploaded successfully',
+  })
+  @UseGuards(AuthGuard, RoleGuard)
+  @CheckRoles(UserRole.LEARNER)
   @UseInterceptors(FileInterceptor('video'))
   async uploadLearnerVideo(
     @UploadedFile() videoFile: Express.Multer.File,
