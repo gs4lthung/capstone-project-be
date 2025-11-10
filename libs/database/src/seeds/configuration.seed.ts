@@ -19,6 +19,13 @@ export const configurationSeed = async (dataSource: DataSource) => {
         'Number of days before course start date to automatically start the course',
       dataType: 'number',
     },
+    {
+      key: 'complete_session_before_hours',
+      value: '24',
+      description:
+        'Number of hours before session end time to allow marking session as complete',
+      dataType: 'number',
+    },
   ]);
 };
 
