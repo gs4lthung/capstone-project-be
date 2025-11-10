@@ -224,7 +224,7 @@ export class SessionService extends BaseTypeOrmService<Session> {
       const feeConfig = await this.configurationService.findByKey(
         'platform_fee_per_percentage',
       );
-      const feePercentage = Number(feeConfig?.value);
+      const feePercentage = Number(feeConfig?.metadata.value);
       if (Number.isNaN(feePercentage))
         throw new InternalServerErrorException('Invalid configuration value');
 

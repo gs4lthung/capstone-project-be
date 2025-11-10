@@ -65,4 +65,8 @@ video_conference_presence_logs_event_type_enum,
 videos_status_enum,
 wallet_transactions_type_enum,
 withdrawal_requests_status_enum,
+attendances_status_enum,
+courses_status_enum,
+subjects_level_enum,
+subjects_status_enum
 CASCADE

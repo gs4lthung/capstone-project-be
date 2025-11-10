@@ -35,10 +35,14 @@ export class ConfigurationService extends BaseTypeOrmService<Configuration> {
     );
   }
 
-  async findByKey(key: string): Promise<Configuration | null> {
-    return this.configurationRepository.findOne({
-      where: { key },
-    });
+  async findByKey(key: string): Promise<CustomApiResponse<Configuration>> {
+    return new CustomApiResponse<Configuration>(
+      HttpStatus.OK,
+      'Configuration retrieved successfully',
+      await this.configurationRepository.findOne({
+        where: { key },
+      }),
+    );
   }
 
   async create(data: CreateConfigurationDto): Promise<CustomApiResponse<void>> {
