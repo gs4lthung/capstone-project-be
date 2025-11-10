@@ -28,7 +28,7 @@ jobs:
           file: ./Dockerfile
           platforms: linux/amd64
           push: true
-          tags: lthung0412/mwbe:latest
+          tags: lthung0412/capstone-be:latest
 
       - name: Trigger redeploy on Render
         run: |
