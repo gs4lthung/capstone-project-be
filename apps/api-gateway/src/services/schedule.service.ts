@@ -45,6 +45,28 @@ export class ScheduleService {
     courseStartDate: Date,
     courseEndDate: Date,
   ): Promise<boolean> {
+    // helper to normalize dates to midnight timestamps for date-only comparison
+    const toDateTimestamp = (d: Date | string): number => {
+      const date = d instanceof Date ? d : new Date(d);
+      const normalized = new Date(
+        date.getFullYear(),
+        date.getMonth(),
+        date.getDate(),
+      );
+      return normalized.getTime();
+    };
+
+    // helper to convert a time value to minutes since midnight
+    // accepts Date, "HH:MM[:SS]" strings, or numeric minutes
+    const toMinutes = (t: Date | string | number): number => {
+      if (typeof t === 'number') return t;
+      if (t instanceof Date) return t.getHours() * 60 + t.getMinutes();
+      const parts = (t || '').split(':').map((p) => parseInt(p, 10));
+      const hours = Number.isFinite(parts[0]) ? parts[0] : 0;
+      const minutes = Number.isFinite(parts[1]) ? parts[1] : 0;
+      return hours * 60 + minutes;
+    };
+
     // load related course and creator; exclude rejected statuses by default
     const statuses = [
       CourseStatus.APPROVED,
@@ -65,52 +87,46 @@ export class ScheduleService {
       relations: ['course', 'course.createdBy'],
     });
 
-    // Helpers: schedules store time-of-day like "9:00" or "17:00" (or with seconds).
-    // We compare time-of-day in minutes and course dates as date-only millis to
-    // avoid issues when parsing time-only strings with `new Date()`.
-    const parseTimeToMinutes = (v: Date | string | number) => {
-      if (v instanceof Date) return v.getHours() * 60 + v.getMinutes();
-      if (typeof v === 'number') {
-        const d = new Date(v);
-        return d.getHours() * 60 + d.getMinutes();
+    const newStartDateTs = toDateTimestamp(courseStartDate);
+    const newEndDateTs = toDateTimestamp(courseEndDate);
+    const newStartMinutes = toMinutes(schedule.startTime);
+    const newEndMinutes = toMinutes(schedule.endTime);
+
+    for (const existingSchedule of existingSchedules) {
+      const existStartDateTs = toDateTimestamp(
+        existingSchedule.course.startDate,
+      );
+      const existEndDateTs = toDateTimestamp(existingSchedule.course.endDate);
+
+      const isStartAndEndDateConflict = !(
+        (newStartDateTs > existEndDateTs && newEndDateTs > existEndDateTs) ||
+        (newStartDateTs < existStartDateTs && newEndDateTs < existStartDateTs)
+      );
+
+      if (isStartAndEndDateConflict) {
+        console.log('Date range conflict detected');
+        const isDayOfWeekConflict =
+          existingSchedule.dayOfWeek === schedule.dayOfWeek;
+        if (isDayOfWeekConflict) {
+          console.log('Day of week conflict detected');
+          const existStartMinutes = toMinutes(existingSchedule.startTime);
+          const existEndMinutes = toMinutes(existingSchedule.endTime);
+
+          const isTimeConflict = !(
+            (newStartMinutes > existEndMinutes &&
+              newEndMinutes > existEndMinutes) ||
+            (newStartMinutes < existStartMinutes &&
+              newEndMinutes < existStartMinutes)
+          );
+
+          if (isTimeConflict) {
+            console.log('Time conflict detected');
+            return false;
+          }
+        }
       }
-      // string like "9:00" or "09:00:00"
-      const parts = String(v)
-        .split(':')
-        .map((p) => parseInt(p, 10));
-      const h = Number.isFinite(parts[0]) ? parts[0] : 0;
-      const m = parts.length > 1 && Number.isFinite(parts[1]) ? parts[1] : 0;
-      return h * 60 + m;
-    };
-
-    const toDateOnlyMillis = (v: Date | string | number) => {
-      const d = v instanceof Date ? new Date(v) : new Date(String(v));
-      d.setHours(0, 0, 0, 0);
-      return d.getTime();
-    };
-
-    const newStart = parseTimeToMinutes(schedule.startTime);
-    const newEnd = parseTimeToMinutes(schedule.endTime);
-    const courseStart = toDateOnlyMillis(courseStartDate);
-    const courseEnd = toDateOnlyMillis(courseEndDate);
-
-    for (const existing of existingSchedules) {
-      // skip self when updating
-      if (schedule.id && existing.id === schedule.id) continue;
-
-      if (!existing.course) continue; // defensive
-
-      const exStart = parseTimeToMinutes(existing.startTime);
-      const exEnd = parseTimeToMinutes(existing.endTime);
-      const exCourseStart = toDateOnlyMillis(existing.course.startDate);
-      const exCourseEnd = toDateOnlyMillis(existing.course.endDate);
-
-      const timesOverlap = newStart < exEnd && newEnd > exStart;
-      const courseDatesOverlap =
-        courseStart <= exCourseEnd && courseEnd >= exCourseStart;
-
-      if (timesOverlap && courseDatesOverlap) return true;
     }
-    return false;
+
+    return true;
   }
 }
