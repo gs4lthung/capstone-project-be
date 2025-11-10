@@ -45,6 +45,7 @@ import { VideoConference } from '@app/database/entities/video-conference.entity'
 import { NotificationService } from './notification.service';
 import { NotificationType } from '@app/shared/enums/notification.enum';
 import { ScheduleService } from './schedule.service';
+import { ConfigurationService } from './configuration.service';
 
 @Injectable({ scope: Scope.REQUEST })
 export class CourseService extends BaseTypeOrmService<Course> {
@@ -70,6 +71,7 @@ export class CourseService extends BaseTypeOrmService<Course> {
     private readonly provinceRepository: Repository<Province>,
     @InjectRepository(District)
     private readonly districtRepository: Repository<District>,
+    private readonly configurationService: ConfigurationService,
     private readonly scheduleService: ScheduleService,
   ) {
     super(courseRepository);
@@ -421,6 +423,16 @@ export class CourseService extends BaseTypeOrmService<Course> {
         course.status !== CourseStatus.FULL
       ) {
         throw new BadRequestException('Khóa học không thể hủy');
+      }
+      const checkCourseBeforeDays = await this.configurationService.findByKey(
+        'course_start_before_days',
+      );
+      if (
+        new Date(course.startDate).getTime() +
+          Number(checkCourseBeforeDays.metadata.value) * 24 * 60 * 60 * 1000 <=
+        Date.now()
+      ) {
+        throw new BadRequestException('Không thể hủy khóa học');
       }
 
       const enrollment = await this.enrollmentRepository.findOne({

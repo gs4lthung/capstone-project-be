@@ -68,7 +68,7 @@ export class CronService {
 
       for (const course of courses) {
         if (
-          new Date(course.startDate).getTime() +
+          new Date(course.startDate).getTime() -
             Number(checkCourseBeforeDays.value) * 24 * 60 * 60 * 1000 <=
           Date.now()
         ) {
@@ -156,7 +156,7 @@ export class CronService {
 
       for (const course of courses) {
         if (
-          new Date(course.startDate).getTime() +
+          new Date(course.startDate).getTime() -
             Number(checkCourseBeforeDays.value) * 24 * 60 * 60 * 1000 <=
           Date.now()
         ) {

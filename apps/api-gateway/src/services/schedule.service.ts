@@ -30,7 +30,6 @@ export class ScheduleService {
           createdBy: { id: this.request.user?.id as User['id'] },
         },
       },
-      relations: ['course', 'course.createdBy'],
     });
     return {
       statusCode: HttpStatus.OK,
