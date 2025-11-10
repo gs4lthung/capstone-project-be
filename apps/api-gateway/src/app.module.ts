@@ -109,6 +109,8 @@ import { TwilioModule } from '@app/twilio';
 import { AttendanceController } from './controllers/attendance.controller';
 import { AttendanceService } from './services/attendance.service';
 import { EnrollmentController } from './controllers/enrollment.controller';
+import { ScheduleService } from './services/schedule.service';
+import { ScheduleController } from './controllers/schedule.controller';
 
 @Module({
   imports: [
@@ -235,6 +237,7 @@ import { EnrollmentController } from './controllers/enrollment.controller';
     ProvinceController,
     StudentAnalysisController,
     AttendanceController,
+    ScheduleController,
     EnrollmentController,
   ],
   providers: [
@@ -266,6 +269,7 @@ import { EnrollmentController } from './controllers/enrollment.controller';
     VideoConferenceService,
     ProvinceService,
     StudentAnalysisService,
+    ScheduleService,
     AttendanceService,
   ],
 })

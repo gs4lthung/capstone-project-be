@@ -44,6 +44,8 @@ import { CustomApiRequest } from '@app/shared/customs/custom-api-request';
 import { VideoConference } from '@app/database/entities/video-conference.entity';
 import { NotificationService } from './notification.service';
 import { NotificationType } from '@app/shared/enums/notification.enum';
+import { ScheduleService } from './schedule.service';
+import { ConfigurationService } from './configuration.service';
 
 @Injectable({ scope: Scope.REQUEST })
 export class CourseService extends BaseTypeOrmService<Course> {
@@ -69,6 +71,8 @@ export class CourseService extends BaseTypeOrmService<Course> {
     private readonly provinceRepository: Repository<Province>,
     @InjectRepository(District)
     private readonly districtRepository: Repository<District>,
+    private readonly configurationService: ConfigurationService,
+    private readonly scheduleService: ScheduleService,
   ) {
     super(courseRepository);
   }
@@ -112,6 +116,26 @@ export class CourseService extends BaseTypeOrmService<Course> {
         throw new BadRequestException('Tài liệu khóa học chưa đầy đủ');
       }
 
+      const courseEndDate = await this.calculateCourseEndDate(
+        data.startDate,
+        subject.lessons ? subject.lessons.length : 0,
+        data.schedules as Schedule[],
+      );
+
+      for (const schedule of data.schedules) {
+        const isValid = await this.scheduleService.isNewScheduleValid(
+          schedule as Schedule,
+          this.request.user.id as User['id'],
+          data.startDate,
+          courseEndDate,
+        );
+        if (isValid) {
+          throw new BadRequestException(
+            `Lịch vào ${schedule.dayOfWeek} ${schedule.startTime} - ${schedule.endTime} bị trùng với lịch đã có`,
+          );
+        }
+      }
+
       const newCourse = this.courseRepository.create({
         ...data,
         name:
@@ -121,6 +145,7 @@ export class CourseService extends BaseTypeOrmService<Course> {
         order: subject.courses ? subject.courses.length + 1 : 1,
         totalSessions: subject.lessons ? subject.lessons.length : 0,
         level: subject.level,
+        endDate: courseEndDate,
         subject: subject,
         createdBy: this.request.user as User,
       } as unknown as Course);
@@ -232,12 +257,6 @@ export class CourseService extends BaseTypeOrmService<Course> {
         request.metadata.details.schedules &&
         request.metadata.details.schedules.length > 0
       ) {
-        course.endDate = this.calculateCourseEndDate(
-          course.startDate,
-          course.totalSessions,
-          request.metadata.details.schedules,
-        );
-
         const sessions =
           await this.sessionService.generateSessionsFromSchedules(
             course,
@@ -405,6 +424,16 @@ export class CourseService extends BaseTypeOrmService<Course> {
       ) {
         throw new BadRequestException('Khóa học không thể hủy');
       }
+      const checkCourseBeforeDays = await this.configurationService.findByKey(
+        'course_start_before_days',
+      );
+      if (
+        new Date(course.startDate).getTime() +
+          Number(checkCourseBeforeDays.metadata.value) * 24 * 60 * 60 * 1000 <=
+        Date.now()
+      ) {
+        throw new BadRequestException('Không thể hủy khóa học');
+      }
 
       const enrollment = await this.enrollmentRepository.findOne({
         where: {
@@ -469,11 +498,11 @@ export class CourseService extends BaseTypeOrmService<Course> {
     });
   }
 
-  calculateCourseEndDate(
+  async calculateCourseEndDate(
     startDate: Date,
     totalSessions: number,
     schedules: Schedule[],
-  ): Date {
+  ): Promise<Date> {
     if (!schedules || schedules.length === 0) {
       throw new BadRequestException(
         'Schedules are required to calculate end date',
