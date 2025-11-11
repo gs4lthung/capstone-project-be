@@ -9,6 +9,7 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
+  Max,
   MaxLength,
   Min,
 } from 'class-validator';
@@ -138,6 +139,12 @@ export class Course {
   @Column({ name: 'end_date', type: 'date', nullable: true })
   @IsDate()
   endDate?: Date;
+
+  @Column({ name: 'progress_pct', type: 'int', default: 0 })
+  @IsInt()
+  @Min(0)
+  @Max(100)
+  progressPct: number;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
