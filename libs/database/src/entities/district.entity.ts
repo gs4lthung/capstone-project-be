@@ -1,6 +1,8 @@
 import {
   Column,
   Entity,
+  Index,
+  JoinColumn,
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
@@ -17,7 +19,9 @@ export class District {
   @Column({ type: 'varchar', length: 100 })
   name: string;
 
+  @Index()
   @ManyToOne(() => Province, (province) => province.districts)
+  @JoinColumn({ name: 'province_id' })
   province: Province;
 
   @OneToMany(() => Course, (course) => course.district)

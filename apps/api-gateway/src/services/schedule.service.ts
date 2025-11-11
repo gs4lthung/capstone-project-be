@@ -1,3 +1,4 @@
+import { Course } from '@app/database/entities/course.entity';
 import { Schedule } from '@app/database/entities/schedule.entity';
 import { User } from '@app/database/entities/user.entity';
 import { CustomApiRequest } from '@app/shared/customs/custom-api-request';
@@ -14,6 +15,8 @@ export class ScheduleService {
     @Inject(REQUEST) private readonly request: CustomApiRequest,
     @InjectRepository(Schedule)
     private readonly scheduleRepository: Repository<Schedule>,
+    @InjectRepository(Course)
+    private readonly courseRepository: Repository<Course>,
   ) {}
 
   async getAvailableSchedulesByCoach(): Promise<CustomApiResponse<Schedule[]>> {

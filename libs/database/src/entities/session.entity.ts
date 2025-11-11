@@ -70,7 +70,7 @@ export class Session {
   @Column({
     type: 'enum',
     enum: SessionStatus,
-    default: SessionStatus.SCHEDULED,
+    default: SessionStatus.PENDING,
   })
   status: SessionStatus;
 

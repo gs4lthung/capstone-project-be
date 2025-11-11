@@ -103,6 +103,19 @@ export class CourseService extends BaseTypeOrmService<Course> {
     data: CreateCourseRequestDto,
   ): Promise<CustomApiResponse<void>> {
     return await this.datasource.transaction(async (manager) => {
+      const courseStartDateConfig = await this.configurationService.findByKey(
+        'course_start_date_after_days_from_now',
+      );
+      if (
+        data.startDate.getTime() <
+        Date.now() +
+          Number(courseStartDateConfig.metadata.value) * 24 * 60 * 60 * 1000
+      ) {
+        throw new BadRequestException(
+          `Ngày bắt đầu khóa học phải cách ngày hiện tại ít nhất ${courseStartDateConfig.metadata.value} ngày`,
+        );
+      }
+
       const subject = await this.subjectRepository.findOne({
         where: { id: subjectId, status: SubjectStatus.PUBLISHED },
         relations: ['lessons'],

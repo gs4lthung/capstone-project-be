@@ -10,7 +10,7 @@ export class TwilioService {
   ) {}
 
   async sendSMS(to: string) {
-    return this.twilioService.client.verify._v2
+    return this.twilioService.client.verify
       .services(this.configService.get('twilio').verifyServiceSid)
       .verifications.create({
         to: to,
@@ -19,7 +19,7 @@ export class TwilioService {
   }
 
   async verifyPhoneNumber(phoneNumber: string, code: string) {
-    return this.twilioService.client.verify._v2
+    return this.twilioService.client.verify
       .services(this.configService.get('twilio').verifyServiceSid)
       .verificationChecks.create({
         to: phoneNumber,
