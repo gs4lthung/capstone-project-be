@@ -54,6 +54,16 @@ export class WalletService extends BaseTypeOrmService<Wallet> {
     return wallet;
   }
 
+  async findByUserId(): Promise<Wallet> {
+    const wallet = await this.walletRepository.findOne({
+      where: { user: { id: this.request.user.id as User['id'] } },
+      withDeleted: false,
+      relations: ['bank', 'transactions', 'withdrawalRequests'],
+    });
+    if (!wallet) throw new Error('Wallet not found');
+    return wallet;
+  }
+
   async create(data: CreateWalletDto): Promise<CustomApiResponse<void>> {
     return await this.datasource.transaction(async (manager) => {
       const bank = await this.bankRepository.findOne({

@@ -60,6 +60,18 @@ export class WalletController {
     return this.walletService.findOne(id);
   }
 
+  @Get('users')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    tags: ['Wallets'],
+    summary: 'Get wallet by user ID',
+    description: 'Retrieve wallet details for a specific user by their ID',
+  })
+  @UseGuards(AuthGuard)
+  async findByUserId() {
+    return this.walletService.findByUserId();
+  }
+
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @ApiBearerAuth()
