@@ -2,7 +2,7 @@ name: Build and Deploy Docker Image for linux/amd64
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "master" ]
 
 jobs:
   build-and-deploy:
