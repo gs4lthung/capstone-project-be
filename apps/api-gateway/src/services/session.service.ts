@@ -26,7 +26,7 @@ import {
 } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Between, DataSource, Repository } from 'typeorm';
+import { Between, DataSource, In, Repository } from 'typeorm';
 import { WalletService } from './wallet.service';
 import { ConfigurationService } from './configuration.service';
 import { SessionEarning } from '@app/database/entities/session-earning.entity';
@@ -147,6 +147,7 @@ export class SessionService extends BaseTypeOrmService<Session> {
               createdBy: { id: this.request.user.id as User['id'] },
             },
             scheduleDate: Between(startOfWeek, endOfWeek),
+            status: In([SessionStatus.SCHEDULED, SessionStatus.COMPLETED]),
           },
           relations: [
             'course',
@@ -195,13 +196,13 @@ export class SessionService extends BaseTypeOrmService<Session> {
         relations: ['course'],
         withDeleted: false,
       });
-      if (!session) throw new BadRequestException('Session not found');
+      if (!session) throw new BadRequestException('Buổi học không tồn tại');
       if (session.status !== SessionStatus.SCHEDULED) {
-        throw new BadRequestException('Session is not in scheduled status');
+        throw new BadRequestException('Buổi học chưa được lên lịch');
       }
 
       if (this.getSessionTimeStatus(session) !== 'finished') {
-        throw new BadRequestException('Session is not finished yet');
+        throw new BadRequestException('Buổi học chưa kết thúc');
       }
 
       const course = await this.courseRepository.findOne({
@@ -217,7 +218,7 @@ export class SessionService extends BaseTypeOrmService<Session> {
         data.attendances.length === course.enrollments.length;
       if (!isCheckAllLearnerAttendance) {
         throw new BadRequestException(
-          'Attendance for all enrolled learners must be checked',
+          'Phải kiểm tra điểm danh cho tất cả học viên đã đăng ký',
         );
       }
 
@@ -226,7 +227,7 @@ export class SessionService extends BaseTypeOrmService<Session> {
       );
       const feePercentage = Number(feeConfig?.metadata.value);
       if (Number.isNaN(feePercentage))
-        throw new InternalServerErrorException('Invalid configuration value');
+        throw new InternalServerErrorException('Giá trị cấu hình không hợp lệ');
 
       const sessionEarning =
         (course.totalEarnings * (100 - feePercentage)) /
@@ -293,6 +294,12 @@ export class SessionService extends BaseTypeOrmService<Session> {
           status: SessionStatus.COMPLETED,
         },
       });
+
+      const progressPct = Math.floor((completedSessions / totalSessions) * 100);
+      await manager.getRepository(Course).update(course.id, {
+        progressPct: progressPct,
+      });
+
       if (totalSessions === completedSessions) {
         await manager.getRepository(Course).update(course.id, {
           status: CourseStatus.COMPLETED,
@@ -365,7 +372,7 @@ export class SessionService extends BaseTypeOrmService<Session> {
             scheduleDate: new Date(currentDate),
             startTime: schedule.startTime,
             endTime: schedule.endTime,
-            status: SessionStatus.SCHEDULED,
+            status: SessionStatus.PENDING,
             course: course,
             lesson: subject
               ? subject.lessons.find(

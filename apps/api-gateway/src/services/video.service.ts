@@ -9,6 +9,9 @@ import {
 import { REQUEST } from '@nestjs/core';
 import * as path from 'path';
 import * as fs from 'fs';
+
+// Define upload root directory (must match actual Multer storage configuration)
+const UPLOAD_ROOT = path.resolve(__dirname, '../../../../uploads');
 import { CreateVideoDto } from '@app/shared/videos/video.dto';
 import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
 import { FileUtils } from '@app/shared/utils/file.util';
@@ -59,9 +62,20 @@ export class VideoService {
       });
       if (!lesson) throw new BadRequestException('Không tìm thấy bài học');
 
+      // Validate and normalize videoFile.path
+      let normalizedPath;
+      try {
+        normalizedPath = fs.realpathSync(path.resolve(videoFile.path));
+      } catch {
+        throw new BadRequestException('Invalid uploaded file path');
+      }
+      if (!normalizedPath.startsWith(UPLOAD_ROOT)) {
+        throw new BadRequestException('File path outside of upload directory');
+      }
+
       const videoThumbnail = await this.ffmpegService.createVideoThumbnail(
-        videoFile.path,
-        FileUtils.excludeFileFromPath(videoFile.path),
+        normalizedPath,
+        FileUtils.excludeFileFromPath(normalizedPath),
       );
 
       const filePath =
@@ -88,7 +102,7 @@ export class VideoService {
 
       const videoPublicUrl = await this.awsService.uploadFileToPublicBucket({
         file: {
-          buffer: fs.readFileSync(videoFile.path),
+          buffer: fs.readFileSync(normalizedPath),
           ...videoFile,
         },
       });

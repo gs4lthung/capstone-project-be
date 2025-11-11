@@ -29,6 +29,7 @@ import { DataSource, Repository } from 'typeorm';
 import { BaseTypeOrmService } from '@app/shared/helpers/typeorm.helper';
 import { FindOptions } from '@app/shared/interfaces/find-options.interface';
 import { PaginateObject } from '@app/shared/dtos/paginate.dto';
+import { ConfigurationService } from './configuration.service';
 
 @Injectable({ scope: Scope.REQUEST })
 export class PaymentService extends BaseTypeOrmService<Payment> {
@@ -40,6 +41,7 @@ export class PaymentService extends BaseTypeOrmService<Payment> {
     private readonly courseRepository: Repository<Course>,
     @InjectRepository(Enrollment)
     private readonly enrollmentRepository: Repository<Enrollment>,
+    private readonly configurationService: ConfigurationService,
     private readonly payosService: PayosService,
     private readonly datasource: DataSource,
   ) {
@@ -174,8 +176,15 @@ export class PaymentService extends BaseTypeOrmService<Payment> {
       });
 
       course.currentParticipants += 1;
+      const platformFeeConfig = await this.configurationService.findByKey(
+        'platform_fee_per_percentage',
+      );
       course.totalEarnings =
-        Number(course.totalEarnings) + Number(payment.amount) * 1000;
+        Number(course.totalEarnings) +
+        (Number(payment.amount) *
+          1000 *
+          (100 - Number(platformFeeConfig.metadata.value))) /
+          100; /////////
 
       switch (course.learningFormat) {
         case CourseLearningFormat.INDIVIDUAL:

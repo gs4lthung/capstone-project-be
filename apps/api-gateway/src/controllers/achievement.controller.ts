@@ -107,18 +107,6 @@ export class AchievementController {
    * ────────────────────────────────────────────
    * GET /api/v1/achievements/test-aws
    */
-  @Get('test-aws')
-  @HttpCode(HttpStatus.OK)
-  @ApiBearerAuth()
-  @ApiOperation({
-    summary: 'Test AWS S3 connection',
-    description: 'Test if AWS credentials are working',
-  })
-  @CheckRoles(UserRole.ADMIN)
-  @UseGuards(AuthGuard, RoleGuard)
-  async testAws() {
-    return this.achievementService.testAws();
-  }
 
   /**
    * CREATE EVENT COUNT ACHIEVEMENT

@@ -9,6 +9,7 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
+  Max,
   MaxLength,
   Min,
 } from 'class-validator';
@@ -139,6 +140,12 @@ export class Course {
   @IsDate()
   endDate?: Date;
 
+  @Column({ name: 'progress_pct', type: 'int', default: 0 })
+  @IsInt()
+  @Min(0)
+  @Max(100)
+  progressPct: number;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
@@ -174,7 +181,7 @@ export class Course {
 
   @OneToMany(() => Schedule, (schedule) => schedule.course, {
     eager: true,
-    cascade: ['insert'],
+    cascade: ['insert', 'update'],
   })
   schedules: Schedule[];
 

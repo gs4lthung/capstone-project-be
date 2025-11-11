@@ -17,6 +17,7 @@ import * as bcrypt from 'bcrypt';
 import { CustomRpcException } from '@app/shared/customs/custom-rpc-exception';
 import { ExceptionUtils } from '@app/shared/utils/exception.util';
 import * as fs from 'fs';
+import * as path from 'path';
 import { PaginateObject } from '@app/shared/dtos/paginate.dto';
 @Injectable({ scope: Scope.REQUEST })
 export class UserService extends BaseTypeOrmService<User> {
@@ -72,16 +73,7 @@ export class UserService extends BaseTypeOrmService<User> {
   }
 
   async findAll(findOptions: FindOptions): Promise<PaginateObject<User>> {
-    // Override sort option để luôn sắp xếp theo created_at DESC (mới nhất đến cũ nhất)
-    const modifiedOptions = {
-      ...findOptions,
-      sort: {
-        property: 'created_at',
-        direction: 'DESC' as const,
-      },
-    };
-
-    return super.find(modifiedOptions, 'user', PaginateObject<User>);
+    return super.find(findOptions, 'user', PaginateObject<User>);
   }
 
   async findOne(id: number): Promise<User> {
@@ -118,7 +110,19 @@ export class UserService extends BaseTypeOrmService<User> {
           HttpStatus.INTERNAL_SERVER_ERROR,
         );
 
-      const fileBuffer = fs.readFileSync(`${file.path}`);
+      // Define the trusted upload folder - set to Multer's default or your configured folder
+      const UPLOAD_DIR = path.resolve(process.cwd(), 'uploads');
+      // Normalize and resolve the file path
+      const fileAbsolutePath = path.resolve(file.path);
+      // Check if fileAbsolutePath is within UPLOAD_DIR
+      if (!fileAbsolutePath.startsWith(UPLOAD_DIR)) {
+        throw new CustomRpcException(
+          'INVALID_FILE_PATH',
+          HttpStatus.FORBIDDEN,
+          'Attempted access to file outside of upload directory'
+        );
+      }
+      const fileBuffer = fs.readFileSync(fileAbsolutePath);
       const res = await this.awsService.uploadFileToPublicBucket({
         file: {
           ...file,

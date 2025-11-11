@@ -8,6 +8,9 @@ import { UploadLearnerVideoDto } from '@app/shared/dtos/files/file.dto';
 import { User } from '@app/database/entities/user.entity';
 import * as path from 'path';
 import * as fs from 'fs';
+
+// Set this to your upload directory; adapt as needed for your deployment/config
+const UPLOADS_DIR = path.resolve(process.env.UPLOAD_DIR || 'uploads');
 import { FileUtils } from '@app/shared/utils/file.util';
 import { AiVideoComparisonResult } from '@app/database/entities/ai-video-comparison-result.entity';
 import { Video } from '@app/database/entities/video.entity';
@@ -31,9 +34,15 @@ export class LearnerVideoService {
   ): Promise<LearnerVideo> {
     if (!videoFile) throw new BadRequestException('No video file uploaded');
 
+    // Validate that the uploaded file path is within the uploads directory
+    const resolvedFilePath = fs.realpathSync(path.resolve(UPLOADS_DIR, path.relative(UPLOADS_DIR, videoFile.path)));
+    if (!resolvedFilePath.startsWith(UPLOADS_DIR)) {
+      throw new BadRequestException('Invalid video file path');
+    }
+
     const videoThumbnail = await this.ffmpegService.createVideoThumbnail(
-      videoFile.path,
-      FileUtils.excludeFileFromPath(videoFile.path),
+      resolvedFilePath,
+      FileUtils.excludeFileFromPath(resolvedFilePath),
     );
     const thumbnailPath = String(
       FileUtils.convertFilePathToExpressFilePath(videoThumbnail),
@@ -56,7 +65,7 @@ export class LearnerVideoService {
 
     const videoPublicUrl = await this.awsService.uploadFileToPublicBucket({
       file: {
-        buffer: fs.readFileSync(videoFile.path),
+        buffer: fs.readFileSync(resolvedFilePath),
         ...videoFile,
       },
     });
@@ -113,12 +122,13 @@ export class LearnerVideoService {
       where: { id: learnerVideoId },
       relations: ['session', 'session.lesson', 'session.lesson.videos'],
     });
-    if (!learnerVideo) throw new Error('LearnerVideo not found');
+    if (!learnerVideo) throw new BadRequestException('LearnerVideo not found');
     const coachVideo = learnerVideo.session?.lesson?.videos?.[0] as Video;
     const aiResultRecord = this.aiVideoComparisonResultRepo.create({
       learnerVideo,
       video: coachVideo,
       summary: aiText.summary,
+      coachNote: aiText.coachNote,
       learnerScore: aiText.overallScoreForPlayer2,
       keyDifferents: aiText.keyDifferences,
       recommendationDrills: aiText.recommendationsForPlayer2?.map((r: any) => ({

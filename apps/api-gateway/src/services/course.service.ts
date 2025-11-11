@@ -46,6 +46,7 @@ import { NotificationService } from './notification.service';
 import { NotificationType } from '@app/shared/enums/notification.enum';
 import { ScheduleService } from './schedule.service';
 import { ConfigurationService } from './configuration.service';
+import { DateTimeUtils } from '@app/shared/utils/datetime.util';
 
 @Injectable({ scope: Scope.REQUEST })
 export class CourseService extends BaseTypeOrmService<Course> {
@@ -103,6 +104,41 @@ export class CourseService extends BaseTypeOrmService<Course> {
     data: CreateCourseRequestDto,
   ): Promise<CustomApiResponse<void>> {
     return await this.datasource.transaction(async (manager) => {
+      for (const s1 of data.schedules) {
+        for (const s2 of data.schedules) {
+          if (
+            s1.dayOfWeek === s2.dayOfWeek &&
+            !(
+              (DateTimeUtils.toMinutes(s1.endTime) <
+                DateTimeUtils.toMinutes(s2.startTime) &&
+                DateTimeUtils.toMinutes(s1.endTime) <
+                  DateTimeUtils.toMinutes(s2.endTime)) ||
+              (DateTimeUtils.toMinutes(s1.startTime) >
+                DateTimeUtils.toMinutes(s2.endTime) &&
+                DateTimeUtils.toMinutes(s1.startTime) >
+                  DateTimeUtils.toMinutes(s2.startTime))
+            ) &&
+            s1 !== s2
+          ) {
+            throw new BadRequestException(
+              `Lịch học bị trùng: ${s1.dayOfWeek} ${s1.startTime} - ${s1.endTime}`,
+            );
+          }
+        }
+      }
+      const courseStartDateConfig = await this.configurationService.findByKey(
+        'course_start_date_after_days_from_now',
+      );
+      if (
+        data.startDate.getTime() <
+        Date.now() +
+          Number(courseStartDateConfig.metadata.value) * 24 * 60 * 60 * 1000
+      ) {
+        throw new BadRequestException(
+          `Ngày bắt đầu khóa học phải cách ngày hiện tại ít nhất ${courseStartDateConfig.metadata.value} ngày`,
+        );
+      }
+
       const subject = await this.subjectRepository.findOne({
         where: { id: subjectId, status: SubjectStatus.PUBLISHED },
         relations: ['lessons'],
@@ -114,6 +150,19 @@ export class CourseService extends BaseTypeOrmService<Course> {
         !subject.lessons
       ) {
         throw new BadRequestException('Tài liệu khóa học chưa đầy đủ');
+      }
+
+      const scheduleLength = (data.schedules as Schedule[]).length;
+      const lessonCount = subject.lessons ? subject.lessons.length : 0;
+      if (scheduleLength > lessonCount) {
+        throw new BadRequestException(
+          `Số lượng lịch học ${scheduleLength} không thể lớn hơn số buổi học ${lessonCount}`,
+        );
+      }
+      if (lessonCount % scheduleLength !== 0) {
+        throw new BadRequestException(
+          `Số buổi học của khóa: ${lessonCount} không phù hợp với lịch đã chọn ${scheduleLength}. Ví dụ: nếu có 10 buổi học thì phải có 2 hoặc 5 lịch học`,
+        );
       }
 
       const courseEndDate = await this.calculateCourseEndDate(
@@ -129,7 +178,7 @@ export class CourseService extends BaseTypeOrmService<Course> {
           data.startDate,
           courseEndDate,
         );
-        if (isValid) {
+        if (!isValid) {
           throw new BadRequestException(
             `Lịch vào ${schedule.dayOfWeek} ${schedule.startTime} - ${schedule.endTime} bị trùng với lịch đã có`,
           );
@@ -138,6 +187,10 @@ export class CourseService extends BaseTypeOrmService<Course> {
 
       const newCourse = this.courseRepository.create({
         ...data,
+        schedules: data.schedules.map((s) => ({
+          ...s,
+          totalSessions: lessonCount / scheduleLength,
+        })) as Schedule[],
         name:
           subject.name +
           ` -  Khóa ${subject.courses ? subject.courses.length + 1 : 1}`,

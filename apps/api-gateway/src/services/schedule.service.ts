@@ -1,8 +1,10 @@
+import { Course } from '@app/database/entities/course.entity';
 import { Schedule } from '@app/database/entities/schedule.entity';
 import { User } from '@app/database/entities/user.entity';
 import { CustomApiRequest } from '@app/shared/customs/custom-api-request';
 import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
 import { CourseStatus } from '@app/shared/enums/course.enum';
+import { DateTimeUtils } from '@app/shared/utils/datetime.util';
 import { HttpStatus, Inject, Injectable, Scope } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -14,6 +16,8 @@ export class ScheduleService {
     @Inject(REQUEST) private readonly request: CustomApiRequest,
     @InjectRepository(Schedule)
     private readonly scheduleRepository: Repository<Schedule>,
+    @InjectRepository(Course)
+    private readonly courseRepository: Repository<Course>,
   ) {}
 
   async getAvailableSchedulesByCoach(): Promise<CustomApiResponse<Schedule[]>> {
@@ -45,7 +49,6 @@ export class ScheduleService {
     courseStartDate: Date,
     courseEndDate: Date,
   ): Promise<boolean> {
-    // load related course and creator; exclude rejected statuses by default
     const statuses = [
       CourseStatus.APPROVED,
       CourseStatus.READY_OPENED,
@@ -65,52 +68,52 @@ export class ScheduleService {
       relations: ['course', 'course.createdBy'],
     });
 
-    // Helpers: schedules store time-of-day like "9:00" or "17:00" (or with seconds).
-    // We compare time-of-day in minutes and course dates as date-only millis to
-    // avoid issues when parsing time-only strings with `new Date()`.
-    const parseTimeToMinutes = (v: Date | string | number) => {
-      if (v instanceof Date) return v.getHours() * 60 + v.getMinutes();
-      if (typeof v === 'number') {
-        const d = new Date(v);
-        return d.getHours() * 60 + d.getMinutes();
+    const newStartDateTs = DateTimeUtils.toDateTimestamp(courseStartDate);
+    const newEndDateTs = DateTimeUtils.toDateTimestamp(courseEndDate);
+    const newStartMinutes = DateTimeUtils.toMinutes(schedule.startTime);
+    const newEndMinutes = DateTimeUtils.toMinutes(schedule.endTime);
+
+    for (const existingSchedule of existingSchedules) {
+      const existStartDateTs = DateTimeUtils.toDateTimestamp(
+        existingSchedule.course.startDate,
+      );
+      const existEndDateTs = DateTimeUtils.toDateTimestamp(
+        existingSchedule.course.endDate,
+      );
+
+      const isStartAndEndDateConflict = !(
+        (newStartDateTs > existEndDateTs && newEndDateTs > existEndDateTs) ||
+        (newStartDateTs < existStartDateTs && newEndDateTs < existStartDateTs)
+      );
+
+      if (isStartAndEndDateConflict) {
+        console.log('Date range conflict detected');
+        const isDayOfWeekConflict =
+          existingSchedule.dayOfWeek === schedule.dayOfWeek;
+        if (isDayOfWeekConflict) {
+          console.log('Day of week conflict detected');
+          const existStartMinutes = DateTimeUtils.toMinutes(
+            existingSchedule.startTime,
+          );
+          const existEndMinutes = DateTimeUtils.toMinutes(
+            existingSchedule.endTime,
+          );
+
+          const isTimeConflict = !(
+            (newStartMinutes > existEndMinutes &&
+              newEndMinutes > existEndMinutes) ||
+            (newStartMinutes < existStartMinutes &&
+              newEndMinutes < existStartMinutes)
+          );
+
+          if (isTimeConflict) {
+            console.log('Time conflict detected');
+            return false;
+          }
+        }
       }
-      // string like "9:00" or "09:00:00"
-      const parts = String(v)
-        .split(':')
-        .map((p) => parseInt(p, 10));
-      const h = Number.isFinite(parts[0]) ? parts[0] : 0;
-      const m = parts.length > 1 && Number.isFinite(parts[1]) ? parts[1] : 0;
-      return h * 60 + m;
-    };
-
-    const toDateOnlyMillis = (v: Date | string | number) => {
-      const d = v instanceof Date ? new Date(v) : new Date(String(v));
-      d.setHours(0, 0, 0, 0);
-      return d.getTime();
-    };
-
-    const newStart = parseTimeToMinutes(schedule.startTime);
-    const newEnd = parseTimeToMinutes(schedule.endTime);
-    const courseStart = toDateOnlyMillis(courseStartDate);
-    const courseEnd = toDateOnlyMillis(courseEndDate);
-
-    for (const existing of existingSchedules) {
-      // skip self when updating
-      if (schedule.id && existing.id === schedule.id) continue;
-
-      if (!existing.course) continue; // defensive
-
-      const exStart = parseTimeToMinutes(existing.startTime);
-      const exEnd = parseTimeToMinutes(existing.endTime);
-      const exCourseStart = toDateOnlyMillis(existing.course.startDate);
-      const exCourseEnd = toDateOnlyMillis(existing.course.endDate);
-
-      const timesOverlap = newStart < exEnd && newEnd > exStart;
-      const courseDatesOverlap =
-        courseStart <= exCourseEnd && courseEnd >= exCourseStart;
-
-      if (timesOverlap && courseDatesOverlap) return true;
     }
-    return false;
+
+    return true;
   }
 }

@@ -16,6 +16,8 @@
     "seed:prod": "node dist/libs/database/src/seeds/seed.js",
     "seed:achievements": "ts-node -r tsconfig-paths/register libs/database/src/seeds/seed-achievements-only.ts",
     "seed:learner-achievements": "ts-node -r tsconfig-paths/register libs/database/src/seeds/seed-learner-achievements-only.ts",
+    "git:push": "git add . && git commit -m \"$(date +'%Y-%m-%d %H:%M:%S')\" && git push",
+    "docker": "docker build -t capstone-be . && docker tag capstone-be lthung0412/capstone-be && docker push lthung0412/capstone-be ",
     "build": "nest build && npm run copy:templates",
     "build:database": "npx tsc -p ./libs/database/tsconfig.lib.json",
     "copy:templates": "node scripts/copy-templates.js",
@@ -76,7 +78,7 @@
     "socket.io": "^4.8.1",
     "streamifier": "^0.1.1",
     "twilio": "^5.10.4",
-    "typeorm": "^0.3.25",
+    "typeorm": "^0.3.27",
     "uninstall": "^0.0.0"
   },
   "devDependencies": {

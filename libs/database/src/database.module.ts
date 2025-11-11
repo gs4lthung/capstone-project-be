@@ -22,7 +22,6 @@ import { LearnerAchievement } from './entities/learner-achievement.entity';
 import { LearnerAnswer } from './entities/learner-answer.entity';
 import { LearnerProgress } from './entities/learner-progress.entity';
 import { LearnerVideo } from './entities/learner-video.entity';
-import { Note } from './entities/note.entity';
 import { Payment } from './entities/payment.entity';
 import { PropertyCheckAchievement } from './entities/property-check-achievement.entity';
 import { Quiz } from './entities/quiz.entity';
@@ -78,7 +77,6 @@ import { VideoConference } from './entities/video-conference.entity';
           LearnerAnswer,
           LearnerProgress,
           LearnerVideo,
-          Note,
           Notification,
           Payment,
           PropertyCheckAchievement,

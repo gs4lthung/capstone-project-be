@@ -101,12 +101,22 @@ export class FfmpegService {
       return new Error(`File not found: ${filePath}`);
     }
 
-    if (!fs.existsSync(outputDes)) {
-      fs.mkdirSync(outputDes, { recursive: true });
+    // Restrict outputDes to uploads root
+    const UPLOADS_ROOT =
+      process.env.UPLOADS_ROOT
+        ? path.resolve(process.env.UPLOADS_ROOT)
+        : path.resolve(process.cwd(), 'uploads');
+    const safeOutputDes = path.resolve(UPLOADS_ROOT, path.relative(UPLOADS_ROOT, outputDes));
+    if (!safeOutputDes.startsWith(UPLOADS_ROOT)) {
+      this.logger.error(`Invalid output destination: ${outputDes}`);
+      throw new Error('Invalid output destination');
+    }
+    if (!fs.existsSync(safeOutputDes)) {
+      fs.mkdirSync(safeOutputDes, { recursive: true });
     }
 
     const outputFileName = `${path.basename(filePath, '.mp4')}-thumbnail.png`;
-    const outputPath = path.join(outputDes, outputFileName);
+    const outputPath = path.join(safeOutputDes, outputFileName);
 
     await new Promise((resolve, reject) => {
       const ffmpeg = spawn('ffmpeg', [

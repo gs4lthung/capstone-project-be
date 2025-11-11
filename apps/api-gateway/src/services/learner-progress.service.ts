@@ -2,7 +2,10 @@ import { LearnerProgress } from '@app/database/entities/learner-progress.entity'
 import { User } from '@app/database/entities/user.entity';
 import { CustomApiRequest } from '@app/shared/customs/custom-api-request';
 import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
+import { PaginateObject } from '@app/shared/dtos/paginate.dto';
 import { UserRole } from '@app/shared/enums/user.enum';
+import { BaseTypeOrmService } from '@app/shared/helpers/typeorm.helper';
+import { FindOptions } from '@app/shared/interfaces/find-options.interface';
 import {
   BadRequestException,
   HttpStatus,
@@ -15,12 +18,24 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
 @Injectable({ scope: Scope.REQUEST })
-export class LearnerProgressService {
+export class LearnerProgressService extends BaseTypeOrmService<LearnerProgress> {
   constructor(
     @Inject(REQUEST) private readonly request: CustomApiRequest,
     @InjectRepository(LearnerProgress)
     private readonly learnerProgressRepository: Repository<LearnerProgress>,
-  ) {}
+  ) {
+    super(learnerProgressRepository);
+  }
+
+  async findAll(
+    findOptions: FindOptions,
+  ): Promise<PaginateObject<LearnerProgress>> {
+    return super.find(
+      findOptions,
+      'learnerProgress',
+      PaginateObject<LearnerProgress>,
+    );
+  }
 
   async getProgressForCourse(
     courseId: number,

@@ -20,6 +20,8 @@ import {
 } from '@app/shared/enums/payment.enum';
 import { Wallet } from '@app/database/entities/wallet.entity';
 import { WalletTransaction } from '@app/database/entities/wallet-transaction.entity';
+import { SessionStatus } from '@app/shared/enums/session.enum';
+import { Session } from '@app/database/entities/session.entity';
 
 @Injectable()
 export class CronService {
@@ -53,7 +55,7 @@ export class CronService {
       const courses = await this.courseRepository.find({
         where: { status: In([CourseStatus.FULL, CourseStatus.READY_OPENED]) },
         withDeleted: false,
-        relations: ['enrollments', 'createdBy'],
+        relations: ['enrollments', 'createdBy', 'sessions'],
       });
 
       const checkCourseBeforeDays = await this.checkExistAndCreateDefaultConfig(
@@ -73,7 +75,6 @@ export class CronService {
           Date.now()
         ) {
           this.logger.log(`Start course ${course.id}`);
-          let courseTotalEarnings = 0;
           course.status = CourseStatus.ON_GOING;
           for (const enrollment of course.enrollments) {
             enrollment.status = EnrollmentStatus.LEARNING;
@@ -87,8 +88,6 @@ export class CronService {
             });
             await manager.getRepository(LearnerProgress).save(learnerProgress);
 
-            courseTotalEarnings += enrollment.paymentAmount;
-
             await this.notificationService.sendNotification({
               userId: enrollment.user.id,
               title: 'Khởi động khóa học',
@@ -97,22 +96,12 @@ export class CronService {
               type: NotificationType.INFO,
             });
           }
-
-          const platformFeeConfig = await this.checkExistAndCreateDefaultConfig(
-            {
-              key: 'platform_fee_per_percentage',
-              value: '10',
-              dataType: 'number',
-              description: 'Platform fee percentage per transaction',
-            },
-          );
-
-          const platformFeePercentage = Number(platformFeeConfig.value);
-          const platformFeeAmount =
-            (courseTotalEarnings * (100 - platformFeePercentage)) / 100;
-          courseTotalEarnings -= platformFeeAmount;
-          course.totalEarnings = courseTotalEarnings;
           await manager.getRepository(Course).save(course);
+
+          for (const session of course.sessions) {
+            session.status = SessionStatus.SCHEDULED;
+            await manager.getRepository(Session).save(session);
+          }
 
           await this.notificationService.sendNotification({
             userId: course.createdBy.id,
@@ -141,7 +130,7 @@ export class CronService {
           ]),
         },
         withDeleted: false,
-        relations: ['createdBy', 'enrollments', 'enrollments.user'],
+        relations: ['createdBy', 'enrollments', 'enrollments.user', 'sessions'],
       });
 
       const checkCourseBeforeDays = await this.checkExistAndCreateDefaultConfig(
@@ -173,6 +162,11 @@ export class CronService {
             case CourseStatus.REJECTED:
               cancellingReason = 'Khóa học bị từ chối phê duyệt.';
               break;
+          }
+
+          for (const session of course.sessions) {
+            session.status = SessionStatus.CANCELLED;
+            await manager.getRepository(Session).save(session);
           }
 
           course.status = CourseStatus.CANCELLED;
