@@ -111,6 +111,8 @@ import { AttendanceService } from './services/attendance.service';
 import { EnrollmentController } from './controllers/enrollment.controller';
 import { ScheduleService } from './services/schedule.service';
 import { ScheduleController } from './controllers/schedule.controller';
+import { PlatformAnalysisService } from './services/platform-analysis.service';
+import { PlatformAnalysisController } from './controllers/platform-analysis.controller';
 
 @Module({
   imports: [
@@ -239,6 +241,7 @@ import { ScheduleController } from './controllers/schedule.controller';
     AttendanceController,
     ScheduleController,
     EnrollmentController,
+    PlatformAnalysisController,
   ],
   providers: [
     AppService,
@@ -271,6 +274,7 @@ import { ScheduleController } from './controllers/schedule.controller';
     StudentAnalysisService,
     ScheduleService,
     AttendanceService,
+    PlatformAnalysisService,
   ],
 })
 export class AppModule {}
