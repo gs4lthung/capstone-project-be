@@ -63,6 +63,36 @@ export class LessonController {
     );
   }
 
+  @Get('courses/:id')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiOperation({
+    tags: ['Lessons'],
+    summary: 'Get all lessons by course id',
+    description: 'Retrieve a list of all available lessons by course id',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Danh sách các bài học theo khóa học',
+  })
+  @UseGuards(AuthGuard)
+  async findAllByCourseId(
+    @PaginationParams()
+    pagination: Pagination,
+    @SortingParams() sort: Sorting,
+    @FilteringParams() filter: Filtering,
+    @Param('id') id: number,
+  ) {
+    return await this.lessonService.findAllBySubjectId(
+      {
+        pagination,
+        sort,
+        filter,
+      } as FindOptions,
+      id,
+    );
+  }
+
   @Post('subjects/:id')
   @HttpCode(HttpStatus.CREATED)
   @ApiBearerAuth()
