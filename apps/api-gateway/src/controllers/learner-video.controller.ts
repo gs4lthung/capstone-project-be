@@ -67,6 +67,13 @@ export class LearnerVideoController {
     return this.learnerVideoService.findAll({ lessonId, sessionId, userId });
   }
 
+  @Get('user/:userId')
+  @UseGuards(AuthGuard, RoleGuard)
+  @CheckRoles(UserRole.LEARNER)
+  async getLearnerVideosByUser(@Param('userId') userId: number) {
+    return this.learnerVideoService.findAll({ userId });
+  }
+
   @Get(':id')
   @UseGuards(AuthGuard, RoleGuard)
   @CheckRoles(UserRole.COACH)
