@@ -66,7 +66,7 @@ export class VideoService {
       let normalizedPath;
       try {
         normalizedPath = fs.realpathSync(path.resolve(videoFile.path));
-      } catch (err) {
+      } catch {
         throw new BadRequestException('Invalid uploaded file path');
       }
       if (!normalizedPath.startsWith(UPLOAD_ROOT)) {

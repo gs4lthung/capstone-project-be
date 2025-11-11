@@ -294,6 +294,12 @@ export class SessionService extends BaseTypeOrmService<Session> {
           status: SessionStatus.COMPLETED,
         },
       });
+
+      const progressPct = Math.floor((completedSessions / totalSessions) * 100);
+      await manager.getRepository(Course).update(course.id, {
+        progressPct: progressPct,
+      });
+
       if (totalSessions === completedSessions) {
         await manager.getRepository(Course).update(course.id, {
           status: CourseStatus.COMPLETED,
