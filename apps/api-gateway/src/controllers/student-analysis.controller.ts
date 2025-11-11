@@ -8,22 +8,16 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { StudentAnalysisService } from '../services/student-analysis.service';
-import {
-  CoachMonthlyCourseRequestDto,
-  CoachMonthlyCourseResponseDto,
-  CoachMonthlyLearnerRequestDto,
-  CoachMonthlyLearnerResponseDto,
-  CoachMonthlyRevenueRequestDto,
-  CoachMonthlyRevenueResponseDto,
-  CoachMonthlySessionRequestDto,
-  CoachMonthlySessionResponseDto,
-} from '@app/shared/dtos/coaches/coach.dto';
 import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
 import { CheckRoles } from '@app/shared/decorators/check-roles.decorator';
 import { UserRole } from '@app/shared/enums/user.enum';
 import { AuthGuard } from '../guards/auth.guard';
 import { RoleGuard } from '../guards/role.guard';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import {
+  MonthlyRequestDto,
+  MonthlyResponseDto,
+} from '@app/shared/dtos/coaches/coach.dto';
 
 @Controller('student-analysis')
 export class StudentAnalysisController {
@@ -43,8 +37,8 @@ export class StudentAnalysisController {
   @UseGuards(AuthGuard, RoleGuard)
   async getMonthlyRevenue(
     @Param('userId') userId: number,
-    @Body() data: CoachMonthlyRevenueRequestDto,
-  ): Promise<CustomApiResponse<CoachMonthlyRevenueResponseDto>> {
+    @Body() data: MonthlyRequestDto,
+  ): Promise<CustomApiResponse<MonthlyResponseDto>> {
     return this.studentAnalysisService.getMonthlyRevenue(userId, data);
   }
 
@@ -60,8 +54,8 @@ export class StudentAnalysisController {
   @UseGuards(AuthGuard, RoleGuard)
   async getMonthlyLearners(
     @Param('userId') userId: number,
-    @Body() data: CoachMonthlyLearnerRequestDto,
-  ): Promise<CustomApiResponse<CoachMonthlyLearnerResponseDto>> {
+    @Body() data: MonthlyRequestDto,
+  ): Promise<CustomApiResponse<MonthlyResponseDto>> {
     return this.studentAnalysisService.getMonthlyLearnerCount(userId, data);
   }
 
@@ -77,8 +71,8 @@ export class StudentAnalysisController {
   @UseGuards(AuthGuard, RoleGuard)
   async getMonthlyCourses(
     @Param('userId') userId: number,
-    @Body() data: CoachMonthlyCourseRequestDto,
-  ): Promise<CustomApiResponse<CoachMonthlyCourseResponseDto>> {
+    @Body() data: MonthlyRequestDto,
+  ): Promise<CustomApiResponse<MonthlyResponseDto>> {
     return this.studentAnalysisService.getMonthlyCourseCount(userId, data);
   }
 
@@ -94,8 +88,8 @@ export class StudentAnalysisController {
   @UseGuards(AuthGuard, RoleGuard)
   async getMonthlySessions(
     @Param('userId') userId: number,
-    @Body() data: CoachMonthlySessionRequestDto,
-  ): Promise<CustomApiResponse<CoachMonthlySessionResponseDto>> {
+    @Body() data: MonthlyRequestDto,
+  ): Promise<CustomApiResponse<MonthlyResponseDto>> {
     return this.studentAnalysisService.getMonthlySessionCount(userId, data);
   }
 }
