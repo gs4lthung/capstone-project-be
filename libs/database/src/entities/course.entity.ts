@@ -174,7 +174,7 @@ export class Course {
 
   @OneToMany(() => Schedule, (schedule) => schedule.course, {
     eager: true,
-    cascade: ['insert'],
+    cascade: ['insert', 'update'],
   })
   schedules: Schedule[];
 

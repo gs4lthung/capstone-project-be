@@ -102,12 +102,6 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
    * TEST AWS CONNECTION
    * ─────────────────────────────────────
    */
-  async testAws(): Promise<any> {
-    console.log('🔷 [TEST] Starting AWS connection test...');
-    const result = await this.awsService.testConnection();
-    console.log('🔷 [TEST] Result:', result);
-    return result;
-  }
 
   /**
    * CREATE EVENT COUNT ACHIEVEMENT
@@ -132,15 +126,20 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
   ): Promise<CustomApiResponse<void>> {
     console.log('🔷 [CREATE EVENT COUNT] Start');
     console.log('🔷 Data:', JSON.stringify(data, null, 2));
-    console.log('🔷 Icon file:', icon ? { 
-      filename: icon.filename, 
-      originalname: icon.originalname, 
-      mimetype: icon.mimetype, 
-      size: icon.size,
-      path: icon.path,
-      hasBuffer: !!icon.buffer, // Check có buffer không
-      bufferLength: icon.buffer?.length || 0, // Độ dài buffer
-    } : 'No icon');
+    console.log(
+      '🔷 Icon file:',
+      icon
+        ? {
+            filename: icon.filename,
+            originalname: icon.originalname,
+            mimetype: icon.mimetype,
+            size: icon.size,
+            path: icon.path,
+            hasBuffer: !!icon.buffer, // Check có buffer không
+            bufferLength: icon.buffer?.length || 0, // Độ dài buffer
+          }
+        : 'No icon',
+    );
 
     // Upload icon lên S3 nếu có file
     let iconUrl: string | undefined = undefined;
@@ -153,20 +152,26 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
             ...icon,
           },
         });
-        
+
         // Timeout sau 10 giây
         const timeoutPromise = new Promise<never>((_, reject) => {
-          setTimeout(() => reject(new Error('AWS S3 upload timeout after 10s')), 10000);
+          setTimeout(
+            () => reject(new Error('AWS S3 upload timeout after 10s')),
+            10000,
+          );
         });
-        
-        iconUrl = await Promise.race([uploadPromise, timeoutPromise])
-          .then((res) => {
+
+        iconUrl = await Promise.race([uploadPromise, timeoutPromise]).then(
+          (res) => {
             console.log('🔷 [AWS] Upload success:', res.url);
             return res.url;
-          });
+          },
+        );
       } catch (error) {
         console.error('🔷 [AWS] Upload failed:', error.message);
-        console.warn('⚠️  [WARNING] Skipping icon upload, creating achievement without icon');
+        console.warn(
+          '⚠️  [WARNING] Skipping icon upload, creating achievement without icon',
+        );
         // KHÔNG throw error, chỉ warning và tiếp tục
         // iconUrl sẽ là undefined
       }
@@ -214,19 +219,25 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
             ...icon,
           },
         });
-        
+
         const timeoutPromise = new Promise<never>((_, reject) => {
-          setTimeout(() => reject(new Error('AWS S3 upload timeout after 10s')), 10000);
+          setTimeout(
+            () => reject(new Error('AWS S3 upload timeout after 10s')),
+            10000,
+          );
         });
-        
-        iconUrl = await Promise.race([uploadPromise, timeoutPromise])
-          .then((res) => {
+
+        iconUrl = await Promise.race([uploadPromise, timeoutPromise]).then(
+          (res) => {
             console.log('🔷 [AWS] Upload success:', res.url);
             return res.url;
-          });
+          },
+        );
       } catch (error) {
         console.error('🔷 [AWS] Upload failed:', error.message);
-        console.warn('⚠️  [WARNING] Skipping icon upload, creating achievement without icon');
+        console.warn(
+          '⚠️  [WARNING] Skipping icon upload, creating achievement without icon',
+        );
       }
     }
 
@@ -275,19 +286,25 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
             ...icon,
           },
         });
-        
+
         const timeoutPromise = new Promise<never>((_, reject) => {
-          setTimeout(() => reject(new Error('AWS S3 upload timeout after 10s')), 10000);
+          setTimeout(
+            () => reject(new Error('AWS S3 upload timeout after 10s')),
+            10000,
+          );
         });
-        
-        iconUrl = await Promise.race([uploadPromise, timeoutPromise])
-          .then((res) => {
+
+        iconUrl = await Promise.race([uploadPromise, timeoutPromise]).then(
+          (res) => {
             console.log('🔷 [AWS] Upload success:', res.url);
             return res.url;
-          });
+          },
+        );
       } catch (error) {
         console.error('🔷 [AWS] Upload failed:', error.message);
-        console.warn('⚠️  [WARNING] Skipping icon upload, creating achievement without icon');
+        console.warn(
+          '⚠️  [WARNING] Skipping icon upload, creating achievement without icon',
+        );
       }
     }
 
@@ -340,8 +357,12 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
         direction: 'DESC' as const,
       },
     };
-    
-    return super.find(modifiedOptions, 'achievement', PaginateObject<Achievement>);
+
+    return super.find(
+      modifiedOptions,
+      'achievement',
+      PaginateObject<Achievement>,
+    );
   }
 
   /**
@@ -427,17 +448,22 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
             ...icon,
           },
         });
-        
+
         const timeoutPromise = new Promise<never>((_, reject) => {
-          setTimeout(() => reject(new Error('AWS S3 upload timeout after 10s')), 10000);
+          setTimeout(
+            () => reject(new Error('AWS S3 upload timeout after 10s')),
+            10000,
+          );
         });
-        
-        const iconUrl = await Promise.race([uploadPromise, timeoutPromise])
-          .then((res) => {
-            console.log('🔷 [AWS] Upload success:', res.url);
-            return res.url;
-          });
-        
+
+        const iconUrl = await Promise.race([
+          uploadPromise,
+          timeoutPromise,
+        ]).then((res) => {
+          console.log('🔷 [AWS] Upload success:', res.url);
+          return res.url;
+        });
+
         data.iconUrl = iconUrl; // Override iconUrl trong data
       } catch (error) {
         console.error('🔷 [AWS] Upload failed:', error.message);
@@ -494,17 +520,22 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
             ...icon,
           },
         });
-        
+
         const timeoutPromise = new Promise<never>((_, reject) => {
-          setTimeout(() => reject(new Error('AWS S3 upload timeout after 10s')), 10000);
+          setTimeout(
+            () => reject(new Error('AWS S3 upload timeout after 10s')),
+            10000,
+          );
         });
-        
-        const iconUrl = await Promise.race([uploadPromise, timeoutPromise])
-          .then((res) => {
-            console.log('🔷 [AWS] Upload success:', res.url);
-            return res.url;
-          });
-        
+
+        const iconUrl = await Promise.race([
+          uploadPromise,
+          timeoutPromise,
+        ]).then((res) => {
+          console.log('🔷 [AWS] Upload success:', res.url);
+          return res.url;
+        });
+
         data.iconUrl = iconUrl;
       } catch (error) {
         console.error('🔷 [AWS] Upload failed:', error.message);
@@ -558,24 +589,31 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
     // Upload icon mới lên S3 nếu có file
     if (icon) {
       try {
-        console.log('🔷 [AWS] Starting upload to S3 (Update Property Check)...');
+        console.log(
+          '🔷 [AWS] Starting upload to S3 (Update Property Check)...',
+        );
         const uploadPromise = this.awsService.uploadFileToPublicBucket({
           file: {
             buffer: icon.buffer,
             ...icon,
           },
         });
-        
+
         const timeoutPromise = new Promise<never>((_, reject) => {
-          setTimeout(() => reject(new Error('AWS S3 upload timeout after 10s')), 10000);
+          setTimeout(
+            () => reject(new Error('AWS S3 upload timeout after 10s')),
+            10000,
+          );
         });
-        
-        const iconUrl = await Promise.race([uploadPromise, timeoutPromise])
-          .then((res) => {
-            console.log('🔷 [AWS] Upload success:', res.url);
-            return res.url;
-          });
-        
+
+        const iconUrl = await Promise.race([
+          uploadPromise,
+          timeoutPromise,
+        ]).then((res) => {
+          console.log('🔷 [AWS] Upload success:', res.url);
+          return res.url;
+        });
+
         data.iconUrl = iconUrl;
       } catch (error) {
         console.error('🔷 [AWS] Upload failed:', error.message);
@@ -630,7 +668,7 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
      * Vì foreign key constraint không có ON DELETE CASCADE,
      * phải xóa tất cả records liên quan trước
      */
-    
+
     // 1. Xóa tất cả learner_achievements (achievements đã earned)
     await this.learnerAchievementRepository.delete({
       achievement: { id },

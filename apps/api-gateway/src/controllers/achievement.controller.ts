@@ -107,18 +107,6 @@ export class AchievementController {
    * ────────────────────────────────────────────
    * GET /api/v1/achievements/test-aws
    */
-  @Get('test-aws')
-  @HttpCode(HttpStatus.OK)
-  @ApiBearerAuth()
-  @ApiOperation({
-    summary: 'Test AWS S3 connection',
-    description: 'Test if AWS credentials are working',
-  })
-  @CheckRoles(UserRole.ADMIN)
-  @UseGuards(AuthGuard, RoleGuard)
-  async testAws() {
-    return this.achievementService.testAws();
-  }
 
   /**
    * CREATE EVENT COUNT ACHIEVEMENT
@@ -171,7 +159,7 @@ export class AchievementController {
    * → Swagger sẽ hiển thị UI upload file
    */
   @ApiConsumes('multipart/form-data')
-  
+
   /**
    * @ApiBody()
    * → Định nghĩa schema cho request body với file upload
@@ -183,19 +171,22 @@ export class AchievementController {
       properties: {
         name: { type: 'string', description: 'Tên achievement' },
         description: { type: 'string', description: 'Mô tả achievement' },
-        eventName: { type: 'string', description: 'Tên sự kiện (VD: LESSON_COMPLETED)' },
+        eventName: {
+          type: 'string',
+          description: 'Tên sự kiện (VD: LESSON_COMPLETED)',
+        },
         targetCount: { type: 'number', description: 'Số lần cần đạt' },
         isActive: { type: 'boolean', description: 'Trạng thái active' },
-        icon: { 
-          type: 'string', 
+        icon: {
+          type: 'string',
           format: 'binary',
-          description: 'File icon (upload ảnh từ device)' 
+          description: 'File icon (upload ảnh từ device)',
         },
       },
       required: ['name', 'eventName', 'targetCount'],
     },
   })
-  
+
   /**
    * @ApiOperation()
    * → Mô tả endpoint trong Swagger documentation
@@ -249,17 +240,17 @@ export class AchievementController {
    * → File sẽ được extract và truyền vào @UploadedFile()
    */
   @UseInterceptors(FileInterceptor('icon'))
-  
+
   /**
    * async createEventCount(@Body() data, @UploadedFile() icon)
-   * 
+   *
    * @Body() decorator:
    * → Extract request body (form-data fields) và validate theo DTO
-   * 
+   *
    * @UploadedFile() decorator:
    * → Extract file từ form-data field 'icon'
    * → File optional - có thể không upload
-   * 
+   *
    * Request format: multipart/form-data
    * - name: string
    * - description: string
@@ -294,13 +285,16 @@ export class AchievementController {
       properties: {
         name: { type: 'string', description: 'Tên achievement' },
         description: { type: 'string', description: 'Mô tả achievement' },
-        eventName: { type: 'string', description: 'Tên sự kiện (VD: DAILY_LOGIN)' },
+        eventName: {
+          type: 'string',
+          description: 'Tên sự kiện (VD: DAILY_LOGIN)',
+        },
         targetDays: { type: 'number', description: 'Số ngày streak cần đạt' },
         isActive: { type: 'boolean', description: 'Trạng thái active' },
-        icon: { 
-          type: 'string', 
+        icon: {
+          type: 'string',
           format: 'binary',
-          description: 'File icon (upload ảnh từ device)' 
+          description: 'File icon (upload ảnh từ device)',
         },
       },
       required: ['name', 'eventName', 'targetDays'],
@@ -343,14 +337,20 @@ export class AchievementController {
       properties: {
         name: { type: 'string', description: 'Tên achievement' },
         description: { type: 'string', description: 'Mô tả achievement' },
-        propertyName: { type: 'string', description: 'Tên thuộc tính (VD: averageScore)' },
-        comparisonOperator: { type: 'string', description: 'Toán tử so sánh (VD: >=, <=, ==)' },
+        propertyName: {
+          type: 'string',
+          description: 'Tên thuộc tính (VD: averageScore)',
+        },
+        comparisonOperator: {
+          type: 'string',
+          description: 'Toán tử so sánh (VD: >=, <=, ==)',
+        },
         targetValue: { type: 'string', description: 'Giá trị mục tiêu' },
         isActive: { type: 'boolean', description: 'Trạng thái active' },
-        icon: { 
-          type: 'string', 
+        icon: {
+          type: 'string',
           format: 'binary',
-          description: 'File icon (upload ảnh từ device)' 
+          description: 'File icon (upload ảnh từ device)',
         },
       },
       required: ['name', 'propertyName', 'comparisonOperator', 'targetValue'],
@@ -446,7 +446,8 @@ export class AchievementController {
     name: 'filter',
     required: false,
     type: String,
-    description: 'Filter by field: {field}_{rule}_{value}. Rules: eq, neq. Multiple filters separated by comma. Examples: type_eq_EVENT_COUNT, isActive_eq_true, type_eq_STREAK,isActive_eq_true',
+    description:
+      'Filter by field: {field}_{rule}_{value}. Rules: eq, neq. Multiple filters separated by comma. Examples: type_eq_EVENT_COUNT, isActive_eq_true, type_eq_STREAK,isActive_eq_true',
     example: 'type_eq_EVENT_COUNT',
   })
   @ApiOperation({
@@ -461,15 +462,15 @@ export class AchievementController {
 
   /**
    * async findAll(@Query() page, @Query() pageSize, @FilteringParams() filter)
-   * 
+   *
    * @Query() decorator:
    * → Extract query parameters từ URL
    * → VD: /achievements?page=2&pageSize=20&filter=type_eq_EVENT_COUNT
-   * 
+   *
    * @FilteringParams() decorator:
    * → Parse filter string theo format: {field}_{rule}_{value}
    * → VD: type_eq_EVENT_COUNT → { property: 'type', rule: 'eq', value: 'EVENT_COUNT' }
-   * 
+   *
    * Filter examples:
    * - ?filter=type_eq_EVENT_COUNT → Lọc achievements kiểu EVENT_COUNT
    * - ?filter=isActive_eq_true → Lọc achievements đang active
@@ -785,10 +786,10 @@ export class AchievementController {
         eventName: { type: 'string', description: 'Tên sự kiện' },
         targetCount: { type: 'number', description: 'Số lần cần đạt' },
         isActive: { type: 'boolean', description: 'Trạng thái active' },
-        icon: { 
-          type: 'string', 
+        icon: {
+          type: 'string',
           format: 'binary',
-          description: 'File icon mới (upload ảnh từ device)' 
+          description: 'File icon mới (upload ảnh từ device)',
         },
       },
     },
@@ -836,10 +837,10 @@ export class AchievementController {
         eventName: { type: 'string', description: 'Tên sự kiện' },
         targetDays: { type: 'number', description: 'Số ngày streak cần đạt' },
         isActive: { type: 'boolean', description: 'Trạng thái active' },
-        icon: { 
-          type: 'string', 
+        icon: {
+          type: 'string',
           format: 'binary',
-          description: 'File icon mới (upload ảnh từ device)' 
+          description: 'File icon mới (upload ảnh từ device)',
         },
       },
     },
@@ -883,10 +884,10 @@ export class AchievementController {
         comparisonOperator: { type: 'string', description: 'Toán tử so sánh' },
         targetValue: { type: 'string', description: 'Giá trị mục tiêu' },
         isActive: { type: 'boolean', description: 'Trạng thái active' },
-        icon: { 
-          type: 'string', 
+        icon: {
+          type: 'string',
           format: 'binary',
-          description: 'File icon mới (upload ảnh từ device)' 
+          description: 'File icon mới (upload ảnh từ device)',
         },
       },
     },
