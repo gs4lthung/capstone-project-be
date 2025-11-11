@@ -42,4 +42,4 @@ EXPOSE 8386
 USER node
 
 # Run the API gateway directly
-CMD ["node", "dist/apps/api-gateway/main"]
+CMD ["node", "dist/apps/api-gateway/src/main"]

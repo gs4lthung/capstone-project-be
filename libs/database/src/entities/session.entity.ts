@@ -13,7 +13,6 @@ import {
 } from 'typeorm';
 
 import { Course } from './course.entity';
-import { Note } from './note.entity';
 import { Attendance } from './attendance.entity';
 import { QuizAttempt } from './quiz_attempt.entity';
 import { WalletTransaction } from './wallet-transaction.entity';
@@ -71,7 +70,7 @@ export class Session {
   @Column({
     type: 'enum',
     enum: SessionStatus,
-    default: SessionStatus.SCHEDULED,
+    default: SessionStatus.PENDING,
   })
   status: SessionStatus;
 
@@ -90,9 +89,6 @@ export class Session {
   @ManyToOne(() => Course, (course) => course.sessions, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'course_id' })
   course: Course;
-
-  @OneToMany(() => Note, (note) => note.session)
-  notes: Note[];
 
   @OneToMany(() => Attendance, (attendance) => attendance.session)
   attendances: Attendance[];

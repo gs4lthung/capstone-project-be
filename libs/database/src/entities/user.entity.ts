@@ -32,7 +32,6 @@ import { VideoConferencePresenceLog } from './video-conference-presence-log.enti
 import { Wallet } from './wallet.entity';
 import { Learner } from './learner.entity';
 import { Course } from './course.entity';
-import { Note } from './note.entity';
 import { AchievementProgress } from './achievement-progress.entity';
 import { Achievement } from './achievement.entity';
 import { Configuration } from './configuration.entity';
@@ -166,9 +165,6 @@ export class User {
   @OneToMany(() => Course, (course) => course.createdBy)
   courses: Course[];
 
-  @OneToMany(() => Note, (note) => note.createdBy)
-  noteTaken: Note[];
-
   @OneToMany(
     () => AchievementProgress,
     (achievementProgress) => achievementProgress.user,
@@ -204,9 +200,6 @@ export class User {
 
   @OneToMany(() => Feedback, (feedback) => feedback.receivedBy)
   receivedFeedback: Feedback[];
-
-  @OneToMany(() => Note, (note) => note.receivedBy)
-  noteBeingTaken: Note[];
 
   @OneToMany(() => Attendance, (attendance) => attendance.user)
   attendances: Attendance[];
