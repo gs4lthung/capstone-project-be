@@ -7,7 +7,7 @@ import {
 } from 'typeorm';
 import { Course } from './course.entity';
 import { ScheduleDayOfWeek } from '@app/shared/enums/schedule.enum';
-import { IsEnum } from 'class-validator';
+import { IsEnum, IsInt, Min } from 'class-validator';
 
 @Entity('schedules')
 export class Schedule {
@@ -27,6 +27,11 @@ export class Schedule {
 
   @Column({ name: 'end_time', type: 'time' })
   endTime: string;
+
+  @Column({ name: 'total_sessions', type: 'int', default: 0 })
+  @IsInt()
+  @Min(0)
+  totalSessions: number;
 
   @ManyToOne(() => Course, (course) => course.schedules, {
     onDelete: 'CASCADE',
