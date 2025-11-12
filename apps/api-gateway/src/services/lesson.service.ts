@@ -44,7 +44,6 @@ export class LessonService extends BaseTypeOrmService<Lesson> {
     findOptions: FindOptions,
     subjectId: number,
   ): Promise<PaginateObject<Lesson>> {
-    // Add filter for subject.id
     const subjectFilter: Filtering = {
       property: 'subject.id',
       rule: 'eq',
