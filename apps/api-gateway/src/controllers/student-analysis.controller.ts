@@ -1,5 +1,4 @@
 import {
-  Body,
   Controller,
   Get,
   HttpCode,
@@ -14,10 +13,7 @@ import { UserRole } from '@app/shared/enums/user.enum';
 import { AuthGuard } from '../guards/auth.guard';
 import { RoleGuard } from '../guards/role.guard';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
-import {
-  MonthlyRequestDto,
-  MonthlyResponseDto,
-} from '@app/shared/dtos/coaches/coach.dto';
+import { MonthlyResponseDto } from '@app/shared/dtos/coaches/coach.dto';
 
 @Controller('student-analysis')
 export class StudentAnalysisController {
@@ -37,9 +33,13 @@ export class StudentAnalysisController {
   @UseGuards(AuthGuard, RoleGuard)
   async getMonthlyRevenue(
     @Param('userId') userId: number,
-    @Body() data: MonthlyRequestDto,
+    @Param('month') month: number,
+    @Param('year') year: number,
   ): Promise<CustomApiResponse<MonthlyResponseDto>> {
-    return this.studentAnalysisService.getMonthlyRevenue(userId, data);
+    return this.studentAnalysisService.getMonthlyRevenue(userId, {
+      month,
+      year,
+    });
   }
 
   @Get(':userId/learners/monthly')
@@ -54,9 +54,13 @@ export class StudentAnalysisController {
   @UseGuards(AuthGuard, RoleGuard)
   async getMonthlyLearners(
     @Param('userId') userId: number,
-    @Body() data: MonthlyRequestDto,
+    @Param('month') month: number,
+    @Param('year') year: number,
   ): Promise<CustomApiResponse<MonthlyResponseDto>> {
-    return this.studentAnalysisService.getMonthlyLearnerCount(userId, data);
+    return this.studentAnalysisService.getMonthlyLearnerCount(userId, {
+      month,
+      year,
+    });
   }
 
   @Get(':userId/courses/monthly')
@@ -71,9 +75,13 @@ export class StudentAnalysisController {
   @UseGuards(AuthGuard, RoleGuard)
   async getMonthlyCourses(
     @Param('userId') userId: number,
-    @Body() data: MonthlyRequestDto,
+    @Param('month') month: number,
+    @Param('year') year: number,
   ): Promise<CustomApiResponse<MonthlyResponseDto>> {
-    return this.studentAnalysisService.getMonthlyCourseCount(userId, data);
+    return this.studentAnalysisService.getMonthlyCourseCount(userId, {
+      month,
+      year,
+    });
   }
 
   @Get(':userId/sessions/monthly')
@@ -88,8 +96,12 @@ export class StudentAnalysisController {
   @UseGuards(AuthGuard, RoleGuard)
   async getMonthlySessions(
     @Param('userId') userId: number,
-    @Body() data: MonthlyRequestDto,
+    @Param('month') month: number,
+    @Param('year') year: number,
   ): Promise<CustomApiResponse<MonthlyResponseDto>> {
-    return this.studentAnalysisService.getMonthlySessionCount(userId, data);
+    return this.studentAnalysisService.getMonthlySessionCount(userId, {
+      month,
+      year,
+    });
   }
 }

@@ -20,7 +20,7 @@ export const courtSeed = async (dataSource: DataSource) => {
     });
     for (const district of existingProvince.districts) {
       const newCourt = courtRepo.create({
-        name: `Sân Pickleball Quận ${district.name}`,
+        name: `Sân Pickleball ${district.name}`,
         phoneNumber: `+84${Math.floor(100000000 + Math.random() * 900000000)}`,
         pricePerHour: 250000,
         address: `123 Đường Lý Thường Kiệt, Phường 1`,
