@@ -8,8 +8,8 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Province } from './province.entity';
-import { Course } from './course.entity';
 import { Learner } from './learner.entity';
+import { Court } from './court.entity';
 
 @Entity('districts')
 export class District {
@@ -24,8 +24,8 @@ export class District {
   @JoinColumn({ name: 'province_id' })
   province: Province;
 
-  @OneToMany(() => Course, (course) => course.district)
-  courses: Course[];
+  @OneToMany(() => Court, (court) => court.district)
+  courts: Court[];
 
   @OneToMany(() => Learner, (learner) => learner.district)
   learners: Learner[];

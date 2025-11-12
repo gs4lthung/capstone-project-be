@@ -4,10 +4,8 @@ import { User } from '../entities/user.entity';
 import { Learner } from '../entities/learner.entity';
 import { Coach } from '../entities/coach.entity';
 import { Wallet } from '../entities/wallet.entity';
-import { AuthProvider } from '../entities/auth-provider.entity';
 import { PickleballLevel } from '../../../shared/src/enums/pickleball.enum';
 import { CoachVerificationStatus } from '../../../shared/src/enums/coach.enum';
-import { AuthProviderEnum } from '../../../shared/src/enums/auth.enum';
 
 export const userSeed = async (dataSource: DataSource) => {
   const userRepository = dataSource.getRepository(User);
@@ -15,7 +13,6 @@ export const userSeed = async (dataSource: DataSource) => {
   const learnerRepository = dataSource.getRepository(Learner);
   const coachRepository = dataSource.getRepository(Coach);
   const walletRepository = dataSource.getRepository(Wallet);
-  const authProviderRepository = dataSource.getRepository(AuthProvider);
 
   // Get roles
   const adminRole = await roleRepository.findOne({ where: { name: 'ADMIN' } });
@@ -35,8 +32,9 @@ export const userSeed = async (dataSource: DataSource) => {
       role: adminRole,
       password: await bcrypt.hash(process.env.ADMIN_PASSWORD || 'admin123', 10),
       isEmailVerified: true,
+      isPhoneVerified: true,
       isActive: true,
-      phoneNumber: '0901234567',
+      phoneNumber: '+84901234567',
     },
     {
       fullName: 'Huấn luyện viên Nguyễn Văn A',
@@ -44,8 +42,9 @@ export const userSeed = async (dataSource: DataSource) => {
       role: coachRole,
       password: await bcrypt.hash(process.env.COACH_PASSWORD || 'coach123', 10),
       isEmailVerified: true,
+      isPhoneVerified: true,
       isActive: true,
-      phoneNumber: '0902234567',
+      phoneNumber: '+84902234567',
     },
     {
       fullName: 'Huấn luyện viên Trần Thị B',
@@ -53,8 +52,9 @@ export const userSeed = async (dataSource: DataSource) => {
       role: coachRole,
       password: await bcrypt.hash('coach123', 10),
       isEmailVerified: true,
+      isPhoneVerified: true,
       isActive: true,
-      phoneNumber: '0903234567',
+      phoneNumber: '+84903234567',
     },
     {
       fullName: 'Học viên Lê Văn C',
@@ -65,8 +65,9 @@ export const userSeed = async (dataSource: DataSource) => {
         10,
       ),
       isEmailVerified: true,
+      isPhoneVerified: true,
       isActive: true,
-      phoneNumber: '0904234567',
+      phoneNumber: '+84904234567',
     },
     {
       fullName: 'Học viên Phạm Thị D',
@@ -74,8 +75,9 @@ export const userSeed = async (dataSource: DataSource) => {
       role: learnerRole,
       password: await bcrypt.hash('learner123', 10),
       isEmailVerified: true,
+      isPhoneVerified: true,
       isActive: true,
-      phoneNumber: '0905234567',
+      phoneNumber: '+84905234567',
     },
   ];
 
@@ -123,34 +125,6 @@ export const userSeed = async (dataSource: DataSource) => {
         learningGoal: PickleballLevel.INTERMEDIATE,
       });
       await learnerRepository.save(learner);
-    }
-  }
-
-  // Create auth providers for some users
-  const authProviders = [
-    {
-      provider: 'google',
-      providerId: 'google_123456789',
-      user: users[0],
-    },
-    {
-      provider: 'facebook',
-      providerId: 'facebook_123456789',
-      user: users[1],
-    },
-  ];
-
-  for (const authProviderData of authProviders) {
-    const user = await userRepository.findOne({
-      where: { email: authProviderData.user.email },
-    });
-    if (user) {
-      const authProvider = authProviderRepository.create({
-        provider: authProviderData.provider as AuthProviderEnum,
-        providerId: authProviderData.providerId,
-        user: user,
-      });
-      await authProviderRepository.save(authProvider);
     }
   }
 

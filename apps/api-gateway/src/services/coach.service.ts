@@ -13,8 +13,6 @@ import { Credential } from '@app/database/entities/credential.entity';
 import { CoachVerificationStatus } from '@app/shared/enums/coach.enum';
 import { RegisterCoachDto } from '@app/shared/dtos/coaches/register-coach.dto';
 import { Role } from '@app/database/entities/role.entity';
-import { AuthProvider } from '@app/database/entities/auth-provider.entity';
-import { AuthProviderEnum } from '@app/shared/enums/auth.enum';
 import { UserRole } from '@app/shared/enums/user.enum';
 import { ConfigService } from '@app/config';
 import * as bcrypt from 'bcrypt';
@@ -144,12 +142,6 @@ export class CoachService extends BaseTypeOrmService<Coach> {
       email: data.email,
       password: passwordHashed,
       role: coachRole,
-      authProviders: [
-        {
-          provider: AuthProviderEnum.LOCAL,
-          providerId: data.email,
-        } as AuthProvider,
-      ],
       emailVerificationToken,
     });
 
