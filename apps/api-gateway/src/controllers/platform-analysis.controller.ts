@@ -1,10 +1,7 @@
-import { Body, Controller, Get, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Get, HttpCode, HttpStatus, Param } from '@nestjs/common';
 import { PlatformAnalysisService } from '../services/platform-analysis.service';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
-import {
-  MonthlyRequestDto,
-  MonthlyResponseDto,
-} from '@app/shared/dtos/coaches/coach.dto';
+import { MonthlyResponseDto } from '@app/shared/dtos/coaches/coach.dto';
 import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
 
 @Controller('platform-analysis')
@@ -25,9 +22,13 @@ export class PlatformAnalysisController {
     description: 'Monthly new user registrations',
   })
   async getMonthlyNewUsers(
-    @Body() data: MonthlyRequestDto,
+    @Param('month') month: number,
+    @Param('year') year: number,
   ): Promise<CustomApiResponse<MonthlyResponseDto>> {
-    return this.platformAnalysisService.getMonthlyNewUsers(data);
+    return this.platformAnalysisService.getMonthlyNewUsers({
+      month,
+      year,
+    });
   }
 
   @Get('learner-payments/monthly')
@@ -42,9 +43,13 @@ export class PlatformAnalysisController {
     description: 'Monthly learner payments',
   })
   async getMonthlyLearnerPayments(
-    @Body() data: MonthlyRequestDto,
+    @Param('month') month: number,
+    @Param('year') year: number,
   ): Promise<CustomApiResponse<MonthlyResponseDto>> {
-    return this.platformAnalysisService.getMonthlyLearnerPayment(data);
+    return this.platformAnalysisService.getMonthlyLearnerPayment({
+      month,
+      year,
+    });
   }
 
   @Get('coach-earnings/monthly')
@@ -59,9 +64,13 @@ export class PlatformAnalysisController {
     description: 'Monthly coach earnings',
   })
   async getMonthlyCoachEarnings(
-    @Body() data: MonthlyRequestDto,
+    @Param('month') month: number,
+    @Param('year') year: number,
   ): Promise<CustomApiResponse<MonthlyResponseDto>> {
-    return this.platformAnalysisService.getMonthlyCoachSessionEarning(data);
+    return this.platformAnalysisService.getMonthlyCoachSessionEarning({
+      month,
+      year,
+    });
   }
 
   @Get('revenue/monthly')
@@ -76,8 +85,12 @@ export class PlatformAnalysisController {
     description: 'Monthly platform revenue',
   })
   async getMonthlyPlatformRevenue(
-    @Body() data: MonthlyRequestDto,
+    @Param('month') month: number,
+    @Param('year') year: number,
   ): Promise<CustomApiResponse<MonthlyResponseDto>> {
-    return this.platformAnalysisService.getMonthlyPlatformRevenue(data);
+    return this.platformAnalysisService.getMonthlyPlatformRevenue({
+      month,
+      year,
+    });
   }
 }
