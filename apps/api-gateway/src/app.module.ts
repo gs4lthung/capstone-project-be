@@ -50,6 +50,7 @@ import { PaymentService } from './services/payment.service';
 import { PaymentController } from './controllers/payment.controller';
 import { Coach } from '@app/database/entities/coach.entity';
 import { Credential } from '@app/database/entities/credential.entity';
+import { Learner } from '@app/database/entities/learner.entity';
 import { CoachController } from './controllers/coach.controller';
 import { CoachService } from './services/coach.service';
 import { Wallet } from '@app/database/entities/wallet.entity';
@@ -190,6 +191,7 @@ import { Court } from '@app/database/entities/court.entity';
       Lesson,
       Coach,
       Credential,
+      Learner,
       Wallet,
       Configuration,
       Bank,
