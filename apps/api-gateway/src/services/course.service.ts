@@ -47,6 +47,7 @@ import { NotificationType } from '@app/shared/enums/notification.enum';
 import { ScheduleService } from './schedule.service';
 import { ConfigurationService } from './configuration.service';
 import { DateTimeUtils } from '@app/shared/utils/datetime.util';
+import { Court } from '@app/database/entities/court.entity';
 
 @Injectable({ scope: Scope.REQUEST })
 export class CourseService extends BaseTypeOrmService<Course> {
@@ -74,6 +75,8 @@ export class CourseService extends BaseTypeOrmService<Course> {
     private readonly districtRepository: Repository<District>,
     private readonly configurationService: ConfigurationService,
     private readonly scheduleService: ScheduleService,
+    @InjectRepository(Court)
+    private readonly courtRepository: Repository<Court>,
   ) {
     super(courseRepository);
   }
@@ -104,6 +107,12 @@ export class CourseService extends BaseTypeOrmService<Course> {
     data: CreateCourseRequestDto,
   ): Promise<CustomApiResponse<void>> {
     return await this.datasource.transaction(async (manager) => {
+      const court = await this.courtRepository.findOne({
+        where: { id: data.court },
+        withDeleted: false,
+      });
+      if (!court) throw new BadRequestException('Không tìm thấy sân tập');
+
       for (const s1 of data.schedules) {
         for (const s2 of data.schedules) {
           if (
@@ -187,6 +196,7 @@ export class CourseService extends BaseTypeOrmService<Course> {
 
       const newCourse = this.courseRepository.create({
         ...data,
+        court: data.court ? ({ id: data.court } as Court) : undefined,
         schedules: data.schedules.map((s) => ({
           ...s,
           totalSessions: lessonCount / scheduleLength,
@@ -205,14 +215,6 @@ export class CourseService extends BaseTypeOrmService<Course> {
 
       const savedCourse = await manager.getRepository(Course).save(newCourse);
 
-      const courseMetadata = { ...savedCourse };
-      courseMetadata.province = await this.provinceRepository.findOne({
-        where: { id: data.province },
-      });
-      courseMetadata.district = await this.districtRepository.findOne({
-        where: { id: data.district },
-      });
-
       const newCourseCreationRequest = this.requestRepository.create({
         description: `Tạo khóa học: ${subject.name} - Khóa ${
           subject.courses ? subject.courses.length + 1 : 1
@@ -221,7 +223,7 @@ export class CourseService extends BaseTypeOrmService<Course> {
         metadata: {
           type: 'course',
           id: savedCourse.id,
-          details: courseMetadata,
+          details: savedCourse,
         } as RequestMetadata,
         createdBy: this.request.user as User,
         status: RequestStatus.PENDING,
@@ -263,12 +265,7 @@ export class CourseService extends BaseTypeOrmService<Course> {
 
       await manager.getRepository(Course).update(course.id, {
         ...data,
-        province: data.province
-          ? ({ id: data.province } as Province)
-          : course.province,
-        district: data.district
-          ? ({ id: data.district } as District)
-          : course.district,
+        court: data.court ? ({ id: data.court } as Court) : course.court,
       });
 
       await this.notificationService.sendNotificationToAdmins({

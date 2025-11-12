@@ -3,7 +3,6 @@ import { ConfigModule, ConfigService } from '@app/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
 import { Error } from './entities/error.entity';
-import { AuthProvider } from './entities/auth-provider.entity';
 import { Notification } from './entities/notification.entity';
 import { Role } from './entities/role.entity';
 import { Achievement } from './entities/achievement.entity';
@@ -45,6 +44,7 @@ import { Subject } from './entities/subject.entity';
 import { Lesson } from './entities/lesson.entity';
 import { Bank } from './entities/bank.entity';
 import { VideoConference } from './entities/video-conference.entity';
+import { Court } from './entities/court.entity';
 
 @Module({
   imports: [
@@ -63,7 +63,6 @@ import { VideoConference } from './entities/video-conference.entity';
           AchievementProgress,
           AiVideoComparisonResult,
           Attendance,
-          AuthProvider,
           Coach,
           Configuration,
           Course,
@@ -102,6 +101,7 @@ import { VideoConference } from './entities/video-conference.entity';
           Subject,
           Lesson,
           Bank,
+          Court,
           VideoConference,
         ],
         logging: false,

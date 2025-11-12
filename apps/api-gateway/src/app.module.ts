@@ -19,7 +19,6 @@ import { FileUtils } from '@app/shared/utils/file.util';
 import { Role } from '@app/database/entities/role.entity';
 import { UserService } from './services/user.service';
 import { AuthService } from './services/auth.service';
-import { AuthProvider } from '@app/database/entities/auth-provider.entity';
 import { UserController } from './controllers/user.controller';
 import { AuthController } from './controllers/auth.controller';
 import { AwsModule } from '@app/aws';
@@ -117,6 +116,9 @@ import { LearnerVideoController } from './controllers/learner-video.controller';
 import { LearnerVideoService } from './services/learner-video.service';
 import { LearnerVideo } from '@app/database/entities/learner-video.entity';
 import { AiVideoComparisonResult } from '@app/database/entities/ai-video-comparison-result.entity';
+import { CourtService } from './services/court.service';
+import { CourtController } from './controllers/court.controller';
+import { Court } from '@app/database/entities/court.entity';
 
 @Module({
   imports: [
@@ -172,7 +174,6 @@ import { AiVideoComparisonResult } from '@app/database/entities/ai-video-compari
       User,
       Notification,
       Role,
-      AuthProvider,
       Course,
       Enrollment,
       Schedule,
@@ -185,6 +186,7 @@ import { AiVideoComparisonResult } from '@app/database/entities/ai-video-compari
       Payment,
       Video,
       Quiz,
+      Court,
       Lesson,
       Coach,
       Credential,
@@ -237,6 +239,7 @@ import { AiVideoComparisonResult } from '@app/database/entities/ai-video-compari
     WalletController,
     AchievementController, // Achievement Management
     ConfigurationController,
+    CourtController,
     SessionController,
     VideoController,
     LearnerProgressController,
@@ -275,6 +278,7 @@ import { AiVideoComparisonResult } from '@app/database/entities/ai-video-compari
     VideoService,
     LearnerProgressService,
     FeedbackService,
+    CourtService,
     NotificationService,
     VideoConferenceService,
     ProvinceService,

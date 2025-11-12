@@ -102,18 +102,12 @@ export class CreateCourseRequestDto {
   address: string;
 
   @ApiProperty({
-    description: 'The province ID where the course will take place',
-    example: 1,
+    description: 'The ID of the court where the course will take place',
+    example: 5,
   })
+  @IsNotEmpty()
   @IsInt()
-  province: number;
-
-  @ApiProperty({
-    description: 'The district ID where the course will take place',
-    example: 1,
-  })
-  @IsInt()
-  district: number;
+  court: number;
 
   @ApiProperty({
     description: 'The schedules of the course',

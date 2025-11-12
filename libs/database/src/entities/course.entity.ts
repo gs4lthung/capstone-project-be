@@ -32,12 +32,11 @@ import { Enrollment } from './enrollment.entity';
 import { Feedback } from './feedback.entity';
 import { LearnerProgress } from './learner-progress.entity';
 import { User } from './user.entity';
-import { District } from './district.entity';
-import { Province } from './province.entity';
 import { Subject } from './subject.entity';
 import { PickleballLevel } from '@app/shared/enums/pickleball.enum';
 import { VideoConference } from './video-conference.entity';
 import { Index } from 'typeorm';
+import { Court } from './court.entity';
 
 @Entity('courses')
 @Check(
@@ -196,26 +195,11 @@ export class Course {
   @OneToMany(() => LearnerProgress, (learnerProgress) => learnerProgress.course)
   learnerProgresses: LearnerProgress[];
 
-  @Column({ name: 'address', type: 'text' })
-  @IsNotEmpty()
-  @IsString()
-  address: string;
-
-  @Index()
-  @ManyToOne(() => Province, (province) => province.courses, {
-    eager: true,
-  })
-  @JoinColumn({ name: 'province_id' })
-  province: Province;
-
-  @Index()
-  @ManyToOne(() => District, (district) => district.courses, {
-    eager: true,
-  })
-  @JoinColumn({ name: 'district_id' })
-  district: District;
-
   @OneToOne(() => VideoConference, (vc) => vc.course)
   @JoinColumn({ name: 'video_conference_id' })
   videoConference: VideoConference;
+
+  @ManyToOne(() => Court, (court) => court.courses, { eager: true })
+  @JoinColumn({ name: 'court_id' })
+  court: Court;
 }

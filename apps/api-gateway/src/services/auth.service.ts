@@ -1,5 +1,4 @@
 import { ConfigService } from '@app/config';
-import { AuthProvider } from '@app/database/entities/auth-provider.entity';
 import { Role } from '@app/database/entities/role.entity';
 import { User } from '@app/database/entities/user.entity';
 import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
@@ -27,7 +26,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { ExceptionUtils } from '@app/shared/utils/exception.util';
-import { AuthProviderEnum } from '@app/shared/enums/auth.enum';
 import { MailSendDto } from '@app/shared/dtos/mails/mail-send.dto';
 import { UserRole } from '@app/shared/enums/user.enum';
 import { MailService } from './mail.service';
@@ -52,18 +50,38 @@ export class AuthService {
   async login(
     data: LoginRequestDto,
   ): Promise<CustomApiResponse<LoginResponseDto>> {
-    const user = await this.userRepository.findOne({
-      where: { email: data.email },
-      withDeleted: false,
-      select: ['id', 'fullName', 'email', 'password'],
-      relations: [
-        'role',
-        'learner',
-        'learner.province',
-        'learner.district',
-        'coach',
-      ],
-    });
+    let user: User;
+    if (data.email) {
+      user = await this.userRepository.findOne({
+        where: { email: data.email, isActive: true, isEmailVerified: true },
+        withDeleted: false,
+        select: ['id', 'fullName', 'email', 'phoneNumber', 'password'],
+        relations: [
+          'role',
+          'learner',
+          'learner.province',
+          'learner.district',
+          'coach',
+        ],
+      });
+    } else if (data.phoneNumber) {
+      user = await this.userRepository.findOne({
+        where: {
+          phoneNumber: data.phoneNumber,
+          isActive: true,
+          isPhoneVerified: true,
+        },
+        withDeleted: false,
+        select: ['id', 'fullName', 'email', 'phoneNumber', 'password'],
+        relations: [
+          'role',
+          'learner',
+          'learner.province',
+          'learner.district',
+          'coach',
+        ],
+      });
+    }
     if (!user) throw new UnauthorizedException('Không tìm thấy tài khoản');
 
     const isPasswordValid = await bcrypt.compare(data.password, user.password);
@@ -97,14 +115,7 @@ export class AuthService {
       {
         accessToken: accessToken,
         refreshToken: refreshToken,
-        user: {
-          id: user.id,
-          fullName: user.fullName,
-          email: user.email,
-          role: user.role,
-          learner: user.learner,
-          coach: user.coach,
-        },
+        user: user,
       },
     );
   }
@@ -214,12 +225,6 @@ export class AuthService {
           profilePicture: data.picture,
           isEmailVerified: true,
           role: { id: roleId } as Role,
-          authProviders: [
-            {
-              provider: AuthProviderEnum.GOOGLE,
-              providerId: data.id,
-            } as AuthProvider,
-          ],
         });
         const savedUser = await this.userRepository.save(newUser);
 
@@ -228,22 +233,6 @@ export class AuthService {
         };
 
         return `${this.configService.get('front_end').url}/login?accessToken=${await this.jwtService.signAsync(payload)}`;
-      }
-
-      const isLinkedWithGoogle = existingUser.authProviders.some(
-        (provider) =>
-          provider.provider === AuthProviderEnum.GOOGLE &&
-          provider.providerId === data.id,
-      );
-
-      if (!isLinkedWithGoogle) {
-        existingUser.isEmailVerified = true;
-        existingUser.profilePicture = data.picture;
-        existingUser.authProviders.push({
-          provider: AuthProviderEnum.GOOGLE,
-          providerId: data.id,
-        } as AuthProvider);
-        await this.userRepository.save(existingUser);
       }
 
       const payload: JwtPayloadDto = {
@@ -297,12 +286,6 @@ export class AuthService {
         role: {
           id: roleId,
         } as Role,
-        authProviders: [
-          {
-            provider: AuthProviderEnum.LOCAL,
-            providerId: data.email ? data.email : data.phoneNumber,
-          } as AuthProvider,
-        ],
         learner: [
           {
             skillLevel: data.learner.skillLevel,

@@ -15,7 +15,6 @@ import {
 
 import { Error } from './error.entity';
 import { Role } from './role.entity';
-import { AuthProvider } from './auth-provider.entity';
 import { Notification } from './notification.entity';
 import { Coach } from './coach.entity';
 import { Request } from './request.entity';
@@ -131,11 +130,6 @@ export class User {
 
   @OneToMany(() => Error, (error) => error.user)
   errors: Error[];
-
-  @OneToMany(() => AuthProvider, (authProvider) => authProvider.user, {
-    cascade: ['insert'],
-  })
-  authProviders: AuthProvider[];
 
   @ManyToOne(() => Role, (role) => role.users, { nullable: true, eager: true })
   @JoinColumn({ name: 'role_id' })

@@ -1,19 +1,33 @@
 import { User } from '@app/database/entities/user.entity';
 import { PickType } from '@nestjs/mapped-types';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsNotEmpty } from 'class-validator';
+import {
+  IsEmail,
+  IsNotEmpty,
+  IsOptional,
+  IsPhoneNumber,
+} from 'class-validator';
 
 export class LoginRequestDto extends PickType(User, [
   'email',
+  'phoneNumber',
   'password',
 ] as const) {
   @ApiProperty({
     description: 'The email of the user',
     example: 'user@example.com',
   })
-  @IsNotEmpty({ message: 'Email is required' })
+  @IsOptional()
   @IsEmail({}, { message: 'Invalid email format' })
-  email: string;
+  email?: string;
+
+  @ApiProperty({
+    description: 'The phone number of the user',
+    example: '+84123456789',
+  })
+  @IsOptional()
+  @IsPhoneNumber('VN', { message: 'Invalid phone number format' })
+  phoneNumber?: string;
 
   @ApiProperty({
     description: 'The password of the user',
@@ -29,7 +43,7 @@ export class LoginResponseDto {
     refreshToken: string,
     user: Pick<
       User,
-      'id' | 'fullName' | 'email' | 'role' | 'learner' | 'coach'
+      'id' | 'fullName' | 'email' | 'phoneNumber' | 'role' | 'learner' | 'coach'
     >,
   ) {
     this.accessToken = accessToken;
@@ -64,14 +78,17 @@ export class LoginResponseDto {
     required: true,
   })
   @IsNotEmpty({ message: 'User information is required' })
-  user: Pick<User, 'id' | 'fullName' | 'email' | 'role' | 'learner' | 'coach'>;
+  user: Pick<
+    User,
+    'id' | 'fullName' | 'email' | 'phoneNumber' | 'role' | 'learner' | 'coach'
+  >;
 }
 
 export class CurrentUserResponseDto {
   constructor(
     user: Pick<
       User,
-      'id' | 'fullName' | 'email' | 'role' | 'learner' | 'coach'
+      'id' | 'fullName' | 'email' | 'phoneNumber' | 'role' | 'learner' | 'coach'
     >,
   ) {
     this.user = user;
@@ -84,5 +101,8 @@ export class CurrentUserResponseDto {
     required: true,
   })
   @IsNotEmpty({ message: 'User information is required' })
-  user: Pick<User, 'id' | 'fullName' | 'email' | 'role' | 'learner' | 'coach'>;
+  user: Pick<
+    User,
+    'id' | 'fullName' | 'email' | 'phoneNumber' | 'role' | 'learner' | 'coach'
+  >;
 }
