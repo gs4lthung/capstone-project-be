@@ -1,3 +1,4 @@
+import { Course } from '@app/database/entities/course.entity';
 import { Payment } from '@app/database/entities/payment.entity';
 import { SessionEarning } from '@app/database/entities/session-earning.entity';
 import { User } from '@app/database/entities/user.entity';
@@ -6,6 +7,7 @@ import {
   MonthlyRequestDto,
   MonthlyResponseDto,
 } from '@app/shared/dtos/coaches/coach.dto';
+import { CourseStatus } from '@app/shared/enums/course.enum';
 import { PaymentStatus } from '@app/shared/enums/payment.enum';
 import { SessionEarningStatus } from '@app/shared/enums/session.enum';
 import { UserRole } from '@app/shared/enums/user.enum';
@@ -22,6 +24,8 @@ export class PlatformAnalysisService {
     private readonly paymentRepository: Repository<Payment>,
     @InjectRepository(SessionEarning)
     private readonly sessionEarningRepository: Repository<SessionEarning>,
+    @InjectRepository(Course)
+    private readonly courseRepository: Repository<Course>,
   ) {}
 
   async getMonthlyNewUsers(
@@ -309,6 +313,111 @@ export class PlatformAnalysisService {
         {
           data: monthlyData,
         },
+      );
+    }
+  }
+
+  async getMonthlyPlatformRevenue(
+    data: MonthlyRequestDto,
+  ): Promise<CustomApiResponse<MonthlyResponseDto>> {
+    const isGetSingleMonthPlatformRevenue =
+      data.month !== undefined && data.year !== undefined;
+    if (isGetSingleMonthPlatformRevenue) {
+      const startDate = new Date(data.year, data.month - 1, 1);
+      const endDate = new Date(data.year, data.month, 0, 23, 59, 59, 999);
+
+      const courses = await this.courseRepository.find({
+        where: {
+          status: CourseStatus.COMPLETED,
+          startDate: Between(startDate, endDate),
+        },
+      });
+      let platformRevenue = 0;
+      for (const course of courses) {
+        platformRevenue +=
+          Number(course.currentParticipants) *
+            Number(course.pricePerParticipant) -
+          Number(course.totalEarnings);
+      }
+
+      const lastMonthStartDate = new Date(data.year, data.month - 2, 1);
+      const lastMonthEndDate = new Date(
+        data.year,
+        data.month - 1,
+        0,
+        23,
+        59,
+        59,
+        999,
+      );
+      const lastMonthCourses = await this.courseRepository.find({
+        where: {
+          status: CourseStatus.COMPLETED,
+          startDate: Between(lastMonthStartDate, lastMonthEndDate),
+        },
+      });
+      let lastMonthPlatformRevenue = 0;
+      for (const course of lastMonthCourses) {
+        lastMonthPlatformRevenue +=
+          Number(course.currentParticipants) *
+            Number(course.pricePerParticipant) -
+          Number(course.totalEarnings);
+      }
+      const increaseFromLastMonth =
+        lastMonthPlatformRevenue === 0
+          ? platformRevenue === 0
+            ? 0
+            : 100
+          : parseFloat(
+              (
+                ((platformRevenue - lastMonthPlatformRevenue) /
+                  lastMonthPlatformRevenue) *
+                100
+              ).toFixed(2),
+            );
+
+      return new CustomApiResponse<MonthlyResponseDto>(
+        HttpStatus.OK,
+        'Success',
+        {
+          data: [
+            {
+              month: `${data.month}/${data.year}`,
+              data: platformRevenue,
+              increaseFromLastMonth,
+            },
+          ],
+        },
+      );
+    } else {
+      const currentYear = data.year || new Date().getFullYear();
+      const months = Array.from({ length: 12 }, (_, i) => i + 1);
+      const monthlyData = [];
+      for (const month of months) {
+        const startDate = new Date(currentYear, month - 1, 1);
+        const endDate = new Date(currentYear, month, 0, 23, 59, 59, 999);
+        const courses = await this.courseRepository.find({
+          where: {
+            status: CourseStatus.COMPLETED,
+            startDate: Between(startDate, endDate),
+          },
+        });
+        let platformRevenue = 0;
+        for (const course of courses) {
+          platformRevenue +=
+            Number(course.currentParticipants) *
+              Number(course.pricePerParticipant) -
+            Number(course.totalEarnings);
+        }
+        monthlyData.push({
+          month: `${month}/${currentYear}`,
+          data: platformRevenue,
+        });
+      }
+      return new CustomApiResponse<MonthlyResponseDto>(
+        HttpStatus.OK,
+        'Success',
+        { data: monthlyData },
       );
     }
   }

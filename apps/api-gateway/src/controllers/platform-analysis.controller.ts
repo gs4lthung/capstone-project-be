@@ -63,4 +63,21 @@ export class PlatformAnalysisController {
   ): Promise<CustomApiResponse<MonthlyResponseDto>> {
     return this.platformAnalysisService.getMonthlyCoachSessionEarning(data);
   }
+
+  @Get('revenue/monthly')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    tags: ['Platform Analysis'],
+    summary: 'Get monthly platform revenue',
+    description: 'Get monthly platform revenue',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Monthly platform revenue',
+  })
+  async getMonthlyPlatformRevenue(
+    @Body() data: MonthlyRequestDto,
+  ): Promise<CustomApiResponse<MonthlyResponseDto>> {
+    return this.platformAnalysisService.getMonthlyPlatformRevenue(data);
+  }
 }
