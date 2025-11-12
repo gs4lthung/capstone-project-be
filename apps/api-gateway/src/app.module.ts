@@ -111,6 +111,8 @@ import { AttendanceService } from './services/attendance.service';
 import { EnrollmentController } from './controllers/enrollment.controller';
 import { ScheduleService } from './services/schedule.service';
 import { ScheduleController } from './controllers/schedule.controller';
+import { PlatformAnalysisService } from './services/platform-analysis.service';
+import { PlatformAnalysisController } from './controllers/platform-analysis.controller';
 import { LearnerVideoController } from './controllers/learner-video.controller';
 import { LearnerVideoService } from './services/learner-video.service';
 import { LearnerVideo } from '@app/database/entities/learner-video.entity';
@@ -245,6 +247,7 @@ import { AiVideoComparisonResult } from '@app/database/entities/ai-video-compari
     AttendanceController,
     ScheduleController,
     EnrollmentController,
+    PlatformAnalysisController,
     LearnerVideoController,
   ],
   providers: [
@@ -278,6 +281,7 @@ import { AiVideoComparisonResult } from '@app/database/entities/ai-video-compari
     StudentAnalysisService,
     ScheduleService,
     AttendanceService,
+    PlatformAnalysisService,
     LearnerVideoService,
   ],
 })

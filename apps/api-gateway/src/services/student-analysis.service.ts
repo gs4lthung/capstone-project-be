@@ -5,14 +5,8 @@ import { User } from '@app/database/entities/user.entity';
 import { WalletTransaction } from '@app/database/entities/wallet-transaction.entity';
 import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
 import {
-  CoachMonthlyCourseRequestDto,
-  CoachMonthlyCourseResponseDto,
-  CoachMonthlyLearnerRequestDto,
-  CoachMonthlyLearnerResponseDto,
-  CoachMonthlyRevenueRequestDto,
-  CoachMonthlyRevenueResponseDto,
-  CoachMonthlySessionRequestDto,
-  CoachMonthlySessionResponseDto,
+  MonthlyRequestDto,
+  MonthlyResponseDto,
 } from '@app/shared/dtos/coaches/coach.dto';
 import { CourseStatus } from '@app/shared/enums/course.enum';
 import { EnrollmentStatus } from '@app/shared/enums/enrollment.enum';
@@ -43,8 +37,8 @@ export class StudentAnalysisService {
   ) {}
   async getMonthlyRevenue(
     userId: number,
-    data: CoachMonthlyRevenueRequestDto,
-  ): Promise<CustomApiResponse<CoachMonthlyRevenueResponseDto>> {
+    data: MonthlyRequestDto,
+  ): Promise<CustomApiResponse<MonthlyResponseDto>> {
     const user = await this.userRepository.findOne({
       where: { id: userId },
     });
@@ -97,14 +91,14 @@ export class StudentAnalysisService {
               ).toFixed(2),
             );
 
-      return new CustomApiResponse<CoachMonthlyRevenueResponseDto>(
+      return new CustomApiResponse<MonthlyResponseDto>(
         HttpStatus.OK,
         'Success',
         {
           data: [
             {
               month: `${month}/${year}`,
-              revenue: totalRevenue,
+              data: totalRevenue,
               increaseFromLastMonth,
             },
           ],
@@ -125,11 +119,11 @@ export class StudentAnalysisService {
 
         return {
           month: `${month}/${currentYear}`,
-          revenue,
+          data: revenue,
         };
       });
 
-      return new CustomApiResponse<CoachMonthlyRevenueResponseDto>(
+      return new CustomApiResponse<MonthlyResponseDto>(
         HttpStatus.OK,
         'Success',
         { data: monthlyData },
@@ -139,8 +133,8 @@ export class StudentAnalysisService {
 
   async getMonthlyLearnerCount(
     userId: number,
-    data: CoachMonthlyLearnerRequestDto,
-  ): Promise<CustomApiResponse<CoachMonthlyLearnerResponseDto>> {
+    data: MonthlyRequestDto,
+  ): Promise<CustomApiResponse<MonthlyResponseDto>> {
     const user = await this.userRepository.findOne({
       where: { id: userId },
     });
@@ -192,12 +186,16 @@ export class StudentAnalysisService {
               ).toFixed(2),
             );
 
-      return new CustomApiResponse<CoachMonthlyLearnerResponseDto>(
+      return new CustomApiResponse<MonthlyResponseDto>(
         HttpStatus.OK,
         'Success',
         {
           data: [
-            { month: `${month}/${year}`, learnerCount, increaseFromLastMonth },
+            {
+              month: `${month}/${year}`,
+              data: learnerCount,
+              increaseFromLastMonth,
+            },
           ],
         },
       );
@@ -219,7 +217,7 @@ export class StudentAnalysisService {
         monthlyData.push({ month: `${month}/${currentYear}`, learnerCount });
       }
 
-      return new CustomApiResponse<CoachMonthlyLearnerResponseDto>(
+      return new CustomApiResponse<MonthlyResponseDto>(
         HttpStatus.OK,
         'Success',
         { data: monthlyData },
@@ -229,8 +227,8 @@ export class StudentAnalysisService {
 
   async getMonthlyCourseCount(
     id: number,
-    data: CoachMonthlyCourseRequestDto,
-  ): Promise<CustomApiResponse<CoachMonthlyCourseResponseDto>> {
+    data: MonthlyRequestDto,
+  ): Promise<CustomApiResponse<MonthlyResponseDto>> {
     const user = await this.userRepository.findOne({
       where: { id: id },
     });
@@ -287,12 +285,16 @@ export class StudentAnalysisService {
               ).toFixed(2),
             );
 
-      return new CustomApiResponse<CoachMonthlyCourseResponseDto>(
+      return new CustomApiResponse<MonthlyResponseDto>(
         HttpStatus.OK,
         'Success',
         {
           data: [
-            { month: `${month}/${year}`, courseCount, increaseFromLastMonth },
+            {
+              month: `${month}/${year}`,
+              data: courseCount,
+              increaseFromLastMonth,
+            },
           ],
         },
       );
@@ -316,9 +318,12 @@ export class StudentAnalysisService {
             ]),
           },
         });
-        monthlyData.push({ month: `${month}/${currentYear}`, courseCount });
+        monthlyData.push({
+          month: `${month}/${currentYear}`,
+          data: courseCount,
+        });
       }
-      return new CustomApiResponse<CoachMonthlyCourseResponseDto>(
+      return new CustomApiResponse<MonthlyResponseDto>(
         HttpStatus.OK,
         'Success',
         { data: monthlyData },
@@ -328,8 +333,8 @@ export class StudentAnalysisService {
 
   async getMonthlySessionCount(
     userId: number,
-    data: CoachMonthlySessionRequestDto,
-  ): Promise<CustomApiResponse<CoachMonthlySessionResponseDto>> {
+    data: MonthlyRequestDto,
+  ): Promise<CustomApiResponse<MonthlyResponseDto>> {
     const user = await this.userRepository.findOne({
       where: { id: userId },
     });
@@ -379,12 +384,16 @@ export class StudentAnalysisService {
                 100
               ).toFixed(2),
             );
-      return new CustomApiResponse<CoachMonthlySessionResponseDto>(
+      return new CustomApiResponse<MonthlyResponseDto>(
         HttpStatus.OK,
         'Success',
         {
           data: [
-            { month: `${month}/${year}`, sessionCount, increaseFromLastMonth },
+            {
+              month: `${month}/${year}`,
+              data: sessionCount,
+              increaseFromLastMonth,
+            },
           ],
         },
       );
@@ -402,9 +411,12 @@ export class StudentAnalysisService {
             status: In([SessionStatus.SCHEDULED, SessionStatus.COMPLETED]),
           },
         });
-        monthlyData.push({ month: `${month}/${currentYear}`, sessionCount });
+        monthlyData.push({
+          month: `${month}/${currentYear}`,
+          data: sessionCount,
+        });
       }
-      return new CustomApiResponse<CoachMonthlySessionResponseDto>(
+      return new CustomApiResponse<MonthlyResponseDto>(
         HttpStatus.OK,
         'Success',
         { data: monthlyData },
