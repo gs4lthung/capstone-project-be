@@ -4,6 +4,7 @@ import {
   HttpCode,
   HttpStatus,
   Param,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { StudentAnalysisService } from '../services/student-analysis.service';
@@ -33,8 +34,8 @@ export class StudentAnalysisController {
   @UseGuards(AuthGuard, RoleGuard)
   async getMonthlyRevenue(
     @Param('userId') userId: number,
-    @Param('month') month: number,
-    @Param('year') year: number,
+    @Query('month') month: number,
+    @Query('year') year: number,
   ): Promise<CustomApiResponse<MonthlyResponseDto>> {
     return this.studentAnalysisService.getMonthlyRevenue(userId, {
       month,
@@ -54,8 +55,8 @@ export class StudentAnalysisController {
   @UseGuards(AuthGuard, RoleGuard)
   async getMonthlyLearners(
     @Param('userId') userId: number,
-    @Param('month') month: number,
-    @Param('year') year: number,
+    @Query('month') month: number,
+    @Query('year') year: number,
   ): Promise<CustomApiResponse<MonthlyResponseDto>> {
     return this.studentAnalysisService.getMonthlyLearnerCount(userId, {
       month,
@@ -75,8 +76,8 @@ export class StudentAnalysisController {
   @UseGuards(AuthGuard, RoleGuard)
   async getMonthlyCourses(
     @Param('userId') userId: number,
-    @Param('month') month: number,
-    @Param('year') year: number,
+    @Query('month') month: number,
+    @Query('year') year: number,
   ): Promise<CustomApiResponse<MonthlyResponseDto>> {
     return this.studentAnalysisService.getMonthlyCourseCount(userId, {
       month,
@@ -96,8 +97,8 @@ export class StudentAnalysisController {
   @UseGuards(AuthGuard, RoleGuard)
   async getMonthlySessions(
     @Param('userId') userId: number,
-    @Param('month') month: number,
-    @Param('year') year: number,
+    @Query('month') month: number,
+    @Query('year') year: number,
   ): Promise<CustomApiResponse<MonthlyResponseDto>> {
     return this.studentAnalysisService.getMonthlySessionCount(userId, {
       month,

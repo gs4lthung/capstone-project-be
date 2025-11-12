@@ -1,4 +1,4 @@
-import { Controller, Get, HttpCode, HttpStatus, Param } from '@nestjs/common';
+import { Controller, Get, HttpCode, HttpStatus, Query } from '@nestjs/common';
 import { PlatformAnalysisService } from '../services/platform-analysis.service';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { MonthlyResponseDto } from '@app/shared/dtos/coaches/coach.dto';
@@ -22,8 +22,8 @@ export class PlatformAnalysisController {
     description: 'Monthly new user registrations',
   })
   async getMonthlyNewUsers(
-    @Param('month') month: number,
-    @Param('year') year: number,
+    @Query('month') month: number,
+    @Query('year') year: number,
   ): Promise<CustomApiResponse<MonthlyResponseDto>> {
     return this.platformAnalysisService.getMonthlyNewUsers({
       month,
@@ -43,8 +43,8 @@ export class PlatformAnalysisController {
     description: 'Monthly learner payments',
   })
   async getMonthlyLearnerPayments(
-    @Param('month') month: number,
-    @Param('year') year: number,
+    @Query('month') month: number,
+    @Query('year') year: number,
   ): Promise<CustomApiResponse<MonthlyResponseDto>> {
     return this.platformAnalysisService.getMonthlyLearnerPayment({
       month,
@@ -64,8 +64,8 @@ export class PlatformAnalysisController {
     description: 'Monthly coach earnings',
   })
   async getMonthlyCoachEarnings(
-    @Param('month') month: number,
-    @Param('year') year: number,
+    @Query('month') month: number,
+    @Query('year') year: number,
   ): Promise<CustomApiResponse<MonthlyResponseDto>> {
     return this.platformAnalysisService.getMonthlyCoachSessionEarning({
       month,
@@ -85,8 +85,8 @@ export class PlatformAnalysisController {
     description: 'Monthly platform revenue',
   })
   async getMonthlyPlatformRevenue(
-    @Param('month') month: number,
-    @Param('year') year: number,
+    @Query('month') month: number,
+    @Query('year') year: number,
   ): Promise<CustomApiResponse<MonthlyResponseDto>> {
     return this.platformAnalysisService.getMonthlyPlatformRevenue({
       month,
