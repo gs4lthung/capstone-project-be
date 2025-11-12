@@ -2,6 +2,7 @@ import { Controller, Get, HttpCode, HttpStatus, Query } from '@nestjs/common';
 import { PlatformAnalysisService } from '../services/platform-analysis.service';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { MonthlyResponseDto } from '@app/shared/dtos/coaches/coach.dto';
+import { DashboardOverviewDto } from '@app/shared/dtos/platform-analysis/dashboard-overview.dto';
 import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
 
 @Controller('platform-analysis')
@@ -92,5 +93,24 @@ export class PlatformAnalysisController {
       month,
       year,
     });
+  }
+
+  @Get('dashboard/overview')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    tags: ['Platform Analysis'],
+    summary: 'Get dashboard overview data',
+    description:
+      'Get comprehensive dashboard overview including summary cards and charts data',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Dashboard overview data',
+    type: DashboardOverviewDto,
+  })
+  async getDashboardOverview(): Promise<
+    CustomApiResponse<DashboardOverviewDto>
+  > {
+    return this.platformAnalysisService.getDashboardOverview();
   }
 }
