@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, In, Repository } from 'typeorm';
 import { SessionService } from './session.service';
 import { Session } from '@app/database/entities/session.entity';
 import { RequestAction } from '@app/database/entities/request-action.entity';
@@ -100,6 +100,60 @@ export class CourseService extends BaseTypeOrmService<Course> {
     if (!course) throw new Error('Course not found');
 
     return course;
+  }
+
+  async findAvailableCourses(
+    page: number = 1,
+    size: number = 10,
+    province?: number,
+    district?: number,
+  ): Promise<PaginateObject<Course>> {
+    const offset = (page - 1) * size;
+
+    const whereConditions: any = {
+      status: In([
+        CourseStatus.APPROVED,
+        CourseStatus.READY_OPENED,
+        CourseStatus.FULL,
+      ]),
+    };
+
+    if (province) {
+      whereConditions.court = {
+        province: { id: province },
+      };
+    }
+
+    if (district) {
+      whereConditions.court = {
+        ...whereConditions.court,
+        district: { id: district },
+      };
+    }
+
+    const [courses, total] = await this.courseRepository.findAndCount({
+      where: whereConditions,
+      relations: [
+        'court',
+        'court.province',
+        'court.district',
+        'enrollments',
+        'subject',
+      ],
+      skip: offset,
+      take: size,
+      order: { createdAt: 'DESC' },
+    });
+
+    const result = new PaginateObject<Course>();
+    Object.assign(result, {
+      items: courses,
+      page,
+      pageSize: size,
+      total,
+    });
+
+    return result;
   }
 
   async createCourseCreationRequest(

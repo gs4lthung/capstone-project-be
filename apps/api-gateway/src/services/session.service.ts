@@ -80,7 +80,6 @@ export class SessionService extends BaseTypeOrmService<Session> {
         'course.enrollments.user',
         'lesson',
         'attendances',
-        'notes',
         'quizzes',
         'quizzes.questions',
         'quizzes.questions.options',
