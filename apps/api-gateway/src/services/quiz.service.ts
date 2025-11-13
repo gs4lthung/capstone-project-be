@@ -99,11 +99,11 @@ export class QuizService extends BaseTypeOrmService<Quiz> {
       if (!session) throw new BadRequestException('Session not found');
       if (session.course.status !== CourseStatus.ON_GOING)
         throw new BadRequestException(
-          'Cannot create quiz for sessions whose course is not ongoing',
+          'Không thể tạo quiz cho các buổi học thuộc khóa học chưa diễn ra',
         );
       if (session.status !== SessionStatus.SCHEDULED)
         throw new BadRequestException(
-          'Cannot create quiz for sessions that are not scheduled',
+          'Không thể tạo quiz cho các buổi học chưa lên lịch',
         );
 
       session.quizzes.push({
@@ -115,7 +115,7 @@ export class QuizService extends BaseTypeOrmService<Quiz> {
 
       return new CustomApiResponse<void>(
         HttpStatus.CREATED,
-        'SESSION.QUIZ_CREATE_SUCCESS',
+        'Tạo quiz thành công',
       );
     });
   }
