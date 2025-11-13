@@ -97,7 +97,9 @@ export class CoachController {
     status: HttpStatus.CREATED,
     description: 'Coach profile created',
   })
-  async register(@Body() data: RegisterCoachDto): Promise<Coach> {
+  async register(
+    @Body() data: RegisterCoachDto,
+  ): Promise<CustomApiResponse<void>> {
     return this.coachService.registerCoach(data);
   }
 

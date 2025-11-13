@@ -12,6 +12,8 @@ import {
 import { Reflector } from '@nestjs/core';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { UserRole } from '@app/shared/enums/user.enum';
+import { CoachVerificationStatus } from '@app/shared/enums/coach.enum';
 
 @Injectable()
 export class RoleGuard implements CanActivate {
@@ -55,7 +57,7 @@ export class RoleGuard implements CanActivate {
 
       const user = await this.userRepository.findOne({
         where: { id: userId },
-        relations: ['role'],
+        relations: ['role', 'coach', 'learner'],
       });
 
       if (!user || !user.role) {
@@ -65,6 +67,22 @@ export class RoleGuard implements CanActivate {
       const hasRole = this.requiredRoles.includes(user.role.name);
       if (!hasRole) {
         throw new CustomRpcException('FORBIDDEN', HttpStatus.FORBIDDEN);
+      }
+
+      switch (user.role.name) {
+        case UserRole.COACH:
+          if (
+            user.coach[0].verificationStatus !==
+            CoachVerificationStatus.VERIFIED
+          ) {
+            throw new CustomRpcException(
+              'Coach is not verified',
+              HttpStatus.FORBIDDEN,
+            );
+          }
+          break;
+        default:
+          break;
       }
     } catch (error) {
       throw ExceptionUtils.wrapAsRpcException(error);

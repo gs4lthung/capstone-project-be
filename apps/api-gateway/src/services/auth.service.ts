@@ -64,7 +64,8 @@ export class AuthService {
           'coach',
         ],
       });
-    } else if (data.phoneNumber) {
+    }
+    if (data.phoneNumber) {
       user = await this.userRepository.findOne({
         where: {
           phoneNumber: data.phoneNumber,
@@ -296,8 +297,6 @@ export class AuthService {
         ],
       });
 
-      console.log(newUser);
-
       if (data.email) {
         const payload: JwtPayloadDto = {
           id: newUser.id,
@@ -447,6 +446,23 @@ export class AuthService {
     return new CustomApiResponse<void>(
       HttpStatus.OK,
       'AUTH.PHONE_VERIFIED_SUCCESS',
+    );
+  }
+
+  async resendVerificationPhone(data: {
+    phoneNumber: string;
+  }): Promise<CustomApiResponse<void>> {
+    const user = await this.userRepository.findOne({
+      where: { phoneNumber: data.phoneNumber, isPhoneVerified: false },
+    });
+    if (!user) {
+      throw new CustomRpcException('AUTH.USER_NOT_FOUND', HttpStatus.NOT_FOUND);
+    }
+    await this.twilioService.sendSMS(data.phoneNumber);
+
+    return new CustomApiResponse<void>(
+      HttpStatus.OK,
+      'AUTH.PHONE_VERIFICATION_CODE_SENT',
     );
   }
 

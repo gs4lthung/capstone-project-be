@@ -8,7 +8,6 @@ import {
   ArrayNotEmpty,
   ValidateNested,
   IsNotEmpty,
-  IsString,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { PartialType } from '@nestjs/mapped-types';
@@ -92,14 +91,6 @@ export class CreateCourseRequestDto {
   @IsDate()
   @Type(() => Date)
   startDate: Date;
-
-  @ApiProperty({
-    description: 'The address where the course will take place',
-    example: '123 Main St, City, Country',
-  })
-  @IsNotEmpty()
-  @IsString()
-  address: string;
 
   @ApiProperty({
     description: 'The ID of the court where the course will take place',
