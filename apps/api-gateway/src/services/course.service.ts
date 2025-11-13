@@ -156,6 +156,32 @@ export class CourseService extends BaseTypeOrmService<Course> {
     return result;
   }
 
+  async findLearnerCourses(
+    page: number = 1,
+    size: number = 10,
+  ): Promise<PaginateObject<Course>> {
+    const offset = (page - 1) * size;
+
+    const [courses, total] = await this.courseRepository.findAndCount({
+      where: {
+        enrollments: {
+          user: { id: this.request.user?.id as User['id'] },
+        },
+      },
+      skip: offset,
+      take: size,
+      order: { createdAt: 'DESC' },
+    });
+    const result = new PaginateObject<Course>();
+    Object.assign(result, {
+      items: courses,
+      page,
+      pageSize: size,
+      total,
+    });
+    return result;
+  }
+
   async createCourseCreationRequest(
     subjectId: number,
     data: CreateCourseRequestDto,

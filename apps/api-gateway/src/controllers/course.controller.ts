@@ -60,6 +60,21 @@ export class CourseController {
     return courses;
   }
 
+  @Get('learner')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    tags: ['Courses'],
+    summary: 'Get courses for learner',
+    description: 'Retrieve a list of courses available to the learner',
+  })
+  @UseGuards(AuthGuard)
+  async getCoursesForLearner(
+    @Query('page') page: number,
+    @Query('size') size: number,
+  ): Promise<PaginateObject<Course>> {
+    return await this.courseService.findLearnerCourses(page, size);
+  }
+
   @Get()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
