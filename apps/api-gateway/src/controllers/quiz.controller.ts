@@ -18,6 +18,7 @@ import { UserRole } from '@app/shared/enums/user.enum';
 import { AuthGuard } from '../guards/auth.guard';
 import { RoleGuard } from '../guards/role.guard';
 import {
+  CreateQuestionDto,
   CreateQuizDto,
   LearnerAttemptQuizDto,
 } from '@app/shared/dtos/quizzes/quiz.dto';
@@ -155,5 +156,26 @@ export class QuizController {
     @Body() data: LearnerAttemptQuizDto,
   ) {
     return this.quizService.learnerAttemptQuiz(id, data);
+  }
+
+  @Post(':id/questions')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiBearerAuth()
+  @ApiOperation({
+    tags: ['Quizzes'],
+    summary: 'Add questions to a quiz',
+    description: 'Add questions to a quiz',
+  })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: 'Questions added to quiz successfully',
+  })
+  @CheckRoles(UserRole.COACH)
+  @UseGuards(AuthGuard, RoleGuard)
+  async addQuestionsToQuiz(
+    @Param('id') id: number,
+    @Body() data: CreateQuestionDto,
+  ) {
+    return this.quizService.createQuestion(id, data);
   }
 }

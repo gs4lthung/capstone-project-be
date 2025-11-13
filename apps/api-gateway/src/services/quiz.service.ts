@@ -8,6 +8,7 @@ import { User } from '@app/database/entities/user.entity';
 import { CustomApiRequest } from '@app/shared/customs/custom-api-request';
 import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
 import {
+  CreateQuestionDto,
   CreateQuizDto,
   LearnerAttemptQuizDto,
 } from '@app/shared/dtos/quizzes/quiz.dto';
@@ -101,9 +102,12 @@ export class QuizService extends BaseTypeOrmService<Quiz> {
         throw new BadRequestException(
           'Không thể tạo quiz cho các buổi học thuộc khóa học chưa diễn ra',
         );
-      if (session.status !== SessionStatus.SCHEDULED)
+      if (
+        session.status !== SessionStatus.SCHEDULED &&
+        session.status !== SessionStatus.COMPLETED
+      )
         throw new BadRequestException(
-          'Không thể tạo quiz cho các buổi học chưa lên lịch',
+          'Không thể tạo quiz cho các buổi học chưa lên lịch hoặc đã bị hủy',
         );
 
       session.quizzes.push({
@@ -117,6 +121,34 @@ export class QuizService extends BaseTypeOrmService<Quiz> {
         HttpStatus.CREATED,
         'Tạo quiz thành công',
       );
+    });
+  }
+
+  async createQuestion(quizId: number, data: CreateQuestionDto) {
+    return await this.datasource.transaction(async (manager) => {
+      const quiz = await this.quizRepository.findOne({
+        where: { id: quizId },
+        relations: ['session', 'lesson'],
+        withDeleted: false,
+      });
+      if (!quiz) throw new BadRequestException('Quiz not found');
+      if (quiz.session) {
+        if (quiz.session.course.status !== CourseStatus.ON_GOING)
+          throw new BadRequestException(
+            'Không thể thêm câu hỏi cho quiz của các buổi học thuộc khóa học chưa diễn ra',
+          );
+        if (
+          quiz.session.status !== SessionStatus.SCHEDULED &&
+          quiz.session.status !== SessionStatus.COMPLETED
+        )
+          throw new BadRequestException(
+            'Không thể thêm câu hỏi cho quiz của các buổi học chưa lên lịch hoặc đã bị hủy',
+          );
+      }
+
+      quiz.questions.push(data as Quiz['questions'][0]);
+      quiz.totalQuestions = quiz.questions.length;
+      await manager.getRepository(Quiz).save(quiz);
     });
   }
 
