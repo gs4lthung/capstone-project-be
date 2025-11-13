@@ -48,6 +48,17 @@ export class WalletController {
     });
   }
 
+  @Get('banks')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    tags: ['Wallets'],
+    summary: 'Get list of banks',
+    description: 'Retrieve a list of all available banks',
+  })
+  async findBanks() {
+    return this.walletService.findBanks();
+  }
+
   @Get('users')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
