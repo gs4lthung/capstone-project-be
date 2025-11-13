@@ -119,7 +119,7 @@ export class UserService extends BaseTypeOrmService<User> {
         throw new CustomRpcException(
           'INVALID_FILE_PATH',
           HttpStatus.FORBIDDEN,
-          'Attempted access to file outside of upload directory'
+          'Attempted access to file outside of upload directory',
         );
       }
       const fileBuffer = fs.readFileSync(fileAbsolutePath);

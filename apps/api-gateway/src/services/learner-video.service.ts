@@ -10,7 +10,6 @@ import * as path from 'path';
 import * as fs from 'fs';
 
 // Set this to your upload directory; adapt as needed for your deployment/config
-const UPLOADS_DIR = path.resolve(process.env.UPLOAD_DIR || 'uploads');
 import { FileUtils } from '@app/shared/utils/file.util';
 import { AiVideoComparisonResult } from '@app/database/entities/ai-video-comparison-result.entity';
 import { Video } from '@app/database/entities/video.entity';
@@ -34,38 +33,35 @@ export class LearnerVideoService {
   ): Promise<LearnerVideo> {
     if (!videoFile) throw new BadRequestException('No video file uploaded');
 
-    // Validate that the uploaded file path is within the uploads directory
-    const resolvedFilePath = fs.realpathSync(path.resolve(UPLOADS_DIR, path.relative(UPLOADS_DIR, videoFile.path)));
-    if (!resolvedFilePath.startsWith(UPLOADS_DIR)) {
-      throw new BadRequestException('Invalid video file path');
+    const videoThumbnail = await this.ffmpegService.createVideoThumbnail(
+      videoFile.path,
+      FileUtils.excludeFileFromPath(videoFile.path),
+    );
+
+    const filePath = FileUtils.convertFilePathToExpressFilePath(videoThumbnail);
+
+    if (typeof filePath !== 'string') {
+      throw new BadRequestException('Invalid thumbnail file path');
     }
 
-    const videoThumbnail = await this.ffmpegService.createVideoThumbnail(
-      resolvedFilePath,
-      FileUtils.excludeFileFromPath(resolvedFilePath),
-    );
-    const thumbnailPath = String(
-      FileUtils.convertFilePathToExpressFilePath(videoThumbnail),
-    );
     const videoThumbnailPublicUrl =
       await this.awsService.uploadFileToPublicBucket({
         file: {
-          buffer: fs.readFileSync(thumbnailPath),
-          path: thumbnailPath,
-          originalname: path.basename(thumbnailPath),
+          buffer: fs.readFileSync(filePath),
+          path: filePath,
+          originalname: path.basename(filePath),
           mimetype: 'image/jpeg',
-          size: fs.statSync(thumbnailPath).size,
+          size: fs.statSync(filePath).size,
           fieldname: 'video_thumbnail',
           destination: '',
           filename: '',
           encoding: '7bit',
-          stream: undefined,
-        } as unknown as Express.Multer.File,
+        } as Express.Multer.File,
       });
 
     const videoPublicUrl = await this.awsService.uploadFileToPublicBucket({
       file: {
-        buffer: fs.readFileSync(resolvedFilePath),
+        buffer: fs.readFileSync(videoFile.path),
         ...videoFile,
       },
     });
