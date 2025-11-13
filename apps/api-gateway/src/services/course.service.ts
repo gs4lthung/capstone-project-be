@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, In, Repository } from 'typeorm';
+import { DataSource, In, Not, Repository } from 'typeorm';
 import { SessionService } from './session.service';
 import { Session } from '@app/database/entities/session.entity';
 import { RequestAction } from '@app/database/entities/request-action.entity';
@@ -167,6 +167,7 @@ export class CourseService extends BaseTypeOrmService<Course> {
         enrollments: {
           user: { id: this.request.user?.id as User['id'] },
         },
+        status: Not(CourseStatus.CANCELLED),
       },
       skip: offset,
       take: size,
