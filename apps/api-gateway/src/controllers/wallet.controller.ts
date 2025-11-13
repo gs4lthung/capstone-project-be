@@ -48,18 +48,6 @@ export class WalletController {
     });
   }
 
-  @Get(':id')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({
-    tags: ['Wallets'],
-    summary: 'Get a specific wallet by ID',
-    description: 'Retrieve details of a specific wallet belonging to the user',
-  })
-  @UseGuards(AuthGuard)
-  async findOne(@Param('id') id: number) {
-    return this.walletService.findOne(id);
-  }
-
   @Get('users')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
@@ -70,6 +58,18 @@ export class WalletController {
   @UseGuards(AuthGuard)
   async findByUserId() {
     return this.walletService.findByUserId();
+  }
+
+  @Get(':id')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    tags: ['Wallets'],
+    summary: 'Get a specific wallet by ID',
+    description: 'Retrieve details of a specific wallet belonging to the user',
+  })
+  @UseGuards(AuthGuard)
+  async findOne(@Param('id') id: number) {
+    return this.walletService.findOne(id);
   }
 
   @Post()
