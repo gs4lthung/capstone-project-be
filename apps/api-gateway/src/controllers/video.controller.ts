@@ -62,4 +62,27 @@ export class VideoController {
   ) {
     return this.videoService.createLessonVideo(id, data, videoFile);
   }
+
+  @Post('sessions/:id')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiBearerAuth()
+  @ApiOperation({
+    tags: ['Videos'],
+    summary: 'Upload video for a session',
+    description: 'Upload video for a session',
+  })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: 'Video uploaded successfully',
+  })
+  @CheckRoles(UserRole.COACH)
+  @UseGuards(AuthGuard, RoleGuard)
+  @UseInterceptors(FileInterceptor('video'))
+  async uploadSessionVideo(
+    @Param('id') id: number,
+    @UploadedFile() videoFile: Express.Multer.File,
+    @Body() data: CreateVideoDto,
+  ) {
+    return this.videoService.createSessionVideo(id, data, videoFile);
+  }
 }

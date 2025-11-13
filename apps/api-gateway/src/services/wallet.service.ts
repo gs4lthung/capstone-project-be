@@ -54,6 +54,10 @@ export class WalletService extends BaseTypeOrmService<Wallet> {
     return wallet;
   }
 
+  async findBanks(): Promise<Bank[]> {
+    return await this.bankRepository.find();
+  }
+
   async findByUserId(): Promise<Wallet> {
     const wallet = await this.walletRepository.findOne({
       where: { user: { id: this.request.user.id as User['id'] } },

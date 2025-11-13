@@ -13,8 +13,6 @@ import { Credential } from '@app/database/entities/credential.entity';
 import { CoachVerificationStatus } from '@app/shared/enums/coach.enum';
 import { RegisterCoachDto } from '@app/shared/dtos/coaches/register-coach.dto';
 import { Role } from '@app/database/entities/role.entity';
-import { AuthProvider } from '@app/database/entities/auth-provider.entity';
-import { AuthProviderEnum } from '@app/shared/enums/auth.enum';
 import { UserRole } from '@app/shared/enums/user.enum';
 import { ConfigService } from '@app/config';
 import * as bcrypt from 'bcrypt';
@@ -31,6 +29,10 @@ import { WalletTransaction } from '@app/database/entities/wallet-transaction.ent
 import { Enrollment } from '@app/database/entities/enrollment.entity';
 import { Session } from '@app/database/entities/session.entity';
 import { Course } from '@app/database/entities/course.entity';
+import { JwtPayloadDto } from '@app/shared/dtos/auth/jwt.payload.dto';
+import { MailSendDto } from '@app/shared/dtos/mails/mail-send.dto';
+import { MailService } from './mail.service';
+import { TwilioService } from '@app/twilio';
 
 @Injectable({ scope: Scope.REQUEST })
 export class CoachService extends BaseTypeOrmService<Coach> {
@@ -56,6 +58,8 @@ export class CoachService extends BaseTypeOrmService<Coach> {
     private readonly courseRepository: Repository<Course>,
     private readonly jwtService: JwtService,
     private readonly datasource: DataSource,
+    private readonly mailService: MailService,
+    private readonly twilioService: TwilioService,
   ) {
     super(coachRepository);
   }
@@ -100,88 +104,83 @@ export class CoachService extends BaseTypeOrmService<Coach> {
     );
   }
 
-  async registerCoach(data: RegisterCoachDto): Promise<Coach> {
-    // Check email already exists
-    const existingUser = await this.userRepository.findOne({
-      where: { email: data.email },
-    });
-    if (existingUser) {
-      throw new BadRequestException('Email đã tồn tại');
-    }
+  async registerCoach(
+    data: RegisterCoachDto,
+  ): Promise<CustomApiResponse<void>> {
+    return await this.datasource.transaction(async (manager) => {
+      let existingUser: User;
+      if (data.email) {
+        existingUser = await this.userRepository.findOne({
+          where: { email: data.email },
+        });
+        if (existingUser) {
+          throw new BadRequestException('Email đã tồn tại');
+        }
+      }
 
-    // Check coach profile already exists (if user exists)
-    const existed = await this.coachRepository.findOne({
-      where: { user: { email: data.email } },
-    });
-    if (existed) throw new BadRequestException('Coach profile already exists');
+      if (data.phoneNumber) {
+        existingUser = await this.userRepository.findOne({
+          where: { phoneNumber: data.phoneNumber },
+        });
+        if (existingUser) {
+          throw new BadRequestException('Số điện thoại đã tồn tại');
+        }
+      }
 
-    // Hash password
-    const passwordHashed = await bcrypt.hash(
-      data.password,
-      this.configService.get('password_salt_rounds'),
-    );
-
-    // Get COACH role
-    const coachRole = await this.roleRepository.findOne({
-      where: { name: UserRole.COACH },
-    });
-    if (!coachRole) {
-      throw new BadRequestException('Coach role not found');
-    }
-
-    // Create email verification token
-    const emailVerificationToken = await this.jwtService.signAsync(
-      { email: data.email },
-      {
-        secret: this.configService.get('jwt').verify_email_token.secret,
-        expiresIn: this.configService.get('jwt').verify_email_token.expiration,
-      },
-    );
-
-    // Create new user with COACH role
-    const newUser = this.userRepository.create({
-      fullName: data.fullName,
-      email: data.email,
-      password: passwordHashed,
-      role: coachRole,
-      authProviders: [
-        {
-          provider: AuthProviderEnum.LOCAL,
-          providerId: data.email,
-        } as AuthProvider,
-      ],
-      emailVerificationToken,
-    });
-
-    const savedUser = await this.userRepository.save(newUser);
-
-    // Create coach profile
-    const coach = this.coachRepository.create({
-      bio: data.bio,
-      specialties: data.specialties,
-      teachingMethods: data.teachingMethods,
-      yearOfExperience: data.yearOfExperience,
-      verificationStatus: CoachVerificationStatus.UNVERIFIED,
-      user: savedUser,
-    });
-
-    const savedCoach = await this.coachRepository.save(coach);
-
-    if (data.credentials && data.credentials.length > 0) {
-      const credentials = data.credentials.map((c) =>
-        this.credentialRepository.create({
-          name: c.name,
-          description: c.description,
-          type: c.type,
-          publicUrl: c.publicUrl,
-          coach: savedCoach,
-        }),
+      const passwordHashed = await bcrypt.hash(
+        data.password,
+        this.configService.get('password_salt_rounds'),
       );
-      await this.credentialRepository.save(credentials);
-      savedCoach.credentials = credentials;
-    }
 
-    return savedCoach;
+      const coachRole = await this.roleRepository.findOne({
+        where: { name: UserRole.COACH },
+      });
+      if (!coachRole) {
+        throw new BadRequestException('Coach role not found');
+      }
+
+      const newUser = this.userRepository.create({
+        fullName: data.fullName,
+        email: data.email ? data.email : null,
+        phoneNumber: data.phoneNumber ? data.phoneNumber : null,
+        password: passwordHashed,
+        role: coachRole,
+        coach: [
+          {
+            ...(data.coach as Coach),
+          },
+        ],
+      });
+
+      if (data.email) {
+        const payload: JwtPayloadDto = {
+          id: newUser.id,
+        };
+        const emailVerificationToken = await this.jwtService.signAsync(
+          payload,
+          {
+            secret: this.configService.get('jwt').verify_email_token.secret,
+            expiresIn:
+              this.configService.get('jwt').verify_email_token.expiration,
+          },
+        );
+
+        newUser.emailVerificationToken = emailVerificationToken;
+
+        await this.sendVerificationEmail(data.email, emailVerificationToken);
+      }
+
+      if (data.phoneNumber) {
+        await this.twilioService.sendSMS(data.phoneNumber);
+      }
+
+      await manager.getRepository(User).save(newUser);
+
+      return new CustomApiResponse<void>(
+        HttpStatus.CREATED,
+        'Đăng ký thành công',
+      );
+    });
   }
 
   async verifyCoach(coachId: number): Promise<void> {
@@ -212,5 +211,20 @@ export class CoachService extends BaseTypeOrmService<Coach> {
     });
 
     return;
+  }
+
+  private async sendVerificationEmail(
+    email: string,
+    emailVerificationToken: string,
+  ): Promise<void> {
+    this.mailService.sendMail({
+      to: email,
+      subject: 'Email Verification',
+      text: 'Please verify your email address',
+      template: './verify-mail',
+      context: {
+        verificationLink: `${this.configService.get('app').url}/api/${this.configService.get('app').version}/auth/verify-email?token=${emailVerificationToken}`,
+      },
+    } as MailSendDto);
   }
 }

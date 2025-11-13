@@ -10,6 +10,7 @@ import {
   Logger,
   Get,
   Put,
+  Query,
 } from '@nestjs/common';
 import { CourseService } from '../services/course.service';
 import { ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
@@ -36,6 +37,28 @@ import { PaginateObject } from '@app/shared/dtos/paginate.dto';
 export class CourseController {
   private readonly logger = new Logger(CourseController.name);
   constructor(private readonly courseService: CourseService) {}
+
+  @Get('available')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    tags: ['Courses'],
+    summary: 'Get available courses',
+    description: 'Retrieve a list of all available courses',
+  })
+  async getAvailableCourses(
+    @Query('page') page: number,
+    @Query('size') size: number,
+    @Query('province') province: number,
+    @Query('district') district: number,
+  ): Promise<PaginateObject<Course>> {
+    const courses = await this.courseService.findAvailableCourses(
+      page,
+      size,
+      province,
+      district,
+    );
+    return courses;
+  }
 
   @Get()
   @HttpCode(HttpStatus.OK)
