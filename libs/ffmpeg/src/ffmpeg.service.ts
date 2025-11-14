@@ -98,70 +98,70 @@ export class FfmpegService {
     });
   }
 
-  async createVideoThumbnail(filePath: string, outputDes: string) {
-    if (!fs.existsSync(filePath)) {
-      this.logger.error(`File not found: ${filePath}`);
-      return new Error(`File not found: ${filePath}`);
-    }
+  // async createVideoThumbnail(filePath: string, outputDes: string) {
+  //   if (!fs.existsSync(filePath)) {
+  //     this.logger.error(`File not found: ${filePath}`);
+  //     return new Error(`File not found: ${filePath}`);
+  //   }
 
-    // Restrict outputDes to uploads root
-    const UPLOADS_ROOT = process.env.UPLOADS_ROOT
-      ? path.resolve(process.env.UPLOADS_ROOT)
-      : path.resolve(process.cwd(), 'uploads');
-    const safeOutputDes = path.resolve(
-      UPLOADS_ROOT,
-      path.relative(UPLOADS_ROOT, outputDes),
-    );
-    if (!safeOutputDes.startsWith(UPLOADS_ROOT)) {
-      this.logger.error(`Invalid output destination: ${outputDes}`);
-      throw new Error('Invalid output destination');
-    }
-    if (!fs.existsSync(safeOutputDes)) {
-      fs.mkdirSync(safeOutputDes, { recursive: true });
-    }
+  //   // Restrict outputDes to uploads root
+  //   const UPLOADS_ROOT = process.env.UPLOADS_ROOT
+  //     ? path.resolve(process.env.UPLOADS_ROOT)
+  //     : path.resolve(process.cwd(), 'uploads');
+  //   const safeOutputDes = path.resolve(
+  //     UPLOADS_ROOT,
+  //     path.relative(UPLOADS_ROOT, outputDes),
+  //   );
+  //   if (!safeOutputDes.startsWith(UPLOADS_ROOT)) {
+  //     this.logger.error(`Invalid output destination: ${outputDes}`);
+  //     throw new Error('Invalid output destination');
+  //   }
+  //   if (!fs.existsSync(safeOutputDes)) {
+  //     fs.mkdirSync(safeOutputDes, { recursive: true });
+  //   }
 
-    const outputFileName = `${path.basename(filePath, '.mp4')}-thumbnail.png`;
-    const outputPath = path.join(safeOutputDes, outputFileName);
+  //   const outputFileName = `${path.basename(filePath, '.mp4')}-thumbnail.png`;
+  //   const outputPath = path.join(safeOutputDes, outputFileName);
 
-    await new Promise((resolve, reject) => {
-      const ffmpeg = spawn('ffmpeg', [
-        '-analyzeduration',
-        '100M',
-        '-probesize',
-        '100M',
-        '-ss',
-        '00:00:01',
-        '-i',
-        filePath,
-        '-vf',
-        'thumbnail',
-        '-frames:v',
-        '1',
-        '-update',
-        '1',
-        outputPath,
-      ]);
+  //   await new Promise((resolve, reject) => {
+  //     const ffmpeg = spawn('ffmpeg', [
+  //       '-analyzeduration',
+  //       '100M',
+  //       '-probesize',
+  //       '100M',
+  //       '-ss',
+  //       '00:00:01',
+  //       '-i',
+  //       filePath,
+  //       '-vf',
+  //       'thumbnail',
+  //       '-frames:v',
+  //       '1',
+  //       '-update',
+  //       '1',
+  //       outputPath,
+  //     ]);
 
-      // ffmpeg.stderr.on('data', (data) => {
-      //   this.logger.error(`FFmpeg error: ${data}`);
-      // });
+  //     // ffmpeg.stderr.on('data', (data) => {
+  //     //   this.logger.error(`FFmpeg error: ${data}`);
+  //     // });
 
-      ffmpeg.stdout.on('data', (data) => {
-        this.logger.log(`FFmpeg output: ${data}`);
-      });
+  //     ffmpeg.stdout.on('data', (data) => {
+  //       this.logger.log(`FFmpeg output: ${data}`);
+  //     });
 
-      ffmpeg.on('close', (code) => {
-        if (code === 0) resolve(outputPath);
-        else reject(new Error(`FFmpeg process exited with code ${code}`));
-      });
+  //     ffmpeg.on('close', (code) => {
+  //       if (code === 0) resolve(outputPath);
+  //       else reject(new Error(`FFmpeg process exited with code ${code}`));
+  //     });
 
-      ffmpeg.on('error', (err) => {
-        reject(new Error(`FFmpeg process error: ${err.message}`));
-      });
-    });
+  //     ffmpeg.on('error', (err) => {
+  //       reject(new Error(`FFmpeg process error: ${err.message}`));
+  //     });
+  //   });
 
-    return outputPath;
-  }
+  //   return outputPath;
+  // }
 
   async getVideoFileDuration(filePath: string): Promise<number> {
     return new Promise((resolve, reject) => {
