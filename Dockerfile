@@ -25,6 +25,7 @@ RUN npm ci --only=production
 
 # Copy compiled output from builder and set ownership to non-root user
 COPY --from=builder --chown=node:node /usr/src/app/dist ./dist
+COPY --from=builder --chown=node:node /usr/src/app/uploads ./uploads
 
 # Optionally copy runtime assets (uploads/public) if your app relies on them
 # COPY --from=builder --chown=node:node /usr/src/app/public ./public
