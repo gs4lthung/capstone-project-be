@@ -126,6 +126,7 @@ export class QuizService extends BaseTypeOrmService<Quiz> {
 
   async createQuestion(quizId: number, data: CreateQuestionDto) {
     return await this.datasource.transaction(async (manager) => {
+      console.log('Creating question with data:', data);
       const quiz = await this.quizRepository.findOne({
         where: { id: quizId },
         relations: ['session', 'lesson'],
