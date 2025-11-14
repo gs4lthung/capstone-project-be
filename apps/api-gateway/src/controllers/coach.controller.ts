@@ -7,6 +7,7 @@ import {
   Param,
   Post,
   Put,
+  UploadedFile,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -19,6 +20,7 @@ import {
 import { CoachService } from '../services/coach.service';
 import { AuthGuard } from '../guards/auth.guard';
 import {
+  RegisterCoachCredentialDto,
   RegisterCoachDto,
   UpdateCoachProfileDto,
 } from '@app/shared/dtos/coaches/register-coach.dto';
@@ -87,6 +89,39 @@ export class CoachController {
     @Body() data: UpdateCoachProfileDto,
   ): Promise<CustomApiResponse<void>> {
     return this.coachService.update(data);
+  }
+
+  @Post('credentials')
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Update coach credential' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Coach credential updated',
+  })
+  @UseGuards(AuthGuard, RoleGuard)
+  async updateCredential(
+    @UploadedFile('file') file: Express.Multer.File,
+    @Body() data: RegisterCoachCredentialDto,
+  ): Promise<CustomApiResponse<void>> {
+    return this.coachService.uploadCredential(data, file);
+  }
+
+  @Put('credentials/:id')
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Update coach credential by id' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Coach credential updated',
+  })
+  @UseGuards(AuthGuard, RoleGuard)
+  async updateCredentialById(
+    @Param('id') id: number,
+    @UploadedFile('file') file: Express.Multer.File,
+    @Body() data: RegisterCoachCredentialDto,
+  ): Promise<CustomApiResponse<void>> {
+    return this.coachService.updateCredential(id, data, file);
   }
 
   @Get(':id/rating/overall')

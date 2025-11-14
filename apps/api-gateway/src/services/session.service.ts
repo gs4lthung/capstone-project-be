@@ -229,7 +229,7 @@ export class SessionService extends BaseTypeOrmService<Session> {
         throw new InternalServerErrorException('Giá trị cấu hình không hợp lệ');
 
       const sessionEarning =
-        (course.totalEarnings * (100 - feePercentage)) /
+        (Number(course.totalEarnings) * (100 - feePercentage)) /
         100 /
         course.totalSessions;
       const sessionEarningRecord = this.sessionEarningRepository.create({
@@ -266,28 +266,36 @@ export class SessionService extends BaseTypeOrmService<Session> {
         await manager.getRepository(Attendance).save(attendance);
       }
 
-      const completeBefourHours = await this.configurationRepository.findOne({
-        where: { key: 'complete_session_before_hours' },
-      });
-      const hoursBefore = completeBefourHours
-        ? Number(completeBefourHours.value)
+      // Get configuration for completion deadline (hours after session ends)
+      const completeBeforeHoursConfig =
+        await this.configurationService.findByKey(
+          'complete_session_before_hours',
+        );
+      const hoursBefore = completeBeforeHoursConfig?.metadata?.value
+        ? Number(completeBeforeHoursConfig.metadata.value)
         : 0;
+
+      // Calculate deadline: session end time + allowed hours buffer
       const sessionEndTime = new Date(session.scheduleDate);
       const [eh, em] = session.endTime.split(':').map(Number);
       sessionEndTime.setHours(eh, em, 0, 0);
-      const allowedCompleteTime = new Date(
+      const deadlineTime = new Date(
         sessionEndTime.getTime() + hoursBefore * 60 * 60 * 1000,
       );
-      if (new Date() <= allowedCompleteTime)
+
+      // Wallet top-up: only if coach completes within deadline
+      // If current time <= deadline, then coach completed on time
+      if (new Date() <= deadlineTime) {
         await this.walletService.handleWalletTopUp(
           this.request.user.id as User['id'],
           sessionEarning,
         );
+      }
 
-      const totalSessions = await this.sessionRepository.count({
+      const totalSessions = await manager.getRepository(Session).count({
         where: { course: { id: course.id } },
       });
-      const completedSessions = await this.sessionRepository.count({
+      const completedSessions = await manager.getRepository(Session).count({
         where: {
           course: { id: course.id },
           status: SessionStatus.COMPLETED,
@@ -318,7 +326,7 @@ export class SessionService extends BaseTypeOrmService<Session> {
       return new CustomApiResponse<void>(
         HttpStatus.OK,
         `Điểm danh và hoàn thành buổi học thành công` +
-          (new Date() <= allowedCompleteTime
+          (new Date() <= deadlineTime
             ? ', bạn đã nhận được ' + sessionEarning + ' vào ví của mình.'
             : ', nhưng buổi học đã hoàn thành quá thời gian quy định để nhận tiền.'),
       );
