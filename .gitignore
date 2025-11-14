@@ -60,6 +60,5 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 # Ignore all migrations and seeds file in development process
 /libs/database/src/migrations/*.[ts][js]
 
-*uploads
 
 *.claude
