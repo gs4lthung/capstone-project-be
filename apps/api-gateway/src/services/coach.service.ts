@@ -87,27 +87,35 @@ export class CoachService extends BaseTypeOrmService<Coach> {
     return coach;
   }
 
-  async getOverallRating(id: number): Promise<CustomApiResponse<number>> {
+  async getOverallRating(
+    id: number,
+  ): Promise<CustomApiResponse<{ overall: number; total: number }>> {
     const feedbacks = await this.feedbackRepository.find({
       where: {
         receivedBy: { id: id },
       },
     });
     if (feedbacks.length === 0)
-      return new CustomApiResponse<number>(
+      return new CustomApiResponse<{ overall: number; total: number }>(
         HttpStatus.OK,
         'No feedbacks found',
-        0,
+        {
+          overall: 0,
+          total: 0,
+        },
       );
     const totalRating = feedbacks.reduce(
       (acc, feedback) => acc + feedback.rating,
       0,
     );
     const overallRating = totalRating / feedbacks.length;
-    return new CustomApiResponse<number>(
+    return new CustomApiResponse<{ overall: number; total: number }>(
       HttpStatus.OK,
       'Success',
-      overallRating,
+      {
+        overall: overallRating,
+        total: feedbacks.length,
+      },
     );
   }
 

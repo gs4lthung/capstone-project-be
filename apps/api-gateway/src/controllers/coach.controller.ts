@@ -134,7 +134,7 @@ export class CoachController {
   @ApiResponse({ status: HttpStatus.OK, description: 'Overall rating' })
   async getOverallRating(
     @Param('id') id: number,
-  ): Promise<CustomApiResponse<number>> {
+  ): Promise<CustomApiResponse<{ overall: number; total: number }>> {
     return this.coachService.getOverallRating(id);
   }
 
