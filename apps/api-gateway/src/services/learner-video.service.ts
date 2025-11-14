@@ -25,6 +25,8 @@ export class LearnerVideoService {
     private readonly learnerProgressRepo: Repository<LearnerProgress>,
     @InjectRepository(AiVideoComparisonResult)
     private readonly aiVideoComparisonResultRepo: Repository<AiVideoComparisonResult>,
+    @InjectRepository(Video)
+    private readonly videoRepo: Repository<Video>,
     private readonly awsService: AwsService,
     private readonly ffmpegService: FfmpegService,
   ) {}
@@ -76,6 +78,7 @@ export class LearnerVideoService {
       tags: data.tags,
       user: { id: user.id },
       session: data.sessionId ? { id: data.sessionId } : undefined,
+      video: data.coachVideoId ? { id: data.coachVideoId } : undefined,
     });
 
     return this.learnerVideoRepo.save(learnerVideo);
@@ -163,5 +166,45 @@ export class LearnerVideoService {
     }
 
     return this.aiVideoComparisonResultRepo.save(aiResultRecord);
+  }
+
+  async generateOverlayVideo(learnerVideoId: number): Promise<string> {
+    const learnerVideo = await this.learnerVideoRepo.findOne({
+      where: { id: learnerVideoId },
+      relations: ['session', 'session.lesson', 'session.lesson.video'],
+    });
+    if (!learnerVideo) throw new BadRequestException('LearnerVideo not found');
+
+    const coachVideo = await this.videoRepo.findOne({
+      where: {
+        aiVideoComparisonResults: { learnerVideo: { id: learnerVideo.id } },
+      },
+    });
+    if (!coachVideo) throw new BadRequestException('Coach Video not found');
+
+    const overlayFilePath = await this.ffmpegService.overlayVideoOnVideo(
+      learnerVideo.publicUrl,
+      coachVideo.publicUrl,
+      FileUtils.excludeFileFromPath(learnerVideo.publicUrl),
+    );
+
+    const uploadedResult = this.awsService.uploadFileToPublicBucket({
+      file: {
+        buffer: fs.readFileSync(overlayFilePath),
+        path: overlayFilePath,
+        originalname: path.basename(overlayFilePath),
+        mimetype: 'video/mp4',
+        size: fs.statSync(overlayFilePath).size,
+        fieldname: 'video_overlay',
+        destination: '',
+        filename: '',
+        encoding: '7bit',
+      } as Express.Multer.File,
+    });
+
+    learnerVideo.overlayVideoUrl = (await uploadedResult).url;
+    await this.learnerVideoRepo.save(learnerVideo);
+
+    return (await uploadedResult).url;
   }
 }

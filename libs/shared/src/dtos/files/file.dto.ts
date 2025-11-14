@@ -17,8 +17,8 @@ export class UploadFileDto {
 }
 
 export class UploadLearnerVideoDto {
-  lessonId: number;
   sessionId?: number;
+  coachVideoId?: number;
   duration: number;
   tags?: string[];
 }
