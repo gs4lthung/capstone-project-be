@@ -163,17 +163,28 @@ export class CourseService extends BaseTypeOrmService<Course> {
   ): Promise<PaginateObject<Course>> {
     const offset = (page - 1) * size;
 
+    const enrollments = await this.enrollmentRepository.find({
+      where: {
+        user: { id: this.request.user?.id as User['id'] },
+      },
+      relations: ['course'],
+    });
+
+    const enrolledCourseIds = enrollments.map(
+      (enrollment) => enrollment.course.id,
+    );
+
     const [courses, total] = await this.courseRepository.findAndCount({
       where: {
-        enrollments: {
-          user: { id: this.request.user?.id as User['id'] },
-        },
+        id: In(enrolledCourseIds),
         status: Not(CourseStatus.CANCELLED),
       },
+      relations: ['subject', 'sessions', 'enrollments'],
       skip: offset,
       take: size,
       order: { createdAt: 'DESC' },
     });
+
     const result = new PaginateObject<Course>();
     Object.assign(result, {
       items: courses,
