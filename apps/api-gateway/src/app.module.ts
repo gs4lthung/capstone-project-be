@@ -117,6 +117,8 @@ import { LearnerVideoController } from './controllers/learner-video.controller';
 import { LearnerVideoService } from './services/learner-video.service';
 import { LearnerVideo } from '@app/database/entities/learner-video.entity';
 import { AiVideoComparisonResult } from '@app/database/entities/ai-video-comparison-result.entity';
+import { AiVideoCompareResultController } from './controllers/ai-video-compare-result.controller';
+import { AiVideoCompareResultService } from './services/ai-video-compare-result.service';
 import { CourtService } from './services/court.service';
 import { CourtController } from './controllers/court.controller';
 import { Court } from '@app/database/entities/court.entity';
@@ -254,6 +256,7 @@ import { Court } from '@app/database/entities/court.entity';
     EnrollmentController,
     PlatformAnalysisController,
     LearnerVideoController,
+    AiVideoCompareResultController,
   ],
   providers: [
     AppService,
@@ -289,6 +292,7 @@ import { Court } from '@app/database/entities/court.entity';
     AttendanceService,
     PlatformAnalysisService,
     LearnerVideoService,
+    AiVideoCompareResultService,
   ],
 })
 export class AppModule {}

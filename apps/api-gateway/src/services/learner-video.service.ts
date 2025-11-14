@@ -127,45 +127,105 @@ export class LearnerVideoService {
     });
     if (!learnerVideo) throw new BadRequestException('LearnerVideo not found');
     const coachVideo = learnerVideo.session?.lesson?.videos?.[0] as Video;
-    const aiResultRecord = this.aiVideoComparisonResultRepo.create({
+    const aiResultRecord: any = {
       learnerVideo,
-      video: coachVideo,
-      summary: aiText.summary,
-      coachNote: aiText.coachNote,
-      learnerScore: aiText.overallScoreForPlayer2,
-      keyDifferents: aiText.keyDifferences,
-      recommendationDrills: aiText.recommendationsForPlayer2?.map((r: any) => ({
-        name: r.drill?.title,
-        description: r.drill?.description,
-        practiceSets: r.drill?.practice_sets,
-      })),
-      details: buildDetailsArrayFromComparison(aiText.comparison),
-    });
+    };
 
-    const learnerProgress = await this.learnerProgressRepo.findOne({
-      where: {
-        user: {
-          learner: {
-            id: learnerVideo.user.id,
-          },
-        },
-        course: { sessions: { id: learnerVideo.session.id } },
-      },
-    });
-    if (learnerProgress) {
-      learnerProgress.avgAiAnalysisScore = Math.round(
-        (learnerProgress.avgAiAnalysisScore + aiText.overallScoreForPlayer2) /
-          (await this.learnerVideoRepo.count({
-            where: {
-              user: { id: learnerVideo.user.id },
-              session: { course: { id: learnerProgress.course.id } },
-            },
-          })),
-      );
-      await this.learnerProgressRepo.save(learnerProgress);
+    // Only set video if it exists
+    if (coachVideo) {
+      aiResultRecord.video = coachVideo;
     }
 
-    return this.aiVideoComparisonResultRepo.save(aiResultRecord);
+    // Only set fields that have values
+    if (aiText.summary) {
+      aiResultRecord.summary = aiText.summary;
+    }
+    if (aiText.coachNote) {
+      aiResultRecord.coachNote = aiText.coachNote;
+    }
+    if (
+      aiText.overallScoreForPlayer2 !== undefined &&
+      aiText.overallScoreForPlayer2 !== null
+    ) {
+      aiResultRecord.learnerScore = aiText.overallScoreForPlayer2;
+    }
+    if (
+      aiText.keyDifferences &&
+      Array.isArray(aiText.keyDifferences) &&
+      aiText.keyDifferences.length > 0
+    ) {
+      aiResultRecord.keyDifferents = aiText.keyDifferences.map((kd: any) => ({
+        aspect: kd.aspect || kd.key || '',
+        impact: kd.impact || '',
+        coachTechnique: kd.coachTechnique || kd.coach_technique || '',
+        learnerTechnique: kd.learnerTechnique || kd.learner_technique || '',
+      }));
+    }
+    if (
+      aiText.recommendationsForPlayer2 &&
+      Array.isArray(aiText.recommendationsForPlayer2) &&
+      aiText.recommendationsForPlayer2.length > 0
+    ) {
+      aiResultRecord.recommendationDrills =
+        aiText.recommendationsForPlayer2.map((r: any) => {
+          const drill: any = {};
+          if (r.drill?.title || r.name) {
+            drill.name = r.drill?.title || r.name || '';
+          }
+          if (r.drill?.description || r.description) {
+            drill.description = r.drill?.description || r.description;
+          }
+          if (r.drill?.practice_sets || r.practiceSets) {
+            drill.practiceSets =
+              typeof r.drill?.practice_sets === 'string'
+                ? r.drill.practice_sets
+                : Array.isArray(r.drill?.practice_sets)
+                  ? r.drill.practice_sets.join(', ')
+                  : r.drill?.practice_sets?.toString() || r.practiceSets;
+          }
+          return drill;
+        });
+    }
+    if (aiText.comparison) {
+      const details = buildDetailsArrayFromComparison(aiText.comparison);
+      if (details && details.length > 0) {
+        aiResultRecord.details = details;
+      }
+    }
+
+    const createdRecord =
+      this.aiVideoComparisonResultRepo.create(aiResultRecord);
+
+    // Only update learner progress if learnerScore is provided
+    if (
+      aiText.overallScoreForPlayer2 !== undefined &&
+      aiText.overallScoreForPlayer2 !== null
+    ) {
+      const learnerProgress = await this.learnerProgressRepo.findOne({
+        where: {
+          user: {
+            learner: {
+              id: learnerVideo.user.id,
+            },
+          },
+          course: { sessions: { id: learnerVideo.session.id } },
+        },
+      });
+      if (learnerProgress) {
+        learnerProgress.avgAiAnalysisScore = Math.round(
+          (learnerProgress.avgAiAnalysisScore + aiText.overallScoreForPlayer2) /
+            (await this.learnerVideoRepo.count({
+              where: {
+                user: { id: learnerVideo.user.id },
+                session: { course: { id: learnerProgress.course.id } },
+              },
+            })),
+        );
+        await this.learnerProgressRepo.save(learnerProgress);
+      }
+    }
+
+    return this.aiVideoComparisonResultRepo.save(createdRecord);
   }
 
   async generateOverlayVideo(learnerVideoId: number): Promise<string> {

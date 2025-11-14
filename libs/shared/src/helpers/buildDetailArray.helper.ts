@@ -5,25 +5,45 @@ export function buildDetailsArrayFromComparison(comparison: any) {
     swingAndContact: 'SWING_AND_CONTACT',
     followThrough: 'FOLLOW_THROUGH',
   };
-  return Object.keys(comparison).map((key) => {
+  const details: any[] = [];
+
+  Object.keys(comparison).forEach((key) => {
     const value = comparison[key];
-    return {
-      type: mapKey[key] || key,
-      advanced: value.advantage || '',
-      // Player 1 (coach)
-      player1: {
-        analysis: value.player1?.analysis,
-        strengths: value.player1?.strengths,
-        weaknesses: value.player1?.weaknesses,
-        timestamp: value.player1?.timestamp,
-      },
-      // Player 2 (learner)
-      player2: {
-        analysis: value.player2?.analysis,
-        strengths: value.player2?.strengths,
-        weaknesses: value.player2?.weaknesses,
-        timestamp: value.player2?.timestamp,
-      },
-    };
+    const type = mapKey[key] || key;
+    const advanced = value.advantage || '';
+
+    // Create record for COACH (player1)
+    if (value.player1) {
+      const coachDetail: any = {
+        type,
+        advanced,
+        userRole: 'COACH',
+      };
+      if (value.player1?.strengths?.length > 0) {
+        coachDetail.strengths = value.player1.strengths;
+      }
+      if (value.player1?.weaknesses?.length > 0) {
+        coachDetail.weaknesses = value.player1.weaknesses;
+      }
+      details.push(coachDetail);
+    }
+
+    // Create record for LEARNER (player2)
+    if (value.player2) {
+      const learnerDetail: any = {
+        type,
+        advanced,
+        userRole: 'LEARNER',
+      };
+      if (value.player2?.strengths?.length > 0) {
+        learnerDetail.strengths = value.player2.strengths;
+      }
+      if (value.player2?.weaknesses?.length > 0) {
+        learnerDetail.weaknesses = value.player2.weaknesses;
+      }
+      details.push(learnerDetail);
+    }
   });
+
+  return details;
 }

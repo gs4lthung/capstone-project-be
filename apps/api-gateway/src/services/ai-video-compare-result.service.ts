@@ -24,4 +24,22 @@ export class AiVideoCompareResultService {
       relations: ['video', 'learnerVideo'],
     });
   }
+
+  async findBySessionIdAndUserId(sessionId: number, userId: number) {
+    return this.aiRepo.find({
+      where: {
+        learnerVideo: {
+          session: { id: sessionId },
+          user: { id: userId },
+        },
+      },
+      relations: [
+        'video',
+        'learnerVideo',
+        'learnerVideo.session',
+        'learnerVideo.user',
+      ],
+      order: { createdAt: 'DESC' },
+    });
+  }
 }
