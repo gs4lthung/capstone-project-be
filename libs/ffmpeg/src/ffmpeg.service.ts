@@ -3,6 +3,9 @@ import * as ffmpeg from 'fluent-ffmpeg';
 import * as path from 'path';
 import * as fs from 'fs';
 import { spawn } from 'child_process';
+import * as os from 'os';
+import * as http from 'http';
+import * as https from 'https';
 @Injectable()
 export class FfmpegService {
   private logger = new Logger(FfmpegService.name);
@@ -102,11 +105,13 @@ export class FfmpegService {
     }
 
     // Restrict outputDes to uploads root
-    const UPLOADS_ROOT =
-      process.env.UPLOADS_ROOT
-        ? path.resolve(process.env.UPLOADS_ROOT)
-        : path.resolve(process.cwd(), 'uploads');
-    const safeOutputDes = path.resolve(UPLOADS_ROOT, path.relative(UPLOADS_ROOT, outputDes));
+    const UPLOADS_ROOT = process.env.UPLOADS_ROOT
+      ? path.resolve(process.env.UPLOADS_ROOT)
+      : path.resolve(process.cwd(), 'uploads');
+    const safeOutputDes = path.resolve(
+      UPLOADS_ROOT,
+      path.relative(UPLOADS_ROOT, outputDes),
+    );
     if (!safeOutputDes.startsWith(UPLOADS_ROOT)) {
       this.logger.error(`Invalid output destination: ${outputDes}`);
       throw new Error('Invalid output destination');
@@ -257,6 +262,186 @@ export class FfmpegService {
       fs.writeFileSync(m3u8FilePath, m3u8Content, { encoding: 'utf-8' });
 
       resolve(m3u8FilePath);
+    });
+  }
+
+  async overlayVideoOnVideo(
+    backgroundVideoPathOrUrl: string,
+    overlayVideoPathOrUrl: string,
+    outputVideoPath: string,
+  ) {
+    const isRemote = (p: string) => /^https?:\/\//i.test(p);
+
+    const downloadToTemp = (urlStr: string) =>
+      new Promise<string>((resolve, reject) => {
+        try {
+          const parsed = new URL(urlStr);
+          const ext = path.extname(parsed.pathname) || '.mp4';
+          const tmpFile = path.join(
+            os.tmpdir(),
+            `ffmpeg-${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`,
+          );
+
+          const client = parsed.protocol === 'https:' ? https : http;
+          const req = client.get(urlStr, (res: any) => {
+            if (res.statusCode && res.statusCode >= 400) {
+              return reject(
+                new Error(
+                  `Failed to download ${urlStr}, status ${res.statusCode}`,
+                ),
+              );
+            }
+            const fileStream = fs.createWriteStream(tmpFile);
+            res.pipe(fileStream);
+            fileStream.on('finish', () => {
+              fileStream.close();
+              resolve(tmpFile);
+            });
+            fileStream.on('error', (err) => {
+              try {
+                // Prefer fs.rmSync with force option when available, otherwise fall back to unlinkSync
+                if ((fs as any).rmSync) {
+                  (fs as any).rmSync(tmpFile, { force: true });
+                } else {
+                  fs.unlinkSync(tmpFile);
+                }
+              } catch {
+                /* ignore cleanup errors */
+              }
+              reject(err);
+            });
+          });
+
+          req.on('error', (err: Error) => {
+            reject(err);
+          });
+        } catch (err) {
+          reject(err);
+        }
+      });
+
+    return new Promise<string>(async (resolve, reject) => {
+      let bgLocal = backgroundVideoPathOrUrl;
+      let overlayLocal = overlayVideoPathOrUrl;
+      const tempsToCleanup: string[] = [];
+
+      try {
+        // Download remote files if needed
+        if (isRemote(backgroundVideoPathOrUrl)) {
+          this.logger.log(
+            `Downloading background from ${backgroundVideoPathOrUrl}`,
+          );
+          bgLocal = await downloadToTemp(backgroundVideoPathOrUrl);
+          tempsToCleanup.push(bgLocal);
+        }
+
+        if (isRemote(overlayVideoPathOrUrl)) {
+          this.logger.log(`Downloading overlay from ${overlayVideoPathOrUrl}`);
+          overlayLocal = await downloadToTemp(overlayVideoPathOrUrl);
+          tempsToCleanup.push(overlayLocal);
+        }
+
+        // Validate local existence
+        if (!fs.existsSync(bgLocal)) {
+          this.logger.error(`Background video not found: ${bgLocal}`);
+          return reject(new Error(`Background video not found: ${bgLocal}`));
+        }
+        if (!fs.existsSync(overlayLocal)) {
+          this.logger.error(`Overlay video not found: ${overlayLocal}`);
+          return reject(new Error(`Overlay video not found: ${overlayLocal}`));
+        }
+
+        const outputDir = path.dirname(outputVideoPath);
+        if (!fs.existsSync(outputDir)) {
+          fs.mkdirSync(outputDir, { recursive: true });
+        }
+
+        const filter =
+          '[1:v]scale=1920x1080,format=yuva420p,colorchannelmixer=aa=0.5[transparent_top];[0:v][transparent_top]overlay[v]';
+
+        const args = [
+          '-i',
+          bgLocal,
+          '-i',
+          overlayLocal,
+          '-filter_complex',
+          filter,
+          '-map',
+          '[v]',
+          '-map',
+          '0:a?',
+          '-c:v',
+          'libx264',
+          '-c:a',
+          'aac',
+          '-preset',
+          'fast',
+          '-crf',
+          '23',
+          '-y',
+          outputVideoPath,
+        ];
+
+        const ffmpegProc = spawn('ffmpeg', args);
+
+        let stderr = '';
+        ffmpegProc.stderr.on('data', (data) => {
+          const msg = data.toString();
+          stderr += msg;
+          this.logger.log(`FFmpeg: ${msg}`);
+        });
+
+        ffmpegProc.stdout.on('data', (data) => {
+          this.logger.log(`FFmpeg stdout: ${data.toString()}`);
+        });
+
+        ffmpegProc.on('close', (code) => {
+          // cleanup temps
+          for (const t of tempsToCleanup) {
+            try {
+              fs.unlinkSync(t);
+            } catch {
+              /* ignore */
+            }
+          }
+
+          if (code === 0) {
+            this.logger.log(`Overlay completed: ${outputVideoPath}`);
+            resolve(outputVideoPath);
+          } else {
+            this.logger.error(`FFmpeg exited with code ${code}`);
+            reject(new Error(`FFmpeg exited with code ${code}. ${stderr}`));
+          }
+        });
+
+        ffmpegProc.on('error', (err) => {
+          // cleanup temps
+          for (const t of tempsToCleanup) {
+            try {
+              fs.unlinkSync(t);
+            } catch {
+              /* ignore */
+            }
+          }
+
+          this.logger.error(`FFmpeg process error: ${err.message}`);
+          reject(err);
+        });
+      } catch (err) {
+        // cleanup temps on failure
+        for (const t of tempsToCleanup) {
+          try {
+            fs.unlinkSync(t);
+          } catch {
+            /* ignore */
+          }
+        }
+
+        this.logger.error(
+          `Failed to start FFmpeg overlay: ${err.message || err}`,
+        );
+        reject(err);
+      }
     });
   }
 }
