@@ -14,14 +14,19 @@ import { FileUtils } from '@app/shared/utils/file.util';
 import { AiVideoComparisonResult } from '@app/database/entities/ai-video-comparison-result.entity';
 import { Video } from '@app/database/entities/video.entity';
 import { buildDetailsArrayFromComparison } from '@app/shared/helpers/buildDetailArray.helper';
+import { LearnerProgress } from '@app/database/entities/learner-progress.entity';
 
 @Injectable()
 export class LearnerVideoService {
   constructor(
     @InjectRepository(LearnerVideo)
     private readonly learnerVideoRepo: Repository<LearnerVideo>,
+    @InjectRepository(LearnerProgress)
+    private readonly learnerProgressRepo: Repository<LearnerProgress>,
     @InjectRepository(AiVideoComparisonResult)
     private readonly aiVideoComparisonResultRepo: Repository<AiVideoComparisonResult>,
+    @InjectRepository(Video)
+    private readonly videoRepo: Repository<Video>,
     private readonly awsService: AwsService,
     private readonly ffmpegService: FfmpegService,
   ) {}
@@ -73,7 +78,9 @@ export class LearnerVideoService {
       tags: data.tags,
       user: { id: user.id },
       session: data.sessionId ? { id: data.sessionId } : undefined,
+      video: data.coachVideoId ? { id: data.coachVideoId } : undefined,
     });
+
     return this.learnerVideoRepo.save(learnerVideo);
   }
 
@@ -134,6 +141,70 @@ export class LearnerVideoService {
       })),
       details: buildDetailsArrayFromComparison(aiText.comparison),
     });
+
+    const learnerProgress = await this.learnerProgressRepo.findOne({
+      where: {
+        user: {
+          learner: {
+            id: learnerVideo.user.id,
+          },
+        },
+        course: { sessions: { id: learnerVideo.session.id } },
+      },
+    });
+    if (learnerProgress) {
+      learnerProgress.avgAiAnalysisScore = Math.round(
+        (learnerProgress.avgAiAnalysisScore + aiText.overallScoreForPlayer2) /
+          (await this.learnerVideoRepo.count({
+            where: {
+              user: { id: learnerVideo.user.id },
+              session: { course: { id: learnerProgress.course.id } },
+            },
+          })),
+      );
+      await this.learnerProgressRepo.save(learnerProgress);
+    }
+
     return this.aiVideoComparisonResultRepo.save(aiResultRecord);
+  }
+
+  async generateOverlayVideo(learnerVideoId: number): Promise<string> {
+    const learnerVideo = await this.learnerVideoRepo.findOne({
+      where: { id: learnerVideoId },
+      relations: ['session', 'session.lesson', 'session.lesson.video'],
+    });
+    if (!learnerVideo) throw new BadRequestException('LearnerVideo not found');
+
+    const coachVideo = await this.videoRepo.findOne({
+      where: {
+        aiVideoComparisonResults: { learnerVideo: { id: learnerVideo.id } },
+      },
+    });
+    if (!coachVideo) throw new BadRequestException('Coach Video not found');
+
+    const overlayFilePath = await this.ffmpegService.overlayVideoOnVideo(
+      learnerVideo.publicUrl,
+      coachVideo.publicUrl,
+      FileUtils.excludeFileFromPath(learnerVideo.publicUrl),
+    );
+
+    const uploadedResult = this.awsService.uploadFileToPublicBucket({
+      file: {
+        buffer: fs.readFileSync(overlayFilePath),
+        path: overlayFilePath,
+        originalname: path.basename(overlayFilePath),
+        mimetype: 'video/mp4',
+        size: fs.statSync(overlayFilePath).size,
+        fieldname: 'video_overlay',
+        destination: '',
+        filename: '',
+        encoding: '7bit',
+      } as Express.Multer.File,
+    });
+
+    learnerVideo.overlayVideoUrl = (await uploadedResult).url;
+    await this.learnerVideoRepo.save(learnerVideo);
+
+    return (await uploadedResult).url;
   }
 }

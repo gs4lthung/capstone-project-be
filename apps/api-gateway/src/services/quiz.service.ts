@@ -358,7 +358,12 @@ export class QuizService extends BaseTypeOrmService<Quiz> {
       if (learnerProgress) {
         learnerProgress.avgQuizScore = Math.round(
           (learnerProgress.avgQuizScore + score) /
-            learnerProgress.sessionsCompleted,
+            (await manager.getRepository(QuizAttempt).count({
+              where: {
+                attemptedBy: { id: (this.request.user as User).id },
+                session: { course: { id: session.course.id } },
+              },
+            })),
         );
         await manager.getRepository(LearnerProgress).save(learnerProgress);
       }

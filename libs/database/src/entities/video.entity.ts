@@ -12,6 +12,7 @@ import { User } from './user.entity';
 import { Lesson } from './lesson.entity';
 import { AiVideoComparisonResult } from './ai-video-comparison-result.entity';
 import { Session } from './session.entity';
+import { LearnerVideo } from './learner-video.entity';
 
 @Entity('videos')
 @Check(
@@ -67,6 +68,9 @@ export class Video {
   @ManyToOne(() => Session, (session) => session.videos, { nullable: true })
   @JoinColumn({ name: 'session_id' })
   session: Session;
+
+  @OneToMany(() => LearnerVideo, (LearnerVideo) => LearnerVideo.video)
+  learnerVideos: LearnerVideo[];
 
   @OneToMany(
     () => AiVideoComparisonResult,

@@ -20,6 +20,7 @@ import {
   IsUrl,
 } from 'class-validator';
 import { User } from './user.entity';
+import { Video } from './video.entity';
 
 @Entity('learner_videos')
 export class LearnerVideo {
@@ -45,6 +46,11 @@ export class LearnerVideo {
   @IsUrl()
   thumbnailUrl?: string;
 
+  @Column({ name: 'overlay_video_url', type: 'text', nullable: true })
+  @IsOptional()
+  @IsUrl()
+  overlayVideoUrl?: string;
+
   @Column({
     type: 'enum',
     enum: LearnerVideoStatus,
@@ -63,6 +69,10 @@ export class LearnerVideo {
   @ManyToOne(() => Session, (session) => session.learnerVideos)
   @JoinColumn({ name: 'session_id' })
   session: Session;
+
+  @ManyToOne(() => Video, (video) => video.learnerVideos)
+  @JoinColumn({ name: 'video_id' })
+  video: Video;
 
   @OneToMany(
     () => AiVideoComparisonResult,
