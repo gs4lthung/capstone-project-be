@@ -126,7 +126,7 @@ export class FeedbackService {
   async findForCoach(): Promise<CustomApiResponse<Feedback[]>> {
     const feedbacks = await this.feedbackRepository.find({
       where: { receivedBy: { id: this.request.user.id as User['id'] } },
-      relations: ['createdBy', 'course', 'receivedBy'],
+      relations: ['createdBy', 'receivedBy'],
       order: {
         createdAt: 'DESC',
       },

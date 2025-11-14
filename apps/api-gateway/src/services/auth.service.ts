@@ -131,7 +131,13 @@ export class AuthService {
       const user = await this.userRepository.findOne({
         where: { id: userId },
         withDeleted: false,
-        relations: ['role'],
+        relations: [
+          'role',
+          'coach',
+          'learner',
+          'learner.province',
+          'learner.district',
+        ],
         select: ['id', 'fullName', 'email', 'role'],
       });
 

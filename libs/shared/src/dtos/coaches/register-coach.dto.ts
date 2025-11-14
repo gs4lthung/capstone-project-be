@@ -41,6 +41,14 @@ export class RegisterCoachCredentialDto {
   @IsOptional()
   @IsString()
   publicUrl?: string;
+
+  @ApiProperty({ example: '2023-01-01T00:00:00Z', required: false })
+  @IsOptional()
+  issuedAt?: Date;
+
+  @ApiProperty({ example: '2025-01-01T00:00:00Z', required: false })
+  @IsOptional()
+  expiresAt?: Date;
 }
 
 export class CoachProfileDto {

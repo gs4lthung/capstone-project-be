@@ -87,27 +87,35 @@ export class CoachService extends BaseTypeOrmService<Coach> {
     return coach;
   }
 
-  async getOverallRating(id: number): Promise<CustomApiResponse<number>> {
+  async getOverallRating(
+    id: number,
+  ): Promise<CustomApiResponse<{ overall: number; total: number }>> {
     const feedbacks = await this.feedbackRepository.find({
       where: {
         receivedBy: { id: id },
       },
     });
     if (feedbacks.length === 0)
-      return new CustomApiResponse<number>(
+      return new CustomApiResponse<{ overall: number; total: number }>(
         HttpStatus.OK,
         'No feedbacks found',
-        0,
+        {
+          overall: 0,
+          total: 0,
+        },
       );
     const totalRating = feedbacks.reduce(
       (acc, feedback) => acc + feedback.rating,
       0,
     );
     const overallRating = totalRating / feedbacks.length;
-    return new CustomApiResponse<number>(
+    return new CustomApiResponse<{ overall: number; total: number }>(
       HttpStatus.OK,
       'Success',
-      overallRating,
+      {
+        overall: overallRating,
+        total: feedbacks.length,
+      },
     );
   }
 
@@ -207,6 +215,17 @@ export class CoachService extends BaseTypeOrmService<Coach> {
     });
   }
 
+  async coachGetCredentials(): Promise<Credential[]> {
+    const coach = await this.coachRepository.findOne({
+      where: {
+        user: { id: this.request.user.id as User['id'] },
+      },
+      relations: ['credentials'],
+    });
+    if (!coach) throw new NotFoundException('Coach not found');
+    return coach.credentials;
+  }
+
   async uploadCredential(
     data: RegisterCoachCredentialDto,
     file: Express.Multer.File,
@@ -269,6 +288,43 @@ export class CoachService extends BaseTypeOrmService<Coach> {
       return new CustomApiResponse<void>(
         HttpStatus.OK,
         'Cập nhật giấy tờ thành công',
+      );
+    });
+  }
+
+  async deleteCredential(id: number): Promise<CustomApiResponse<void>> {
+    return await this.datasource.transaction(async (manager) => {
+      const credential = await this.credentialRepository.findOne({
+        where: { id: id },
+        relations: ['coach', 'coach.user'],
+      });
+      if (!credential) throw new NotFoundException('Credential not found');
+      if (credential.coach.user.id !== this.request.user.id) {
+        throw new BadRequestException('You are not authorized to delete this');
+      }
+      await manager.getRepository(Credential).softDelete(credential.id);
+      return new CustomApiResponse<void>(
+        HttpStatus.OK,
+        'Xóa giấy tờ thành công',
+      );
+    });
+  }
+
+  async restoreCredential(id: number): Promise<CustomApiResponse<void>> {
+    return await this.datasource.transaction(async (manager) => {
+      const credential = await this.credentialRepository.findOne({
+        where: { id: id },
+        withDeleted: true,
+        relations: ['coach', 'coach.user'],
+      });
+      if (!credential) throw new NotFoundException('Credential not found');
+      if (credential.coach.user.id !== this.request.user.id) {
+        throw new BadRequestException('You are not authorized to restore this');
+      }
+      await manager.getRepository(Credential).restore(credential.id);
+      return new CustomApiResponse<void>(
+        HttpStatus.OK,
+        'Khôi phục giấy tờ thành công',
       );
     });
   }
