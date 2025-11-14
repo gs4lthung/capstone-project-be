@@ -38,32 +38,6 @@ export class LearnerVideoService {
   ): Promise<LearnerVideo> {
     if (!videoFile) throw new BadRequestException('No video file uploaded');
 
-    const videoThumbnail = await this.ffmpegService.createVideoThumbnail(
-      videoFile.path,
-      FileUtils.excludeFileFromPath(videoFile.path),
-    );
-
-    const filePath = FileUtils.convertFilePathToExpressFilePath(videoThumbnail);
-
-    if (typeof filePath !== 'string') {
-      throw new BadRequestException('Invalid thumbnail file path');
-    }
-
-    const videoThumbnailPublicUrl =
-      await this.awsService.uploadFileToPublicBucket({
-        file: {
-          buffer: fs.readFileSync(filePath),
-          path: filePath,
-          originalname: path.basename(filePath),
-          mimetype: 'image/jpeg',
-          size: fs.statSync(filePath).size,
-          fieldname: 'video_thumbnail',
-          destination: '',
-          filename: '',
-          encoding: '7bit',
-        } as Express.Multer.File,
-      });
-
     const videoPublicUrl = await this.awsService.uploadFileToPublicBucket({
       file: {
         buffer: fs.readFileSync(videoFile.path),
@@ -73,7 +47,6 @@ export class LearnerVideoService {
 
     const learnerVideo = this.learnerVideoRepo.create({
       publicUrl: videoPublicUrl.url,
-      thumbnailUrl: videoThumbnailPublicUrl.url,
       duration: data.duration,
       tags: data.tags,
       user: { id: user.id },

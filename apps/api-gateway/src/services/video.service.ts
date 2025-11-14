@@ -7,13 +7,11 @@ import {
   Scope,
 } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
-import * as path from 'path';
 import * as fs from 'fs';
 
 // Define upload root directory (must match actual Multer storage configuration)
 import { CreateVideoDto } from '@app/shared/videos/video.dto';
 import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
-import { FileUtils } from '@app/shared/utils/file.util';
 import { AwsService } from '@app/aws';
 import { FfmpegService } from '@app/ffmpeg';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -66,33 +64,6 @@ export class VideoService {
       });
       if (!lesson) throw new BadRequestException('Không tìm thấy bài học');
 
-      const videoThumbnail = await this.ffmpegService.createVideoThumbnail(
-        videoFile.path,
-        FileUtils.excludeFileFromPath(videoFile.path),
-      );
-
-      const filePath =
-        FileUtils.convertFilePathToExpressFilePath(videoThumbnail);
-
-      if (typeof filePath !== 'string') {
-        throw new BadRequestException('Invalid thumbnail file path');
-      }
-
-      const videoThumbnailPublicUrl =
-        await this.awsService.uploadFileToPublicBucket({
-          file: {
-            buffer: fs.readFileSync(filePath),
-            path: filePath,
-            originalname: path.basename(filePath),
-            mimetype: 'image/jpeg',
-            size: fs.statSync(filePath).size,
-            fieldname: 'video_thumbnail',
-            destination: '',
-            filename: '',
-            encoding: '7bit',
-          } as Express.Multer.File,
-        });
-
       const videoPublicUrl = await this.awsService.uploadFileToPublicBucket({
         file: {
           buffer: fs.readFileSync(videoFile.path),
@@ -103,7 +74,6 @@ export class VideoService {
       lesson.videos.push({
         ...data,
         publicUrl: videoPublicUrl.url,
-        thumbnailUrl: videoThumbnailPublicUrl.url,
         status: CoachVideoStatus.READY,
         uploadedBy: this.request.user as User,
       } as Video);
@@ -140,33 +110,6 @@ export class VideoService {
         );
       }
 
-      const videoThumbnail = await this.ffmpegService.createVideoThumbnail(
-        videoFile.path,
-        FileUtils.excludeFileFromPath(videoFile.path),
-      );
-
-      const filePath =
-        FileUtils.convertFilePathToExpressFilePath(videoThumbnail);
-
-      if (typeof filePath !== 'string') {
-        throw new BadRequestException('Invalid thumbnail file path');
-      }
-
-      const videoThumbnailPublicUrl =
-        await this.awsService.uploadFileToPublicBucket({
-          file: {
-            buffer: fs.readFileSync(filePath),
-            path: filePath,
-            originalname: path.basename(filePath),
-            mimetype: 'image/jpeg',
-            size: fs.statSync(filePath).size,
-            fieldname: 'video_thumbnail',
-            destination: '',
-            filename: '',
-            encoding: '7bit',
-          } as Express.Multer.File,
-        });
-
       const videoPublicUrl = await this.awsService.uploadFileToPublicBucket({
         file: {
           buffer: fs.readFileSync(videoFile.path),
@@ -177,7 +120,6 @@ export class VideoService {
       session.videos.push({
         ...data,
         publicUrl: videoPublicUrl.url,
-        thumbnailUrl: videoThumbnailPublicUrl.url,
         status: CoachVideoStatus.READY,
         uploadedBy: this.request.user as User,
       } as Video);
