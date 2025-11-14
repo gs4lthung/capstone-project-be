@@ -14,6 +14,7 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { CourseCredentialType } from '@app/shared/enums/course.enum';
+import { PartialType } from '@nestjs/mapped-types';
 
 class RegisterCoachCredentialDto {
   @ApiProperty({ example: 'USPTA Certified Professional' })
@@ -118,3 +119,5 @@ export class RegisterCoachDto {
 
   coach: CoachProfileDto;
 }
+
+export class UpdateCoachProfileDto extends PartialType(CoachProfileDto) {}
