@@ -68,10 +68,24 @@ export class LearnerVideoController {
   }
 
   @Get('user/:userId')
+  @ApiBearerAuth()
+  @ApiOperation({
+    tags: ['Learner Videos'],
+    summary: 'Get learner videos by user',
+    description:
+      'Get all learner videos for a specific user, optionally filtered by session',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'List of learner videos',
+  })
   @UseGuards(AuthGuard, RoleGuard)
   @CheckRoles(UserRole.LEARNER)
-  async getLearnerVideosByUser(@Param('userId') userId: number) {
-    return this.learnerVideoService.findAll({ userId });
+  async getLearnerVideosByUser(
+    @Param('userId') userId: number,
+    @Query('sessionId') sessionId?: number,
+  ) {
+    return this.learnerVideoService.findAll({ userId, sessionId });
   }
 
   @Get(':id')
@@ -82,11 +96,23 @@ export class LearnerVideoController {
   }
 
   @Post(':learnerVideoId/ai-feedback')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiOperation({
+    tags: ['Learner Videos'],
+    summary: 'Save AI feedback for learner video',
+    description:
+      'Save AI-generated feedback and analysis results for a learner video',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'AI feedback saved successfully',
+  })
   @UseGuards(AuthGuard, RoleGuard)
   @CheckRoles(UserRole.COACH)
   async saveAiFeedback(
     @Param('learnerVideoId') learnerVideoId: number,
-    @Body('text') aiText: any,
+    @Body() aiText: any,
   ) {
     return this.learnerVideoService.saveAiFeedback(learnerVideoId, aiText);
   }
