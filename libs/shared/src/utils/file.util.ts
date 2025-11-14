@@ -70,15 +70,16 @@ export class FileUtils {
           break;
       }
 
-      fs.mkdir(destination, { recursive: true }, (err) => {
-        if (err) {
-          FileUtils.logger.error(
-            `Failed to create directory ${destination}: ${err.message}`,
-          );
-          return cb(err, destination);
-        }
+      // Use synchronous mkdir with recursive option to ensure directory exists
+      try {
+        fs.mkdirSync(destination, { recursive: true });
         cb(null, destination);
-      });
+      } catch (err) {
+        FileUtils.logger.error(
+          `Failed to create directory ${destination}: ${(err as Error).message}`,
+        );
+        cb(err as NodeJS.ErrnoException, destination);
+      }
     },
 
     filename: (req, file, cb) => {
