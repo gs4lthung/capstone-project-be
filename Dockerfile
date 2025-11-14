@@ -25,11 +25,11 @@ RUN npm ci --only=production
 
 # Copy compiled output from builder and set ownership to non-root user
 COPY --from=builder --chown=node:node /usr/src/app/dist ./dist
-COPY --from=builder --chown=node:node /usr/src/app/uploads ./uploads
 
-# Optionally copy runtime assets (uploads/public) if your app relies on them
-# COPY --from=builder --chown=node:node /usr/src/app/public ./public
-# COPY --from=builder --chown=node:node /usr/src/app/uploads ./uploads
+# Create required directories for file uploads with proper permissions
+# These directories are used by FileUtils.fileStorage for multer uploads
+RUN mkdir -p uploads/users uploads/videos uploads/icons uploads/subjects/images && \
+    chown -R node:node uploads
 
 # Default environment variables the app reads via ConfigService
 ENV NODE_ENV=production
