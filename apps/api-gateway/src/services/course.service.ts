@@ -48,6 +48,7 @@ import { ScheduleService } from './schedule.service';
 import { ConfigurationService } from './configuration.service';
 import { DateTimeUtils } from '@app/shared/utils/datetime.util';
 import { Court } from '@app/database/entities/court.entity';
+import { CoachVideoStatus } from '@app/shared/enums/coach.enum';
 
 @Injectable({ scope: Scope.REQUEST })
 export class CourseService extends BaseTypeOrmService<Course> {
@@ -432,6 +433,7 @@ export class CourseService extends BaseTypeOrmService<Course> {
               delete video.id;
               session.videos.push({
                 ...video,
+                status: CoachVideoStatus.READY,
                 lesson: null,
                 session: session,
               });
