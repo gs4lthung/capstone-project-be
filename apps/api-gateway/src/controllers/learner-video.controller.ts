@@ -90,4 +90,12 @@ export class LearnerVideoController {
   ) {
     return this.learnerVideoService.saveAiFeedback(learnerVideoId, aiText);
   }
+
+  @Post(':learnerVideoId/overlay-video')
+  @UseGuards(AuthGuard, RoleGuard)
+  @CheckRoles(UserRole.LEARNER)
+  @UseInterceptors(FileInterceptor('overlayVideo'))
+  async uploadOverlayVideo(@Param('learnerVideoId') learnerVideoId: number) {
+    return this.learnerVideoService.generateOverlayVideo(learnerVideoId);
+  }
 }
