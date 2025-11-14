@@ -54,6 +54,20 @@ export class VideoService {
     });
   }
 
+  async getVideosBySession(sessionId: number): Promise<Video[]> {
+    const session = await this.sessionRepository.findOne({
+      where: { id: sessionId },
+      withDeleted: false,
+    });
+    if (!session) throw new BadRequestException('Không tìm thấy buổi học');
+
+    return this.videoRepository.find({
+      where: { session: { id: sessionId } },
+      relations: ['uploadedBy'],
+      withDeleted: false,
+    });
+  }
+
   async createLessonVideo(
     id: number,
     data: CreateVideoDto,

@@ -40,6 +40,23 @@ export class VideoController {
     return this.videoService.getVideosByLesson(id);
   }
 
+  @Get('sessions/:id')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiOperation({
+    tags: ['Videos'],
+    summary: 'Get videos by session id',
+    description: 'Get all videos of a session',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'List of videos',
+  })
+  @UseGuards(AuthGuard)
+  async getVideosBySession(@Param('id') id: number) {
+    return this.videoService.getVideosBySession(id);
+  }
+
   @Post('lessons/:id')
   @HttpCode(HttpStatus.CREATED)
   @ApiBearerAuth()

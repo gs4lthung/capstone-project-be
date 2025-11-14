@@ -75,6 +75,19 @@ export class CourseController {
     return await this.courseService.findLearnerCourses(page, size);
   }
 
+  @Get('learner/:id')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    tags: ['Courses'],
+    summary: 'Get learner course by ID',
+    description:
+      'Retrieve a specific course that belongs to the authenticated learner',
+  })
+  @UseGuards(AuthGuard)
+  async getLearnerCourseById(@Param('id') id: number): Promise<Course> {
+    return await this.courseService.findLearnerCourse(id);
+  }
+
   @Get()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({

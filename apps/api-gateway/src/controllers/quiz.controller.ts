@@ -43,6 +43,23 @@ export class QuizController {
     return this.quizService.getQuizzesByLesson(id);
   }
 
+  @Get('sessions/:id')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiOperation({
+    tags: ['Quizzes'],
+    summary: 'Get quizzes by session id',
+    description: 'Get all quizzes of a session',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'List of quizzes',
+  })
+  @UseGuards(AuthGuard)
+  async getQuizzesBySession(@Param('id') id: number) {
+    return this.quizService.getQuizzesBySession(id);
+  }
+
   @Post('lessons/:id')
   @HttpCode(HttpStatus.CREATED)
   @ApiBearerAuth()

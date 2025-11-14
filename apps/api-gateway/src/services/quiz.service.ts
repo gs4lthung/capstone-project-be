@@ -61,6 +61,20 @@ export class QuizService extends BaseTypeOrmService<Quiz> {
     });
   }
 
+  async getQuizzesBySession(sessionId: number): Promise<Quiz[]> {
+    const session = await this.sessionRepository.findOne({
+      where: { id: sessionId },
+      withDeleted: false,
+    });
+    if (!session) throw new BadRequestException('Không tìm thấy buổi học');
+
+    return this.quizRepository.find({
+      where: { session: { id: sessionId } },
+      relations: ['questions', 'questions.options', 'createdBy'],
+      withDeleted: false,
+    });
+  }
+
   async createLessonQuiz(
     lessonId: number,
     data: CreateQuizDto,

@@ -183,6 +183,36 @@ export class CourseService extends BaseTypeOrmService<Course> {
     return result;
   }
 
+  async findLearnerCourse(id: number): Promise<Course> {
+    const course = await this.courseRepository.findOne({
+      where: {
+        id,
+        enrollments: {
+          user: { id: this.request.user?.id as User['id'] },
+        },
+        status: Not(CourseStatus.CANCELLED),
+      },
+      relations: [
+        'subject',
+        'subject.lessons',
+        'subject.lessons.quizzes',
+        'subject.lessons.videos',
+        'sessions',
+        'sessions.lesson',
+        'sessions.videos',
+        'sessions.quizzes',
+        'enrollments',
+        'enrollments.user',
+      ],
+    });
+
+    if (!course) {
+      throw new BadRequestException('Không tìm thấy khóa học');
+    }
+
+    return course;
+  }
+
   async createCourseCreationRequest(
     subjectId: number,
     data: CreateCourseRequestDto,
