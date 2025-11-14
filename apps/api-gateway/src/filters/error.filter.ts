@@ -98,24 +98,24 @@ export class ErrorLoggingFilter implements ExceptionFilter {
     }
 
     // Store error in database
-    if (!isDevelopment) {
-      const ERROR_MESSAGE_LENGTH = 4900;
-      const errorEntity = this.errorRepository.create({
-        code: String(statusCode),
-        message: message,
-        stack: isAggregateError
-          ? exception.errors
-              .map((err) => String(err))
-              .join('\n')
-              ?.slice(0, ERROR_MESSAGE_LENGTH)
-          : stack?.slice(0, ERROR_MESSAGE_LENGTH),
-        url: requestUrl,
-        body: request.body ? JSON.stringify(request.body) : null,
-        user: userId ? { id: userId } : null,
-      });
+    // if (!isDevelopment) {
+    //   const ERROR_MESSAGE_LENGTH = 4900;
+    //   const errorEntity = this.errorRepository.create({
+    //     code: String(statusCode),
+    //     message: message,
+    //     stack: isAggregateError
+    //       ? exception.errors
+    //           .map((err) => String(err))
+    //           .join('\n')
+    //           ?.slice(0, ERROR_MESSAGE_LENGTH)
+    //       : stack?.slice(0, ERROR_MESSAGE_LENGTH),
+    //     url: requestUrl,
+    //     body: request.body ? JSON.stringify(request.body) : null,
+    //     user: userId ? { id: userId } : null,
+    //   });
 
-      await this.errorRepository.save(errorEntity);
-    }
+    //   await this.errorRepository.save(errorEntity);
+    // }
 
     // Response based on context types
     switch (contextType) {
