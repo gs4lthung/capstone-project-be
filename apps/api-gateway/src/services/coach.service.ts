@@ -12,8 +12,10 @@ import { User } from '@app/database/entities/user.entity';
 import { Credential } from '@app/database/entities/credential.entity';
 import { CoachVerificationStatus } from '@app/shared/enums/coach.enum';
 import {
+  RegisterCoachCredentialDto,
   RegisterCoachDto,
   UpdateCoachProfileDto,
+  UpdateCredentialDto,
 } from '@app/shared/dtos/coaches/register-coach.dto';
 import { Role } from '@app/database/entities/role.entity';
 import { UserRole } from '@app/shared/enums/user.enum';
@@ -36,7 +38,8 @@ import { JwtPayloadDto } from '@app/shared/dtos/auth/jwt.payload.dto';
 import { MailSendDto } from '@app/shared/dtos/mails/mail-send.dto';
 import { MailService } from './mail.service';
 import { TwilioService } from '@app/twilio';
-
+import { AwsService } from '@app/aws';
+import * as fs from 'fs';
 @Injectable({ scope: Scope.REQUEST })
 export class CoachService extends BaseTypeOrmService<Coach> {
   constructor(
@@ -59,6 +62,7 @@ export class CoachService extends BaseTypeOrmService<Coach> {
     private readonly sessionRepository: Repository<Session>,
     @InjectRepository(Course)
     private readonly courseRepository: Repository<Course>,
+    private readonly awsService: AwsService,
     private readonly jwtService: JwtService,
     private readonly datasource: DataSource,
     private readonly mailService: MailService,
@@ -202,6 +206,73 @@ export class CoachService extends BaseTypeOrmService<Coach> {
       );
     });
   }
+
+  async uploadCredential(
+    data: RegisterCoachCredentialDto,
+    file: Express.Multer.File,
+  ): Promise<CustomApiResponse<void>> {
+    return await this.datasource.transaction(async (manager) => {
+      const coach = await this.coachRepository.findOne({
+        where: {
+          user: { id: this.request.user.id as User['id'] },
+        },
+        relations: ['user', 'credentials'],
+      });
+      if (!coach) throw new NotFoundException('Coach not found');
+      if (file) {
+        const credentialFilePath =
+          await this.awsService.uploadFileToPublicBucket({
+            file: {
+              buffer: fs.readFileSync(file.path),
+              ...file,
+            },
+          });
+        data.publicUrl = credentialFilePath.url;
+      }
+      const newCredential = this.credentialRepository.create({
+        ...data,
+        coach: coach,
+      });
+      await manager.getRepository(Credential).save(newCredential);
+      return new CustomApiResponse<void>(
+        HttpStatus.OK,
+        'Cập nhật giấy tờ thành công',
+      );
+    });
+  }
+
+  async updateCredential(
+    id: number,
+    data: UpdateCredentialDto,
+    file?: Express.Multer.File,
+  ): Promise<CustomApiResponse<void>> {
+    return await this.datasource.transaction(async (manager) => {
+      const credential = await this.credentialRepository.findOne({
+        where: { id: id },
+        relations: ['coach', 'coach.user'],
+      });
+      if (!credential) throw new NotFoundException('Credential not found');
+      if (credential.coach.user.id !== this.request.user.id) {
+        throw new BadRequestException('You are not authorized to update this');
+      }
+      if (file) {
+        const credentialFilePath =
+          await this.awsService.uploadFileToPublicBucket({
+            file: {
+              buffer: fs.readFileSync(file.path),
+              ...file,
+            },
+          });
+        data.publicUrl = credentialFilePath.url;
+      }
+      await manager.getRepository(Credential).update(credential.id, data);
+      return new CustomApiResponse<void>(
+        HttpStatus.OK,
+        'Cập nhật giấy tờ thành công',
+      );
+    });
+  }
+
   async verifyCoach(coachId: number): Promise<void> {
     const coach = await this.coachRepository.findOne({
       where: { id: coachId },

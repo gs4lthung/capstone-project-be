@@ -16,7 +16,7 @@ import { Type } from 'class-transformer';
 import { CourseCredentialType } from '@app/shared/enums/course.enum';
 import { PartialType } from '@nestjs/mapped-types';
 
-class RegisterCoachCredentialDto {
+export class RegisterCoachCredentialDto {
   @ApiProperty({ example: 'USPTA Certified Professional' })
   @IsString()
   @IsNotEmpty()
@@ -121,3 +121,7 @@ export class RegisterCoachDto {
 }
 
 export class UpdateCoachProfileDto extends PartialType(CoachProfileDto) {}
+
+export class UpdateCredentialDto extends PartialType(
+  RegisterCoachCredentialDto,
+) {}

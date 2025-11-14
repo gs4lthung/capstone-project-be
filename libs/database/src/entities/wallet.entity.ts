@@ -14,7 +14,7 @@ import { User } from './user.entity';
 import { WalletTransaction } from './wallet-transaction.entity';
 import { WithdrawalRequest } from './withdrawal-request.entity';
 import { Bank } from './bank.entity';
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsOptional, IsString } from 'class-validator';
 
 @Entity('wallets')
 export class Wallet {
@@ -27,9 +27,9 @@ export class Wallet {
     length: 50,
     nullable: true,
   })
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
-  bankAccountNumber: string;
+  bankAccountNumber?: string;
 
   @Column({
     name: 'current_balance',

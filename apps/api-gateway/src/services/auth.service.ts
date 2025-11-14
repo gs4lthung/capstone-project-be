@@ -31,6 +31,7 @@ import { UserRole } from '@app/shared/enums/user.enum';
 import { MailService } from './mail.service';
 import { Learner } from '@app/database/entities/learner.entity';
 import { TwilioService } from '@app/twilio/twilio.service';
+import { Wallet } from '@app/database/entities/wallet.entity';
 
 @Injectable({ scope: Scope.REQUEST })
 export class AuthService {
@@ -43,6 +44,8 @@ export class AuthService {
     private readonly configService: ConfigService,
     private readonly twilioService: TwilioService,
     private readonly jwtService: JwtService,
+    @InjectRepository(Wallet)
+    private readonly walletRepository: Repository<Wallet>,
     private readonly dataSource: DataSource,
   ) {}
 
@@ -320,6 +323,12 @@ export class AuthService {
       }
 
       await manager.getRepository(User).save(newUser);
+      await this.walletRepository.save(
+        this.walletRepository.create({
+          user: { id: newUser.id },
+          currentBalance: 0,
+        }),
+      );
 
       return new CustomApiResponse<void>(
         HttpStatus.CREATED,
