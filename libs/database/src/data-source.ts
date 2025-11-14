@@ -8,11 +8,14 @@ const isDev = process.env.NODE_ENV === 'dev';
 
 const entitiesPath = isDev
   ? path.resolve(__dirname, 'entities/*.entity{.ts,.js}')
-  : path.resolve(__dirname, 'entities/*.entity{.ts,.js}');
+  : path.resolve(
+      __dirname,
+      '../../dist/libs/database/src/entities/*.entity.js',
+    );
 
 const migrationsPath = isDev
   ? path.resolve(__dirname, 'migrations/*{.ts,.js}')
-  : path.resolve(__dirname, 'migrations/*{.ts,.js}');
+  : path.resolve(__dirname, '../../dist/libs/database/src/migrations/*.js');
 
 export const AppDataSource = new DataSource({
   type: 'postgres',
@@ -23,6 +26,6 @@ export const AppDataSource = new DataSource({
   database: process.env.DB_NAME,
   entities: [entitiesPath],
   migrations: [migrationsPath],
-  ssl: isDev ? { rejectUnauthorized: false } : false,
+  ssl: !isDev ? { rejectUnauthorized: false } : false,
   logging: isDev,
 });

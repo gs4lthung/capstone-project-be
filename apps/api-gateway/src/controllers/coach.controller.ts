@@ -18,7 +18,10 @@ import {
 } from '@nestjs/swagger';
 import { CoachService } from '../services/coach.service';
 import { AuthGuard } from '../guards/auth.guard';
-import { RegisterCoachDto } from '@app/shared/dtos/coaches/register-coach.dto';
+import {
+  RegisterCoachDto,
+  UpdateCoachProfileDto,
+} from '@app/shared/dtos/coaches/register-coach.dto';
 import { Coach } from '@app/database/entities/coach.entity';
 import { RejectCoachDto } from '@app/shared/dtos/coaches/reject-coach.dto';
 import { UserRole } from '@app/shared/enums/user.enum';
@@ -72,6 +75,18 @@ export class CoachController {
   @ApiResponse({ status: HttpStatus.OK, description: 'Coach' })
   async findOne(@Param('id') id: number): Promise<Coach> {
     return this.coachService.findOne(Number(id));
+  }
+
+  @Put(':id')
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Update coach profile' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Coach profile updated' })
+  @UseGuards(AuthGuard, RoleGuard)
+  async update(
+    @Body() data: UpdateCoachProfileDto,
+  ): Promise<CustomApiResponse<void>> {
+    return this.coachService.update(data);
   }
 
   @Get(':id/rating/overall')

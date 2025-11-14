@@ -11,7 +11,10 @@ import { DataSource, Repository } from 'typeorm';
 import { User } from '@app/database/entities/user.entity';
 import { Credential } from '@app/database/entities/credential.entity';
 import { CoachVerificationStatus } from '@app/shared/enums/coach.enum';
-import { RegisterCoachDto } from '@app/shared/dtos/coaches/register-coach.dto';
+import {
+  RegisterCoachDto,
+  UpdateCoachProfileDto,
+} from '@app/shared/dtos/coaches/register-coach.dto';
 import { Role } from '@app/database/entities/role.entity';
 import { UserRole } from '@app/shared/enums/user.enum';
 import { ConfigService } from '@app/config';
@@ -183,6 +186,22 @@ export class CoachService extends BaseTypeOrmService<Coach> {
     });
   }
 
+  async update(data: UpdateCoachProfileDto): Promise<CustomApiResponse<void>> {
+    return await this.datasource.transaction(async (manager) => {
+      const coach = await this.coachRepository.findOne({
+        where: {
+          user: { id: this.request.user.id as User['id'] },
+        },
+        relations: ['user'],
+      });
+      if (!coach) throw new NotFoundException('Coach not found');
+      await manager.getRepository(Coach).update(coach.id, data);
+      return new CustomApiResponse<void>(
+        HttpStatus.OK,
+        'Cập nhật hồ sơ huấn luyện viên thành công',
+      );
+    });
+  }
   async verifyCoach(coachId: number): Promise<void> {
     const coach = await this.coachRepository.findOne({
       where: { id: coachId },
