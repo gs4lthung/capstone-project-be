@@ -188,7 +188,7 @@ export class LearnerVideoService {
       FileUtils.excludeFileFromPath(learnerVideo.publicUrl),
     );
 
-    const uploadedResult = this.awsService.uploadFileToPublicBucket({
+    const uploadedResult = await this.awsService.uploadFileToPublicBucket({
       file: {
         buffer: fs.readFileSync(overlayFilePath),
         path: overlayFilePath,
@@ -202,9 +202,9 @@ export class LearnerVideoService {
       } as Express.Multer.File,
     });
 
-    learnerVideo.overlayVideoUrl = (await uploadedResult).url;
+    learnerVideo.overlayVideoUrl = uploadedResult.url;
     await this.learnerVideoRepo.save(learnerVideo);
 
-    return (await uploadedResult).url;
+    return uploadedResult.url;
   }
 }
