@@ -265,7 +265,6 @@ export class QuizService extends BaseTypeOrmService<Quiz> {
       const session = await this.sessionRepository.findOne({
         where: { id: quiz.session.id },
         relations: [
-          'quizAttempts',
           'course',
           'course.enrollments',
           'course.createdBy',
