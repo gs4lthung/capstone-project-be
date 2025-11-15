@@ -457,11 +457,11 @@ export class SessionService extends BaseTypeOrmService<Session> {
       now_after_end: nowUTC > end,
     });
 
-    if (nowUTC < start) {
+    if (nowVietnam < start) {
       console.log("[SessionTimeStatus] Result: 'upcoming' (now < start)");
       return 'upcoming';
     }
-    if (nowUTC >= start && nowUTC <= end) {
+    if (nowVietnam >= start && nowVietnam <= end) {
       console.log(
         "[SessionTimeStatus] Result: 'ongoing' (now between start and end)",
       );
