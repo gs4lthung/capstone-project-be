@@ -418,31 +418,29 @@ export class SessionService extends BaseTypeOrmService<Session> {
       return 'invalid';
     }
 
-    // Parse session date - handle both string and Date objects
-    let sessionDate: Date;
-    if (typeof session.scheduleDate === 'string') {
-      sessionDate = new Date(session.scheduleDate);
-    } else {
-      sessionDate = new Date(session.scheduleDate);
-    }
+    // Get current time in Vietnam timezone (UTC+7)
+    const nowUTC = new Date();
+    const vietnamOffset = 7 * 60 * 60 * 1000; // UTC+7 in milliseconds
+    const nowVietnam = new Date(nowUTC.getTime() + vietnamOffset);
 
-    // Reset to start of day in local timezone
-    sessionDate.setHours(0, 0, 0, 0);
+    // Parse session date string (format: YYYY-MM-DD)
+    const [year, month, day] = (session.scheduleDate as any)
+      .toString()
+      .split('-')
+      .map(Number);
 
-    // Parse start time
-    const start = new Date(sessionDate);
-    const [sh, sm] = session.startTime.split(':').map(Number);
-    start.setHours(sh, sm, 0, 0);
+    // Create start time in Vietnam timezone
+    const start = new Date(Date.UTC(year, month - 1, day, 0, 0, 0));
+    const [sh, sm, ss] = session.startTime.split(':').map(Number);
+    start.setUTCHours(sh, sm, ss || 0, 0);
 
-    // Parse end time
-    const end = new Date(sessionDate);
-    const [eh, em] = session.endTime.split(':').map(Number);
-    end.setHours(eh, em, 0, 0);
+    // Create end time in Vietnam timezone
+    const end = new Date(Date.UTC(year, month - 1, day, 0, 0, 0));
+    const [eh, em, es] = session.endTime.split(':').map(Number);
+    end.setUTCHours(eh, em, es || 0, 0);
 
     // if end is equal or before start assume it finishes the next day
-    if (end <= start) end.setDate(end.getDate() + 1);
-
-    const now = new Date();
+    if (end <= start) end.setUTCDate(end.getUTCDate() + 1);
 
     // Log all times for debugging
     console.log('[SessionTimeStatus] Time Comparison:', {
@@ -450,19 +448,20 @@ export class SessionService extends BaseTypeOrmService<Session> {
       scheduleDate: session.scheduleDate,
       startTime: session.startTime,
       endTime: session.endTime,
+      currentTimeUTC: nowUTC.toISOString(),
+      currentTimeVietnam: nowVietnam.toISOString(),
       parsedStartTime: start.toISOString(),
       parsedEndTime: end.toISOString(),
-      currentTime: now.toISOString(),
-      now_before_start: now < start,
-      now_between: now >= start && now <= end,
-      now_after_end: now > end,
+      now_before_start: nowUTC < start,
+      now_between: nowUTC >= start && nowUTC <= end,
+      now_after_end: nowUTC > end,
     });
 
-    if (now < start) {
+    if (nowUTC < start) {
       console.log("[SessionTimeStatus] Result: 'upcoming' (now < start)");
       return 'upcoming';
     }
-    if (now >= start && now <= end) {
+    if (nowUTC >= start && nowUTC <= end) {
       console.log(
         "[SessionTimeStatus] Result: 'ongoing' (now between start and end)",
       );
