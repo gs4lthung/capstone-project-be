@@ -15,6 +15,7 @@ import { AiVideoComparisonResult } from '@app/database/entities/ai-video-compari
 import { Video } from '@app/database/entities/video.entity';
 import { buildDetailsArrayFromComparison } from '@app/shared/helpers/buildDetailArray.helper';
 import { LearnerProgress } from '@app/database/entities/learner-progress.entity';
+import { LearnerVideoStatus } from '@app/shared/enums/learner.enum';
 
 @Injectable()
 export class LearnerVideoService {
@@ -45,10 +46,13 @@ export class LearnerVideoService {
       },
     });
 
+    console.log(data);
+
     const learnerVideo = this.learnerVideoRepo.create({
       publicUrl: videoPublicUrl.url,
       duration: data.duration,
       tags: data.tags,
+      status: LearnerVideoStatus.READY,
       user: { id: user.id },
       session: data.sessionId ? { id: data.sessionId } : undefined,
       video: data.coachVideoId ? { id: data.coachVideoId } : undefined,
