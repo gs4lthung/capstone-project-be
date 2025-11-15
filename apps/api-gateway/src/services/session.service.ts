@@ -408,11 +408,24 @@ export class SessionService extends BaseTypeOrmService<Session> {
     )
       return 'invalid';
 
-    const start = new Date(session.scheduleDate);
+    // Parse session date - handle both string and Date objects
+    let sessionDate: Date;
+    if (typeof session.scheduleDate === 'string') {
+      sessionDate = new Date(session.scheduleDate);
+    } else {
+      sessionDate = new Date(session.scheduleDate);
+    }
+
+    // Reset to start of day in local timezone
+    sessionDate.setHours(0, 0, 0, 0);
+
+    // Parse start time
+    const start = new Date(sessionDate);
     const [sh, sm] = session.startTime.split(':').map(Number);
     start.setHours(sh, sm, 0, 0);
 
-    const end = new Date(session.scheduleDate);
+    // Parse end time
+    const end = new Date(sessionDate);
     const [eh, em] = session.endTime.split(':').map(Number);
     end.setHours(eh, em, 0, 0);
 
