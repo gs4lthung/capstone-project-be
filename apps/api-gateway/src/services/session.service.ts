@@ -405,8 +405,18 @@ export class SessionService extends BaseTypeOrmService<Session> {
       !session.scheduleDate ||
       !session.startTime ||
       !session.endTime
-    )
+    ) {
+      console.log(
+        '[SessionTimeStatus] Invalid session data:',
+        JSON.stringify({
+          hasSession: !!session,
+          hasScheduleDate: !!session?.scheduleDate,
+          hasStartTime: !!session?.startTime,
+          hasEndTime: !!session?.endTime,
+        }),
+      );
       return 'invalid';
+    }
 
     // Parse session date - handle both string and Date objects
     let sessionDate: Date;
@@ -434,8 +444,31 @@ export class SessionService extends BaseTypeOrmService<Session> {
 
     const now = new Date();
 
-    if (now < start) return 'upcoming';
-    if (now >= start && now <= end) return 'ongoing';
+    // Log all times for debugging
+    console.log('[SessionTimeStatus] Time Comparison:', {
+      sessionId: session.id,
+      scheduleDate: session.scheduleDate,
+      startTime: session.startTime,
+      endTime: session.endTime,
+      parsedStartTime: start.toISOString(),
+      parsedEndTime: end.toISOString(),
+      currentTime: now.toISOString(),
+      now_before_start: now < start,
+      now_between: now >= start && now <= end,
+      now_after_end: now > end,
+    });
+
+    if (now < start) {
+      console.log("[SessionTimeStatus] Result: 'upcoming' (now < start)");
+      return 'upcoming';
+    }
+    if (now >= start && now <= end) {
+      console.log(
+        "[SessionTimeStatus] Result: 'ongoing' (now between start and end)",
+      );
+      return 'ongoing';
+    }
+    console.log("[SessionTimeStatus] Result: 'finished' (now > end)");
     return 'finished';
   }
 
