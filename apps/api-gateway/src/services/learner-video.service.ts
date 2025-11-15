@@ -201,7 +201,10 @@ export class LearnerVideoService {
     return this.aiVideoComparisonResultRepo.save(createdRecord);
   }
 
-  async generateOverlayVideo(learnerVideoId: number): Promise<string> {
+  async generateOverlayVideo(
+    learnerVideoId: number,
+    coachVideoId: number,
+  ): Promise<string> {
     const learnerVideo = await this.learnerVideoRepo.findOne({
       where: { id: learnerVideoId },
       relations: ['session', 'session.lesson', 'session.lesson.videos'],
@@ -209,9 +212,7 @@ export class LearnerVideoService {
     if (!learnerVideo) throw new BadRequestException('LearnerVideo not found');
 
     const coachVideo = await this.videoRepo.findOne({
-      where: {
-        aiVideoComparisonResults: { learnerVideo: { id: learnerVideo.id } },
-      },
+      where: { id: coachVideoId },
     });
     if (!coachVideo) throw new BadRequestException('Coach Video not found');
 
