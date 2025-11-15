@@ -117,11 +117,17 @@ export class LearnerVideoController {
     return this.learnerVideoService.saveAiFeedback(learnerVideoId, aiText);
   }
 
-  @Post(':learnerVideoId/overlay-video')
+  @Post(':learnerVideoId/overlay-video/:coachVideoId')
   @UseGuards(AuthGuard, RoleGuard)
   @CheckRoles(UserRole.LEARNER)
   @UseInterceptors(FileInterceptor('overlayVideo'))
-  async uploadOverlayVideo(@Param('learnerVideoId') learnerVideoId: number) {
-    return this.learnerVideoService.generateOverlayVideo(learnerVideoId);
+  async uploadOverlayVideo(
+    @Param('learnerVideoId') learnerVideoId: number,
+    @Param('coachVideoId') coachVideoId: number,
+  ) {
+    return this.learnerVideoService.generateOverlayVideo(
+      learnerVideoId,
+      coachVideoId,
+    );
   }
 }
