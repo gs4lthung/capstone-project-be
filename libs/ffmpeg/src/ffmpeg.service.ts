@@ -268,7 +268,6 @@ export class FfmpegService {
   async overlayVideoOnVideo(
     backgroundVideoPathOrUrl: string,
     overlayVideoPathOrUrl: string,
-    outputVideoPath: string,
   ) {
     const isRemote = (p: string) => /^https?:\/\//i.test(p);
 
@@ -351,7 +350,7 @@ export class FfmpegService {
           return reject(new Error(`Overlay video not found: ${overlayLocal}`));
         }
 
-        const outputDir = path.dirname(outputVideoPath);
+        const outputDir = path.dirname('uploads/videos');
         if (!fs.existsSync(outputDir)) {
           fs.mkdirSync(outputDir, { recursive: true });
         }
@@ -378,8 +377,7 @@ export class FfmpegService {
           'fast',
           '-crf',
           '23',
-          '-y',
-          outputVideoPath,
+          'uploads/videos/overlay_output.mp4',
         ];
 
         const ffmpegProc = spawn('ffmpeg', args);
@@ -406,8 +404,10 @@ export class FfmpegService {
           }
 
           if (code === 0) {
-            this.logger.log(`Overlay completed: ${outputVideoPath}`);
-            resolve(outputVideoPath);
+            this.logger.log(
+              `Overlay completed: uploads/videos/overlays/output.mp4`,
+            );
+            resolve('uploads/videos/overlay_output.mp4');
           } else {
             this.logger.error(`FFmpeg exited with code ${code}`);
             reject(new Error(`FFmpeg exited with code ${code}. ${stderr}`));

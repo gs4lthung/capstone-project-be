@@ -204,7 +204,7 @@ export class LearnerVideoService {
   async generateOverlayVideo(learnerVideoId: number): Promise<string> {
     const learnerVideo = await this.learnerVideoRepo.findOne({
       where: { id: learnerVideoId },
-      relations: ['session', 'session.lesson', 'session.lesson.video'],
+      relations: ['session', 'session.lesson', 'session.lesson.videos'],
     });
     if (!learnerVideo) throw new BadRequestException('LearnerVideo not found');
 
@@ -218,7 +218,6 @@ export class LearnerVideoService {
     const overlayFilePath = await this.ffmpegService.overlayVideoOnVideo(
       learnerVideo.publicUrl,
       coachVideo.publicUrl,
-      FileUtils.excludeFileFromPath(learnerVideo.publicUrl),
     );
 
     const uploadedResult = await this.awsService.uploadFileToPublicBucket({
