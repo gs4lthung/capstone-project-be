@@ -225,6 +225,8 @@ export class LearnerVideoService {
       coachVideo.publicUrl,
     );
 
+    console.log(overlayFilePath);
+
     const uploadedResult = await this.awsService.uploadFileToPublicBucket({
       file: {
         buffer: fs.readFileSync(overlayFilePath),

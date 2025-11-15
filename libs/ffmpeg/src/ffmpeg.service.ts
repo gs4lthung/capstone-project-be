@@ -356,8 +356,7 @@ export class FfmpegService {
         }
 
         const filter =
-          '[1:v]scale=1920x1080,format=yuva420p,colorchannelmixer=aa=0.5[transparent_top];[0:v][transparent_top]overlay[v]';
-
+          '[0:v]scale=1080x1920:force_original_aspect_ratio=increase,crop=1080:1920[bg];[1:v]scale=1080x1920:force_original_aspect_ratio=increase,crop=1080:1920,format=yuva420p,colorchannelmixer=aa=0.5[transparent_top];[bg][transparent_top]overlay[v]';
         const args = [
           '-i',
           bgLocal,
