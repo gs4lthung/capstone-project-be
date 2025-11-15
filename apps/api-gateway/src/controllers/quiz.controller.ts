@@ -27,6 +27,23 @@ import {
 export class QuizController {
   constructor(private readonly quizService: QuizService) {}
 
+  @Get(':id/attempts')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiOperation({
+    tags: ['Quizzes'],
+    summary: 'Get quiz attempts by quiz id',
+    description: 'Get all attempts of a quiz',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'List of quiz attempts',
+  })
+  @UseGuards(AuthGuard)
+  async getQuizAttemptsByQuiz(@Param('id') id: number) {
+    return this.quizService.findQuizAttempts(id);
+  }
+
   @Get('lessons/:id')
   @HttpCode(HttpStatus.OK)
   @ApiBearerAuth()

@@ -251,11 +251,31 @@ export class QuizService extends BaseTypeOrmService<Quiz> {
     });
   }
 
+  async findQuizAttempts(quizId: number): Promise<QuizAttempt[]> {
+    const quiz = await this.quizRepository.findOne({
+      where: { id: quizId },
+      relations: ['session'],
+      withDeleted: false,
+    });
+    if (!quiz) throw new BadRequestException('Quiz not found');
+    if (!quiz.session)
+      throw new BadRequestException('Quiz không thuộc về buổi học nào');
+    return this.quizAttemptRepository.find({
+      where: { session: { id: quiz.session.id } },
+      relations: [
+        'attemptedBy',
+        'learnerAnswers',
+        'learnerAnswers.question',
+        'learnerAnswers.questionOption',
+      ],
+      withDeleted: false,
+    });
+  }
+
   async learnerAttemptQuiz(quizId: number, data: LearnerAttemptQuizDto) {
     return await this.datasource.transaction(async (manager) => {
       const quiz = await this.quizRepository.findOne({
         where: { id: quizId },
-        withDeleted: false,
         relations: ['questions', 'questions.options', 'session'],
       });
       if (!quiz) throw new BadRequestException('Quiz not found');
@@ -265,10 +285,12 @@ export class QuizService extends BaseTypeOrmService<Quiz> {
       const session = await this.sessionRepository.findOne({
         where: { id: quiz.session.id },
         relations: [
+          'quizAttempts',
           'course',
           'course.enrollments',
           'course.createdBy',
           'attendances',
+          'attendances.user',
         ],
         withDeleted: false,
       });
@@ -290,6 +312,7 @@ export class QuizService extends BaseTypeOrmService<Quiz> {
           'Bạn không được đăng ký khóa học cho buổi học này',
         );
       }
+
       if (
         session.attendances &&
         !session.attendances.some(
