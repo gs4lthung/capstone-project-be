@@ -410,6 +410,39 @@ export class FfmpegService {
 
         const ffmpegProc = spawn('ffmpeg', args);
 
+        // Attach listeners to log ffmpeg output for debugging
+        if (ffmpegProc.stdout) {
+          ffmpegProc.stdout.on('data', (chunk: Buffer) => {
+            const text = chunk.toString().trim();
+            if (text) this.logger.log(`FFmpeg stdout: ${text}`);
+          });
+        }
+
+        if (ffmpegProc.stderr) {
+          ffmpegProc.stderr.on('data', (chunk: Buffer) => {
+            const text = chunk.toString();
+            if (text.trim()) this.logger.log(`FFmpeg stderr: ${text.trim()}`);
+
+            // Try to extract simple progress info (e.g. time=)
+            const timeMatch = text.match(/time=\s*([0-9:.]+)/);
+            if (timeMatch) {
+              this.logger.log(`FFmpeg progress - time: ${timeMatch[1]}`);
+            }
+
+            const speedMatch = text.match(/speed=\s*([0-9.]+x)/);
+            if (speedMatch) {
+              this.logger.log(`FFmpeg progress - speed: ${speedMatch[1]}`);
+            }
+          });
+        }
+
+        // Optional: handle stdin errors gracefully
+        if (ffmpegProc.stdin) {
+          ffmpegProc.stdin.on('error', (err) => {
+            this.logger.error(`FFmpeg stdin error: ${err.message}`);
+          });
+        }
+
         ffmpegProc.on('close', (code) => {
           // cleanup temps
           for (const t of tempsToCleanup) {
