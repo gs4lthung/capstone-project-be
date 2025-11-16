@@ -9,8 +9,6 @@ import { User } from '@app/database/entities/user.entity';
 import * as path from 'path';
 import * as fs from 'fs';
 
-// Set this to your upload directory; adapt as needed for your deployment/config
-import { FileUtils } from '@app/shared/utils/file.util';
 import { AiVideoComparisonResult } from '@app/database/entities/ai-video-comparison-result.entity';
 import { Video } from '@app/database/entities/video.entity';
 import { buildDetailsArrayFromComparison } from '@app/shared/helpers/buildDetailArray.helper';
