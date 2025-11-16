@@ -410,17 +410,6 @@ export class FfmpegService {
 
         const ffmpegProc = spawn('ffmpeg', args);
 
-        let stderr = '';
-        ffmpegProc.stderr.on('data', (data) => {
-          const msg = data.toString();
-          stderr += msg;
-          this.logger.log(`FFmpeg: ${msg}`);
-        });
-
-        ffmpegProc.stdout.on('data', (data) => {
-          this.logger.log(`FFmpeg stdout: ${data.toString()}`);
-        });
-
         ffmpegProc.on('close', (code) => {
           // cleanup temps
           for (const t of tempsToCleanup) {
@@ -438,7 +427,7 @@ export class FfmpegService {
             resolve('uploads/videos/overlay_output.mp4');
           } else {
             this.logger.error(`FFmpeg exited with code ${code}`);
-            reject(new Error(`FFmpeg exited with code ${code}. ${stderr}`));
+            reject(new Error(`FFmpeg exited with code ${code}.`));
           }
         });
 
