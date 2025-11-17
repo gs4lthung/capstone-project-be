@@ -98,70 +98,99 @@ export class FfmpegService {
     });
   }
 
-  // async createVideoThumbnail(filePath: string, outputDes: string) {
-  //   if (!fs.existsSync(filePath)) {
-  //     this.logger.error(`File not found: ${filePath}`);
-  //     return new Error(`File not found: ${filePath}`);
-  //   }
+  async createVideoThumbnail(filePath: string, outputDes: string) {
+    if (!fs.existsSync(filePath)) {
+      this.logger.error(`File not found: ${filePath}`);
+      return new Error(`File not found: ${filePath}`);
+    }
 
-  //   // Restrict outputDes to uploads root
-  //   const UPLOADS_ROOT = process.env.UPLOADS_ROOT
-  //     ? path.resolve(process.env.UPLOADS_ROOT)
-  //     : path.resolve(process.cwd(), 'uploads');
-  //   const safeOutputDes = path.resolve(
-  //     UPLOADS_ROOT,
-  //     path.relative(UPLOADS_ROOT, outputDes),
-  //   );
-  //   if (!safeOutputDes.startsWith(UPLOADS_ROOT)) {
-  //     this.logger.error(`Invalid output destination: ${outputDes}`);
-  //     throw new Error('Invalid output destination');
-  //   }
-  //   if (!fs.existsSync(safeOutputDes)) {
-  //     fs.mkdirSync(safeOutputDes, { recursive: true });
-  //   }
+    // Restrict outputDes to uploads root
+    const UPLOADS_ROOT = process.env.UPLOADS_ROOT
+      ? path.resolve(process.env.UPLOADS_ROOT)
+      : path.resolve(process.cwd(), 'uploads');
+    const safeOutputDes = path.resolve(
+      UPLOADS_ROOT,
+      path.relative(UPLOADS_ROOT, outputDes),
+    );
+    if (!safeOutputDes.startsWith(UPLOADS_ROOT)) {
+      this.logger.error(`Invalid output destination: ${outputDes}`);
+      throw new Error('Invalid output destination');
+    }
+    if (!fs.existsSync(safeOutputDes)) {
+      fs.mkdirSync(safeOutputDes, { recursive: true });
+    }
 
-  //   const outputFileName = `${path.basename(filePath, '.mp4')}-thumbnail.png`;
-  //   const outputPath = path.join(safeOutputDes, outputFileName);
+    const outputFileName = `${path.basename(filePath, '.mp4')}-thumbnail.png`;
+    const outputPath = path.join(safeOutputDes, outputFileName);
 
-  //   await new Promise((resolve, reject) => {
-  //     const ffmpeg = spawn('ffmpeg', [
-  //       '-analyzeduration',
-  //       '100M',
-  //       '-probesize',
-  //       '100M',
-  //       '-ss',
-  //       '00:00:01',
-  //       '-i',
-  //       filePath,
-  //       '-vf',
-  //       'thumbnail',
-  //       '-frames:v',
-  //       '1',
-  //       '-update',
-  //       '1',
-  //       outputPath,
-  //     ]);
+    await new Promise((resolve, reject) => {
+      const ffmpeg = spawn('ffmpeg', [
+        '-analyzeduration',
+        '100M',
+        '-probesize',
+        '100M',
+        '-ss',
+        '00:00:01',
+        '-i',
+        filePath,
+        '-vf',
+        'thumbnail',
+        '-frames:v',
+        '1',
+        '-update',
+        '1',
+        outputPath,
+      ]);
 
-  //     // ffmpeg.stderr.on('data', (data) => {
-  //     //   this.logger.error(`FFmpeg error: ${data}`);
-  //     // });
+      // ffmpeg.stderr.on('data', (data) => {
+      //   this.logger.error(`FFmpeg error: ${data}`);
+      // });
 
-  //     ffmpeg.stdout.on('data', (data) => {
-  //       this.logger.log(`FFmpeg output: ${data}`);
-  //     });
+      ffmpeg.stdout.on('data', (data) => {
+        this.logger.log(`FFmpeg output: ${data}`);
+      });
 
-  //     ffmpeg.on('close', (code) => {
-  //       if (code === 0) resolve(outputPath);
-  //       else reject(new Error(`FFmpeg process exited with code ${code}`));
-  //     });
+      ffmpeg.on('close', (code) => {
+        if (code === 0) resolve(outputPath);
+        else reject(new Error(`FFmpeg process exited with code ${code}`));
+      });
 
-  //     ffmpeg.on('error', (err) => {
-  //       reject(new Error(`FFmpeg process error: ${err.message}`));
-  //     });
-  //   });
+      ffmpeg.on('error', (err) => {
+        reject(new Error(`FFmpeg process error: ${err.message}`));
+      });
+    });
 
-  //   return outputPath;
-  // }
+    return outputPath;
+  }
+
+  async createVideoThumbnailVer2(
+    filePath: string,
+    outputDes: string,
+    timestamp: string = '00:00:01',
+  ): Promise<string> {
+    const thumnailPath = path.join(
+      outputDes,
+      `${path.basename(filePath, path.extname(filePath))}-thumbnail.png`,
+    );
+
+    return new Promise<string>((resolve, reject) => {
+      ffmpeg(filePath)
+        .screenshots({
+          timestamps: [timestamp],
+          filename: path.basename(thumnailPath),
+          folder: outputDes,
+          size: '320x240',
+        })
+        .on('end', () => {
+          this.logger.log(`Thumbnail created at ${thumnailPath}`);
+          resolve(thumnailPath);
+        })
+        .on('error', (err) => {
+          this.logger.error(`Error creating thumbnail: ${err.message}`);
+          reject(err);
+        });
+    });
+  }
 
   async getVideoFileDuration(filePath: string): Promise<number> {
     return new Promise((resolve, reject) => {
@@ -265,6 +294,45 @@ export class FfmpegService {
     });
   }
 
+  private getVideoMetadata = (filePath: string) =>
+    new Promise<{ width: number; height: number }>((resolve, reject) => {
+      const ffprobe = spawn('ffprobe', [
+        '-v',
+        'error',
+        '-select_streams',
+        'v:0',
+        '-show_entries',
+        'stream=width,height',
+        '-of',
+        'json',
+        filePath,
+      ]);
+
+      let output = '';
+
+      ffprobe.stdout.on('data', (data) => {
+        output += data.toString();
+      });
+
+      ffprobe.on('close', (code) => {
+        if (code === 0) {
+          try {
+            const parsed = JSON.parse(output);
+            const stream = parsed.streams[0];
+            resolve({ width: stream.width, height: stream.height });
+          } catch (err) {
+            reject(new Error(`Failed to parse video metadata: ${err.message}`));
+          }
+        } else {
+          reject(new Error(`FFprobe exited with code ${code}`));
+        }
+      });
+
+      ffprobe.on('error', (err) => {
+        reject(err);
+      });
+    });
+
   async overlayVideoOnVideo(
     backgroundVideoPathOrUrl: string,
     overlayVideoPathOrUrl: string,
@@ -350,13 +418,36 @@ export class FfmpegService {
           return reject(new Error(`Overlay video not found: ${overlayLocal}`));
         }
 
-        const outputDir = path.dirname('uploads/videos');
+        // Get video dimensions
+        this.logger.log(`Getting video metadata...`);
+        const bgDimensions = await this.getVideoMetadata(bgLocal);
+        const overlayDimensions = await this.getVideoMetadata(overlayLocal);
+        this.logger.log(
+          `Background dimensions: ${bgDimensions.width}x${bgDimensions.height}`,
+        );
+        this.logger.log(
+          `Overlay dimensions: ${overlayDimensions.width}x${overlayDimensions.height}`,
+        );
+
+        const outputDir = 'uploads/videos';
         if (!fs.existsSync(outputDir)) {
           fs.mkdirSync(outputDir, { recursive: true });
         }
 
+        const outputPath = path.join(
+          outputDir,
+          `overlay_output_${Date.now()}.mp4`,
+        );
+
+        // Use background video dimensions as output dimensions
+        // Scale overlay to match background if different
         const filter =
-          '[0:v]scale=1080x1920:force_original_aspect_ratio=increase,crop=1080:1920[bg];[1:v]scale=1080x1920:force_original_aspect_ratio=increase,crop=1080:1920,format=yuva420p,colorchannelmixer=aa=0.5[transparent_top];[bg][transparent_top]overlay[v]';
+          bgDimensions.width === overlayDimensions.width &&
+          bgDimensions.height === overlayDimensions.height
+            ? // Same dimensions: just apply transparency and overlay
+              `[0:v]format=yuv420p[bg];[1:v]format=yuva420p,colorchannelmixer=aa=0.5[transparent_top];[bg][transparent_top]overlay[v]`
+            : // Different dimensions: scale overlay to match background
+              `[0:v]format=yuv420p[bg];[1:v]scale=${bgDimensions.width}:${bgDimensions.height}:force_original_aspect_ratio=increase,crop=${bgDimensions.width}:${bgDimensions.height},format=yuva420p,colorchannelmixer=aa=0.5[transparent_top];[bg][transparent_top]overlay[v]`;
         const args = [
           '-i',
           bgLocal,
@@ -376,21 +467,43 @@ export class FfmpegService {
           'fast',
           '-crf',
           '23',
-          'uploads/videos/overlay_output.mp4',
+          outputPath,
         ];
 
         const ffmpegProc = spawn('ffmpeg', args);
 
-        let stderr = '';
-        ffmpegProc.stderr.on('data', (data) => {
-          const msg = data.toString();
-          stderr += msg;
-          this.logger.log(`FFmpeg: ${msg}`);
-        });
+        // Attach listeners to log ffmpeg output for debugging
+        if (ffmpegProc.stdout) {
+          ffmpegProc.stdout.on('data', (chunk: Buffer) => {
+            const text = chunk.toString().trim();
+            if (text) this.logger.log(`FFmpeg stdout: ${text}`);
+          });
+        }
 
-        ffmpegProc.stdout.on('data', (data) => {
-          this.logger.log(`FFmpeg stdout: ${data.toString()}`);
-        });
+        if (ffmpegProc.stderr) {
+          ffmpegProc.stderr.on('data', (chunk: Buffer) => {
+            const text = chunk.toString();
+            if (text.trim()) this.logger.log(`FFmpeg stderr: ${text.trim()}`);
+
+            // Try to extract simple progress info (e.g. time=)
+            const timeMatch = text.match(/time=\s*([0-9:.]+)/);
+            if (timeMatch) {
+              this.logger.log(`FFmpeg progress - time: ${timeMatch[1]}`);
+            }
+
+            const speedMatch = text.match(/speed=\s*([0-9.]+x)/);
+            if (speedMatch) {
+              this.logger.log(`FFmpeg progress - speed: ${speedMatch[1]}`);
+            }
+          });
+        }
+
+        // Optional: handle stdin errors gracefully
+        if (ffmpegProc.stdin) {
+          ffmpegProc.stdin.on('error', (err) => {
+            this.logger.error(`FFmpeg stdin error: ${err.message}`);
+          });
+        }
 
         ffmpegProc.on('close', (code) => {
           // cleanup temps
@@ -403,13 +516,11 @@ export class FfmpegService {
           }
 
           if (code === 0) {
-            this.logger.log(
-              `Overlay completed: uploads/videos/overlays/output.mp4`,
-            );
-            resolve('uploads/videos/overlay_output.mp4');
+            this.logger.log(`Overlay completed: ${outputPath}`);
+            resolve(outputPath);
           } else {
             this.logger.error(`FFmpeg exited with code ${code}`);
-            reject(new Error(`FFmpeg exited with code ${code}. ${stderr}`));
+            reject(new Error(`FFmpeg exited with code ${code}.`));
           }
         });
 

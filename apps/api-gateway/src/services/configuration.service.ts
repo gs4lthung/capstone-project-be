@@ -36,13 +36,15 @@ export class ConfigurationService extends BaseTypeOrmService<Configuration> {
   }
 
   async findByKey(key: string): Promise<CustomApiResponse<Configuration>> {
-    return new CustomApiResponse<Configuration>(
-      HttpStatus.OK,
-      'Configuration retrieved successfully',
-      await this.configurationRepository.findOne({
-        where: { key },
-      }),
-    );
+    return await this.datasource.transaction(async (manager) => {
+      return new CustomApiResponse<Configuration>(
+        HttpStatus.OK,
+        'Configuration retrieved successfully',
+        await manager.getRepository(Configuration).findOne({
+          where: { key },
+        }),
+      );
+    });
   }
 
   async create(data: CreateConfigurationDto): Promise<CustomApiResponse<void>> {
@@ -65,7 +67,7 @@ export class ConfigurationService extends BaseTypeOrmService<Configuration> {
     data: UpdateConfigurationDto,
   ): Promise<CustomApiResponse<void>> {
     return await this.datasource.transaction(async (manager) => {
-      const configuration = await this.configurationRepository.findOne({
+      const configuration = await manager.getRepository(Configuration).findOne({
         where: { id },
       });
       if (!configuration) {

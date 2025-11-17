@@ -7,7 +7,6 @@ import { REQUEST } from '@nestjs/core';
 import { CustomApiRequest } from '@app/shared/customs/custom-api-request';
 import { CreateUserDto } from '@app/shared/dtos/users/create-user.dto';
 import { ConfigService } from '@app/config';
-import { AwsService } from '@app/aws';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Role } from '@app/database/entities/role.entity';
 import { Repository } from 'typeorm';
@@ -16,15 +15,14 @@ import { UserRole } from '@app/shared/enums/user.enum';
 import * as bcrypt from 'bcrypt';
 import { CustomRpcException } from '@app/shared/customs/custom-rpc-exception';
 import { ExceptionUtils } from '@app/shared/utils/exception.util';
-import * as fs from 'fs';
-import * as path from 'path';
 import { PaginateObject } from '@app/shared/dtos/paginate.dto';
+import { BunnyService } from '@app/bunny';
 @Injectable({ scope: Scope.REQUEST })
 export class UserService extends BaseTypeOrmService<User> {
   constructor(
     @Inject(REQUEST) private readonly request: CustomApiRequest,
     private readonly configService: ConfigService,
-    private readonly awsService: AwsService,
+    private readonly bunnyService: BunnyService,
     @InjectRepository(User) private readonly userRepository: Repository<User>,
     @InjectRepository(Role) private readonly roleRepository: Repository<Role>,
   ) {
@@ -109,29 +107,14 @@ export class UserService extends BaseTypeOrmService<User> {
           'INTERNAL_SERVER_ERROR',
           HttpStatus.INTERNAL_SERVER_ERROR,
         );
-
-      // Define the trusted upload folder - set to Multer's default or your configured folder
-      const UPLOAD_DIR = path.resolve(process.cwd(), 'uploads');
-      // Normalize and resolve the file path
-      const fileAbsolutePath = path.resolve(file.path);
-      // Check if fileAbsolutePath is within UPLOAD_DIR
-      if (!fileAbsolutePath.startsWith(UPLOAD_DIR)) {
-        throw new CustomRpcException(
-          'INVALID_FILE_PATH',
-          HttpStatus.FORBIDDEN,
-          'Attempted access to file outside of upload directory',
-        );
-      }
-      const fileBuffer = fs.readFileSync(fileAbsolutePath);
-      const res = await this.awsService.uploadFileToPublicBucket({
-        file: {
-          ...file,
-          buffer: fileBuffer,
-        },
+      const res = await this.bunnyService.uploadToStorage({
+        filePath: file.path,
+        type: 'avatar',
+        id: Date.now(),
       });
 
       await this.userRepository.update(this.request.user.id, {
-        profilePicture: res.url,
+        profilePicture: res,
       });
       return new CustomApiResponse<void>(
         HttpStatus.OK,

@@ -52,7 +52,7 @@ export class CronService {
   async handleStartCourse() {
     return this.datasource.transaction(async (manager) => {
       this.logger.log('Check for courses to start');
-      const courses = await this.courseRepository.find({
+      const courses = await manager.getRepository(Course).find({
         where: { status: In([CourseStatus.FULL, CourseStatus.READY_OPENED]) },
         withDeleted: false,
         relations: ['enrollments', 'createdBy', 'sessions'],
@@ -80,12 +80,14 @@ export class CronService {
             enrollment.status = EnrollmentStatus.LEARNING;
             await manager.getRepository(Enrollment).save(enrollment);
 
-            const learnerProgress = this.learnerProgressRepository.create({
-              totalSessions: course.totalSessions,
-              status: LearnerProgressStatus.IN_PROGRESS,
-              course: course,
-              user: enrollment.user,
-            });
+            const learnerProgress = manager
+              .getRepository(LearnerProgress)
+              .create({
+                totalSessions: course.totalSessions,
+                status: LearnerProgressStatus.IN_PROGRESS,
+                course: course,
+                user: enrollment.user,
+              });
             await manager.getRepository(LearnerProgress).save(learnerProgress);
 
             await this.notificationService.sendNotification({
@@ -177,14 +179,14 @@ export class CronService {
           for (const enrollment of course.enrollments) {
             enrollment.status = EnrollmentStatus.CANCELLED;
 
-            const payment = await this.paymentRepository.findOne({
+            const payment = await manager.getRepository(Payment).findOne({
               where: {
                 enrollment: { id: enrollment.id },
                 status: PaymentStatus.PAID,
               },
             });
             if (payment) {
-              const wallet = await this.walletRepository.findOne({
+              const wallet = await manager.getRepository(Wallet).findOne({
                 where: {
                   user: { id: enrollment.user.id },
                 },
@@ -217,11 +219,11 @@ export class CronService {
     data: CreateConfigurationDto,
   ): Promise<Configuration> {
     return await this.datasource.transaction(async (manager) => {
-      let config = await this.configurationRepository.findOne({
+      let config = await manager.getRepository(Configuration).findOne({
         where: { key: data.key },
       });
       if (!config) {
-        config = this.configurationRepository.create({
+        config = manager.getRepository(Configuration).create({
           key: data.key,
           value: data.value,
           dataType: data.dataType,

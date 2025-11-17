@@ -3,7 +3,8 @@
   "collection": "@nestjs/schematics",
   "sourceRoot": "src",
   "compilerOptions": {
-    "deleteOutDir": true
+    "deleteOutDir": true,
+    "webpack": true
   },
   "monorepo": true,
   "projects": {
@@ -69,15 +70,6 @@
         "tsConfigPath": "libs/ffmpeg/tsconfig.lib.json"
       }
     },
-    "aws": {
-      "type": "library",
-      "root": "libs/aws",
-      "entryFile": "index",
-      "sourceRoot": "libs/aws/src",
-      "compilerOptions": {
-        "tsConfigPath": "libs/aws/tsconfig.lib.json"
-      }
-    },
     "twilio": {
       "type": "library",
       "root": "libs/twilio",
@@ -103,6 +95,15 @@
       "sourceRoot": "libs/agora/src",
       "compilerOptions": {
         "tsConfigPath": "libs/agora/tsconfig.lib.json"
+      }
+    },
+    "bunny": {
+      "type": "library",
+      "root": "libs/bunny",
+      "entryFile": "index",
+      "sourceRoot": "libs/bunny/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/bunny/tsconfig.lib.json"
       }
     }
   }

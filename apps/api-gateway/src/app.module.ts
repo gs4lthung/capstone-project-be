@@ -21,7 +21,6 @@ import { UserService } from './services/user.service';
 import { AuthService } from './services/auth.service';
 import { UserController } from './controllers/user.controller';
 import { AuthController } from './controllers/auth.controller';
-import { AwsModule } from '@app/aws';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
 import { MailService } from './services/mail.service';
@@ -124,6 +123,7 @@ import { AiVideoCompareResultService } from './services/ai-video-compare-result.
 import { CourtService } from './services/court.service';
 import { CourtController } from './controllers/court.controller';
 import { Court } from '@app/database/entities/court.entity';
+import { BunnyModule } from '@app/bunny';
 
 @Module({
   imports: [
@@ -142,7 +142,7 @@ import { Court } from '@app/database/entities/court.entity';
     ScheduleModule.forRoot(),
     EventEmitterModule.forRoot(),
     DatabaseModule,
-    AwsModule,
+    BunnyModule,
     FfmpegModule,
     PayosModule,
     TwilioModule,

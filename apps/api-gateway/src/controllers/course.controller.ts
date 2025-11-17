@@ -11,6 +11,8 @@ import {
   Get,
   Put,
   Query,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
 import { CourseService } from '../services/course.service';
 import { ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
@@ -32,6 +34,8 @@ import { FilteringParams } from '@app/shared/decorators/filtering-params.decorat
 import { Filtering } from '@app/shared/interfaces/filtering.interface';
 import { FindOptions } from '@app/shared/interfaces/find-options.interface';
 import { PaginateObject } from '@app/shared/dtos/paginate.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { FileSizeLimitEnum } from '@app/shared/enums/file.enum';
 
 @Controller('courses')
 export class CourseController {
@@ -58,6 +62,22 @@ export class CourseController {
       district,
     );
     return courses;
+  }
+
+  @Get('coach')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    tags: ['Courses'],
+    summary: 'Get courses for coach',
+    description:
+      'Retrieve a list of courses created by the authenticated coach',
+  })
+  @UseGuards(AuthGuard)
+  async getCoursesForCoach(
+    @Query('page') page: number,
+    @Query('size') size: number,
+  ): Promise<PaginateObject<Course>> {
+    return await this.courseService.findCoachCourses(page, size);
   }
 
   @Get('learner')
@@ -145,11 +165,21 @@ export class CourseController {
   })
   @CheckRoles(UserRole.COACH)
   @UseGuards(AuthGuard, RoleGuard)
+  @UseInterceptors(
+    FileInterceptor('course_image', {
+      limits: { fileSize: FileSizeLimitEnum.IMAGE },
+    }),
+  )
   async createCourse(
     @Param('id') subjectId: number,
     @Body() data: CreateCourseRequestDto,
+    @UploadedFile() file?: Express.Multer.File,
   ) {
-    return this.courseService.createCourseCreationRequest(subjectId, data);
+    return this.courseService.createCourseCreationRequest(
+      subjectId,
+      data,
+      file,
+    );
   }
 
   @Put(':id')
@@ -166,11 +196,17 @@ export class CourseController {
   })
   @CheckRoles(UserRole.COACH)
   @UseGuards(AuthGuard, RoleGuard)
+  @UseInterceptors(
+    FileInterceptor('course_image', {
+      limits: { fileSize: FileSizeLimitEnum.IMAGE },
+    }),
+  )
   async updateCourseCreationRequest(
     @Param('id') id: number,
     @Body() data: UpdateCourseDto,
+    @UploadedFile() file?: Express.Multer.File,
   ) {
-    return this.courseService.update(id, data);
+    return this.courseService.update(id, data, file);
   }
 
   @Patch('requests/:id/approve')

@@ -150,7 +150,15 @@ export class AuthService {
           'learner.province',
           'learner.district',
         ],
-        select: ['id', 'fullName', 'email', 'role'],
+        select: [
+          'id',
+          'fullName',
+          'email',
+          'role',
+          'coach',
+          'learner',
+          'phoneNumber',
+        ],
       });
 
       await this.userRepository.save(user);

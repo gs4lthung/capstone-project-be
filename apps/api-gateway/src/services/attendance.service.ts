@@ -5,7 +5,7 @@ import { BaseTypeOrmService } from '@app/shared/helpers/typeorm.helper';
 import { HttpStatus, Inject, Injectable, Scope } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 
 @Injectable({ scope: Scope.REQUEST })
 export class AttendanceService extends BaseTypeOrmService<Attendance> {
@@ -13,6 +13,7 @@ export class AttendanceService extends BaseTypeOrmService<Attendance> {
     @Inject(REQUEST) private readonly request: CustomApiRequest,
     @InjectRepository(Attendance)
     private readonly attendanceRepository: Repository<Attendance>,
+    private readonly datasource: DataSource,
   ) {
     super(attendanceRepository);
   }
@@ -21,20 +22,22 @@ export class AttendanceService extends BaseTypeOrmService<Attendance> {
     sessionId: number,
     learnerId: number,
   ): Promise<CustomApiResponse<Attendance>> {
-    const attendance = await this.attendanceRepository.findOne({
-      where: {
-        session: { id: sessionId },
-        user: { id: learnerId },
-      },
-    });
-    if (!attendance) {
-      throw new Error('Không tìm thấy thông tin điểm danh');
-    }
+    return await this.datasource.transaction(async (manager) => {
+      const attendance = await manager.getRepository(Attendance).findOne({
+        where: {
+          session: { id: sessionId },
+          user: { id: learnerId },
+        },
+      });
+      if (!attendance) {
+        throw new Error('Không tìm thấy thông tin điểm danh');
+      }
 
-    return new CustomApiResponse<Attendance>(
-      HttpStatus.OK,
-      'Lấy thông tin điểm danh thành công',
-      attendance,
-    );
+      return new CustomApiResponse<Attendance>(
+        HttpStatus.OK,
+        'Lấy thông tin điểm danh thành công',
+        attendance,
+      );
+    });
   }
 }

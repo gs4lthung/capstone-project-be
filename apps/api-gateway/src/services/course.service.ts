@@ -1,4 +1,5 @@
 import { Course } from '@app/database/entities/course.entity';
+import { BunnyService } from '@app/bunny';
 import { BaseTypeOrmService } from '@app/shared/helpers/typeorm.helper';
 import { FindOptions } from '@app/shared/interfaces/find-options.interface';
 import {
@@ -78,6 +79,7 @@ export class CourseService extends BaseTypeOrmService<Course> {
     private readonly scheduleService: ScheduleService,
     @InjectRepository(Court)
     private readonly courtRepository: Repository<Court>,
+    private readonly bunnyService: BunnyService,
   ) {
     super(courseRepository);
   }
@@ -92,15 +94,17 @@ export class CourseService extends BaseTypeOrmService<Course> {
   }
 
   async findOne(id: number): Promise<Course> {
-    const course = await this.courseRepository.findOne({
-      where: { id: id },
-      withDeleted: false,
-      relations: ['subject', 'sessions', 'enrollments'],
+    return await this.datasource.transaction(async (manager) => {
+      const course = await manager.getRepository(Course).findOne({
+        where: { id: id },
+        withDeleted: false,
+        relations: ['subject', 'sessions', 'enrollments'],
+      });
+
+      if (!course) throw new Error('Course not found');
+
+      return course;
     });
-
-    if (!course) throw new Error('Course not found');
-
-    return course;
   }
 
   async findAvailableCourses(
@@ -109,117 +113,156 @@ export class CourseService extends BaseTypeOrmService<Course> {
     province?: number,
     district?: number,
   ): Promise<PaginateObject<Course>> {
-    const offset = (page - 1) * size;
+    return await this.datasource.transaction(async (manager) => {
+      const offset = (page - 1) * size;
 
-    const whereConditions: any = {
-      status: In([
-        CourseStatus.APPROVED,
-        CourseStatus.READY_OPENED,
-        CourseStatus.FULL,
-      ]),
-    };
-
-    if (province) {
-      whereConditions.court = {
-        province: { id: province },
+      const whereConditions: any = {
+        status: In([
+          CourseStatus.APPROVED,
+          CourseStatus.READY_OPENED,
+          CourseStatus.FULL,
+        ]),
       };
-    }
 
-    if (district) {
-      whereConditions.court = {
-        ...whereConditions.court,
-        district: { id: district },
-      };
-    }
+      if (province) {
+        whereConditions.court = {
+          province: { id: province },
+        };
+      }
 
-    const [courses, total] = await this.courseRepository.findAndCount({
-      where: whereConditions,
-      relations: [
-        'court',
-        'court.province',
-        'court.district',
-        'enrollments',
-        'subject',
-      ],
-      skip: offset,
-      take: size,
-      order: { createdAt: 'DESC' },
+      if (district) {
+        whereConditions.court = {
+          ...whereConditions.court,
+          district: { id: district },
+        };
+      }
+
+      const [courses, total] = await manager
+        .getRepository(Course)
+        .findAndCount({
+          where: whereConditions,
+          relations: [
+            'court',
+            'court.province',
+            'court.district',
+            'enrollments',
+            'subject',
+          ],
+          skip: offset,
+          take: size,
+          order: { createdAt: 'DESC' },
+        });
+
+      const result = new PaginateObject<Course>();
+      Object.assign(result, {
+        items: courses,
+        page,
+        pageSize: size,
+        total,
+      });
+
+      return result;
     });
+  }
 
-    const result = new PaginateObject<Course>();
-    Object.assign(result, {
-      items: courses,
-      page,
-      pageSize: size,
-      total,
+  async findCoachCourses(
+    page: number = 1,
+    size: number = 10,
+  ): Promise<PaginateObject<Course>> {
+    return await this.datasource.transaction(async (manager) => {
+      const offset = (page - 1) * size;
+      const [courses, total] = await manager
+        .getRepository(Course)
+        .findAndCount({
+          where: {
+            createdBy: { id: this.request.user?.id as User['id'] },
+          },
+          relations: ['subject', 'schedules'],
+          skip: offset,
+          take: size,
+          order: { createdAt: 'DESC' },
+        });
+      const result = new PaginateObject<Course>();
+      Object.assign(result, {
+        items: courses,
+        page,
+        pageSize: size,
+        total,
+      });
+      return result;
     });
-
-    return result;
   }
 
   async findLearnerCourses(
     page: number = 1,
     size: number = 10,
   ): Promise<PaginateObject<Course>> {
-    const offset = (page - 1) * size;
+    return await this.datasource.transaction(async (manager) => {
+      const offset = (page - 1) * size;
 
-    const [courses, total] = await this.courseRepository.findAndCount({
-      where: {
-        enrollments: {
-          user: { id: this.request.user?.id as User['id'] },
-        },
-        status: Not(CourseStatus.CANCELLED),
-      },
-      skip: offset,
-      take: size,
-      order: { createdAt: 'DESC' },
+      const [courses, total] = await manager
+        .getRepository(Course)
+        .findAndCount({
+          where: {
+            enrollments: {
+              user: { id: this.request.user?.id as User['id'] },
+            },
+            status: Not(CourseStatus.CANCELLED),
+          },
+          skip: offset,
+          take: size,
+          order: { createdAt: 'DESC' },
+        });
+      const result = new PaginateObject<Course>();
+      Object.assign(result, {
+        items: courses,
+        page,
+        pageSize: size,
+        total,
+      });
+      return result;
     });
-    const result = new PaginateObject<Course>();
-    Object.assign(result, {
-      items: courses,
-      page,
-      pageSize: size,
-      total,
-    });
-    return result;
   }
 
   async findLearnerCourse(id: number): Promise<Course> {
-    const course = await this.courseRepository.findOne({
-      where: {
-        id,
-        enrollments: {
-          user: { id: this.request.user?.id as User['id'] },
+    return await this.datasource.transaction(async (manager) => {
+      const course = await manager.getRepository(Course).findOne({
+        where: {
+          id,
+          enrollments: {
+            user: { id: this.request.user?.id as User['id'] },
+          },
+          status: Not(CourseStatus.CANCELLED),
         },
-        status: Not(CourseStatus.CANCELLED),
-      },
-      relations: [
-        'subject',
-        'subject.lessons',
-        'subject.lessons.quizzes',
-        'subject.lessons.videos',
-        'sessions',
-        'sessions.lesson',
-        'sessions.videos',
-        'sessions.quizzes',
-        'enrollments',
-        'enrollments.user',
-      ],
+        relations: [
+          'subject',
+          'subject.lessons',
+          'subject.lessons.quizzes',
+          'subject.lessons.videos',
+          'sessions',
+          'sessions.lesson',
+          'sessions.videos',
+          'sessions.quizzes',
+          'enrollments',
+          'enrollments.user',
+        ],
+      });
+
+      if (!course) {
+        throw new BadRequestException('Không tìm thấy khóa học');
+      }
+
+      return course;
     });
-
-    if (!course) {
-      throw new BadRequestException('Không tìm thấy khóa học');
-    }
-
-    return course;
   }
 
   async createCourseCreationRequest(
     subjectId: number,
     data: CreateCourseRequestDto,
+    file?: Express.Multer.File,
   ): Promise<CustomApiResponse<void>> {
     return await this.datasource.transaction(async (manager) => {
-      const court = await this.courtRepository.findOne({
+      const court = await manager.getRepository(Court).findOne({
         where: { id: data.court },
         withDeleted: false,
       });
@@ -260,7 +303,7 @@ export class CourseService extends BaseTypeOrmService<Course> {
         );
       }
 
-      const subject = await this.subjectRepository.findOne({
+      const subject = await manager.getRepository(Subject).findOne({
         where: { id: subjectId, status: SubjectStatus.PUBLISHED },
         relations: ['lessons'],
         withDeleted: false,
@@ -306,6 +349,18 @@ export class CourseService extends BaseTypeOrmService<Course> {
         }
       }
 
+      let publicUrl: string | undefined;
+      if (file?.path) {
+        publicUrl = await this.bunnyService.uploadToStorage({
+          id:
+            typeof this.request.user?.id === 'number'
+              ? this.request.user.id
+              : Number(this.request.user?.id ?? Date.now()),
+          type: 'icon',
+          filePath: file.path,
+        });
+      }
+
       const newCourse = this.courseRepository.create({
         ...data,
         court: data.court ? ({ id: data.court } as Court) : undefined,
@@ -313,6 +368,7 @@ export class CourseService extends BaseTypeOrmService<Course> {
           ...s,
           totalSessions: lessonCount / scheduleLength,
         })) as Schedule[],
+        publicUrl,
         name:
           subject.name +
           ` -  Khóa ${subject.courses ? subject.courses.length + 1 : 1}`,
@@ -360,9 +416,10 @@ export class CourseService extends BaseTypeOrmService<Course> {
   async update(
     id: number,
     data: UpdateCourseDto,
+    file?: Express.Multer.File,
   ): Promise<CustomApiResponse<void>> {
     return await this.datasource.transaction(async (manager) => {
-      const course = await this.courseRepository.findOne({
+      const course = await manager.getRepository(Course).findOne({
         where: { id: id },
         relations: ['createdBy'],
         withDeleted: false,
@@ -370,15 +427,31 @@ export class CourseService extends BaseTypeOrmService<Course> {
       if (!course) throw new BadRequestException('Không tìm thấy khóa học');
       if (course.createdBy.id !== this.request.user.id)
         throw new ForbiddenException('Không có quyền truy cập khóa học này');
-      if (course.status !== CourseStatus.REJECTED)
+      if (
+        course.status !== CourseStatus.REJECTED &&
+        course.status !== CourseStatus.PENDING_APPROVAL
+      )
         throw new BadRequestException(
           'Khoá học đã được duyệt, không thể cập nhật',
         );
 
-      await manager.getRepository(Course).update(course.id, {
-        ...data,
+      const updatePayload: Partial<Course> = {
+        ...(data as unknown as Partial<Course>),
         court: data.court ? ({ id: data.court } as Court) : course.court,
-      });
+      };
+
+      if (file?.path) {
+        updatePayload.publicUrl = await this.bunnyService.uploadToStorage({
+          id:
+            typeof this.request.user?.id === 'number'
+              ? this.request.user.id
+              : Number(this.request.user?.id ?? Date.now()),
+          type: 'icon',
+          filePath: file.path,
+        });
+      }
+
+      await manager.getRepository(Course).update(course.id, updatePayload);
 
       await this.notificationService.sendNotificationToAdmins({
         title: ' Cập nhật yêu cầu tạo khóa học',
@@ -398,7 +471,7 @@ export class CourseService extends BaseTypeOrmService<Course> {
     id: number,
   ): Promise<CustomApiResponse<void>> {
     return await this.datasource.transaction(async (manager) => {
-      const request = await this.requestRepository.findOne({
+      const request = await manager.getRepository(Request).findOne({
         where: { id: id },
         relations: ['createdBy', 'actions'],
       });
@@ -406,7 +479,7 @@ export class CourseService extends BaseTypeOrmService<Course> {
       if (request.status === RequestStatus.APPROVED)
         throw new BadRequestException('Yêu cầu không được chờ duyệt');
 
-      const course = await this.courseRepository.findOne({
+      const course = await manager.getRepository(Course).findOne({
         where: { id: request.metadata.id },
         withDeleted: false,
         relations: ['subject', 'subject.lessons'],
@@ -458,7 +531,7 @@ export class CourseService extends BaseTypeOrmService<Course> {
         await manager.getRepository(Session).save(sessions);
       }
 
-      const videoConference = this.videoConferenceRepository.create({
+      const videoConference = manager.getRepository(VideoConference).create({
         course: course,
         channelName: `course-${course.id}-vc`,
       });
@@ -499,7 +572,7 @@ export class CourseService extends BaseTypeOrmService<Course> {
     reason: string,
   ): Promise<CustomApiResponse<void>> {
     return await this.datasource.transaction(async (manager) => {
-      const request = await this.requestRepository.findOne({
+      const request = await manager.getRepository(Request).findOne({
         where: { id: id },
         relations: ['createdBy', 'actions'],
       });
@@ -510,7 +583,7 @@ export class CourseService extends BaseTypeOrmService<Course> {
       )
         throw new BadRequestException('Yêu cầu không được chờ duyệt');
 
-      const course = await this.courseRepository.findOne({
+      const course = await manager.getRepository(Course).findOne({
         where: { id: request.metadata.id },
         withDeleted: false,
       });
@@ -522,7 +595,7 @@ export class CourseService extends BaseTypeOrmService<Course> {
       request.status = RequestStatus.REJECTED;
       await manager.getRepository(Request).save(request);
 
-      const newRequestAction = this.requestActionRepository.create({
+      const newRequestAction = manager.getRepository(RequestAction).create({
         type: RequestActionType.REJECTED,
         comment: reason,
         request: request,
@@ -547,7 +620,7 @@ export class CourseService extends BaseTypeOrmService<Course> {
 
   async coachCancelCourse(id: number): Promise<CustomApiResponse<void>> {
     return await this.datasource.transaction(async (manager) => {
-      const course = await this.courseRepository.findOne({
+      const course = await manager.getRepository(Course).findOne({
         where: { id: id },
         relations: ['createdBy', 'enrollments'],
         withDeleted: false,
@@ -574,7 +647,7 @@ export class CourseService extends BaseTypeOrmService<Course> {
 
   async learnerCancelCourse(id: number): Promise<CustomApiResponse<void>> {
     return await this.datasource.transaction(async (manager) => {
-      const course = await this.courseRepository.findOne({
+      const course = await manager.getRepository(Course).findOne({
         where: { id: id },
         relations: ['createdBy', 'enrollments'],
         withDeleted: false,
@@ -598,7 +671,7 @@ export class CourseService extends BaseTypeOrmService<Course> {
         throw new BadRequestException('Không thể hủy khóa học');
       }
 
-      const enrollment = await this.enrollmentRepository.findOne({
+      const enrollment = await manager.getRepository(Enrollment).findOne({
         where: {
           course: { id: course.id },
           user: { id: this.request.user.id as User['id'] },

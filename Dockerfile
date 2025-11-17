@@ -19,6 +19,9 @@ RUN npm run build
 FROM node:20-alpine AS runner
 WORKDIR /usr/src/app
 
+# Install FFmpeg and ffprobe (required for video processing)
+RUN apk add --no-cache ffmpeg
+
 # Only install production dependencies
 COPY package*.json ./
 RUN npm ci --only=production

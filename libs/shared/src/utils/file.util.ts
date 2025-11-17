@@ -162,4 +162,15 @@ export class FileUtils {
       }
     });
   }
+
+  static extractFilenameFromPath = async (filePath: string) => {
+    try {
+      // Use path.basename to get the filename from the given path
+      const filename = path.basename(filePath);
+      return filename;
+    } catch (err) {
+      console.error(`Error extracting filename from path: ${err.message}`);
+      return null; // or handle error as needed
+    }
+  };
 }

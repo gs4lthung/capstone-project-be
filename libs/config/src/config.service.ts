@@ -88,6 +88,19 @@ export interface Config {
     appId?: string;
     appCertificate?: string;
   };
+
+  bunny: {
+    account_api_key: string;
+    domain_storage_zone: string;
+    domain_origin: string;
+    pull_zone_id: number;
+    storage: {
+      host_name: string;
+      zone_name: string;
+      zone_id: number;
+      password: string;
+    };
+  };
 }
 
 export interface TcpServiceConfig {
@@ -252,6 +265,28 @@ export class ConfigService {
       agora: {
         appId: this.nestConfigService.get('AGORA_APP_ID', ''),
         appCertificate: this.nestConfigService.get('AGORA_APP_CERTIFICATE', ''),
+      },
+      bunny: {
+        account_api_key: this.nestConfigService.get(
+          'BUNNY_ACCOUNT_API_KEY',
+          '',
+        ),
+        domain_storage_zone: this.nestConfigService.get(
+          'BUNNY_DOMAIN_STORAGE_ZONE',
+          '',
+        ),
+        domain_origin: this.nestConfigService.get('BUNNY_DOMAIN_ORIGIN', ''),
+        pull_zone_id: Number(
+          this.nestConfigService.get('BUNNY_PULL_ZONE_ID', 0),
+        ),
+        storage: {
+          host_name: this.nestConfigService.get('BUNNY_STORAGE_HOST_NAME', ''),
+          zone_name: this.nestConfigService.get('BUNNY_STORAGE_ZONE_NAME', ''),
+          zone_id: Number(
+            this.nestConfigService.get('BUNNY_STORAGE_ZONE_ID', 0),
+          ),
+          password: this.nestConfigService.get('BUNNY_STORAGE_PASSWORD', ''),
+        },
       },
     };
   }

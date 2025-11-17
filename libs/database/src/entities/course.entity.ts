@@ -89,6 +89,11 @@ export class Course {
   @IsEnum(CourseStatus)
   status: CourseStatus;
 
+  @Column({ name: 'public_url', type: 'text', nullable: true })
+  @IsOptional()
+  @IsString()
+  publicUrl?: string;
+
   @Column({ name: 'min_participants', type: 'int', default: 1 })
   @IsInt()
   @Min(1)
