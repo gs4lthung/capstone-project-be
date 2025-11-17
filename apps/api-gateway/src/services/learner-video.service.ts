@@ -1,19 +1,18 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { LearnerVideo } from '@app/database/entities/learner-video.entity';
-import { AwsService } from '@app/aws';
 import { FfmpegService } from '@app/ffmpeg';
 import { UploadLearnerVideoDto } from '@app/shared/dtos/files/file.dto';
 import { User } from '@app/database/entities/user.entity';
-import * as path from 'path';
-import * as fs from 'fs';
 
 import { AiVideoComparisonResult } from '@app/database/entities/ai-video-comparison-result.entity';
 import { Video } from '@app/database/entities/video.entity';
 import { buildDetailsArrayFromComparison } from '@app/shared/helpers/buildDetailArray.helper';
 import { LearnerProgress } from '@app/database/entities/learner-progress.entity';
 import { LearnerVideoStatus } from '@app/shared/enums/learner.enum';
+import { BunnyService } from '@app/bunny';
+import { FileUtils } from '@app/shared/utils/file.util';
 
 @Injectable()
 export class LearnerVideoService {
@@ -26,8 +25,9 @@ export class LearnerVideoService {
     private readonly aiVideoComparisonResultRepo: Repository<AiVideoComparisonResult>,
     @InjectRepository(Video)
     private readonly videoRepo: Repository<Video>,
-    private readonly awsService: AwsService,
     private readonly ffmpegService: FfmpegService,
+    private readonly bunnyService: BunnyService,
+    private readonly datasource: DataSource,
   ) {}
 
   async upload(
@@ -35,28 +35,29 @@ export class LearnerVideoService {
     data: UploadLearnerVideoDto,
     user: Pick<User, 'id'>,
   ): Promise<LearnerVideo> {
-    if (!videoFile) throw new BadRequestException('No video file uploaded');
+    return this.datasource.transaction(async (manager) => {
+      if (!videoFile) throw new BadRequestException('No video file uploaded');
 
-    const videoPublicUrl = await this.awsService.uploadFileToPublicBucket({
-      file: {
-        buffer: fs.readFileSync(videoFile.path),
-        ...videoFile,
-      },
+      const videoPublicUrl = await this.bunnyService.uploadToStorage({
+        id: Date.now(),
+        type: 'video',
+        filePath: videoFile.path,
+      });
+
+      console.log(data);
+
+      const learnerVideo = manager.getRepository(LearnerVideo).create({
+        publicUrl: videoPublicUrl,
+        duration: data.duration,
+        tags: data.tags,
+        status: LearnerVideoStatus.READY,
+        user: { id: user.id },
+        session: data.sessionId ? { id: data.sessionId } : undefined,
+        video: data.coachVideoId ? { id: data.coachVideoId } : undefined,
+      });
+
+      return await manager.getRepository(LearnerVideo).save(learnerVideo);
     });
-
-    console.log(data);
-
-    const learnerVideo = this.learnerVideoRepo.create({
-      publicUrl: videoPublicUrl.url,
-      duration: data.duration,
-      tags: data.tags,
-      status: LearnerVideoStatus.READY,
-      user: { id: user.id },
-      session: data.sessionId ? { id: data.sessionId } : undefined,
-      video: data.coachVideoId ? { id: data.coachVideoId } : undefined,
-    });
-
-    return this.learnerVideoRepo.save(learnerVideo);
   }
 
   async findAll(filter: {
@@ -207,41 +208,46 @@ export class LearnerVideoService {
     learnerVideoId: number,
     coachVideoId: number,
   ): Promise<string> {
-    const learnerVideo = await this.learnerVideoRepo.findOne({
-      where: { id: learnerVideoId },
-      relations: ['session', 'session.lesson', 'session.lesson.videos'],
+    return this.datasource.transaction(async (manager) => {
+      const learnerVideo = await manager.getRepository(LearnerVideo).findOne({
+        where: { id: learnerVideoId },
+        relations: ['session', 'session.lesson', 'session.lesson.videos'],
+      });
+      if (!learnerVideo)
+        throw new BadRequestException('LearnerVideo not found');
+
+      const coachVideo = await manager.getRepository(Video).findOne({
+        where: { id: coachVideoId },
+      });
+      if (!coachVideo) throw new BadRequestException('Coach Video not found');
+
+      const overlayFilePath = await this.ffmpegService.overlayVideoOnVideo(
+        learnerVideo.publicUrl,
+        coachVideo.publicUrl,
+      );
+
+      const thumbnail = await this.ffmpegService.createVideoThumbnailVer2(
+        overlayFilePath,
+        FileUtils.excludeFileFromPath(overlayFilePath),
+      );
+
+      const uploadedResult = await this.bunnyService.uploadToStorage({
+        id: learnerVideo.id,
+        type: 'video',
+        filePath: overlayFilePath,
+      });
+
+      const uploadedThumbnail = await this.bunnyService.uploadToStorage({
+        id: learnerVideo.id,
+        type: 'video_thumbnail',
+        filePath: thumbnail,
+      });
+
+      learnerVideo.overlayVideoUrl = uploadedResult;
+      learnerVideo.overlayThumbnailUrl = uploadedThumbnail;
+      await manager.getRepository(LearnerVideo).save(learnerVideo);
+
+      return uploadedResult;
     });
-    if (!learnerVideo) throw new BadRequestException('LearnerVideo not found');
-
-    const coachVideo = await this.videoRepo.findOne({
-      where: { id: coachVideoId },
-    });
-    if (!coachVideo) throw new BadRequestException('Coach Video not found');
-
-    const overlayFilePath = await this.ffmpegService.overlayVideoOnVideo(
-      learnerVideo.publicUrl,
-      coachVideo.publicUrl,
-    );
-
-    console.log(overlayFilePath);
-
-    const uploadedResult = await this.awsService.uploadFileToPublicBucket({
-      file: {
-        buffer: fs.readFileSync(overlayFilePath),
-        path: overlayFilePath,
-        originalname: path.basename(overlayFilePath),
-        mimetype: 'video/mp4',
-        size: fs.statSync(overlayFilePath).size,
-        fieldname: 'video_overlay',
-        destination: '',
-        filename: '',
-        encoding: '7bit',
-      } as Express.Multer.File,
-    });
-
-    learnerVideo.overlayVideoUrl = uploadedResult.url;
-    await this.learnerVideoRepo.save(learnerVideo);
-
-    return uploadedResult.url;
   }
 }

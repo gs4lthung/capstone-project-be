@@ -68,7 +68,7 @@ export class PaymentService extends BaseTypeOrmService<Payment> {
     id: number,
   ): Promise<CustomApiResponse<Payment>> {
     return await this.datasource.transaction(async (manager) => {
-      const course = await this.courseRepository.findOne({
+      const course = await manager.getRepository(Course).findOne({
         where: { id: id },
         withDeleted: false,
         relations: ['enrollments', 'createdBy'],
@@ -86,7 +86,7 @@ export class PaymentService extends BaseTypeOrmService<Payment> {
 
       let enrollment: Enrollment, newEnrollment: Enrollment;
       if (hasLearnerEnrolled) {
-        enrollment = await this.enrollmentRepository.findOne({
+        enrollment = await manager.getRepository(Enrollment).findOne({
           where: {
             user: { id: this.request.user.id } as User,
             course: { id: course.id } as Course,
@@ -102,7 +102,7 @@ export class PaymentService extends BaseTypeOrmService<Payment> {
         enrollment.status = EnrollmentStatus.UNPAID;
         await manager.getRepository(Enrollment).save(enrollment);
       } else {
-        newEnrollment = this.enrollmentRepository.create({
+        newEnrollment = manager.getRepository(Enrollment).create({
           user: { id: this.request.user.id } as User,
           course: course as Course,
           status: EnrollmentStatus.UNPAID,
@@ -117,7 +117,7 @@ export class PaymentService extends BaseTypeOrmService<Payment> {
         expiredAt: new Date(Date.now() + 1000 * 60 * 60 * 24),
       });
 
-      const payment = this.paymentRepository.create({
+      const payment = manager.getRepository(Payment).create({
         amount: payosResponse.amount,
         description: payosResponse.description,
         orderCode: payosResponse.orderCode,
@@ -145,7 +145,7 @@ export class PaymentService extends BaseTypeOrmService<Payment> {
         return;
       }
 
-      const payment = await this.paymentRepository.findOne({
+      const payment = await manager.getRepository(Payment).findOne({
         where: { orderCode: data.orderCode },
         relations: ['enrollment'],
       });
@@ -153,17 +153,19 @@ export class PaymentService extends BaseTypeOrmService<Payment> {
         return;
       }
 
-      const hasSuccessfulPayment = await this.paymentRepository.findOne({
-        where: {
-          enrollment: { id: payment.enrollment.id },
-          status: PaymentStatus.PAID,
-        },
-      });
+      const hasSuccessfulPayment = await manager
+        .getRepository(Payment)
+        .findOne({
+          where: {
+            enrollment: { id: payment.enrollment.id },
+            status: PaymentStatus.PAID,
+          },
+        });
       if (hasSuccessfulPayment) {
         return;
       }
 
-      const course = await this.courseRepository.findOne({
+      const course = await manager.getRepository(Course).findOne({
         where: { id: payment.enrollment.course.id },
         relations: ['enrollments'],
       });
@@ -234,7 +236,7 @@ export class PaymentService extends BaseTypeOrmService<Payment> {
         return;
       }
 
-      const payment = await this.paymentRepository.findOne({
+      const payment = await manager.getRepository(Payment).findOne({
         where: { orderCode: data.orderCode },
         relations: ['enrollment'],
       });

@@ -38,7 +38,7 @@ export class FeedbackService {
     data: CreateFeedbackDto,
   ): Promise<CustomApiResponse<void>> {
     return await this.datasource.transaction(async (manager) => {
-      const course = await this.courseRepository.findOne({
+      const course = await manager.getRepository(Course).findOne({
         where: { id: courseId, status: CourseStatus.COMPLETED },
         relations: ['createdBy', 'enrollments'],
       });
@@ -55,7 +55,7 @@ export class FeedbackService {
           'You must be enrolled in the course to provide feedback',
         );
 
-      const isAlreadySubmitted = await this.feedbackRepository.findOne({
+      const isAlreadySubmitted = await manager.getRepository(Feedback).findOne({
         where: {
           course: { id: courseId },
           createdBy: { id: (this.request.user as User).id },
@@ -66,7 +66,7 @@ export class FeedbackService {
           'You have already submitted feedback for this course',
         );
 
-      const feedback = this.feedbackRepository.create({
+      const feedback = manager.getRepository(Feedback).create({
         comment: data.comment,
         rating: data.rating,
         isAnonymous: data.isAnonymous || false,
@@ -96,7 +96,7 @@ export class FeedbackService {
     data: UpdateFeedbackDto,
   ): Promise<CustomApiResponse<void>> {
     return await this.datasource.transaction(async (manager) => {
-      const feedback = await this.feedbackRepository.findOne({
+      const feedback = await manager.getRepository(Feedback).findOne({
         where: { id: id, createdBy: { id: (this.request.user as User).id } },
       });
       if (!feedback)
@@ -112,29 +112,33 @@ export class FeedbackService {
   }
 
   async findByCourseId(courseId: number): Promise<Feedback[]> {
-    const feedbacks = await this.feedbackRepository.find({
-      where: { course: { id: courseId } },
-      relations: ['createdBy', 'course', 'receivedBy'],
-      order: {
-        createdAt: 'DESC',
-      },
-    });
+    return await this.datasource.transaction(async (manager) => {
+      const feedbacks = await manager.getRepository(Feedback).find({
+        where: { course: { id: courseId } },
+        relations: ['createdBy', 'course', 'receivedBy'],
+        order: {
+          createdAt: 'DESC',
+        },
+      });
 
-    return feedbacks;
+      return feedbacks;
+    });
   }
 
   async findForCoach(): Promise<CustomApiResponse<Feedback[]>> {
-    const feedbacks = await this.feedbackRepository.find({
-      where: { receivedBy: { id: this.request.user.id as User['id'] } },
-      relations: ['createdBy', 'receivedBy'],
-      order: {
-        createdAt: 'DESC',
-      },
+    return await this.datasource.transaction(async (manager) => {
+      const feedbacks = await manager.getRepository(Feedback).find({
+        where: { receivedBy: { id: this.request.user.id as User['id'] } },
+        relations: ['createdBy', 'receivedBy'],
+        order: {
+          createdAt: 'DESC',
+        },
+      });
+      return new CustomApiResponse<Feedback[]>(
+        HttpStatus.OK,
+        'Feedbacks retrieved successfully',
+        feedbacks,
+      );
     });
-    return new CustomApiResponse<Feedback[]>(
-      HttpStatus.OK,
-      'Feedbacks retrieved successfully',
-      feedbacks,
-    );
   }
 }

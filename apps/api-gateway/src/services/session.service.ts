@@ -109,80 +109,82 @@ export class SessionService extends BaseTypeOrmService<Session> {
   async getSessionsForWeeklyCalendar(
     data: GetSessionForWeeklyCalendarRequestDto,
   ): Promise<CustomApiResponse<Session[]>> {
-    // validate input dates
-    if (!data?.startDate || !data?.endDate) {
-      throw new BadRequestException('startDate and endDate are required');
-    }
+    return await this.datasource.transaction(async (manager) => {
+      // validate input dates
+      if (!data?.startDate || !data?.endDate) {
+        throw new BadRequestException('startDate and endDate are required');
+      }
 
-    const startOfWeek = new Date(data.startDate);
-    const endOfWeek = new Date(data.endDate);
+      const startOfWeek = new Date(data.startDate);
+      const endOfWeek = new Date(data.endDate);
 
-    if (isNaN(startOfWeek.getTime()) || isNaN(endOfWeek.getTime())) {
-      throw new BadRequestException('Invalid startDate or endDate');
-    }
+      if (isNaN(startOfWeek.getTime()) || isNaN(endOfWeek.getTime())) {
+        throw new BadRequestException('Invalid startDate or endDate');
+      }
 
-    if (endOfWeek < startOfWeek) {
-      throw new BadRequestException(
-        'endDate must be the same or after startDate',
-      );
-    }
-
-    // normalize to include full days
-    startOfWeek.setHours(0, 0, 0, 0);
-    endOfWeek.setHours(23, 59, 59, 999);
-
-    const user = await this.userRepository.findOne({
-      where: { id: this.request.user.id as User['id'] },
-      withDeleted: false,
-      relations: ['role'],
-    });
-    if (!user) throw new InternalServerErrorException('Lỗi server');
-
-    switch (user.role.name) {
-      case UserRole.COACH:
-        const sessions = await this.sessionRepository.find({
-          where: {
-            course: {
-              createdBy: { id: this.request.user.id as User['id'] },
-            },
-            scheduleDate: Between(startOfWeek, endOfWeek),
-            status: In([SessionStatus.SCHEDULED, SessionStatus.COMPLETED]),
-          },
-          relations: [
-            'course',
-            'course.enrollments',
-            'quizzes',
-            'quizzes.questions',
-            'quizzes.questions.options',
-            'videos',
-          ],
-        });
-
-        return new CustomApiResponse<Session[]>(
-          HttpStatus.OK,
-          'Sessions retrieved successfully',
-          sessions,
+      if (endOfWeek < startOfWeek) {
+        throw new BadRequestException(
+          'endDate must be the same or after startDate',
         );
-      case UserRole.LEARNER:
-        const learnerSessions = await this.sessionRepository.find({
-          where: {
-            course: {
-              enrollments: {
-                user: { id: this.request.user.id as User['id'] },
+      }
+
+      // normalize to include full days
+      startOfWeek.setHours(0, 0, 0, 0);
+      endOfWeek.setHours(23, 59, 59, 999);
+
+      const user = await manager.getRepository(User).findOne({
+        where: { id: this.request.user.id as User['id'] },
+        withDeleted: false,
+        relations: ['role'],
+      });
+      if (!user) throw new InternalServerErrorException('Lỗi server');
+
+      switch (user.role.name) {
+        case UserRole.COACH:
+          const sessions = await manager.getRepository(Session).find({
+            where: {
+              course: {
+                createdBy: { id: this.request.user.id as User['id'] },
               },
+              scheduleDate: Between(startOfWeek, endOfWeek),
+              status: In([SessionStatus.SCHEDULED, SessionStatus.COMPLETED]),
             },
-            scheduleDate: Between(startOfWeek, endOfWeek),
-          },
-          relations: ['course'],
-        });
-        return new CustomApiResponse<Session[]>(
-          HttpStatus.OK,
-          'Sessions retrieved successfully',
-          learnerSessions,
-        );
-      default:
-        throw new BadRequestException('Invalid user role for sessions');
-    }
+            relations: [
+              'course',
+              'course.enrollments',
+              'quizzes',
+              'quizzes.questions',
+              'quizzes.questions.options',
+              'videos',
+            ],
+          });
+
+          return new CustomApiResponse<Session[]>(
+            HttpStatus.OK,
+            'Sessions retrieved successfully',
+            sessions,
+          );
+        case UserRole.LEARNER:
+          const learnerSessions = await manager.getRepository(Session).find({
+            where: {
+              course: {
+                enrollments: {
+                  user: { id: this.request.user.id as User['id'] },
+                },
+              },
+              scheduleDate: Between(startOfWeek, endOfWeek),
+            },
+            relations: ['course'],
+          });
+          return new CustomApiResponse<Session[]>(
+            HttpStatus.OK,
+            'Sessions retrieved successfully',
+            learnerSessions,
+          );
+        default:
+          throw new BadRequestException('Invalid user role for sessions');
+      }
+    });
   }
 
   async completeAndCheckAttendance(
@@ -190,7 +192,7 @@ export class SessionService extends BaseTypeOrmService<Session> {
     data: CompleteSessionDto,
   ): Promise<CustomApiResponse<void>> {
     return await this.datasource.transaction(async (manager) => {
-      const session = await this.sessionRepository.findOne({
+      const session = await manager.getRepository(Session).findOne({
         where: { id: id },
         relations: ['course'],
         withDeleted: false,
@@ -204,7 +206,7 @@ export class SessionService extends BaseTypeOrmService<Session> {
         throw new BadRequestException('Buổi học chưa kết thúc');
       }
 
-      const course = await this.courseRepository.findOne({
+      const course = await manager.getRepository(Course).findOne({
         where: { id: session.course.id },
         relations: ['enrollments', 'enrollments.user'],
         withDeleted: false,
@@ -232,33 +234,37 @@ export class SessionService extends BaseTypeOrmService<Session> {
         (Number(course.totalEarnings) * (100 - feePercentage)) /
         100 /
         course.totalSessions;
-      const sessionEarningRecord = this.sessionEarningRepository.create({
-        sessionPrice: Number(sessionEarning),
-        coachEarningTotal: Number(sessionEarning),
-        status: SessionEarningStatus.PAID,
-        paidAt: new Date(),
-        session: session,
-      });
+      const sessionEarningRecord = manager
+        .getRepository(SessionEarning)
+        .create({
+          sessionPrice: Number(sessionEarning),
+          coachEarningTotal: Number(sessionEarning),
+          status: SessionEarningStatus.PAID,
+          paidAt: new Date(),
+          session: session,
+        });
       await manager.getRepository(SessionEarning).save(sessionEarningRecord);
       await manager.getRepository(Session).update(id, {
         status: SessionStatus.COMPLETED,
         completedAt: new Date(),
       });
 
-      const learnerProgress = await this.learnerProgressRepository.findOne({
-        where: {
-          course: course,
-          user: this.request.user as User,
-        },
-        withDeleted: false,
-      });
+      const learnerProgress = await manager
+        .getRepository(LearnerProgress)
+        .findOne({
+          where: {
+            course: course,
+            user: this.request.user as User,
+          },
+          withDeleted: false,
+        });
       if (learnerProgress) {
         learnerProgress.sessionsCompleted += 1;
         await manager.getRepository(LearnerProgress).save(learnerProgress);
       }
 
       for (const attendanceDto of data.attendances) {
-        const attendance = this.attendanceRepository.create({
+        const attendance = manager.getRepository(Attendance).create({
           user: { id: attendanceDto.userId as User['id'] },
           session: session,
           status: attendanceDto.status,

@@ -15,7 +15,7 @@ import {
 } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 
 @Injectable({ scope: Scope.REQUEST })
 export class LearnerProgressService extends BaseTypeOrmService<LearnerProgress> {
@@ -23,6 +23,7 @@ export class LearnerProgressService extends BaseTypeOrmService<LearnerProgress> 
     @Inject(REQUEST) private readonly request: CustomApiRequest,
     @InjectRepository(LearnerProgress)
     private readonly learnerProgressRepository: Repository<LearnerProgress>,
+    private readonly datasource: DataSource,
   ) {
     super(learnerProgressRepository);
   }
@@ -40,33 +41,35 @@ export class LearnerProgressService extends BaseTypeOrmService<LearnerProgress> 
   async getProgressForCourse(
     courseId: number,
   ): Promise<CustomApiResponse<LearnerProgress[]>> {
-    let progresses: LearnerProgress[] = [];
+    return await this.datasource.transaction(async (manager) => {
+      let progresses: LearnerProgress[] = [];
 
-    const user = this.request.user as User;
-    if (!user) throw new BadRequestException('User not found');
+      const user = this.request.user as User;
+      if (!user) throw new BadRequestException('User not found');
 
-    switch (user.role.name) {
-      case UserRole.LEARNER:
-        progresses = await this.learnerProgressRepository.find({
-          where: {
-            course: { id: courseId },
-            user: user,
-          },
-        });
-        break;
-      case UserRole.COACH:
-        progresses = await this.learnerProgressRepository.find({
-          where: {
-            course: { id: courseId },
-          },
-        });
-        break;
-    }
+      switch (user.role.name) {
+        case UserRole.LEARNER:
+          progresses = await manager.getRepository(LearnerProgress).find({
+            where: {
+              course: { id: courseId },
+              user: user,
+            },
+          });
+          break;
+        case UserRole.COACH:
+          progresses = await manager.getRepository(LearnerProgress).find({
+            where: {
+              course: { id: courseId },
+            },
+          });
+          break;
+      }
 
-    return new CustomApiResponse<LearnerProgress[]>(
-      HttpStatus.OK,
-      'Learner progresses retrieved successfully',
-      progresses,
-    );
+      return new CustomApiResponse<LearnerProgress[]>(
+        HttpStatus.OK,
+        'Learner progresses retrieved successfully',
+        progresses,
+      );
+    });
   }
 }

@@ -379,13 +379,18 @@ export class FfmpegService {
           return reject(new Error(`Overlay video not found: ${overlayLocal}`));
         }
 
-        const outputDir = path.dirname('uploads/videos');
+        const outputDir = 'uploads/videos';
         if (!fs.existsSync(outputDir)) {
           fs.mkdirSync(outputDir, { recursive: true });
         }
 
+        const outputPath = path.join(
+          outputDir,
+          `overlay_output_${Date.now()}.mp4`,
+        );
+
         const filter =
-          '[0:v]scale=1080x1920:force_original_aspect_ratio=increase,crop=1080:1920[bg];[1:v]scale=1080x1920:force_original_aspect_ratio=increase,crop=1080:1920[overlay];[bg][overlay]overlay=format=auto[v]';
+          '[0:v]scale=1080x1920:force_original_aspect_ratio=increase,crop=1080:1920[bg];[1:v]scale=1080x1920:force_original_aspect_ratio=increase,crop=1080:1920,format=yuva420p,colorchannelmixer=aa=0.5[transparent_top];[bg][transparent_top]overlay[v]';
         const args = [
           '-i',
           bgLocal,
@@ -405,7 +410,7 @@ export class FfmpegService {
           'fast',
           '-crf',
           '23',
-          'uploads/videos/overlay_output.mp4',
+          outputPath,
         ];
 
         const ffmpegProc = spawn('ffmpeg', args);
@@ -454,10 +459,8 @@ export class FfmpegService {
           }
 
           if (code === 0) {
-            this.logger.log(
-              `Overlay completed: uploads/videos/overlay_output.mp4`,
-            );
-            resolve('uploads/videos/overlay_output.mp4');
+            this.logger.log(`Overlay completed: ${outputPath}`);
+            resolve(outputPath);
           } else {
             this.logger.error(`FFmpeg exited with code ${code}`);
             reject(new Error(`FFmpeg exited with code ${code}.`));

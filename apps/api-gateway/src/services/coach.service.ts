@@ -30,43 +30,23 @@ import { REQUEST } from '@nestjs/core';
 import { CustomApiRequest } from '@app/shared/customs/custom-api-request';
 import { Coach } from '@app/database/entities/coach.entity';
 import { PaginateObject } from '@app/shared/dtos/paginate.dto';
-import { WalletTransaction } from '@app/database/entities/wallet-transaction.entity';
-import { Enrollment } from '@app/database/entities/enrollment.entity';
-import { Session } from '@app/database/entities/session.entity';
-import { Course } from '@app/database/entities/course.entity';
 import { JwtPayloadDto } from '@app/shared/dtos/auth/jwt.payload.dto';
 import { MailSendDto } from '@app/shared/dtos/mails/mail-send.dto';
 import { MailService } from './mail.service';
 import { TwilioService } from '@app/twilio';
-import { AwsService } from '@app/aws';
-import * as fs from 'fs';
+import { BunnyService } from '@app/bunny';
 @Injectable({ scope: Scope.REQUEST })
 export class CoachService extends BaseTypeOrmService<Coach> {
   constructor(
     @Inject(REQUEST) private readonly request: CustomApiRequest,
     @InjectRepository(Coach)
     private readonly coachRepository: Repository<Coach>,
-    @InjectRepository(User) private readonly userRepository: Repository<User>,
-    @InjectRepository(Credential)
-    private readonly credentialRepository: Repository<Credential>,
-    @InjectRepository(Role)
-    private readonly roleRepository: Repository<Role>,
-    @InjectRepository(Feedback)
-    private readonly feedbackRepository: Repository<Feedback>,
-    @InjectRepository(WalletTransaction)
-    private readonly walletTransactionRepository: Repository<WalletTransaction>,
     private readonly configService: ConfigService,
-    @InjectRepository(Enrollment)
-    private readonly enrollmentRepository: Repository<Enrollment>,
-    @InjectRepository(Session)
-    private readonly sessionRepository: Repository<Session>,
-    @InjectRepository(Course)
-    private readonly courseRepository: Repository<Course>,
-    private readonly awsService: AwsService,
     private readonly jwtService: JwtService,
     private readonly datasource: DataSource,
     private readonly mailService: MailService,
     private readonly twilioService: TwilioService,
+    private readonly bunnyService: BunnyService,
   ) {
     super(coachRepository);
   }
@@ -90,33 +70,35 @@ export class CoachService extends BaseTypeOrmService<Coach> {
   async getOverallRating(
     id: number,
   ): Promise<CustomApiResponse<{ overall: number; total: number }>> {
-    const feedbacks = await this.feedbackRepository.find({
-      where: {
-        receivedBy: { id: id },
-      },
-    });
-    if (feedbacks.length === 0)
+    return await this.datasource.transaction(async (manager) => {
+      const feedbacks = await manager.getRepository(Feedback).find({
+        where: {
+          receivedBy: { id: id },
+        },
+      });
+      if (feedbacks.length === 0)
+        return new CustomApiResponse<{ overall: number; total: number }>(
+          HttpStatus.OK,
+          'No feedbacks found',
+          {
+            overall: 0,
+            total: 0,
+          },
+        );
+      const totalRating = feedbacks.reduce(
+        (acc, feedback) => acc + feedback.rating,
+        0,
+      );
+      const overallRating = totalRating / feedbacks.length;
       return new CustomApiResponse<{ overall: number; total: number }>(
         HttpStatus.OK,
-        'No feedbacks found',
+        'Success',
         {
-          overall: 0,
-          total: 0,
+          overall: overallRating,
+          total: feedbacks.length,
         },
       );
-    const totalRating = feedbacks.reduce(
-      (acc, feedback) => acc + feedback.rating,
-      0,
-    );
-    const overallRating = totalRating / feedbacks.length;
-    return new CustomApiResponse<{ overall: number; total: number }>(
-      HttpStatus.OK,
-      'Success',
-      {
-        overall: overallRating,
-        total: feedbacks.length,
-      },
-    );
+    });
   }
 
   async registerCoach(
@@ -125,7 +107,7 @@ export class CoachService extends BaseTypeOrmService<Coach> {
     return await this.datasource.transaction(async (manager) => {
       let existingUser: User;
       if (data.email) {
-        existingUser = await this.userRepository.findOne({
+        existingUser = await manager.getRepository(User).findOne({
           where: { email: data.email },
         });
         if (existingUser) {
@@ -134,7 +116,7 @@ export class CoachService extends BaseTypeOrmService<Coach> {
       }
 
       if (data.phoneNumber) {
-        existingUser = await this.userRepository.findOne({
+        existingUser = await manager.getRepository(User).findOne({
           where: { phoneNumber: data.phoneNumber },
         });
         if (existingUser) {
@@ -147,14 +129,14 @@ export class CoachService extends BaseTypeOrmService<Coach> {
         this.configService.get('password_salt_rounds'),
       );
 
-      const coachRole = await this.roleRepository.findOne({
+      const coachRole = await manager.getRepository(Role).findOne({
         where: { name: UserRole.COACH },
       });
       if (!coachRole) {
         throw new BadRequestException('Coach role not found');
       }
 
-      const newUser = this.userRepository.create({
+      const newUser = manager.getRepository(User).create({
         fullName: data.fullName,
         email: data.email ? data.email : null,
         phoneNumber: data.phoneNumber ? data.phoneNumber : null,
@@ -200,7 +182,7 @@ export class CoachService extends BaseTypeOrmService<Coach> {
 
   async update(data: UpdateCoachProfileDto): Promise<CustomApiResponse<void>> {
     return await this.datasource.transaction(async (manager) => {
-      const coach = await this.coachRepository.findOne({
+      const coach = await manager.getRepository(Coach).findOne({
         where: {
           user: { id: this.request.user.id as User['id'] },
         },
@@ -216,14 +198,16 @@ export class CoachService extends BaseTypeOrmService<Coach> {
   }
 
   async coachGetCredentials(): Promise<Credential[]> {
-    const coach = await this.coachRepository.findOne({
-      where: {
-        user: { id: this.request.user.id as User['id'] },
-      },
-      relations: ['credentials'],
+    return await this.datasource.transaction(async (manager) => {
+      const coach = await manager.getRepository(Coach).findOne({
+        where: {
+          user: { id: this.request.user.id as User['id'] },
+        },
+        relations: ['credentials'],
+      });
+      if (!coach) throw new NotFoundException('Coach not found');
+      return coach.credentials;
     });
-    if (!coach) throw new NotFoundException('Coach not found');
-    return coach.credentials;
   }
 
   async uploadCredential(
@@ -239,16 +223,14 @@ export class CoachService extends BaseTypeOrmService<Coach> {
       });
       if (!coach) throw new NotFoundException('Coach not found');
       if (file) {
-        const credentialFilePath =
-          await this.awsService.uploadFileToPublicBucket({
-            file: {
-              buffer: fs.readFileSync(file.path),
-              ...file,
-            },
-          });
-        data.publicUrl = credentialFilePath.url;
+        const credentialFilePath = await this.bunnyService.uploadToStorage({
+          id: Date.now(),
+          type: 'credential_image',
+          filePath: file.path,
+        });
+        data.publicUrl = credentialFilePath;
       }
-      const newCredential = this.credentialRepository.create({
+      const newCredential = manager.getRepository(Credential).create({
         ...data,
         coach: coach,
       });
@@ -266,7 +248,7 @@ export class CoachService extends BaseTypeOrmService<Coach> {
     file?: Express.Multer.File,
   ): Promise<CustomApiResponse<void>> {
     return await this.datasource.transaction(async (manager) => {
-      const credential = await this.credentialRepository.findOne({
+      const credential = await manager.getRepository(Credential).findOne({
         where: { id: id },
         relations: ['coach', 'coach.user'],
       });
@@ -275,14 +257,12 @@ export class CoachService extends BaseTypeOrmService<Coach> {
         throw new BadRequestException('You are not authorized to update this');
       }
       if (file) {
-        const credentialFilePath =
-          await this.awsService.uploadFileToPublicBucket({
-            file: {
-              buffer: fs.readFileSync(file.path),
-              ...file,
-            },
-          });
-        data.publicUrl = credentialFilePath.url;
+        const credentialFilePath = await this.bunnyService.uploadToStorage({
+          id: Date.now(),
+          type: 'credential_image',
+          filePath: file.path,
+        });
+        data.publicUrl = credentialFilePath;
       }
       await manager.getRepository(Credential).update(credential.id, data);
       return new CustomApiResponse<void>(
@@ -294,7 +274,7 @@ export class CoachService extends BaseTypeOrmService<Coach> {
 
   async deleteCredential(id: number): Promise<CustomApiResponse<void>> {
     return await this.datasource.transaction(async (manager) => {
-      const credential = await this.credentialRepository.findOne({
+      const credential = await manager.getRepository(Credential).findOne({
         where: { id: id },
         relations: ['coach', 'coach.user'],
       });
@@ -312,7 +292,7 @@ export class CoachService extends BaseTypeOrmService<Coach> {
 
   async restoreCredential(id: number): Promise<CustomApiResponse<void>> {
     return await this.datasource.transaction(async (manager) => {
-      const credential = await this.credentialRepository.findOne({
+      const credential = await manager.getRepository(Credential).findOne({
         where: { id: id },
         withDeleted: true,
         relations: ['coach', 'coach.user'],
@@ -330,33 +310,39 @@ export class CoachService extends BaseTypeOrmService<Coach> {
   }
 
   async verifyCoach(coachId: number): Promise<void> {
-    const coach = await this.coachRepository.findOne({
-      where: { id: coachId },
-      relations: ['user'],
-    });
-    if (!coach) throw new NotFoundException('Coach not found');
+    return await this.datasource.transaction(async (manager) => {
+      const coach = await this.coachRepository.findOne({
+        where: { id: coachId },
+        relations: ['user'],
+      });
+      if (!coach) throw new NotFoundException('Coach not found');
 
-    await this.coachRepository.update(coachId, {
-      verificationStatus: CoachVerificationStatus.VERIFIED,
-    });
+      await this.coachRepository.update(coachId, {
+        verificationStatus: CoachVerificationStatus.VERIFIED,
+      });
 
-    if (!coach.user.isActive) {
-      await this.userRepository.update(coach.user.id, { isActive: true });
-    }
+      if (!coach.user.isActive) {
+        await manager
+          .getRepository(User)
+          .update(coach.user.id, { isActive: true });
+      }
+    });
   }
 
   async rejectCoach(coachId: number, reason?: string): Promise<void> {
-    const coach = await this.coachRepository.findOne({
-      where: { id: coachId },
-    });
-    if (!coach) throw new NotFoundException('Coach not found');
+    return await this.datasource.transaction(async (manager) => {
+      const coach = await manager.getRepository(Coach).findOne({
+        where: { id: coachId },
+      });
+      if (!coach) throw new NotFoundException('Coach not found');
 
-    await this.coachRepository.update(coachId, {
-      verificationStatus: CoachVerificationStatus.REJECTED,
-      verificationReason: reason,
-    });
+      await manager.getRepository(Coach).update(coachId, {
+        verificationStatus: CoachVerificationStatus.REJECTED,
+        verificationReason: reason,
+      });
 
-    return;
+      return;
+    });
   }
 
   private async sendVerificationEmail(
