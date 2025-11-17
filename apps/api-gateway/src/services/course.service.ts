@@ -165,6 +165,34 @@ export class CourseService extends BaseTypeOrmService<Course> {
     });
   }
 
+  async findCoachCourses(
+    page: number = 1,
+    size: number = 10,
+  ): Promise<PaginateObject<Course>> {
+    return await this.datasource.transaction(async (manager) => {
+      const offset = (page - 1) * size;
+      const [courses, total] = await manager
+        .getRepository(Course)
+        .findAndCount({
+          where: {
+            createdBy: { id: this.request.user?.id as User['id'] },
+          },
+          relations: ['subject', 'schedules'],
+          skip: offset,
+          take: size,
+          order: { createdAt: 'DESC' },
+        });
+      const result = new PaginateObject<Course>();
+      Object.assign(result, {
+        items: courses,
+        page,
+        pageSize: size,
+        total,
+      });
+      return result;
+    });
+  }
+
   async findLearnerCourses(
     page: number = 1,
     size: number = 10,
@@ -399,7 +427,10 @@ export class CourseService extends BaseTypeOrmService<Course> {
       if (!course) throw new BadRequestException('Không tìm thấy khóa học');
       if (course.createdBy.id !== this.request.user.id)
         throw new ForbiddenException('Không có quyền truy cập khóa học này');
-      if (course.status !== CourseStatus.REJECTED)
+      if (
+        course.status !== CourseStatus.REJECTED &&
+        course.status !== CourseStatus.PENDING_APPROVAL
+      )
         throw new BadRequestException(
           'Khoá học đã được duyệt, không thể cập nhật',
         );
