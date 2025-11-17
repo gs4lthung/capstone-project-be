@@ -6,7 +6,7 @@ import { SendNotification } from '@app/shared/interfaces/send-notification.inter
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 
 @Injectable()
 export class NotificationService {
@@ -15,20 +15,23 @@ export class NotificationService {
     @InjectRepository(Notification)
     private readonly notificationRepository: Repository<Notification>,
     private readonly eventEmitter: EventEmitter2,
+    private readonly datasource: DataSource,
   ) {}
 
   async markNotificationAsRead(notificationId: number): Promise<void> {
-    const notification = await this.notificationRepository.findOne({
-      where: { id: notificationId },
-      withDeleted: false,
+    return await this.datasource.transaction(async (manager) => {
+      const notification = await manager.getRepository(Notification).findOne({
+        where: { id: notificationId },
+        withDeleted: false,
+      });
+      if (!notification)
+        throw new CustomRpcException(
+          'NOT_FOUND',
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
+      notification.isRead = true;
+      await this.notificationRepository.save(notification);
     });
-    if (!notification)
-      throw new CustomRpcException(
-        'NOT_FOUND',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    notification.isRead = true;
-    await this.notificationRepository.save(notification);
   }
 
   async getUserUnreadNotifications(userId: number): Promise<Notification[]> {
@@ -41,32 +44,34 @@ export class NotificationService {
   }
 
   async sendNotification(data: SendNotification) {
-    const user = await this.userRepository.findOne({
-      where: { id: data.userId },
-      withDeleted: false,
-    });
-    if (!user)
-      throw new CustomRpcException(
-        'NOT_FOUND',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+    return await this.datasource.transaction(async (manager) => {
+      const user = await manager.getRepository(User).findOne({
+        where: { id: data.userId },
+        withDeleted: false,
+      });
+      if (!user)
+        throw new CustomRpcException(
+          'NOT_FOUND',
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
 
-    const notification = this.notificationRepository.create({
-      title: data.title,
-      body: data.body,
-      navigateTo: data.navigateTo,
-      type: data.type,
-      user: user,
-    });
-    await this.notificationRepository.save(notification);
+      const notification = manager.getRepository(Notification).create({
+        title: data.title,
+        body: data.body,
+        navigateTo: data.navigateTo,
+        type: data.type,
+        user: user,
+      });
+      await manager.getRepository(Notification).save(notification);
 
-    this.eventEmitter.emit('notification.send', {
-      userId: data.userId,
-      title: data.title,
-      body: data.body,
-      navigateTo: data.navigateTo,
-      type: data.type,
-    } as SendNotification);
+      this.eventEmitter.emit('notification.send', {
+        userId: data.userId,
+        title: data.title,
+        body: data.body,
+        navigateTo: data.navigateTo,
+        type: data.type,
+      } as SendNotification);
+    });
   }
 
   async sendNotificationToAdmins(payload: SendNotification) {

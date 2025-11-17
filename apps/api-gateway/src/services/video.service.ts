@@ -106,7 +106,7 @@ export class VideoService {
     videoFile: Express.Multer.File,
   ): Promise<CustomApiResponse<void>> {
     return await this.datasource.transaction(async (manager) => {
-      const session = await this.sessionRepository.findOne({
+      const session = await manager.getRepository(Session).findOne({
         where: { id: sessionId },
         relations: ['course'],
         withDeleted: false,

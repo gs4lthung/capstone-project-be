@@ -68,7 +68,7 @@ export class LessonService extends BaseTypeOrmService<Lesson> {
     data: CreateLessonRequestDto,
   ): Promise<CustomApiResponse<void>> {
     return await this.datasource.transaction(async (manager) => {
-      const subject = await this.subjectRepository.findOne({
+      const subject = await manager.getRepository(Subject).findOne({
         where: { id: subjectId },
         withDeleted: false,
       });
@@ -76,7 +76,7 @@ export class LessonService extends BaseTypeOrmService<Lesson> {
       if (subject.createdBy.id !== this.request.user.id)
         throw new ForbiddenException('Không có quyền truy cập khóa học này');
 
-      const newLesson = this.lessonRepository.create({
+      const newLesson = manager.getRepository(Lesson).create({
         ...data,
         lessonNumber: subject.lessons ? subject.lessons.length + 1 : 1,
         subject: subject as Subject,
@@ -95,7 +95,7 @@ export class LessonService extends BaseTypeOrmService<Lesson> {
     data: UpdateLessonDto,
   ): Promise<CustomApiResponse<void>> {
     return await this.datasource.transaction(async (manager) => {
-      const lesson = await this.lessonRepository.findOne({
+      const lesson = await manager.getRepository(Lesson).findOne({
         where: { id: id },
         withDeleted: false,
         relations: ['subject', 'subject.createdBy'],
@@ -114,30 +114,40 @@ export class LessonService extends BaseTypeOrmService<Lesson> {
   }
 
   async delete(id: number): Promise<CustomApiResponse<void>> {
-    const lesson = await this.lessonRepository.findOne({
-      where: { id: id },
-      withDeleted: false,
-      relations: ['subject', 'subject.createdBy'],
-    });
-    if (!lesson) throw new BadRequestException('Không tìm thấy bài học');
-    if (lesson.subject.createdBy.id !== this.request.user.id)
-      throw new ForbiddenException('Không có quyền truy cập bài học này');
-    await this.lessonRepository.softDelete(lesson.id);
+    return await this.datasource.transaction(async (manager) => {
+      const lesson = await manager.getRepository(Lesson).findOne({
+        where: { id: id },
+        withDeleted: false,
+        relations: ['subject', 'subject.createdBy'],
+      });
+      if (!lesson) throw new BadRequestException('Không tìm thấy bài học');
+      if (lesson.subject.createdBy.id !== this.request.user.id)
+        throw new ForbiddenException('Không có quyền truy cập bài học này');
+      await this.lessonRepository.softDelete(lesson.id);
 
-    return new CustomApiResponse<void>(HttpStatus.OK, 'LESSON.DELETE_SUCCESS');
+      return new CustomApiResponse<void>(
+        HttpStatus.OK,
+        'LESSON.DELETE_SUCCESS',
+      );
+    });
   }
 
   async restore(id: number): Promise<CustomApiResponse<void>> {
-    const lesson = await this.lessonRepository.findOne({
-      where: { id: id },
-      relations: ['subject', 'subject.createdBy'],
-      withDeleted: true,
-    });
-    if (!lesson) throw new BadRequestException('Không tìm thấy bài học');
-    if (lesson.subject.createdBy.id !== this.request.user.id)
-      throw new ForbiddenException('Không có quyền truy cập bài học này');
-    await this.lessonRepository.restore(lesson.id);
+    return await this.datasource.transaction(async (manager) => {
+      const lesson = await manager.getRepository(Lesson).findOne({
+        where: { id: id },
+        relations: ['subject', 'subject.createdBy'],
+        withDeleted: true,
+      });
+      if (!lesson) throw new BadRequestException('Không tìm thấy bài học');
+      if (lesson.subject.createdBy.id !== this.request.user.id)
+        throw new ForbiddenException('Không có quyền truy cập bài học này');
+      await this.lessonRepository.restore(lesson.id);
 
-    return new CustomApiResponse<void>(HttpStatus.OK, 'LESSON.RESTORE_SUCCESS');
+      return new CustomApiResponse<void>(
+        HttpStatus.OK,
+        'LESSON.RESTORE_SUCCESS',
+      );
+    });
   }
 }

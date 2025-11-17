@@ -65,7 +65,7 @@ export class SubjectService extends BaseTypeOrmService<Subject> {
         });
       }
 
-      const newSubject = this.subjectRepository.create({
+      const newSubject = manager.getRepository(Subject).create({
         ...data,
         createdBy: this.request.user as User,
         status: SubjectStatus.DRAFT,
@@ -87,7 +87,7 @@ export class SubjectService extends BaseTypeOrmService<Subject> {
   ): Promise<CustomApiResponse<void>> {
     console.log('Update subject called with id:', id, 'and data:', data);
     return await this.datasource.transaction(async (manager) => {
-      const subject = await this.subjectRepository.findOne({
+      const subject = await manager.getRepository(Subject).findOne({
         where: { id: id },
         withDeleted: false,
         relations: ['createdBy'],
@@ -121,7 +121,7 @@ export class SubjectService extends BaseTypeOrmService<Subject> {
 
   async delete(id: number): Promise<CustomApiResponse<void>> {
     return await this.datasource.transaction(async (manager) => {
-      const subject = await this.subjectRepository.findOne({
+      const subject = await manager.getRepository(Subject).findOne({
         where: { id: id },
         relations: ['createdBy'],
         withDeleted: false,
@@ -141,7 +141,7 @@ export class SubjectService extends BaseTypeOrmService<Subject> {
 
   async restore(id: number): Promise<CustomApiResponse<void>> {
     return await this.datasource.transaction(async (manager) => {
-      const subject = await this.subjectRepository.findOne({
+      const subject = await manager.getRepository(Subject).findOne({
         where: { id: id },
         withDeleted: true,
       });

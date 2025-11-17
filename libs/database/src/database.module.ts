@@ -107,7 +107,7 @@ import { Court } from './entities/court.entity';
         logging: false,
         synchronize: configService.get('node_env') === 'dev',
         ssl:
-          configService.get('node_env') !== 'dev'
+          configService.get('node_env') === 'dev'
             ? { rejectUnauthorized: false }
             : false,
         retryAttempts: 2,

@@ -70,10 +70,10 @@ export class WalletService extends BaseTypeOrmService<Wallet> {
 
   async create(data: CreateWalletDto): Promise<CustomApiResponse<void>> {
     return await this.datasource.transaction(async (manager) => {
-      const bank = await this.bankRepository.findOne({
+      const bank = await manager.getRepository(Bank).findOne({
         where: { id: data.bankId },
       });
-      const newWallet = this.walletRepository.create({
+      const newWallet = manager.getRepository(Wallet).create({
         user: { id: this.request.user.id as User['id'] },
         bank: bank,
         bankAccountNumber: data.bankAccountNumber,
@@ -92,7 +92,7 @@ export class WalletService extends BaseTypeOrmService<Wallet> {
     data: UpdateWalletDto,
   ): Promise<CustomApiResponse<void>> {
     return await this.datasource.transaction(async (manager) => {
-      const wallet = await this.walletRepository.findOne({
+      const wallet = await manager.getRepository(Wallet).findOne({
         where: { id: id },
         withDeleted: false,
       });
@@ -108,7 +108,7 @@ export class WalletService extends BaseTypeOrmService<Wallet> {
 
   async handleWalletTopUp(userId: User['id'], amount: number): Promise<void> {
     return await this.datasource.transaction(async (manager) => {
-      const wallet = await this.walletRepository.findOne({
+      const wallet = await manager.getRepository(Wallet).findOne({
         where: { user: { id: userId } },
         withDeleted: false,
       });
@@ -123,7 +123,7 @@ export class WalletService extends BaseTypeOrmService<Wallet> {
       wallet.totalIncome = newTotal;
       await manager.getRepository(Wallet).save(wallet);
 
-      const newTransaction = this.walletTransactionRepository.create({
+      const newTransaction = manager.getRepository(WalletTransaction).create({
         wallet: wallet,
         type: WalletTransactionType.CREDIT,
         amount: amount,

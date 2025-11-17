@@ -41,13 +41,6 @@ export class CoachService extends BaseTypeOrmService<Coach> {
     @Inject(REQUEST) private readonly request: CustomApiRequest,
     @InjectRepository(Coach)
     private readonly coachRepository: Repository<Coach>,
-    @InjectRepository(User) private readonly userRepository: Repository<User>,
-    @InjectRepository(Credential)
-    private readonly credentialRepository: Repository<Credential>,
-    @InjectRepository(Role)
-    private readonly roleRepository: Repository<Role>,
-    @InjectRepository(Feedback)
-    private readonly feedbackRepository: Repository<Feedback>,
     private readonly configService: ConfigService,
     private readonly jwtService: JwtService,
     private readonly datasource: DataSource,
@@ -77,33 +70,35 @@ export class CoachService extends BaseTypeOrmService<Coach> {
   async getOverallRating(
     id: number,
   ): Promise<CustomApiResponse<{ overall: number; total: number }>> {
-    const feedbacks = await this.feedbackRepository.find({
-      where: {
-        receivedBy: { id: id },
-      },
-    });
-    if (feedbacks.length === 0)
+    return await this.datasource.transaction(async (manager) => {
+      const feedbacks = await manager.getRepository(Feedback).find({
+        where: {
+          receivedBy: { id: id },
+        },
+      });
+      if (feedbacks.length === 0)
+        return new CustomApiResponse<{ overall: number; total: number }>(
+          HttpStatus.OK,
+          'No feedbacks found',
+          {
+            overall: 0,
+            total: 0,
+          },
+        );
+      const totalRating = feedbacks.reduce(
+        (acc, feedback) => acc + feedback.rating,
+        0,
+      );
+      const overallRating = totalRating / feedbacks.length;
       return new CustomApiResponse<{ overall: number; total: number }>(
         HttpStatus.OK,
-        'No feedbacks found',
+        'Success',
         {
-          overall: 0,
-          total: 0,
+          overall: overallRating,
+          total: feedbacks.length,
         },
       );
-    const totalRating = feedbacks.reduce(
-      (acc, feedback) => acc + feedback.rating,
-      0,
-    );
-    const overallRating = totalRating / feedbacks.length;
-    return new CustomApiResponse<{ overall: number; total: number }>(
-      HttpStatus.OK,
-      'Success',
-      {
-        overall: overallRating,
-        total: feedbacks.length,
-      },
-    );
+    });
   }
 
   async registerCoach(
@@ -112,7 +107,7 @@ export class CoachService extends BaseTypeOrmService<Coach> {
     return await this.datasource.transaction(async (manager) => {
       let existingUser: User;
       if (data.email) {
-        existingUser = await this.userRepository.findOne({
+        existingUser = await manager.getRepository(User).findOne({
           where: { email: data.email },
         });
         if (existingUser) {
@@ -121,7 +116,7 @@ export class CoachService extends BaseTypeOrmService<Coach> {
       }
 
       if (data.phoneNumber) {
-        existingUser = await this.userRepository.findOne({
+        existingUser = await manager.getRepository(User).findOne({
           where: { phoneNumber: data.phoneNumber },
         });
         if (existingUser) {
@@ -134,14 +129,14 @@ export class CoachService extends BaseTypeOrmService<Coach> {
         this.configService.get('password_salt_rounds'),
       );
 
-      const coachRole = await this.roleRepository.findOne({
+      const coachRole = await manager.getRepository(Role).findOne({
         where: { name: UserRole.COACH },
       });
       if (!coachRole) {
         throw new BadRequestException('Coach role not found');
       }
 
-      const newUser = this.userRepository.create({
+      const newUser = manager.getRepository(User).create({
         fullName: data.fullName,
         email: data.email ? data.email : null,
         phoneNumber: data.phoneNumber ? data.phoneNumber : null,
@@ -187,7 +182,7 @@ export class CoachService extends BaseTypeOrmService<Coach> {
 
   async update(data: UpdateCoachProfileDto): Promise<CustomApiResponse<void>> {
     return await this.datasource.transaction(async (manager) => {
-      const coach = await this.coachRepository.findOne({
+      const coach = await manager.getRepository(Coach).findOne({
         where: {
           user: { id: this.request.user.id as User['id'] },
         },
@@ -203,14 +198,16 @@ export class CoachService extends BaseTypeOrmService<Coach> {
   }
 
   async coachGetCredentials(): Promise<Credential[]> {
-    const coach = await this.coachRepository.findOne({
-      where: {
-        user: { id: this.request.user.id as User['id'] },
-      },
-      relations: ['credentials'],
+    return await this.datasource.transaction(async (manager) => {
+      const coach = await manager.getRepository(Coach).findOne({
+        where: {
+          user: { id: this.request.user.id as User['id'] },
+        },
+        relations: ['credentials'],
+      });
+      if (!coach) throw new NotFoundException('Coach not found');
+      return coach.credentials;
     });
-    if (!coach) throw new NotFoundException('Coach not found');
-    return coach.credentials;
   }
 
   async uploadCredential(
@@ -233,7 +230,7 @@ export class CoachService extends BaseTypeOrmService<Coach> {
         });
         data.publicUrl = credentialFilePath;
       }
-      const newCredential = this.credentialRepository.create({
+      const newCredential = manager.getRepository(Credential).create({
         ...data,
         coach: coach,
       });
@@ -251,7 +248,7 @@ export class CoachService extends BaseTypeOrmService<Coach> {
     file?: Express.Multer.File,
   ): Promise<CustomApiResponse<void>> {
     return await this.datasource.transaction(async (manager) => {
-      const credential = await this.credentialRepository.findOne({
+      const credential = await manager.getRepository(Credential).findOne({
         where: { id: id },
         relations: ['coach', 'coach.user'],
       });
@@ -277,7 +274,7 @@ export class CoachService extends BaseTypeOrmService<Coach> {
 
   async deleteCredential(id: number): Promise<CustomApiResponse<void>> {
     return await this.datasource.transaction(async (manager) => {
-      const credential = await this.credentialRepository.findOne({
+      const credential = await manager.getRepository(Credential).findOne({
         where: { id: id },
         relations: ['coach', 'coach.user'],
       });
@@ -295,7 +292,7 @@ export class CoachService extends BaseTypeOrmService<Coach> {
 
   async restoreCredential(id: number): Promise<CustomApiResponse<void>> {
     return await this.datasource.transaction(async (manager) => {
-      const credential = await this.credentialRepository.findOne({
+      const credential = await manager.getRepository(Credential).findOne({
         where: { id: id },
         withDeleted: true,
         relations: ['coach', 'coach.user'],
@@ -313,33 +310,39 @@ export class CoachService extends BaseTypeOrmService<Coach> {
   }
 
   async verifyCoach(coachId: number): Promise<void> {
-    const coach = await this.coachRepository.findOne({
-      where: { id: coachId },
-      relations: ['user'],
-    });
-    if (!coach) throw new NotFoundException('Coach not found');
+    return await this.datasource.transaction(async (manager) => {
+      const coach = await this.coachRepository.findOne({
+        where: { id: coachId },
+        relations: ['user'],
+      });
+      if (!coach) throw new NotFoundException('Coach not found');
 
-    await this.coachRepository.update(coachId, {
-      verificationStatus: CoachVerificationStatus.VERIFIED,
-    });
+      await this.coachRepository.update(coachId, {
+        verificationStatus: CoachVerificationStatus.VERIFIED,
+      });
 
-    if (!coach.user.isActive) {
-      await this.userRepository.update(coach.user.id, { isActive: true });
-    }
+      if (!coach.user.isActive) {
+        await manager
+          .getRepository(User)
+          .update(coach.user.id, { isActive: true });
+      }
+    });
   }
 
   async rejectCoach(coachId: number, reason?: string): Promise<void> {
-    const coach = await this.coachRepository.findOne({
-      where: { id: coachId },
-    });
-    if (!coach) throw new NotFoundException('Coach not found');
+    return await this.datasource.transaction(async (manager) => {
+      const coach = await manager.getRepository(Coach).findOne({
+        where: { id: coachId },
+      });
+      if (!coach) throw new NotFoundException('Coach not found');
 
-    await this.coachRepository.update(coachId, {
-      verificationStatus: CoachVerificationStatus.REJECTED,
-      verificationReason: reason,
-    });
+      await manager.getRepository(Coach).update(coachId, {
+        verificationStatus: CoachVerificationStatus.REJECTED,
+        verificationReason: reason,
+      });
 
-    return;
+      return;
+    });
   }
 
   private async sendVerificationEmail(
