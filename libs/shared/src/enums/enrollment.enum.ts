@@ -5,4 +5,5 @@ export enum EnrollmentStatus {
   REFUNDED = 'REFUNDED',
   UNPAID = 'UNPAID',
   CANCELLED = 'CANCELLED',
+  DONE = 'DONE',
 }
