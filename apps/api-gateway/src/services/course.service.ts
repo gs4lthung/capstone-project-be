@@ -1,4 +1,5 @@
 import { Course } from '@app/database/entities/course.entity';
+import { BunnyService } from '@app/bunny';
 import { BaseTypeOrmService } from '@app/shared/helpers/typeorm.helper';
 import { FindOptions } from '@app/shared/interfaces/find-options.interface';
 import {
@@ -78,6 +79,7 @@ export class CourseService extends BaseTypeOrmService<Course> {
     private readonly scheduleService: ScheduleService,
     @InjectRepository(Court)
     private readonly courtRepository: Repository<Court>,
+    private readonly bunnyService: BunnyService,
   ) {
     super(courseRepository);
   }
@@ -229,6 +231,7 @@ export class CourseService extends BaseTypeOrmService<Course> {
   async createCourseCreationRequest(
     subjectId: number,
     data: CreateCourseRequestDto,
+    file?: Express.Multer.File,
   ): Promise<CustomApiResponse<void>> {
     return await this.datasource.transaction(async (manager) => {
       const court = await manager.getRepository(Court).findOne({
@@ -318,6 +321,18 @@ export class CourseService extends BaseTypeOrmService<Course> {
         }
       }
 
+      let publicUrl: string | undefined;
+      if (file?.path) {
+        publicUrl = await this.bunnyService.uploadToStorage({
+          id:
+            typeof this.request.user?.id === 'number'
+              ? this.request.user.id
+              : Number(this.request.user?.id ?? Date.now()),
+          type: 'icon',
+          filePath: file.path,
+        });
+      }
+
       const newCourse = this.courseRepository.create({
         ...data,
         court: data.court ? ({ id: data.court } as Court) : undefined,
@@ -325,6 +340,7 @@ export class CourseService extends BaseTypeOrmService<Course> {
           ...s,
           totalSessions: lessonCount / scheduleLength,
         })) as Schedule[],
+        publicUrl,
         name:
           subject.name +
           ` -  Khóa ${subject.courses ? subject.courses.length + 1 : 1}`,
@@ -372,6 +388,7 @@ export class CourseService extends BaseTypeOrmService<Course> {
   async update(
     id: number,
     data: UpdateCourseDto,
+    file?: Express.Multer.File,
   ): Promise<CustomApiResponse<void>> {
     return await this.datasource.transaction(async (manager) => {
       const course = await manager.getRepository(Course).findOne({
@@ -387,10 +404,23 @@ export class CourseService extends BaseTypeOrmService<Course> {
           'Khoá học đã được duyệt, không thể cập nhật',
         );
 
-      await manager.getRepository(Course).update(course.id, {
-        ...data,
+      const updatePayload: Partial<Course> = {
+        ...(data as unknown as Partial<Course>),
         court: data.court ? ({ id: data.court } as Court) : course.court,
-      });
+      };
+
+      if (file?.path) {
+        updatePayload.publicUrl = await this.bunnyService.uploadToStorage({
+          id:
+            typeof this.request.user?.id === 'number'
+              ? this.request.user.id
+              : Number(this.request.user?.id ?? Date.now()),
+          type: 'icon',
+          filePath: file.path,
+        });
+      }
+
+      await manager.getRepository(Course).update(course.id, updatePayload);
 
       await this.notificationService.sendNotificationToAdmins({
         title: ' Cập nhật yêu cầu tạo khóa học',
