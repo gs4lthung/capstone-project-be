@@ -60,6 +60,22 @@ export class CourseController {
     return courses;
   }
 
+  @Get('coach')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    tags: ['Courses'],
+    summary: 'Get courses for coach',
+    description:
+      'Retrieve a list of courses created by the authenticated coach',
+  })
+  @UseGuards(AuthGuard)
+  async getCoursesForCoach(
+    @Query('page') page: number,
+    @Query('size') size: number,
+  ): Promise<PaginateObject<Course>> {
+    return await this.courseService.findCoachCourses(page, size);
+  }
+
   @Get('learner')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
