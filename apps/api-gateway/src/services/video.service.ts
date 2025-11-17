@@ -7,12 +7,9 @@ import {
   Scope,
 } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
-import * as fs from 'fs';
 
-// Define upload root directory (must match actual Multer storage configuration)
 import { CreateVideoDto } from '@app/shared/videos/video.dto';
 import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
-import { AwsService } from '@app/aws';
 import { FfmpegService } from '@app/ffmpeg';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Lesson } from '@app/database/entities/lesson.entity';
@@ -23,6 +20,9 @@ import { User } from '@app/database/entities/user.entity';
 import { Session } from '@app/database/entities/session.entity';
 import { CourseStatus } from '@app/shared/enums/course.enum';
 import { SessionStatus } from '@app/shared/enums/session.enum';
+import { BunnyService } from '@app/bunny';
+import { CryptoUtils } from '@app/shared/utils/crypto.util';
+import { FileUtils } from '@app/shared/utils/file.util';
 @Injectable({ scope: Scope.REQUEST })
 export class VideoService {
   constructor(
@@ -33,8 +33,8 @@ export class VideoService {
     private readonly videoRepository: Repository<Video>,
     @InjectRepository(Session)
     private readonly sessionRepository: Repository<Session>,
-    private readonly awsService: AwsService,
     private readonly ffmpegService: FfmpegService,
+    private readonly bunnyService: BunnyService,
     private readonly datasource: DataSource,
   ) {}
 
@@ -78,16 +78,15 @@ export class VideoService {
       });
       if (!lesson) throw new BadRequestException('Không tìm thấy bài học');
 
-      const videoPublicUrl = await this.awsService.uploadFileToPublicBucket({
-        file: {
-          buffer: fs.readFileSync(videoFile.path),
-          ...videoFile,
-        },
+      const videoPublicUrl = await this.bunnyService.uploadToStorage({
+        id: CryptoUtils.generateRandomNumber(1000000, 999999),
+        filePath: videoFile.path,
+        type: 'video',
       });
 
       lesson.videos.push({
         ...data,
-        publicUrl: videoPublicUrl.url,
+        publicUrl: videoPublicUrl,
         status: CoachVideoStatus.READY,
         uploadedBy: this.request.user as User,
       } as Video);
@@ -124,16 +123,27 @@ export class VideoService {
         );
       }
 
-      const videoPublicUrl = await this.awsService.uploadFileToPublicBucket({
-        file: {
-          buffer: fs.readFileSync(videoFile.path),
-          ...videoFile,
-        },
+      const thumbnail = await this.ffmpegService.createVideoThumbnailVer2(
+        videoFile.path,
+        FileUtils.excludeFileFromPath(videoFile.path),
+      );
+
+      const uploadedThumbnail = await this.bunnyService.uploadToStorage({
+        id: CryptoUtils.generateRandomNumber(1000000, 999999),
+        filePath: thumbnail,
+        type: 'video_thumbnail',
+      });
+
+      const videoPublicUrl = await this.bunnyService.uploadToStorage({
+        id: CryptoUtils.generateRandomNumber(1000000, 999999),
+        filePath: videoFile.path,
+        type: 'video',
       });
 
       session.videos.push({
         ...data,
-        publicUrl: videoPublicUrl.url,
+        publicUrl: videoPublicUrl,
+        thumbnailUrl: uploadedThumbnail,
         status: CoachVideoStatus.READY,
         uploadedBy: this.request.user as User,
       } as Video);

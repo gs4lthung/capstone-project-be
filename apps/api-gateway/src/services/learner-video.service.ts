@@ -2,18 +2,17 @@ import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { LearnerVideo } from '@app/database/entities/learner-video.entity';
-import { AwsService } from '@app/aws';
 import { FfmpegService } from '@app/ffmpeg';
 import { UploadLearnerVideoDto } from '@app/shared/dtos/files/file.dto';
 import { User } from '@app/database/entities/user.entity';
-import * as path from 'path';
-import * as fs from 'fs';
 
 import { AiVideoComparisonResult } from '@app/database/entities/ai-video-comparison-result.entity';
 import { Video } from '@app/database/entities/video.entity';
 import { buildDetailsArrayFromComparison } from '@app/shared/helpers/buildDetailArray.helper';
 import { LearnerProgress } from '@app/database/entities/learner-progress.entity';
 import { LearnerVideoStatus } from '@app/shared/enums/learner.enum';
+import { BunnyService } from '@app/bunny';
+import { FileUtils } from '@app/shared/utils/file.util';
 
 @Injectable()
 export class LearnerVideoService {
@@ -26,8 +25,8 @@ export class LearnerVideoService {
     private readonly aiVideoComparisonResultRepo: Repository<AiVideoComparisonResult>,
     @InjectRepository(Video)
     private readonly videoRepo: Repository<Video>,
-    private readonly awsService: AwsService,
     private readonly ffmpegService: FfmpegService,
+    private readonly bunnyService: BunnyService,
   ) {}
 
   async upload(
@@ -37,17 +36,16 @@ export class LearnerVideoService {
   ): Promise<LearnerVideo> {
     if (!videoFile) throw new BadRequestException('No video file uploaded');
 
-    const videoPublicUrl = await this.awsService.uploadFileToPublicBucket({
-      file: {
-        buffer: fs.readFileSync(videoFile.path),
-        ...videoFile,
-      },
+    const videoPublicUrl = await this.bunnyService.uploadToStorage({
+      id: Date.now(),
+      type: 'video',
+      filePath: videoFile.path,
     });
 
     console.log(data);
 
     const learnerVideo = this.learnerVideoRepo.create({
-      publicUrl: videoPublicUrl.url,
+      publicUrl: videoPublicUrl,
       duration: data.duration,
       tags: data.tags,
       status: LearnerVideoStatus.READY,
@@ -223,25 +221,27 @@ export class LearnerVideoService {
       coachVideo.publicUrl,
     );
 
-    console.log(overlayFilePath);
+    const thumbnail = await this.ffmpegService.createVideoThumbnailVer2(
+      overlayFilePath,
+      FileUtils.excludeFileFromPath(overlayFilePath),
+    );
 
-    const uploadedResult = await this.awsService.uploadFileToPublicBucket({
-      file: {
-        buffer: fs.readFileSync(overlayFilePath),
-        path: overlayFilePath,
-        originalname: path.basename(overlayFilePath),
-        mimetype: 'video/mp4',
-        size: fs.statSync(overlayFilePath).size,
-        fieldname: 'video_overlay',
-        destination: '',
-        filename: '',
-        encoding: '7bit',
-      } as Express.Multer.File,
+    const uploadedResult = await this.bunnyService.uploadToStorage({
+      id: learnerVideo.id,
+      type: 'video',
+      filePath: overlayFilePath,
     });
 
-    learnerVideo.overlayVideoUrl = uploadedResult.url;
+    const uploadedThumbnail = await this.bunnyService.uploadToStorage({
+      id: learnerVideo.id,
+      type: 'video_thumbnail',
+      filePath: thumbnail,
+    });
+
+    learnerVideo.overlayVideoUrl = uploadedResult;
+    learnerVideo.overlayThumbnailUrl = uploadedThumbnail;
     await this.learnerVideoRepo.save(learnerVideo);
 
-    return uploadedResult.url;
+    return uploadedResult;
   }
 }

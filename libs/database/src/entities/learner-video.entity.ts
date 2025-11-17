@@ -51,6 +51,11 @@ export class LearnerVideo {
   @IsUrl()
   overlayVideoUrl?: string;
 
+  @Column({ name: 'overlay_thumbnail_url', type: 'text', nullable: true })
+  @IsOptional()
+  @IsUrl()
+  overlayThumbnailUrl?: string;
+
   @Column({
     type: 'enum',
     enum: LearnerVideoStatus,

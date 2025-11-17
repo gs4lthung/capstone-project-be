@@ -89,6 +89,12 @@
       ],
       "@app/agora/*": [
         "libs/agora/src/*"
+      ],
+      "@app/bunny": [
+        "libs/bunny/src"
+      ],
+      "@app/bunny/*": [
+        "libs/bunny/src/*"
       ]
     }
   }

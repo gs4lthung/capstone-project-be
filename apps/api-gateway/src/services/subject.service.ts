@@ -1,4 +1,4 @@
-import { AwsService } from '@app/aws';
+import { BunnyService } from '@app/bunny';
 import { Subject } from '@app/database/entities/subject.entity';
 import { User } from '@app/database/entities/user.entity';
 import { CustomApiRequest } from '@app/shared/customs/custom-api-request';
@@ -29,7 +29,7 @@ export class SubjectService extends BaseTypeOrmService<Subject> {
     @Inject(REQUEST) private readonly request: CustomApiRequest,
     @InjectRepository(Subject)
     private readonly subjectRepository: Repository<Subject>,
-    private readonly awsService: AwsService,
+    private readonly bunnyService: BunnyService,
     private readonly datasource: DataSource,
   ) {
     super(subjectRepository);
@@ -58,15 +58,13 @@ export class SubjectService extends BaseTypeOrmService<Subject> {
     return await this.datasource.transaction(async (manager) => {
       let publicUrl: string | undefined = undefined;
       if (file) {
-        publicUrl = await this.awsService
-          .uploadFileToPublicBucket({
-            file: {
-              buffer: file.buffer,
-              ...file,
-            },
-          })
-          .then((res) => res.url);
+        publicUrl = await this.bunnyService.uploadToStorage({
+          filePath: file.path,
+          type: 'icon',
+          id: Date.now(),
+        });
       }
+
       const newSubject = this.subjectRepository.create({
         ...data,
         createdBy: this.request.user as User,

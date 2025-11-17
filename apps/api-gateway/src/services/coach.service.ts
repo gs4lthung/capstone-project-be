@@ -30,16 +30,11 @@ import { REQUEST } from '@nestjs/core';
 import { CustomApiRequest } from '@app/shared/customs/custom-api-request';
 import { Coach } from '@app/database/entities/coach.entity';
 import { PaginateObject } from '@app/shared/dtos/paginate.dto';
-import { WalletTransaction } from '@app/database/entities/wallet-transaction.entity';
-import { Enrollment } from '@app/database/entities/enrollment.entity';
-import { Session } from '@app/database/entities/session.entity';
-import { Course } from '@app/database/entities/course.entity';
 import { JwtPayloadDto } from '@app/shared/dtos/auth/jwt.payload.dto';
 import { MailSendDto } from '@app/shared/dtos/mails/mail-send.dto';
 import { MailService } from './mail.service';
 import { TwilioService } from '@app/twilio';
-import { AwsService } from '@app/aws';
-import * as fs from 'fs';
+import { BunnyService } from '@app/bunny';
 @Injectable({ scope: Scope.REQUEST })
 export class CoachService extends BaseTypeOrmService<Coach> {
   constructor(
@@ -53,20 +48,12 @@ export class CoachService extends BaseTypeOrmService<Coach> {
     private readonly roleRepository: Repository<Role>,
     @InjectRepository(Feedback)
     private readonly feedbackRepository: Repository<Feedback>,
-    @InjectRepository(WalletTransaction)
-    private readonly walletTransactionRepository: Repository<WalletTransaction>,
     private readonly configService: ConfigService,
-    @InjectRepository(Enrollment)
-    private readonly enrollmentRepository: Repository<Enrollment>,
-    @InjectRepository(Session)
-    private readonly sessionRepository: Repository<Session>,
-    @InjectRepository(Course)
-    private readonly courseRepository: Repository<Course>,
-    private readonly awsService: AwsService,
     private readonly jwtService: JwtService,
     private readonly datasource: DataSource,
     private readonly mailService: MailService,
     private readonly twilioService: TwilioService,
+    private readonly bunnyService: BunnyService,
   ) {
     super(coachRepository);
   }
@@ -239,14 +226,12 @@ export class CoachService extends BaseTypeOrmService<Coach> {
       });
       if (!coach) throw new NotFoundException('Coach not found');
       if (file) {
-        const credentialFilePath =
-          await this.awsService.uploadFileToPublicBucket({
-            file: {
-              buffer: fs.readFileSync(file.path),
-              ...file,
-            },
-          });
-        data.publicUrl = credentialFilePath.url;
+        const credentialFilePath = await this.bunnyService.uploadToStorage({
+          id: Date.now(),
+          type: 'credential_image',
+          filePath: file.path,
+        });
+        data.publicUrl = credentialFilePath;
       }
       const newCredential = this.credentialRepository.create({
         ...data,
@@ -275,14 +260,12 @@ export class CoachService extends BaseTypeOrmService<Coach> {
         throw new BadRequestException('You are not authorized to update this');
       }
       if (file) {
-        const credentialFilePath =
-          await this.awsService.uploadFileToPublicBucket({
-            file: {
-              buffer: fs.readFileSync(file.path),
-              ...file,
-            },
-          });
-        data.publicUrl = credentialFilePath.url;
+        const credentialFilePath = await this.bunnyService.uploadToStorage({
+          id: Date.now(),
+          type: 'credential_image',
+          filePath: file.path,
+        });
+        data.publicUrl = credentialFilePath;
       }
       await manager.getRepository(Credential).update(credential.id, data);
       return new CustomApiResponse<void>(
