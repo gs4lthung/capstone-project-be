@@ -119,6 +119,9 @@ export class User {
   @Index()
   isActive: boolean;
 
+  @Column({ name: 'last_login_at', type: 'timestamp', nullable: true })
+  lastLoginAt?: Date;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 

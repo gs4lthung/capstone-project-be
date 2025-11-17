@@ -37,6 +37,7 @@ import { UserRole } from '@app/shared/enums/user.enum';
 import { NotificationService } from './notification.service';
 import { NotificationType } from '@app/shared/enums/notification.enum';
 import { Configuration } from '@app/database/entities/configuration.entity';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable({ scope: Scope.REQUEST })
 export class SessionService extends BaseTypeOrmService<Session> {
@@ -62,6 +63,7 @@ export class SessionService extends BaseTypeOrmService<Session> {
     private readonly configurationService: ConfigurationService,
     private readonly datasource: DataSource,
     private readonly notificationService: NotificationService,
+    private readonly eventEmitter: EventEmitter2,
   ) {
     super(sessionRepository);
   }
@@ -264,6 +266,17 @@ export class SessionService extends BaseTypeOrmService<Session> {
           status: attendanceDto.status,
         });
         await manager.getRepository(Attendance).save(attendance);
+
+        // ═══════════════════════════════════════════════════════════════════
+        // EMIT EVENT: session.attended
+        // ═══════════════════════════════════════════════════════════════════
+        // Emit event để Achievement Tracking Service track attendance
+        this.eventEmitter.emit('session.attended', {
+          userId: attendanceDto.userId,
+          sessionId: session.id,
+          courseId: session.course.id,
+          attendanceStatus: attendanceDto.status,
+        });
       }
 
       // Get configuration for completion deadline (hours after session ends)

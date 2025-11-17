@@ -146,11 +146,16 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
     if (icon) {
       try {
         console.log('🔷 [AWS] Starting upload to S3...');
+        console.log('🔷 [AWS] File info:', {
+          originalname: icon.originalname,
+          size: icon.size,
+          hasPath: !!icon.path,
+          hasBuffer: !!icon.buffer,
+          bufferSize: icon.buffer?.length || 0
+        });
+        
         const uploadPromise = this.awsService.uploadFileToPublicBucket({
-          file: {
-            buffer: icon.buffer,
-            ...icon,
-          },
+          file: icon,
         });
 
         // Timeout sau 10 giây
@@ -213,11 +218,16 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
     if (icon) {
       try {
         console.log('🔷 [AWS] Starting upload to S3 (Streak)...');
+        console.log('🔷 [AWS] File info:', {
+          originalname: icon.originalname,
+          size: icon.size,
+          hasPath: !!icon.path,
+          hasBuffer: !!icon.buffer,
+          bufferSize: icon.buffer?.length || 0
+        });
+        
         const uploadPromise = this.awsService.uploadFileToPublicBucket({
-          file: {
-            buffer: icon.buffer,
-            ...icon,
-          },
+          file: icon,
         });
 
         const timeoutPromise = new Promise<never>((_, reject) => {
@@ -280,11 +290,16 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
     if (icon) {
       try {
         console.log('🔷 [AWS] Starting upload to S3 (Property Check)...');
+        console.log('🔷 [AWS] File info:', {
+          originalname: icon.originalname,
+          size: icon.size,
+          hasPath: !!icon.path,
+          hasBuffer: !!icon.buffer,
+          bufferSize: icon.buffer?.length || 0
+        });
+        
         const uploadPromise = this.awsService.uploadFileToPublicBucket({
-          file: {
-            buffer: icon.buffer,
-            ...icon,
-          },
+          file: icon,
         });
 
         const timeoutPromise = new Promise<never>((_, reject) => {
@@ -442,11 +457,16 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
     if (icon) {
       try {
         console.log('🔷 [AWS] Starting upload to S3 (Update Event Count)...');
+        console.log('🔷 [AWS] File info:', {
+          originalname: icon.originalname,
+          size: icon.size,
+          hasPath: !!icon.path,
+          hasBuffer: !!icon.buffer,
+          bufferSize: icon.buffer?.length || 0
+        });
+        
         const uploadPromise = this.awsService.uploadFileToPublicBucket({
-          file: {
-            buffer: icon.buffer,
-            ...icon,
-          },
+          file: icon,
         });
 
         const timeoutPromise = new Promise<never>((_, reject) => {
@@ -514,11 +534,16 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
     if (icon) {
       try {
         console.log('🔷 [AWS] Starting upload to S3 (Update Streak)...');
+        console.log('🔷 [AWS] File info:', {
+          originalname: icon.originalname,
+          size: icon.size,
+          hasPath: !!icon.path,
+          hasBuffer: !!icon.buffer,
+          bufferSize: icon.buffer?.length || 0
+        });
+        
         const uploadPromise = this.awsService.uploadFileToPublicBucket({
-          file: {
-            buffer: icon.buffer,
-            ...icon,
-          },
+          file: icon,
         });
 
         const timeoutPromise = new Promise<never>((_, reject) => {
@@ -592,11 +617,16 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
         console.log(
           '🔷 [AWS] Starting upload to S3 (Update Property Check)...',
         );
+        console.log('🔷 [AWS] File info:', {
+          originalname: icon.originalname,
+          size: icon.size,
+          hasPath: !!icon.path,
+          hasBuffer: !!icon.buffer,
+          bufferSize: icon.buffer?.length || 0
+        });
+        
         const uploadPromise = this.awsService.uploadFileToPublicBucket({
-          file: {
-            buffer: icon.buffer,
-            ...icon,
-          },
+          file: icon,
         });
 
         const timeoutPromise = new Promise<never>((_, reject) => {

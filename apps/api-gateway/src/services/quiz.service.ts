@@ -29,6 +29,7 @@ import { DataSource, Repository } from 'typeorm';
 import { NotificationService } from './notification.service';
 import { NotificationType } from '@app/shared/enums/notification.enum';
 import { AttendanceStatus } from '@app/shared/enums/attendance.enum';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable({ scope: Scope.REQUEST })
 export class QuizService extends BaseTypeOrmService<Quiz> {
@@ -44,6 +45,7 @@ export class QuizService extends BaseTypeOrmService<Quiz> {
     private readonly sessionRepository: Repository<Session>,
     private readonly notificationService: NotificationService,
     private readonly datasource: DataSource,
+    private readonly eventEmitter: EventEmitter2,
   ) {
     super(quizRepository);
   }
@@ -388,6 +390,19 @@ export class QuizService extends BaseTypeOrmService<Quiz> {
             })),
         );
         await manager.getRepository(LearnerProgress).save(learnerProgress);
+
+        // ═══════════════════════════════════════════════════════════════════
+        // EMIT EVENT: quiz.completed
+        // ═══════════════════════════════════════════════════════════════════
+        // Emit event để Achievement Tracking Service track quiz completion
+        this.eventEmitter.emit('quiz.completed', {
+          userId: (this.request.user as User).id,
+          quizId: quiz.id,
+          sessionId: session.id,
+          courseId: session.course.id,
+          score,
+          avgQuizScore: learnerProgress.avgQuizScore,
+        });
       }
 
       await this.notificationService.sendNotification({
