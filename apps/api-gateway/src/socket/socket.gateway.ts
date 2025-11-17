@@ -35,6 +35,7 @@ export class SocketGateway {
   async handleConnection(client: Socket) {
     try {
       const token = client.handshake.query.accessToken as string;
+      console.log('Token:', token);
       if (!token) {
         client.disconnect();
       }
@@ -46,6 +47,8 @@ export class SocketGateway {
       (client as any).userId = payload.id;
 
       this.onlineUsers.set(payload.id, client.id);
+
+      console.log('User connected:', payload.id);
 
       const unreadNotifications =
         await this.notificationService.getUserUnreadNotifications(payload.id);

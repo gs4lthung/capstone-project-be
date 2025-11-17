@@ -37,6 +37,8 @@ import { UserRole } from '@app/shared/enums/user.enum';
 import { NotificationService } from './notification.service';
 import { NotificationType } from '@app/shared/enums/notification.enum';
 import { Configuration } from '@app/database/entities/configuration.entity';
+import { EnrollmentStatus } from '@app/shared/enums/enrollment.enum';
+import { Enrollment } from '@app/database/entities/enrollment.entity';
 
 @Injectable({ scope: Scope.REQUEST })
 export class SessionService extends BaseTypeOrmService<Session> {
@@ -320,6 +322,8 @@ export class SessionService extends BaseTypeOrmService<Session> {
       }
 
       for (const enrollment of course.enrollments) {
+        enrollment.status = EnrollmentStatus.DONE;
+        await manager.getRepository(Enrollment).save(enrollment);
         await this.notificationService.sendNotification({
           userId: enrollment.user.id,
           title: 'Buổi học đã hoàn thành',

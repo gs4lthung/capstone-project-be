@@ -294,6 +294,45 @@ export class FfmpegService {
     });
   }
 
+  private getVideoMetadata = (filePath: string) =>
+    new Promise<{ width: number; height: number }>((resolve, reject) => {
+      const ffprobe = spawn('ffprobe', [
+        '-v',
+        'error',
+        '-select_streams',
+        'v:0',
+        '-show_entries',
+        'stream=width,height',
+        '-of',
+        'json',
+        filePath,
+      ]);
+
+      let output = '';
+
+      ffprobe.stdout.on('data', (data) => {
+        output += data.toString();
+      });
+
+      ffprobe.on('close', (code) => {
+        if (code === 0) {
+          try {
+            const parsed = JSON.parse(output);
+            const stream = parsed.streams[0];
+            resolve({ width: stream.width, height: stream.height });
+          } catch (err) {
+            reject(new Error(`Failed to parse video metadata: ${err.message}`));
+          }
+        } else {
+          reject(new Error(`FFprobe exited with code ${code}`));
+        }
+      });
+
+      ffprobe.on('error', (err) => {
+        reject(err);
+      });
+    });
+
   async overlayVideoOnVideo(
     backgroundVideoPathOrUrl: string,
     overlayVideoPathOrUrl: string,
@@ -379,6 +418,17 @@ export class FfmpegService {
           return reject(new Error(`Overlay video not found: ${overlayLocal}`));
         }
 
+        // Get video dimensions
+        this.logger.log(`Getting video metadata...`);
+        const bgDimensions = await this.getVideoMetadata(bgLocal);
+        const overlayDimensions = await this.getVideoMetadata(overlayLocal);
+        this.logger.log(
+          `Background dimensions: ${bgDimensions.width}x${bgDimensions.height}`,
+        );
+        this.logger.log(
+          `Overlay dimensions: ${overlayDimensions.width}x${overlayDimensions.height}`,
+        );
+
         const outputDir = 'uploads/videos';
         if (!fs.existsSync(outputDir)) {
           fs.mkdirSync(outputDir, { recursive: true });
@@ -389,8 +439,15 @@ export class FfmpegService {
           `overlay_output_${Date.now()}.mp4`,
         );
 
+        // Use background video dimensions as output dimensions
+        // Scale overlay to match background if different
         const filter =
-          '[0:v]scale=1080x1920:force_original_aspect_ratio=increase,crop=1080:1920[bg];[1:v]scale=1080x1920:force_original_aspect_ratio=increase,crop=1080:1920,format=yuva420p,colorchannelmixer=aa=0.5[transparent_top];[bg][transparent_top]overlay[v]';
+          bgDimensions.width === overlayDimensions.width &&
+          bgDimensions.height === overlayDimensions.height
+            ? // Same dimensions: just apply transparency and overlay
+              `[0:v]format=yuv420p[bg];[1:v]format=yuva420p,colorchannelmixer=aa=0.5[transparent_top];[bg][transparent_top]overlay[v]`
+            : // Different dimensions: scale overlay to match background
+              `[0:v]format=yuv420p[bg];[1:v]scale=${bgDimensions.width}:${bgDimensions.height}:force_original_aspect_ratio=increase,crop=${bgDimensions.width}:${bgDimensions.height},format=yuva420p,colorchannelmixer=aa=0.5[transparent_top];[bg][transparent_top]overlay[v]`;
         const args = [
           '-i',
           bgLocal,
