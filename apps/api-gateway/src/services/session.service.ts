@@ -39,6 +39,7 @@ import { NotificationType } from '@app/shared/enums/notification.enum';
 import { Configuration } from '@app/database/entities/configuration.entity';
 import { EnrollmentStatus } from '@app/shared/enums/enrollment.enum';
 import { Enrollment } from '@app/database/entities/enrollment.entity';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable({ scope: Scope.REQUEST })
 export class SessionService extends BaseTypeOrmService<Session> {
@@ -64,6 +65,7 @@ export class SessionService extends BaseTypeOrmService<Session> {
     private readonly configurationService: ConfigurationService,
     private readonly datasource: DataSource,
     private readonly notificationService: NotificationService,
+    private readonly eventEmitter: EventEmitter2,
   ) {
     super(sessionRepository);
   }
@@ -272,6 +274,13 @@ export class SessionService extends BaseTypeOrmService<Session> {
           status: attendanceDto.status,
         });
         await manager.getRepository(Attendance).save(attendance);
+        
+        // Emit event for achievement tracking
+        this.eventEmitter.emit('session.attended', {
+          userId: attendanceDto.userId,
+          sessionId: session.id,
+          status: attendanceDto.status,
+        });
       }
 
       // Get configuration for completion deadline (hours after session ends)
