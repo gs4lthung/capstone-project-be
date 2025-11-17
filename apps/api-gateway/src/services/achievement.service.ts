@@ -8,6 +8,7 @@ import { CustomRpcException } from '@app/shared/customs/custom-rpc-exception';
 import { ExceptionUtils } from '@app/shared/utils/exception.util';
 import { BaseTypeOrmService } from '@app/shared/helpers/typeorm.helper';
 import { FindOptions } from '@app/shared/interfaces/find-options.interface';
+import { BunnyService } from '@app/bunny';
 
 // Import Entities
 import { Achievement } from '@app/database/entities/achievement.entity';
@@ -28,7 +29,6 @@ import {
   UpdatePropertyCheckAchievementDto,
 } from '@app/shared/dtos/achievements/achievement.dto';
 import { PaginateObject } from '@app/shared/dtos/paginate.dto';
-import { BunnyService } from '@app/bunny';
 
 /**
  * ============================================
@@ -79,8 +79,18 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
     @InjectRepository(LearnerAchievement)
     private readonly learnerAchievementRepository: Repository<LearnerAchievement>,
 
+    /**
+     * private readonly bunnyService: BunnyService
+     * → Service để upload files lên Bunny CDN
+     * → Dùng cho upload icon của achievement
+     */
     private readonly bunnyService: BunnyService,
   ) {
+    /**
+     * super(achievementRepository)
+     * → Truyền repository vào BaseTypeOrmService
+     * → Kích hoạt các method: find(), findOne() từ base class
+     */
     super(achievementRepository);
   }
 
@@ -135,14 +145,25 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
     let iconUrl: string | undefined = undefined;
     if (icon) {
       try {
-        console.log('🔷 [AWS] Starting upload to S3...');
-        const uploadPromise = await this.bunnyService.uploadToStorage({
-          filePath: icon.path,
-          type: 'icon',
-          id: Date.now(),
+        console.log('🔷 [BUNNY] Starting upload to Bunny CDN...');
+        console.log('🔷 [BUNNY] File info:', {
+          originalname: icon.originalname,
+          size: icon.size,
+          path: icon.path,
         });
-
-        iconUrl = uploadPromise;
+        
+        if (!icon.path) {
+          throw new Error('File path is required for Bunny upload');
+        }
+        
+        // Upload to Bunny CDN
+        iconUrl = await this.bunnyService.uploadToStorage({
+          id: Date.now(), // Use timestamp as unique ID
+          type: 'icon',
+          filePath: icon.path,
+        });
+        
+        console.log('🔷 [BUNNY] Upload success:', iconUrl);
       } catch (error) {
         console.error('🔷 [AWS] Upload failed:', error.message);
         console.warn(
@@ -184,20 +205,31 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
     data: CreateStreakAchievementDto,
     icon?: Express.Multer.File,
   ): Promise<CustomApiResponse<void>> {
-    // Upload icon lên S3 nếu có file
+    // Upload icon lên Bunny CDN nếu có file
     let iconUrl: string | undefined = undefined;
     if (icon) {
       try {
-        console.log('🔷 [AWS] Starting upload to S3 (Streak)...');
-        const uploadPromise = await this.bunnyService.uploadToStorage({
-          filePath: icon.path,
-          type: 'icon',
-          id: Date.now(),
+        console.log('🔷 [BUNNY] Starting upload to Bunny CDN (Streak)...');
+        console.log('🔷 [BUNNY] File info:', {
+          originalname: icon.originalname,
+          size: icon.size,
+          path: icon.path,
         });
-
-        iconUrl = uploadPromise;
+        
+        if (!icon.path) {
+          throw new Error('File path is required for Bunny upload');
+        }
+        
+        // Upload to Bunny CDN
+        iconUrl = await this.bunnyService.uploadToStorage({
+          id: Date.now(), // Use timestamp as unique ID
+          type: 'icon',
+          filePath: icon.path,
+        });
+        
+        console.log('🔷 [BUNNY] Upload success:', iconUrl);
       } catch (error) {
-        console.error('🔷 [AWS] Upload failed:', error.message);
+        console.error('🔷 [BUNNY] Upload failed:', error.message);
         console.warn(
           '⚠️  [WARNING] Skipping icon upload, creating achievement without icon',
         );
@@ -238,20 +270,30 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
       );
     }
 
-    // Upload icon lên S3 nếu có file
+    // Upload icon lên Bunny CDN nếu có file
     let iconUrl: string | undefined = undefined;
     if (icon) {
       try {
-        console.log('🔷 [AWS] Starting upload to S3 (Property Check)...');
-        const uploadPromise = await this.bunnyService.uploadToStorage({
-          filePath: icon.path,
-          type: 'icon',
-          id: Date.now(),
+        console.log('🔷 [BUNNY] Starting upload to Bunny CDN (Property Check)...');
+        console.log('🔷 [BUNNY] File info:', {
+          originalname: icon.originalname,
+          size: icon.size,
+          path: icon.path,
         });
-
-        iconUrl = uploadPromise;
+        
+        if (!icon.path) {
+          throw new Error('File path is required for Bunny upload');
+        }
+        
+        iconUrl = await this.bunnyService.uploadToStorage({
+          id: Date.now(),
+          type: 'icon',
+          filePath: icon.path,
+        });
+        
+        console.log('🔷 [BUNNY] Upload success:', iconUrl);
       } catch (error) {
-        console.error('🔷 [AWS] Upload failed:', error.message);
+        console.error('🔷 [BUNNY] Upload failed:', error.message);
         console.warn(
           '⚠️  [WARNING] Skipping icon upload, creating achievement without icon',
         );
@@ -388,19 +430,30 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
       );
     }
 
-    // Upload icon mới lên S3 nếu có file
+    // Upload icon mới lên Bunny CDN nếu có file
     if (icon) {
       try {
-        console.log('🔷 [AWS] Starting upload to S3 (Update Event Count)...');
-        const uploadPromise = await this.bunnyService.uploadToStorage({
-          filePath: icon.path,
-          type: 'icon',
-          id: Date.now(),
+        console.log('🔷 [BUNNY] Starting upload to Bunny CDN (Update Event Count)...');
+        console.log('🔷 [BUNNY] File info:', {
+          originalname: icon.originalname,
+          size: icon.size,
+          path: icon.path,
         });
-
-        data.iconUrl = uploadPromise;
+        
+        if (!icon.path) {
+          throw new Error('File path is required for Bunny upload');
+        }
+        
+        const iconUrl = await this.bunnyService.uploadToStorage({
+          id: Date.now(),
+          type: 'icon',
+          filePath: icon.path,
+        });
+        
+        console.log('🔷 [BUNNY] Upload success:', iconUrl);
+        data.iconUrl = iconUrl; // Override iconUrl trong data
       } catch (error) {
-        console.error('🔷 [AWS] Upload failed:', error.message);
+        console.error('🔷 [BUNNY] Upload failed:', error.message);
         console.warn('⚠️  [WARNING] Skipping icon upload, keeping old icon');
         // Không throw error, giữ icon cũ
       }
@@ -444,19 +497,30 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
       );
     }
 
-    // Upload icon mới lên S3 nếu có file
+    // Upload icon mới lên Bunny CDN nếu có file
     if (icon) {
       try {
-        console.log('🔷 [AWS] Starting upload to S3 (Update Streak)...');
-        const uploadPromise = await this.bunnyService.uploadToStorage({
-          filePath: icon.path,
-          type: 'icon',
-          id: Date.now(),
+        console.log('🔷 [BUNNY] Starting upload to Bunny CDN (Update Streak)...');
+        console.log('🔷 [BUNNY] File info:', {
+          originalname: icon.originalname,
+          size: icon.size,
+          path: icon.path,
         });
-
-        data.iconUrl = uploadPromise;
+        
+        if (!icon.path) {
+          throw new Error('File path is required for Bunny upload');
+        }
+        
+        const iconUrl = await this.bunnyService.uploadToStorage({
+          id: Date.now(),
+          type: 'icon',
+          filePath: icon.path,
+        });
+        
+        console.log('🔷 [BUNNY] Upload success:', iconUrl);
+        data.iconUrl = iconUrl;
       } catch (error) {
-        console.error('🔷 [AWS] Upload failed:', error.message);
+        console.error('🔷 [BUNNY] Upload failed:', error.message);
         console.warn('⚠️  [WARNING] Skipping icon upload, keeping old icon');
         // Không throw error, giữ icon cũ
       }
@@ -504,20 +568,32 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
       );
     }
 
-    // Upload icon mới lên S3 nếu có file
+    // Upload icon mới lên Bunny CDN nếu có file
     if (icon) {
       try {
         console.log(
-          '🔷 [AWS] Starting upload to S3 (Update Property Check)...',
+          '🔷 [BUNNY] Starting upload to Bunny CDN (Update Property Check)...',
         );
-        const uploadPromise = await this.bunnyService.uploadToStorage({
-          filePath: icon.path,
-          type: 'icon',
-          id: Date.now(),
+        console.log('🔷 [BUNNY] File info:', {
+          originalname: icon.originalname,
+          size: icon.size,
+          path: icon.path,
         });
-        data.iconUrl = uploadPromise;
+        
+        if (!icon.path) {
+          throw new Error('File path is required for Bunny upload');
+        }
+        
+        const iconUrl = await this.bunnyService.uploadToStorage({
+          id: Date.now(),
+          type: 'icon',
+          filePath: icon.path,
+        });
+        
+        console.log('🔷 [BUNNY] Upload success:', iconUrl);
+        data.iconUrl = iconUrl;
       } catch (error) {
-        console.error('🔷 [AWS] Upload failed:', error.message);
+        console.error('🔷 [BUNNY] Upload failed:', error.message);
         console.warn('⚠️  [WARNING] Skipping icon upload, keeping old icon');
         // Không throw error, giữ icon cũ
       }

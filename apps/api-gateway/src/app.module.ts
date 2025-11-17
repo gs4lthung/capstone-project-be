@@ -78,6 +78,8 @@ import { LearnerAchievement } from '@app/database/entities/learner-achievement.e
 // Achievement Controller & Service
 import { AchievementController } from './controllers/achievement.controller';
 import { AchievementService } from './services/achievement.service';
+import { AchievementTrackingService } from './services/achievement-tracking.service';
+import { AchievementTracking } from '@app/database/entities/achievement-tracking.entity';
 import { QuizService } from './services/quiz.service';
 import { QuizController } from './controllers/quiz.controller';
 import { Quiz } from '@app/database/entities/quiz.entity';
@@ -204,6 +206,7 @@ import { BunnyModule } from '@app/bunny';
       PropertyCheckAchievement,
       AchievementProgress,
       LearnerAchievement,
+      AchievementTracking,
       SessionEarning,
       Attendance,
       WalletTransaction,
@@ -277,6 +280,7 @@ import { BunnyModule } from '@app/bunny';
     WalletService,
     PaymentService,
     AchievementService,
+    AchievementTrackingService,
     EnrollmentService,
     ConfigurationService,
     QuizService,

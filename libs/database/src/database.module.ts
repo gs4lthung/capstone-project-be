@@ -7,6 +7,7 @@ import { Notification } from './entities/notification.entity';
 import { Role } from './entities/role.entity';
 import { Achievement } from './entities/achievement.entity';
 import { AchievementProgress } from './entities/achievement-progress.entity';
+import { AchievementTracking } from './entities/achievement-tracking.entity';
 import { AiVideoComparisonResult } from './entities/ai-video-comparison-result.entity';
 import { Attendance } from './entities/attendance.entity';
 import { Coach } from './entities/coach.entity';
@@ -61,6 +62,7 @@ import { Court } from './entities/court.entity';
         entities: [
           Achievement,
           AchievementProgress,
+          AchievementTracking,
           AiVideoComparisonResult,
           Attendance,
           Coach,

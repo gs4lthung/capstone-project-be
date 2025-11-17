@@ -32,6 +32,7 @@ import { MailService } from './mail.service';
 import { Learner } from '@app/database/entities/learner.entity';
 import { TwilioService } from '@app/twilio/twilio.service';
 import { Wallet } from '@app/database/entities/wallet.entity';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable({ scope: Scope.REQUEST })
 export class AuthService {
@@ -47,6 +48,7 @@ export class AuthService {
     @InjectRepository(Wallet)
     private readonly walletRepository: Repository<Wallet>,
     private readonly dataSource: DataSource,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   //#region Login
@@ -111,7 +113,17 @@ export class AuthService {
       this.configService.get('password_salt_rounds'),
     );
     user.refreshToken = refreshTokenHash;
+    user.lastLoginAt = new Date(); // Update last login time
     await this.userRepository.save(user);
+
+    // ═══════════════════════════════════════════════════════════════════
+    // EMIT EVENT: user.login
+    // ═══════════════════════════════════════════════════════════════════
+    // Emit event để Achievement Tracking Service track DAILY_LOGIN streak
+    this.eventEmitter.emit('user.login', {
+      userId: user.id,
+      loginTime: new Date(),
+    });
 
     return new CustomApiResponse<LoginResponseDto>(
       HttpStatus.OK,
@@ -242,9 +254,16 @@ export class AuthService {
           email: data.email,
           profilePicture: data.picture,
           isEmailVerified: true,
+          lastLoginAt: new Date(),
           role: { id: roleId } as Role,
         });
         const savedUser = await this.userRepository.save(newUser);
+
+        // Emit event for new user login
+        this.eventEmitter.emit('user.login', {
+          userId: savedUser.id,
+          loginTime: new Date(),
+        });
 
         const payload: JwtPayloadDto = {
           id: savedUser.id,
@@ -252,6 +271,16 @@ export class AuthService {
 
         return `${this.configService.get('front_end').url}/login?accessToken=${await this.jwtService.signAsync(payload)}`;
       }
+
+      // Update lastLoginAt for existing user
+      existingUser.lastLoginAt = new Date();
+      await this.userRepository.save(existingUser);
+
+      // Emit event for existing user login
+      this.eventEmitter.emit('user.login', {
+        userId: existingUser.id,
+        loginTime: new Date(),
+      });
 
       const payload: JwtPayloadDto = {
         id: existingUser.id,
