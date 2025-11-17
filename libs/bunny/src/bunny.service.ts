@@ -22,7 +22,13 @@ export class BunnyService {
   }: {
     id: number;
     filePath: string;
-    type: 'credential_image' | 'avatar' | 'video' | 'video_thumbnail' | 'icon';
+    type:
+      | 'credential_image'
+      | 'avatar'
+      | 'video'
+      | 'video_thumbnail'
+      | 'icon'
+      | 'course_image';
   }): Promise<string> {
     const fileStream = fs.createReadStream(filePath);
     const fileName = await FileUtils.extractFilenameFromPath(filePath);

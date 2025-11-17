@@ -261,6 +261,7 @@ export class CourseService extends BaseTypeOrmService<Course> {
     data: CreateCourseRequestDto,
     file?: Express.Multer.File,
   ): Promise<CustomApiResponse<void>> {
+    console.log(file);
     return await this.datasource.transaction(async (manager) => {
       const court = await manager.getRepository(Court).findOne({
         where: { id: data.court },
@@ -356,7 +357,7 @@ export class CourseService extends BaseTypeOrmService<Course> {
             typeof this.request.user?.id === 'number'
               ? this.request.user.id
               : Number(this.request.user?.id ?? Date.now()),
-          type: 'icon',
+          type: 'course_image',
           filePath: file.path,
         });
       }
@@ -446,7 +447,7 @@ export class CourseService extends BaseTypeOrmService<Course> {
             typeof this.request.user?.id === 'number'
               ? this.request.user.id
               : Number(this.request.user?.id ?? Date.now()),
-          type: 'icon',
+          type: 'course_image',
           filePath: file.path,
         });
       }
