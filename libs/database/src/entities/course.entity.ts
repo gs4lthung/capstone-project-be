@@ -167,14 +167,11 @@ export class Course {
   @Index()
   @ManyToOne(() => User, (user) => user.courses, {
     onDelete: 'SET NULL',
-    eager: true,
   })
   @JoinColumn({ name: 'created_by' })
   createdBy: User;
 
-  @ManyToOne(() => Subject, (subject) => subject.courses, {
-    eager: true,
-  })
+  @ManyToOne(() => Subject, (subject) => subject.courses, {})
   @JoinColumn({ name: 'subject_id' })
   subject: Subject;
 
@@ -184,7 +181,6 @@ export class Course {
   sessions: Session[];
 
   @OneToMany(() => Schedule, (schedule) => schedule.course, {
-    eager: true,
     cascade: ['insert', 'update'],
   })
   schedules: Schedule[];
@@ -204,7 +200,7 @@ export class Course {
   @JoinColumn({ name: 'video_conference_id' })
   videoConference: VideoConference;
 
-  @ManyToOne(() => Court, (court) => court.courses, { eager: true })
+  @ManyToOne(() => Court, (court) => court.courses)
   @JoinColumn({ name: 'court_id' })
   court: Court;
 }

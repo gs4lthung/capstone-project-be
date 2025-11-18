@@ -18,7 +18,7 @@
     "seed:learner-achievements": "ts-node -r tsconfig-paths/register libs/database/src/seeds/seed-learner-achievements-only.ts",
     "git:push": "git add . && git commit -m \"$(date +'%Y-%m-%d %H:%M:%S')\" && git push",
     "docker": "docker build -t capstone-be . && docker tag capstone-be lthung0412/capstone-be && docker push lthung0412/capstone-be ",
-    "build": "nest build && npm run copy:templates",
+    "build": "nest build api-gateway && npm run copy:templates",
     "build:database": "npx tsc -p ./libs/database/tsconfig.lib.json",
     "copy:templates": "node scripts/copy-templates.js",
     "format": "prettier --write \"apps/**/*.ts\" \"libs/**/*.ts\"",

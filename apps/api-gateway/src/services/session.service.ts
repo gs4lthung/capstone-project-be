@@ -274,7 +274,7 @@ export class SessionService extends BaseTypeOrmService<Session> {
           status: attendanceDto.status,
         });
         await manager.getRepository(Attendance).save(attendance);
-        
+
         // Emit event for achievement tracking
         this.eventEmitter.emit('session.attended', {
           userId: attendanceDto.userId,
