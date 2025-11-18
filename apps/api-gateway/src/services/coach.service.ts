@@ -141,12 +141,17 @@ export class CoachService extends BaseTypeOrmService<Coach> {
         email: data.email ? data.email : null,
         phoneNumber: data.phoneNumber ? data.phoneNumber : null,
         password: passwordHashed,
+        province: data.province ? { id: data.province } : null,
+        district: data.district ? { id: data.district } : null,
         role: coachRole,
         coach: [
           {
             ...(data.coach as Coach),
           },
         ],
+        wallet: {
+          currentBalance: 0,
+        },
       });
 
       if (data.email) {

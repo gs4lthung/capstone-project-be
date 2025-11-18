@@ -22,6 +22,7 @@ import {
   CreateQuizDto,
   LearnerAttemptQuizDto,
 } from '@app/shared/dtos/quizzes/quiz.dto';
+import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
 
 @Controller('quizzes')
 export class QuizController {
@@ -115,6 +116,48 @@ export class QuizController {
     @Body() data: CreateQuizDto,
   ) {
     return this.quizService.createSessionQuiz(id, data);
+  }
+
+  @Put(':id/questions/:questionId')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiOperation({
+    tags: ['Quizzes'],
+    summary: 'Update a question in a quiz',
+    description: 'Update a question in a quiz',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Question updated successfully',
+  })
+  @CheckRoles(UserRole.COACH)
+  @UseGuards(AuthGuard, RoleGuard)
+  async updateQuestionInQuiz(
+    @Param('id') id: number,
+    @Param('questionId') questionId: number,
+    @Body() data: CreateQuestionDto,
+  ): Promise<CustomApiResponse<void>> {
+    return this.quizService.updateQuestion(id, questionId, data);
+  }
+
+  @Delete('questions/:questionId')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiOperation({
+    tags: ['Quizzes'],
+    summary: 'Delete a question from a quiz',
+    description: 'Delete a question from a quiz',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Question deleted successfully',
+  })
+  @CheckRoles(UserRole.COACH)
+  @UseGuards(AuthGuard, RoleGuard)
+  async deleteQuestionFromQuiz(
+    @Param('questionId') questionId: number,
+  ): Promise<CustomApiResponse<void>> {
+    return this.quizService.deleteQuestion(questionId);
   }
 
   @Put(':id')

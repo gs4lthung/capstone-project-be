@@ -10,6 +10,7 @@ import { Video } from '../entities/video.entity';
 import { Question } from '../entities/question.entity';
 import { QuestionOption } from '../entities/question-option.entity';
 import { AppDataSource } from '../data-source';
+import { CoachVideoStatus } from '@app/shared/enums/coach.enum';
 
 export const subjectAndLessonSeed = async (datasource: DataSource) => {
   const subjectRepository = datasource.getRepository(Subject);
@@ -182,6 +183,7 @@ export const subjectAndLessonSeed = async (datasource: DataSource) => {
               publicUrl: 'https://example.com/videos/intro-to-pickleball.mp4',
               duration: 600,
               uploadedBy: coach,
+              status: CoachVideoStatus.READY,
             },
           ]),
         },
@@ -203,6 +205,7 @@ export const subjectAndLessonSeed = async (datasource: DataSource) => {
               publicUrl: 'https://example.com/videos/forehand-technique.mp4',
               duration: 800,
               uploadedBy: coach,
+              status: CoachVideoStatus.READY,
             },
           ]),
           quizzes: quizRepository.create([
@@ -323,6 +326,7 @@ export const subjectAndLessonSeed = async (datasource: DataSource) => {
               publicUrl: 'https://example.com/videos/backhand-technique.mp4',
               duration: 800,
               uploadedBy: coach,
+              status: CoachVideoStatus.READY,
             },
           ]),
           quizzes: quizRepository.create([
@@ -424,6 +428,7 @@ export const subjectAndLessonSeed = async (datasource: DataSource) => {
               publicUrl: 'https://example.com/videos/serve-technique.mp4',
               duration: 800,
               uploadedBy: coach,
+              status: CoachVideoStatus.READY,
             },
           ]),
           quizzes: quizRepository.create([

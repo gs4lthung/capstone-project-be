@@ -44,6 +44,8 @@ import { Attendance } from './attendance.entity';
 import { Quiz } from './quiz.entity';
 import { Video } from './video.entity';
 import { Subject } from './subject.entity';
+import { Province } from './province.entity';
+import { District } from './district.entity';
 
 @Entity('users')
 @Check(
@@ -156,6 +158,7 @@ export class User {
 
   @OneToOne(() => Wallet, (wallet) => wallet.user, {
     eager: true,
+    cascade: ['insert'],
   })
   wallet: Wallet;
 
@@ -209,4 +212,12 @@ export class User {
 
   @OneToMany(() => Subject, (subject) => subject.createdBy)
   subjects: Subject[];
+
+  @ManyToOne(() => Province, (province) => province.users, { nullable: true })
+  @JoinColumn({ name: 'province_id' })
+  province: Province;
+
+  @ManyToOne(() => District, (district) => district.users, { nullable: true })
+  @JoinColumn({ name: 'district_id' })
+  district: District;
 }

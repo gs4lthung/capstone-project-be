@@ -62,6 +62,8 @@ export class CreateQuestionDto {
   options?: CreateQuestionOptionDto[];
 }
 
+export class UpdateQuestionDto extends PartialType(CreateQuestionDto) {}
+
 export class CreateQuizDto {
   @ApiProperty({
     description: 'The title of the quiz',

@@ -79,13 +79,7 @@ export class AuthService {
         },
         withDeleted: false,
         select: ['id', 'fullName', 'email', 'phoneNumber', 'password'],
-        relations: [
-          'role',
-          'learner',
-          'learner.province',
-          'learner.district',
-          'coach',
-        ],
+        relations: ['role', 'learner', 'coach', 'province', 'district'],
       });
     }
     if (!user) throw new UnauthorizedException('Không tìm thấy tài khoản');
@@ -330,6 +324,8 @@ export class AuthService {
         email: data.email ? data.email : null,
         phoneNumber: data.phoneNumber ? data.phoneNumber : null,
         password: passwordHashed,
+        province: data.province ? { id: data.province } : null,
+        district: data.district ? { id: data.district } : null,
         role: {
           id: roleId,
         } as Role,
@@ -337,10 +333,11 @@ export class AuthService {
           {
             skillLevel: data.learner.skillLevel,
             learningGoal: data.learner.learningGoal,
-            province: { id: data.learner.province },
-            district: { id: data.learner.district },
           } as Learner,
         ],
+        wallet: {
+          currentBalance: 0,
+        },
       });
 
       if (data.email) {
@@ -366,12 +363,6 @@ export class AuthService {
       }
 
       await manager.getRepository(User).save(newUser);
-      await this.walletRepository.save(
-        this.walletRepository.create({
-          user: { id: newUser.id },
-          currentBalance: 0,
-        }),
-      );
 
       return new CustomApiResponse<void>(
         HttpStatus.CREATED,

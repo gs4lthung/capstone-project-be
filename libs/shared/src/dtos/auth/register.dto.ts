@@ -28,20 +28,6 @@ export class CreateLearnerDto {
   @IsNotEmpty({ message: 'Learning goal is required' })
   @IsEnum(PickleballLevel)
   learningGoal: PickleballLevel;
-
-  @ApiProperty({
-    description: 'Province ID of the learner',
-    example: 1,
-  })
-  @IsNotEmpty({ message: 'Province ID is required' })
-  province: number;
-
-  @ApiProperty({
-    description: 'District ID of the learner',
-    example: 10,
-  })
-  @IsNotEmpty({ message: 'District ID is required' })
-  district: number;
 }
 
 export class RegisterRequestDto {
@@ -94,6 +80,20 @@ export class RegisterRequestDto {
     },
   )
   password: string;
+
+  @ApiProperty({
+    description: 'Province ID of the learner',
+    example: 1,
+  })
+  @IsNotEmpty({ message: 'Province ID is required' })
+  province: number;
+
+  @ApiProperty({
+    description: 'District ID of the learner',
+    example: 10,
+  })
+  @IsNotEmpty({ message: 'District ID is required' })
+  district: number;
 
   @IsNotEmpty({ each: true })
   @ValidateNested({ each: true })

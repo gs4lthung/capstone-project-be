@@ -5,6 +5,7 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  Index,
   JoinColumn,
   ManyToOne,
   OneToMany,
@@ -55,6 +56,7 @@ export class Session {
   sessionNumber: number;
 
   @Column({ name: 'schedule_date', type: 'date' })
+  @Index()
   @IsDate()
   scheduleDate: Date;
 
@@ -72,6 +74,7 @@ export class Session {
     enum: SessionStatus,
     default: SessionStatus.PENDING,
   })
+  @Index()
   status: SessionStatus;
 
   @CreateDateColumn({ name: 'created_at' })

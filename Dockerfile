@@ -45,5 +45,5 @@ EXPOSE 8386
 # Use the non-root node user provided by the base image
 USER node
 
-# Run the API gateway directly
-CMD ["node", "dist/apps/api-gateway/src/main"]
+# Run the API gateway directly (NestJS compiles to dist/apps/api-gateway/apps/api-gateway/src/main.js)
+CMD ["node", "dist/apps/api-gateway/apps/api-gateway/src/main.js"]

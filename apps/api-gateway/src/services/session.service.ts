@@ -26,7 +26,7 @@ import {
 } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Between, DataSource, In, Repository } from 'typeorm';
+import { Between, DataSource, Repository } from 'typeorm';
 import { WalletService } from './wallet.service';
 import { ConfigurationService } from './configuration.service';
 import { SessionEarning } from '@app/database/entities/session-earning.entity';
@@ -36,7 +36,6 @@ import { PaginateObject } from '@app/shared/dtos/paginate.dto';
 import { UserRole } from '@app/shared/enums/user.enum';
 import { NotificationService } from './notification.service';
 import { NotificationType } from '@app/shared/enums/notification.enum';
-import { Configuration } from '@app/database/entities/configuration.entity';
 import { EnrollmentStatus } from '@app/shared/enums/enrollment.enum';
 import { Enrollment } from '@app/database/entities/enrollment.entity';
 import { EventEmitter2 } from '@nestjs/event-emitter';
@@ -47,20 +46,8 @@ export class SessionService extends BaseTypeOrmService<Session> {
     @Inject(REQUEST) private readonly request: CustomApiRequest,
     @InjectRepository(Session)
     private readonly sessionRepository: Repository<Session>,
-    @InjectRepository(SessionEarning)
-    private readonly sessionEarningRepository: Repository<SessionEarning>,
     @InjectRepository(Subject)
     private readonly subjectRepository: Repository<Subject>,
-    @InjectRepository(Course)
-    private readonly courseRepository: Repository<Course>,
-    @InjectRepository(Attendance)
-    private readonly attendanceRepository: Repository<Attendance>,
-    @InjectRepository(LearnerProgress)
-    private readonly learnerProgressRepository: Repository<LearnerProgress>,
-    @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
-    @InjectRepository(Configuration)
-    private readonly configurationRepository: Repository<Configuration>,
     private readonly walletService: WalletService,
     private readonly configurationService: ConfigurationService,
     private readonly datasource: DataSource,
@@ -145,23 +132,77 @@ export class SessionService extends BaseTypeOrmService<Session> {
 
       switch (user.role.name) {
         case UserRole.COACH:
-          const sessions = await manager.getRepository(Session).find({
-            where: {
-              course: {
-                createdBy: { id: this.request.user.id as User['id'] },
-              },
-              scheduleDate: Between(startOfWeek, endOfWeek),
-              status: In([SessionStatus.SCHEDULED, SessionStatus.COMPLETED]),
-            },
-            relations: [
-              'course',
-              'course.enrollments',
-              'quizzes',
-              'quizzes.questions',
-              'quizzes.questions.options',
-              'videos',
-            ],
-          });
+          const queryBuilder = manager
+            .getRepository(Session)
+            .createQueryBuilder('session')
+            .leftJoinAndSelect('session.course', 'course')
+            .leftJoinAndSelect('course.enrollments', 'enrollments')
+            .leftJoinAndSelect('enrollments.user', 'user')
+            .leftJoinAndSelect('course.court', 'court')
+            .leftJoinAndSelect('court.province', 'province')
+            .leftJoinAndSelect('court.district', 'district')
+            .leftJoinAndSelect('session.quizzes', 'quizzes')
+            .leftJoinAndSelect('quizzes.questions', 'questions')
+            .leftJoinAndSelect('questions.options', 'options')
+            .leftJoinAndSelect('session.videos', 'videos')
+            .where('course.createdBy.id = :coachId', {
+              coachId: this.request.user.id as User['id'],
+            })
+            .andWhere('session.scheduleDate BETWEEN :start AND :end', {
+              start: startOfWeek,
+              end: endOfWeek,
+            })
+            .andWhere('session.status IN (:...statuses)', {
+              statuses: [SessionStatus.SCHEDULED, SessionStatus.COMPLETED],
+            })
+            .orderBy('session.scheduleDate', 'ASC')
+            .select([
+              'session.id',
+              'session.name',
+              'session.description',
+              'session.scheduleDate',
+              'session.startTime',
+              'session.endTime',
+              'session.status',
+              'session.sessionNumber',
+              'course.id',
+              'course.name',
+              'course.description',
+              'quizzes.id',
+              'quizzes.title',
+              'questions.id',
+              'questions.title',
+              'questions.explanation',
+              'options.id',
+              'options.content',
+              'options.isCorrect',
+              'videos.id',
+              'videos.title',
+              'videos.description',
+              'videos.duration',
+              'videos.drillName',
+              'videos.drillDescription',
+              'videos.drillPracticeSets',
+              'videos.publicUrl',
+              'videos.thumbnailUrl',
+              'videos.status',
+              'court.id',
+              'court.name',
+              'court.phoneNumber',
+              'court.address',
+              'province.id',
+              'province.name',
+              'district.id',
+              'district.name',
+              'enrollments.id',
+              'enrollments.status',
+              'user.id',
+              'user.fullName',
+              'user.email',
+              'user.phoneNumber',
+            ]);
+
+          const sessions = await queryBuilder.getMany();
 
           return new CustomApiResponse<Session[]>(
             HttpStatus.OK,

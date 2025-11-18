@@ -125,6 +125,20 @@ export class RegisterCoachDto {
   )
   password: string;
 
+  @ApiProperty({
+    description: 'Province ID of the learner',
+    example: 1,
+  })
+  @IsNotEmpty({ message: 'Province ID is required' })
+  province: number;
+
+  @ApiProperty({
+    description: 'District ID of the learner',
+    example: 10,
+  })
+  @IsNotEmpty({ message: 'District ID is required' })
+  district: number;
+
   coach: CoachProfileDto;
 }
 
