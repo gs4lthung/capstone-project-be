@@ -61,13 +61,7 @@ export class AuthService {
         where: { email: data.email, isActive: true, isEmailVerified: true },
         withDeleted: false,
         select: ['id', 'fullName', 'email', 'phoneNumber', 'password'],
-        relations: [
-          'role',
-          'learner',
-          'learner.province',
-          'learner.district',
-          'coach',
-        ],
+        relations: ['role', 'learner', 'coach', 'province', 'district'],
       });
     }
     if (data.phoneNumber) {
