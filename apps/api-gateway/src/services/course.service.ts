@@ -187,7 +187,8 @@ export class CourseService extends BaseTypeOrmService<Course> {
         .leftJoinAndSelect('court.province', 'province')
         .leftJoinAndSelect('course.schedules', 'schedules')
         .leftJoinAndSelect('court.district', 'district')
-        .leftJoinAndSelect('course.enrollments', 'enrollments');
+        .leftJoinAndSelect('course.enrollments', 'enrollments')
+        .leftJoinAndSelect('enrollments.user', 'user');
 
       queryBuilder.where('course.status IN (:...statuses)', {
         statuses: [
@@ -195,6 +196,10 @@ export class CourseService extends BaseTypeOrmService<Course> {
           CourseStatus.READY_OPENED,
           CourseStatus.FULL,
         ],
+      });
+
+      queryBuilder.andWhere('user.id NOT IN (:...userIds)', {
+        userIds: [this.request.user?.id as User['id']],
       });
 
       if (province) {

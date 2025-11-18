@@ -77,6 +77,7 @@ export class Subject {
   courses: Course[];
 
   @OneToMany(() => Lesson, (lesson) => lesson.subject, {
+    eager: true,
     cascade: ['insert', 'update'],
   })
   lessons: Lesson[];

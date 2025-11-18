@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 
-import { CreateVideoDto } from '@app/shared/videos/video.dto';
+import { CreateVideoDto, UpdateVideoDto } from '@app/shared/videos/video.dto';
 import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
 import { FfmpegService } from '@app/ffmpeg';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -64,6 +64,16 @@ export class VideoService {
       relations: ['uploadedBy'],
       withDeleted: false,
     });
+  }
+
+  async getVideoById(id: number): Promise<Video> {
+    const video = await this.videoRepository.findOne({
+      where: { id: id },
+      relations: ['uploadedBy'],
+      withDeleted: false,
+    });
+    if (!video) throw new BadRequestException('Không tìm thấy video');
+    return video;
   }
 
   async createLessonVideo(
@@ -154,6 +164,56 @@ export class VideoService {
         HttpStatus.CREATED,
         'Đăng tải video thành công',
       );
+    });
+  }
+
+  async updateVideo(
+    id: number,
+    data: UpdateVideoDto,
+    videoFile?: Express.Multer.File,
+  ): Promise<CustomApiResponse<void>> {
+    return await this.datasource.transaction(async (manager) => {
+      const video = await manager.getRepository(Video).findOne({
+        where: { id: id },
+        withDeleted: false,
+      });
+      if (!video) throw new BadRequestException('Không tìm thấy video');
+      if (videoFile) {
+        const thumnailUrl = await this.ffmpegService.createVideoThumbnailVer2(
+          videoFile.path,
+          FileUtils.excludeFileFromPath(videoFile.path),
+        );
+        const uploadedThumbnail = await this.bunnyService.uploadToStorage({
+          id: CryptoUtils.generateRandomNumber(100_000, 999_999),
+          filePath: thumnailUrl,
+          type: 'video_thumbnail',
+        });
+        video.thumbnailUrl = uploadedThumbnail;
+        const videoPublicUrl = await this.bunnyService.uploadToStorage({
+          id: CryptoUtils.generateRandomNumber(100_000, 999_999),
+          filePath: videoFile.path,
+          type: 'video',
+        });
+        video.publicUrl = videoPublicUrl;
+      }
+      Object.assign(video, data);
+      await manager.getRepository(Video).save(video);
+      return new CustomApiResponse<void>(
+        HttpStatus.OK,
+        'Cập nhật video thành công',
+      );
+    });
+  }
+
+  async deleteVideo(id: number): Promise<CustomApiResponse<void>> {
+    return await this.datasource.transaction(async (manager) => {
+      const video = await manager.getRepository(Video).findOne({
+        where: { id: id },
+        withDeleted: false,
+      });
+      if (!video) throw new BadRequestException('Không tìm thấy video');
+      await manager.getRepository(Video).softDelete(video.id);
+      return new CustomApiResponse<void>(HttpStatus.OK, 'Xóa video thành công');
     });
   }
 }
