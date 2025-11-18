@@ -33,6 +33,12 @@ export const configurationSeed = async (dataSource: DataSource) => {
         'Number of days from now that a course can be scheduled to start',
       dataType: 'number',
     },
+    {
+      key: 'max_participants_per_course',
+      value: '12',
+      description: 'Maximum number of participants allowed per course',
+      dataType: 'number',
+    },
   ]);
 };
 

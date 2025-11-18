@@ -37,10 +37,6 @@ export class PaymentService extends BaseTypeOrmService<Payment> {
     @Inject(REQUEST) private readonly request: CustomApiRequest,
     @InjectRepository(Payment)
     private readonly paymentRepository: Repository<Payment>,
-    @InjectRepository(Course)
-    private readonly courseRepository: Repository<Course>,
-    @InjectRepository(Enrollment)
-    private readonly enrollmentRepository: Repository<Enrollment>,
     private readonly configurationService: ConfigurationService,
     private readonly payosService: PayosService,
     private readonly datasource: DataSource,
@@ -111,7 +107,7 @@ export class PaymentService extends BaseTypeOrmService<Payment> {
       }
 
       const payosResponse = await this.payosService.createPaymentLink({
-        orderCode: CryptoUtils.generateRandomNumber(10000, 99999),
+        orderCode: CryptoUtils.generateRandomNumber(10_000, 99_999),
         amount: parseInt((course.pricePerParticipant / 1000).toString()), /////////
         description: 'Thanh toán khóa học',
         expiredAt: new Date(Date.now() + 1000 * 60 * 60 * 24),
@@ -126,6 +122,7 @@ export class PaymentService extends BaseTypeOrmService<Payment> {
         qrCode: payosResponse.qrCode,
         status: PaymentStatus.PENDING,
         enrollment: enrollment ? enrollment : newEnrollment,
+        expiredAt: payosResponse.expiredAt,
       });
       await manager.getRepository(Payment).save(payment);
 

@@ -6,6 +6,7 @@ import {
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 
 import { Enrollment } from './enrollment.entity';
@@ -44,6 +45,12 @@ export class Payment {
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
+
+  @UpdateDateColumn({ name: 'updated_at' })
+  updatedAt: Date;
+
+  @Column({ name: 'expired_at', type: 'date', nullable: true })
+  expiredAt?: Date;
 
   @ManyToOne(() => Enrollment, (enrollment) => enrollment.payments, {
     onDelete: 'CASCADE',
