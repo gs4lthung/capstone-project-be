@@ -1,17 +1,19 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
   Param,
   Post,
+  Put,
   UploadedFile,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { VideoService } from '../services/video.service';
-import { CreateVideoDto } from '@app/shared/videos/video.dto';
+import { CreateVideoDto, UpdateVideoDto } from '@app/shared/videos/video.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { RoleGuard } from '../guards/role.guard';
 import { AuthGuard } from '../guards/auth.guard';
@@ -55,6 +57,23 @@ export class VideoController {
   @UseGuards(AuthGuard)
   async getVideosBySession(@Param('id') id: number) {
     return this.videoService.getVideosBySession(id);
+  }
+
+  @Get(':id')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiOperation({
+    tags: ['Videos'],
+    summary: 'Get video by id',
+    description: 'Get a video by its ID',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Video details',
+  })
+  @UseGuards(AuthGuard)
+  async getVideoById(@Param('id') id: number) {
+    return this.videoService.getVideoById(id);
   }
 
   @Post('lessons/:id')
@@ -101,5 +120,46 @@ export class VideoController {
     @Body() data: CreateVideoDto,
   ) {
     return this.videoService.createSessionVideo(id, data, videoFile);
+  }
+
+  @Put(':id')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiOperation({
+    tags: ['Videos'],
+    summary: 'Update an existing video',
+    description: 'Update an existing video with given data',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Video updated successfully',
+  })
+  @CheckRoles(UserRole.COACH)
+  @UseGuards(AuthGuard, RoleGuard)
+  @UseInterceptors(FileInterceptor('video'))
+  async updateVideo(
+    @Param('id') id: number,
+    @Body() data: UpdateVideoDto,
+    @UploadedFile() videoFile?: Express.Multer.File,
+  ) {
+    return this.videoService.updateVideo(id, data, videoFile);
+  }
+
+  @Delete(':id')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiOperation({
+    tags: ['Videos'],
+    summary: 'Delete a video',
+    description: 'Delete a video by its ID',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Video deleted successfully',
+  })
+  @CheckRoles(UserRole.COACH)
+  @UseGuards(AuthGuard, RoleGuard)
+  async deleteVideo(@Param('id') id: number) {
+    return this.videoService.deleteVideo(id);
   }
 }
