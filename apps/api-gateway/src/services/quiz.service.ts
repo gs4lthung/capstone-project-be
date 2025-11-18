@@ -11,6 +11,8 @@ import {
   CreateQuestionDto,
   CreateQuizDto,
   LearnerAttemptQuizDto,
+  UpdateQuestionDto,
+  UpdateQuizDto,
 } from '@app/shared/dtos/quizzes/quiz.dto';
 import { CourseStatus } from '@app/shared/enums/course.enum';
 import { SessionStatus } from '@app/shared/enums/session.enum';
@@ -30,6 +32,8 @@ import { NotificationService } from './notification.service';
 import { NotificationType } from '@app/shared/enums/notification.enum';
 import { AttendanceStatus } from '@app/shared/enums/attendance.enum';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { QuestionOption } from '@app/database/entities/question-option.entity';
+import { Question } from '@app/database/entities/question.entity';
 
 @Injectable({ scope: Scope.REQUEST })
 export class QuizService extends BaseTypeOrmService<Quiz> {
@@ -163,7 +167,7 @@ export class QuizService extends BaseTypeOrmService<Quiz> {
           );
       }
 
-      quiz.questions.push(data as Quiz['questions'][0]);
+      quiz.questions.push(data as Question);
       quiz.totalQuestions = quiz.questions.length;
       await manager.getRepository(Quiz).save(quiz);
     });
@@ -171,7 +175,7 @@ export class QuizService extends BaseTypeOrmService<Quiz> {
 
   async update(
     id: number,
-    data: CreateQuizDto,
+    data: UpdateQuizDto,
   ): Promise<CustomApiResponse<void>> {
     return await this.datasource.transaction(async (manager) => {
       const quiz = await this.quizRepository.findOne({
@@ -199,6 +203,99 @@ export class QuizService extends BaseTypeOrmService<Quiz> {
       return new CustomApiResponse<void>(
         HttpStatus.OK,
         'LESSON.QUIZ_UPDATE_SUCCESS',
+      );
+    });
+  }
+
+  async updateQuestion(
+    quizId: number,
+    questionId: number,
+    data: UpdateQuestionDto,
+  ): Promise<CustomApiResponse<void>> {
+    return await this.datasource.transaction(async (manager) => {
+      const quiz = await this.quizRepository.findOne({
+        where: { id: quizId },
+        relations: ['session', 'lesson'],
+        withDeleted: false,
+      });
+      if (!quiz) throw new BadRequestException('Quiz not found');
+      if (quiz.session) {
+        if (quiz.session.course.status !== CourseStatus.ON_GOING)
+          throw new BadRequestException(
+            'Không thể cập nhật câu hỏi cho quiz của các buổi học thuộc khóa học chưa diễn ra',
+          );
+        if (
+          quiz.session.status !== SessionStatus.SCHEDULED &&
+          quiz.session.status !== SessionStatus.COMPLETED
+        )
+          throw new BadRequestException(
+            'Không thể cập nhật câu hỏi cho quiz của các buổi học chưa lên lịch hoặc đã bị hủy',
+          );
+      }
+
+      const questionIndex = quiz.questions.findIndex(
+        (q) => q.id === questionId,
+      );
+      if (questionIndex === -1) {
+        throw new BadRequestException('Question not found in the quiz');
+      }
+
+      const existingQuestion = quiz.questions[questionIndex];
+
+      for (const option of existingQuestion.options) {
+        const optionIndex = (data.options as QuestionOption[])?.findIndex(
+          (opt) => opt.id === option.id,
+        );
+        if (optionIndex === -1) {
+          // Option has been removed
+          await manager.getRepository(QuestionOption).delete(option.id);
+        }
+        if (optionIndex !== -1) {
+          // Option is being updated
+          await manager
+            .getRepository(QuestionOption)
+            .update(option.id, (data.options as QuestionOption[])[optionIndex]);
+        }
+      }
+
+      existingQuestion.title = data.title ?? existingQuestion.title;
+      existingQuestion.explanation =
+        data.explanation ?? existingQuestion.explanation;
+
+      await manager.getRepository(Question).save(existingQuestion);
+      return new CustomApiResponse<void>(
+        HttpStatus.OK,
+        'Cập nhật câu hỏi thành công',
+      );
+    });
+  }
+
+  async deleteQuestion(questionId: number): Promise<CustomApiResponse<void>> {
+    return await this.datasource.transaction(async (manager) => {
+      const question = await manager.getRepository(Question).findOne({
+        where: { id: questionId },
+        relations: ['quiz', 'quiz.session', 'quiz.session.course'],
+        withDeleted: false,
+      });
+      if (!question) throw new BadRequestException('Question not found');
+      if (question.quiz.session) {
+        if (question.quiz.session.course.status !== CourseStatus.ON_GOING)
+          throw new BadRequestException(
+            'Không thể xóa câu hỏi cho quiz của các buổi học thuộc khóa học chưa diễn ra',
+          );
+        if (
+          question.quiz.session.status !== SessionStatus.SCHEDULED &&
+          question.quiz.session.status !== SessionStatus.COMPLETED
+        )
+          throw new BadRequestException(
+            'Không thể xóa câu hỏi cho quiz của các buổi học chưa lên lịch hoặc đã bị hủy',
+          );
+      }
+
+      await manager.getRepository(Question).delete(questionId);
+      return new CustomApiResponse<void>(
+        HttpStatus.OK,
+        'Xóa câu hỏi thành công',
       );
     });
   }

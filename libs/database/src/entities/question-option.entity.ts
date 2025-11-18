@@ -1,5 +1,6 @@
 import {
   Column,
+  CreateDateColumn,
   Entity,
   JoinColumn,
   ManyToOne,
@@ -31,4 +32,7 @@ export class QuestionOption {
 
   @OneToMany(() => LearnerAnswer, (learnerAnswer) => learnerAnswer.question)
   learnerAnswers: LearnerAnswer[];
+
+  @CreateDateColumn({ name: 'created_at' })
+  createdAt: Date;
 }

@@ -1,7 +1,7 @@
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { District } from './district.entity';
-import { Learner } from './learner.entity';
 import { Court } from './court.entity';
+import { User } from './user.entity';
 
 @Entity('provinces')
 export class Province {
@@ -19,6 +19,6 @@ export class Province {
   @OneToMany(() => Court, (court) => court.province)
   courts: Court[];
 
-  @OneToMany(() => Learner, (learner) => learner.province)
-  learners: Learner[];
+  @OneToMany(() => User, (user) => user.province)
+  users: User[];
 }
