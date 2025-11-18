@@ -8,7 +8,7 @@ import { DateTimeUtils } from '@app/shared/utils/datetime.util';
 import { HttpStatus, Inject, Injectable, Scope } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
+import { In, Not, Repository } from 'typeorm';
 
 @Injectable({ scope: Scope.REQUEST })
 export class ScheduleService {
@@ -48,6 +48,7 @@ export class ScheduleService {
     coachUserId: number,
     courseStartDate: Date,
     courseEndDate: Date,
+    courseId?: number,
   ): Promise<boolean> {
     const statuses = [
       CourseStatus.APPROVED,
@@ -61,6 +62,7 @@ export class ScheduleService {
     const existingSchedules = await this.scheduleRepository.find({
       where: {
         course: {
+          id: Not(courseId ?? 0),
           status: In(statuses),
           createdBy: { id: coachUserId },
         },

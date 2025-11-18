@@ -62,13 +62,11 @@ export class Lesson {
 
   @OneToMany(() => Video, (video) => video.lesson, {
     cascade: ['insert', 'update'],
-    eager: true,
   })
   videos: Video[];
 
   @OneToMany(() => Quiz, (quiz) => quiz.lesson, {
     cascade: ['insert', 'update'],
-    eager: true,
   })
   quizzes: Quiz[];
 

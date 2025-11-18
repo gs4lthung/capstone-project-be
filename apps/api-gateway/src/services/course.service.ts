@@ -4,7 +4,6 @@ import { BaseTypeOrmService } from '@app/shared/helpers/typeorm.helper';
 import { FindOptions } from '@app/shared/interfaces/find-options.interface';
 import {
   BadRequestException,
-  ForbiddenException,
   HttpStatus,
   Inject,
   Injectable,
@@ -12,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, In, Not, Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { SessionService } from './session.service';
 import { Session } from '@app/database/entities/session.entity';
 import { RequestAction } from '@app/database/entities/request-action.entity';
@@ -95,13 +94,76 @@ export class CourseService extends BaseTypeOrmService<Course> {
 
   async findOne(id: number): Promise<Course> {
     return await this.datasource.transaction(async (manager) => {
-      const course = await manager.getRepository(Course).findOne({
-        where: { id: id },
-        withDeleted: false,
-        relations: ['subject', 'sessions', 'enrollments'],
-      });
+      const queryBuilder = manager
+        .getRepository(Course)
+        .createQueryBuilder('course')
+        .leftJoinAndSelect('course.sessions', 'sessions')
+        .leftJoinAndSelect('course.enrollments', 'enrollments')
+        .leftJoinAndSelect('enrollments.user', 'user')
+        .leftJoinAndSelect('course.subject', 'subject')
+        .leftJoinAndSelect('course.schedules', 'schedules')
+        .leftJoinAndSelect('course.court', 'court')
+        .leftJoinAndSelect('court.province', 'province')
+        .leftJoinAndSelect('court.district', 'district')
+        .where('course.id = :id', {
+          id: id,
+        })
+        .select([
+          'course.id',
+          'course.name',
+          'course.description',
+          'course.status',
+          'course.cancellingReason',
+          'course.progressPct',
+          'course.startDate',
+          'course.endDate',
+          'course.level',
+          'course.learningFormat',
+          'course.totalSessions',
+          'course.publicUrl',
+          'course.pricePerParticipant',
+          'course.currentParticipants',
+          'course.minParticipants',
+          'course.maxParticipants',
+          'course.totalEarnings',
+          'course.createdAt',
+          'course.updatedAt',
+          'sessions.id',
+          'sessions.name',
+          'sessions.description',
+          'sessions.sessionNumber',
+          'sessions.scheduleDate',
+          'sessions.startTime',
+          'sessions.endTime',
+          'sessions.durationInMinutes',
+          'sessions.status',
+          'sessions.completedAt',
+          'subject.id',
+          'subject.name',
+          'schedules.id',
+          'schedules.dayOfWeek',
+          'schedules.startTime',
+          'schedules.endTime',
+          'court.id',
+          'court.name',
+          'court.phoneNumber',
+          'court.pricePerHour',
+          'court.publicUrl',
+          'court.address',
+          'province.id',
+          'province.name',
+          'district.id',
+          'district.name',
+          'enrollments.id',
+          'enrollments.paymentAmount',
+          'enrollments.status',
+          'enrollments.enrolledAt',
+          'user.id',
+          'user.fullName',
+        ]);
 
-      if (!course) throw new Error('Course not found');
+      const course = await queryBuilder.getOne();
+      if (!course) throw new BadRequestException('Course not found');
 
       return course;
     });
@@ -116,42 +178,74 @@ export class CourseService extends BaseTypeOrmService<Course> {
     return await this.datasource.transaction(async (manager) => {
       const offset = (page - 1) * size;
 
-      const whereConditions: any = {
-        status: In([
+      const queryBuilder = manager
+        .getRepository(Course)
+        .createQueryBuilder('course');
+
+      queryBuilder
+        .leftJoinAndSelect('course.court', 'court')
+        .leftJoinAndSelect('court.province', 'province')
+        .leftJoinAndSelect('course.schedules', 'schedules')
+        .leftJoinAndSelect('court.district', 'district')
+        .leftJoinAndSelect('course.enrollments', 'enrollments');
+
+      queryBuilder.where('course.status IN (:...statuses)', {
+        statuses: [
           CourseStatus.APPROVED,
           CourseStatus.READY_OPENED,
           CourseStatus.FULL,
-        ]),
-      };
+        ],
+      });
 
       if (province) {
-        whereConditions.court = {
-          province: { id: province },
-        };
+        queryBuilder.andWhere('province.id = :provinceId', {
+          provinceId: province,
+        });
       }
 
       if (district) {
-        whereConditions.court = {
-          ...whereConditions.court,
-          district: { id: district },
-        };
+        queryBuilder.andWhere('district.id = :districtId', {
+          districtId: district,
+        });
       }
 
-      const [courses, total] = await manager
-        .getRepository(Course)
-        .findAndCount({
-          where: whereConditions,
-          relations: [
-            'court',
-            'court.province',
-            'court.district',
-            'enrollments',
-            'subject',
-          ],
-          skip: offset,
-          take: size,
-          order: { createdAt: 'DESC' },
-        });
+      queryBuilder.skip(offset).take(size);
+
+      queryBuilder.orderBy('course.createdAt', 'DESC');
+
+      queryBuilder.select([
+        'course.id',
+        'course.name',
+        'course.description',
+        'course.status',
+        'course.cancellingReason',
+        'course.progressPct',
+        'course.startDate',
+        'course.endDate',
+        'course.level',
+        'course.learningFormat',
+        'course.publicUrl',
+        'course.pricePerParticipant',
+        'course.currentParticipants',
+        'course.minParticipants',
+        'course.maxParticipants',
+        'course.totalSessions',
+        'course.totalEarnings',
+        'course.createdAt',
+        'course.updatedAt',
+        'schedules.id',
+        'schedules.dayOfWeek',
+        'schedules.startTime',
+        'schedules.endTime',
+        'court.id',
+        'court.name',
+        'court.phoneNumber',
+        'court.pricePerHour',
+        'court.publicUrl',
+        'court.address',
+      ]);
+
+      const [courses, total] = await queryBuilder.getManyAndCount();
 
       const result = new PaginateObject<Course>();
       Object.assign(result, {
@@ -171,17 +265,52 @@ export class CourseService extends BaseTypeOrmService<Course> {
   ): Promise<PaginateObject<Course>> {
     return await this.datasource.transaction(async (manager) => {
       const offset = (page - 1) * size;
-      const [courses, total] = await manager
+
+      const queryBuilder = manager
         .getRepository(Course)
-        .findAndCount({
-          where: {
-            createdBy: { id: this.request.user?.id as User['id'] },
-          },
-          relations: ['subject', 'schedules'],
-          skip: offset,
-          take: size,
-          order: { createdAt: 'DESC' },
-        });
+        .createQueryBuilder('course')
+        .leftJoinAndSelect('course.schedules', 'schedules')
+        .leftJoinAndSelect('course.court', 'court')
+        .where('course.createdBy = :userId', {
+          userId: this.request.user.id as User['id'],
+        })
+        .skip(offset)
+        .take(size)
+        .orderBy('course.createdAt', 'DESC')
+        .select([
+          'course.id',
+          'course.name',
+          'course.description',
+          'course.status',
+          'course.cancellingReason',
+          'course.progressPct',
+          'course.startDate',
+          'course.endDate',
+          'course.level',
+          'course.learningFormat',
+          'course.publicUrl',
+          'course.currentParticipants',
+          'course.minParticipants',
+          'course.maxParticipants',
+          'course.totalEarnings',
+          'course.createdAt',
+          'course.updatedAt',
+          'schedules.id',
+          'schedules.dayOfWeek',
+          'schedules.startTime',
+          'schedules.endTime',
+          'court.id',
+          'court.name',
+          'court.phoneNumber',
+          'court.pricePerHour',
+          'court.publicUrl',
+          'court.address',
+        ]);
+
+      const [courses, total] = await queryBuilder.getManyAndCount();
+
+      console.log(courses);
+
       const result = new PaginateObject<Course>();
       Object.assign(result, {
         items: courses,
@@ -199,20 +328,41 @@ export class CourseService extends BaseTypeOrmService<Course> {
   ): Promise<PaginateObject<Course>> {
     return await this.datasource.transaction(async (manager) => {
       const offset = (page - 1) * size;
-
-      const [courses, total] = await manager
+      const queryBuilder = manager
         .getRepository(Course)
-        .findAndCount({
-          where: {
-            enrollments: {
-              user: { id: this.request.user?.id as User['id'] },
-            },
-            status: Not(CourseStatus.CANCELLED),
-          },
-          skip: offset,
-          take: size,
-          order: { createdAt: 'DESC' },
-        });
+        .createQueryBuilder('course')
+        .leftJoinAndSelect('course.enrollments', 'enrollments')
+        .leftJoinAndSelect('enrollments.user', 'user')
+        .where('enrollments.user.id = :userId', {
+          userId: this.request.user.id as User['id'],
+        })
+        .andWhere('course.status != :status', {
+          status: CourseStatus.CANCELLED,
+        })
+        .skip(offset)
+        .take(size)
+        .orderBy('enrollments.enrolledAt', 'DESC')
+        .select([
+          'course.id',
+          'course.name',
+          'course.description',
+          'course.status',
+          'course.cancellingReason',
+          'course.progressPct',
+          'course.startDate',
+          'course.endDate',
+          'course.level',
+          'course.learningFormat',
+          'course.publicUrl',
+          'course.currentParticipants',
+          'course.minParticipants',
+          'course.maxParticipants',
+          'course.totalEarnings',
+          'course.createdAt',
+          'course.updatedAt',
+          'enrollments.enrolledAt',
+        ]);
+      const [courses, total] = await queryBuilder.getManyAndCount();
       const result = new PaginateObject<Course>();
       Object.assign(result, {
         items: courses,
@@ -221,38 +371,6 @@ export class CourseService extends BaseTypeOrmService<Course> {
         total,
       });
       return result;
-    });
-  }
-
-  async findLearnerCourse(id: number): Promise<Course> {
-    return await this.datasource.transaction(async (manager) => {
-      const course = await manager.getRepository(Course).findOne({
-        where: {
-          id,
-          enrollments: {
-            user: { id: this.request.user?.id as User['id'] },
-          },
-          status: Not(CourseStatus.CANCELLED),
-        },
-        relations: [
-          'subject',
-          'subject.lessons',
-          'subject.lessons.quizzes',
-          'subject.lessons.videos',
-          'sessions',
-          'sessions.lesson',
-          'sessions.videos',
-          'sessions.quizzes',
-          'enrollments',
-          'enrollments.user',
-        ],
-      });
-
-      if (!course) {
-        throw new BadRequestException('Không tìm thấy khóa học');
-      }
-
-      return course;
     });
   }
 
@@ -413,36 +531,120 @@ export class CourseService extends BaseTypeOrmService<Course> {
       );
     });
   }
-
-  async update(
-    id: number,
+  async updateCourseCreationRequest(
+    courseId: number,
     data: UpdateCourseDto,
     file?: Express.Multer.File,
   ): Promise<CustomApiResponse<void>> {
     return await this.datasource.transaction(async (manager) => {
-      const course = await manager.getRepository(Course).findOne({
-        where: { id: id },
-        relations: ['createdBy'],
+      console.log(data);
+      // Find the existing course
+      const existingCourse = await manager.getRepository(Course).findOne({
+        where: { id: courseId },
+        relations: ['subject', 'schedules', 'court'],
+      });
+      if (!existingCourse) {
+        throw new BadRequestException('Không tìm thấy khóa học');
+      }
+
+      // Validations similar to create
+      const court = await manager.getRepository(Court).findOne({
+        where: { id: data.court },
         withDeleted: false,
       });
-      if (!course) throw new BadRequestException('Không tìm thấy khóa học');
-      if (course.createdBy.id !== this.request.user.id)
-        throw new ForbiddenException('Không có quyền truy cập khóa học này');
+      if (!court) throw new BadRequestException('Không tìm thấy sân tập');
+
+      // Validate schedules don't conflict internally
+      for (const s1 of data.schedules) {
+        for (const s2 of data.schedules) {
+          if (
+            s1.dayOfWeek === s2.dayOfWeek &&
+            !(
+              (DateTimeUtils.toMinutes(s1.endTime) <
+                DateTimeUtils.toMinutes(s2.startTime) &&
+                DateTimeUtils.toMinutes(s1.endTime) <
+                  DateTimeUtils.toMinutes(s2.endTime)) ||
+              (DateTimeUtils.toMinutes(s1.startTime) >
+                DateTimeUtils.toMinutes(s2.endTime) &&
+                DateTimeUtils.toMinutes(s1.startTime) >
+                  DateTimeUtils.toMinutes(s2.startTime))
+            ) &&
+            s1 !== s2
+          ) {
+            throw new BadRequestException(
+              `Lịch học bị trùng: ${s1.dayOfWeek} ${s1.startTime} - ${s1.endTime}`,
+            );
+          }
+        }
+      }
+
+      // Re-validate start date and schedules constraints, like in create
+      const courseStartDateConfig = await this.configurationService.findByKey(
+        'course_start_date_after_days_from_now',
+      );
       if (
-        course.status !== CourseStatus.REJECTED &&
-        course.status !== CourseStatus.PENDING_APPROVAL
-      )
+        data.startDate.getTime() <
+        Date.now() +
+          Number(courseStartDateConfig.metadata.value) * 24 * 60 * 60 * 1000
+      ) {
         throw new BadRequestException(
-          'Khoá học đã được duyệt, không thể cập nhật',
+          `Ngày bắt đầu khóa học phải cách ngày hiện tại ít nhất ${courseStartDateConfig.metadata.value} ngày`,
         );
+      }
 
-      const updatePayload: Partial<Course> = {
-        ...(data as unknown as Partial<Course>),
-        court: data.court ? ({ id: data.court } as Court) : course.court,
-      };
+      const subject = await manager.getRepository(Subject).findOne({
+        where: {
+          courses: {
+            id: courseId,
+          },
+          status: SubjectStatus.PUBLISHED,
+        },
+        relations: ['lessons', 'courses'],
+        withDeleted: false,
+      });
+      if (!subject) throw new BadRequestException('Không tìm thấy chủ đề');
+      if (!subject.lessons || subject.lessons.length === 0) {
+        throw new BadRequestException('Tài liệu khóa học chưa đầy đủ');
+      }
 
+      const scheduleLength = data.schedules.length;
+      const lessonCount = subject.lessons.length;
+      if (scheduleLength > lessonCount) {
+        throw new BadRequestException(
+          `Số lượng lịch học ${scheduleLength} không thể lớn hơn số buổi học ${lessonCount}`,
+        );
+      }
+      if (lessonCount % scheduleLength !== 0) {
+        throw new BadRequestException(
+          `Số buổi học của khóa: ${lessonCount} không phù hợp với lịch đã chọn ${scheduleLength}. Ví dụ: nếu có 10 buổi học thì phải có 2 hoặc 5 lịch học`,
+        );
+      }
+
+      const courseEndDate = await this.calculateCourseEndDate(
+        data.startDate,
+        lessonCount,
+        data.schedules as Schedule[],
+      );
+
+      for (const schedule of data.schedules) {
+        const isValid = await this.scheduleService.isNewScheduleValid(
+          schedule as Schedule,
+          this.request.user.id as User['id'],
+          data.startDate,
+          courseEndDate,
+          courseId,
+        );
+        if (!isValid) {
+          throw new BadRequestException(
+            `Lịch vào ${schedule.dayOfWeek} ${schedule.startTime} - ${schedule.endTime} bị trùng với lịch đã có`,
+          );
+        }
+      }
+
+      // Handle optional file update
+      let publicUrl = existingCourse.publicUrl;
       if (file?.path) {
-        updatePayload.publicUrl = await this.bunnyService.uploadToStorage({
+        publicUrl = await this.bunnyService.uploadToStorage({
           id:
             typeof this.request.user?.id === 'number'
               ? this.request.user.id
@@ -452,18 +654,34 @@ export class CourseService extends BaseTypeOrmService<Course> {
         });
       }
 
-      await manager.getRepository(Course).update(course.id, updatePayload);
+      // Update existing course with new data
+      existingCourse.name =
+        subject.name +
+        ` - Khóa ${subject.courses ? subject.courses.length : 1}`;
+      existingCourse.description = subject.description || '';
+      existingCourse.court = data.court
+        ? ({ id: data.court } as Court)
+        : undefined;
+      existingCourse.schedules = data.schedules.map((s) => ({
+        ...s,
+        totalSessions: lessonCount / scheduleLength,
+      })) as Schedule[];
+      existingCourse.publicUrl = publicUrl;
+      existingCourse.order = subject.courses ? subject.courses.length : 1;
+      existingCourse.totalSessions = lessonCount;
+      existingCourse.level = subject.level;
+      existingCourse.endDate = courseEndDate;
+      existingCourse.startDate = data.startDate;
+      existingCourse.subject = subject;
 
-      await this.notificationService.sendNotificationToAdmins({
-        title: ' Cập nhật yêu cầu tạo khóa học',
-        body: `Một HLV đã cập nhật yêu cầu tạo khóa học.`,
-        navigateTo: `/admin/requests/${course.id}`,
-        type: NotificationType.INFO,
-      });
+      await manager.getRepository(Course).save(existingCourse);
+
+      // Optionally update related request or notification for course update approval
+      // (Feel free to customize this part based on your business logic)
 
       return new CustomApiResponse<void>(
         HttpStatus.OK,
-        'COURSE.UPDATE_SUCCESS',
+        'Chỉnh sửa khóa học thành công',
       );
     });
   }

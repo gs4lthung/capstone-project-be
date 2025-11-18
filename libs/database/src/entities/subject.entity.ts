@@ -70,7 +70,6 @@ export class Subject {
 
   @ManyToOne(() => User, (user) => user.subjects, {
     onDelete: 'SET NULL',
-    eager: true,
   })
   createdBy: User;
 
@@ -78,7 +77,6 @@ export class Subject {
   courses: Course[];
 
   @OneToMany(() => Lesson, (lesson) => lesson.subject, {
-    eager: true,
     cascade: ['insert', 'update'],
   })
   lessons: Lesson[];
