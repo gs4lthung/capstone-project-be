@@ -95,6 +95,14 @@ export class RegisterRequestDto {
   @IsNotEmpty({ message: 'District ID is required' })
   district: number;
 
+  @ApiProperty({
+    description: 'Learner profile information',
+    type: CreateLearnerDto,
+    example: {
+      skillLevel: 'BEGINNER',
+      learningGoal: 'INTERMEDIATE',
+    },
+  })
   @IsNotEmpty({ each: true })
   @ValidateNested({ each: true })
   @Type(() => CreateLearnerDto)
