@@ -64,8 +64,8 @@ export class AuthService {
         relations: [
           'role',
           'learner',
-          'learner.province',
-          'learner.district',
+          'province',
+          'district',
           'coach',
         ],
       });
@@ -141,8 +141,8 @@ export class AuthService {
           'role',
           'coach',
           'learner',
-          'learner.province',
-          'learner.district',
+          'province',
+          'district',
         ],
         select: [
           'id',

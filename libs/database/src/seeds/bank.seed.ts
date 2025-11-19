@@ -36,13 +36,13 @@ export const seedBanks = async (dataSourse: DataSource) => {
 // ============================================
 // Uncomment below to run this seed file standalone
 
-async function runSeed() {
-  await AppDataSource.initialize();
-  await seedBanks(AppDataSource);
-  await AppDataSource.destroy();
-}
+// async function runSeed() {
+//   await AppDataSource.initialize();
+//   await seedBanks(AppDataSource);
+//   await AppDataSource.destroy();
+// }
 
-runSeed().catch((error) => {
-  console.error('Error seeding banks:', error);
-  process.exit(1);
-});
+// runSeed().catch((error) => {
+//   console.error('Error seeding banks:', error);
+//   process.exit(1);
+// });

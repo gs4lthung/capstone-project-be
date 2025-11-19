@@ -139,6 +139,10 @@ export class RegisterCoachDto {
   @IsNotEmpty({ message: 'District ID is required' })
   district: number;
 
+  @ApiProperty({
+    description: 'Coach profile information',
+    type: CoachProfileDto,
+  })
   coach: CoachProfileDto;
 }
 
