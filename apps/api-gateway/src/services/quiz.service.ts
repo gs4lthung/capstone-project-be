@@ -188,14 +188,18 @@ export class QuizService extends BaseTypeOrmService<Quiz> {
         throw new ForbiddenException('Không có quyền truy cập quiz này');
 
       if (quiz.session) {
-        if (quiz.session.course.status !== CourseStatus.ON_GOING)
-          throw new BadRequestException(
-            'Cannot update quiz for sessions whose course is not ongoing',
-          );
-        if (quiz.session.status !== SessionStatus.SCHEDULED)
-          throw new BadRequestException(
-            'Cannot update quiz for sessions that are not scheduled',
-          );
+        if (
+          quiz.session.course.status !== CourseStatus.ON_GOING &&
+          quiz.session.course.status !== CourseStatus.APPROVED &&
+          quiz.session.course.status !== CourseStatus.READY_OPENED &&
+          quiz.session.course.status !== CourseStatus.FULL
+        )
+          throw new BadRequestException('Không thể cập nhật quiz');
+        if (
+          quiz.session.status !== SessionStatus.SCHEDULED &&
+          quiz.session.status !== SessionStatus.PENDING
+        )
+          throw new BadRequestException('Không thể cập nhật quiz');
       }
 
       await manager.getRepository(Quiz).update(quiz.id, data);
@@ -220,19 +224,19 @@ export class QuizService extends BaseTypeOrmService<Quiz> {
       });
       if (!quiz) throw new BadRequestException('Quiz not found');
       if (quiz.session) {
-        if (quiz.session.course.status !== CourseStatus.ON_GOING)
-          throw new BadRequestException(
-            'Không thể cập nhật câu hỏi cho quiz của các buổi học thuộc khóa học chưa diễn ra',
-          );
+        if (
+          quiz.session.course.status !== CourseStatus.ON_GOING &&
+          quiz.session.course.status !== CourseStatus.APPROVED &&
+          quiz.session.course.status !== CourseStatus.READY_OPENED &&
+          quiz.session.course.status !== CourseStatus.FULL
+        )
+          throw new BadRequestException('Không thể cập nhật quiz');
         if (
           quiz.session.status !== SessionStatus.SCHEDULED &&
-          quiz.session.status !== SessionStatus.COMPLETED
+          quiz.session.status !== SessionStatus.PENDING
         )
-          throw new BadRequestException(
-            'Không thể cập nhật câu hỏi cho quiz của các buổi học chưa lên lịch hoặc đã bị hủy',
-          );
+          throw new BadRequestException('Không thể cập nhật quiz');
       }
-
       const questionIndex = quiz.questions.findIndex(
         (q) => q.id === questionId,
       );
@@ -278,18 +282,29 @@ export class QuizService extends BaseTypeOrmService<Quiz> {
         withDeleted: false,
       });
       if (!question) throw new BadRequestException('Question not found');
+
+      const totalQuestions = await manager.getRepository(Question).count({
+        where: { quiz: { id: question.quiz.id } },
+      });
+      if (totalQuestions <= 1) {
+        throw new BadRequestException(
+          'Không thể xóa câu hỏi. Một quiz phải có ít nhất một câu hỏi.',
+        );
+      }
+
       if (question.quiz.session) {
-        if (question.quiz.session.course.status !== CourseStatus.ON_GOING)
-          throw new BadRequestException(
-            'Không thể xóa câu hỏi cho quiz của các buổi học thuộc khóa học chưa diễn ra',
-          );
+        if (
+          question.quiz.session.course.status !== CourseStatus.ON_GOING &&
+          question.quiz.session.course.status !== CourseStatus.APPROVED &&
+          question.quiz.session.course.status !== CourseStatus.READY_OPENED &&
+          question.quiz.session.course.status !== CourseStatus.FULL
+        )
+          throw new BadRequestException('Không thể cập nhật question.quiz');
         if (
           question.quiz.session.status !== SessionStatus.SCHEDULED &&
-          question.quiz.session.status !== SessionStatus.COMPLETED
+          question.quiz.session.status !== SessionStatus.PENDING
         )
-          throw new BadRequestException(
-            'Không thể xóa câu hỏi cho quiz của các buổi học chưa lên lịch hoặc đã bị hủy',
-          );
+          throw new BadRequestException('Không thể cập nhật quiz');
       }
 
       await manager.getRepository(Question).delete(questionId);
@@ -311,15 +326,30 @@ export class QuizService extends BaseTypeOrmService<Quiz> {
       if (quiz.createdBy.id !== this.request.user.id)
         throw new ForbiddenException('Không có quyền truy cập quiz này');
 
+      const totalQuizzes = await this.quizRepository.count({
+        where: quiz.session
+          ? { session: { id: quiz.session.id } }
+          : { lesson: { id: quiz.lesson.id } },
+      });
+      if (totalQuizzes <= 1) {
+        throw new BadRequestException(
+          'Không thể xóa quiz. Một buổi học hoặc bài học phải có ít nhất một quiz.',
+        );
+      }
+
       if (quiz.session) {
-        if (quiz.session.course.status !== CourseStatus.ON_GOING)
-          throw new BadRequestException(
-            'Cannot update quiz for sessions whose course is not ongoing',
-          );
-        if (quiz.session.status !== SessionStatus.SCHEDULED)
-          throw new BadRequestException(
-            'Cannot update quiz for sessions that are not scheduled',
-          );
+        if (
+          quiz.session.course.status !== CourseStatus.ON_GOING &&
+          quiz.session.course.status !== CourseStatus.APPROVED &&
+          quiz.session.course.status !== CourseStatus.READY_OPENED &&
+          quiz.session.course.status !== CourseStatus.FULL
+        )
+          throw new BadRequestException('Không thể cập nhật quiz');
+        if (
+          quiz.session.status !== SessionStatus.SCHEDULED &&
+          quiz.session.status !== SessionStatus.PENDING
+        )
+          throw new BadRequestException('Không thể cập nhật quiz');
       }
       await manager.getRepository(Quiz).softDelete(quiz);
 

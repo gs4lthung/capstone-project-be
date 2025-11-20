@@ -62,22 +62,12 @@ export class CourseService extends BaseTypeOrmService<Course> {
     private readonly requestActionRepository: Repository<RequestAction>,
     @InjectRepository(Enrollment)
     private readonly enrollmentRepository: Repository<Enrollment>,
-    @InjectRepository(Subject)
-    private readonly subjectRepository: Repository<Subject>,
-    @InjectRepository(VideoConference)
-    private readonly videoConferenceRepository: Repository<VideoConference>,
     private readonly sessionService: SessionService,
     private readonly notificationService: NotificationService,
     private readonly walletService: WalletService,
     private readonly datasource: DataSource,
-    @InjectRepository(Province)
-    private readonly provinceRepository: Repository<Province>,
-    @InjectRepository(District)
-    private readonly districtRepository: Repository<District>,
     private readonly configurationService: ConfigurationService,
     private readonly scheduleService: ScheduleService,
-    @InjectRepository(Court)
-    private readonly courtRepository: Repository<Court>,
     private readonly bunnyService: BunnyService,
   ) {
     super(courseRepository);
@@ -98,6 +88,8 @@ export class CourseService extends BaseTypeOrmService<Course> {
         .getRepository(Course)
         .createQueryBuilder('course')
         .leftJoinAndSelect('course.sessions', 'sessions')
+        .leftJoinAndSelect('sessions.quizzes', 'quizzes')
+        .leftJoinAndSelect('sessions.videos', 'videos')
         .leftJoinAndSelect('course.enrollments', 'enrollments')
         .leftJoinAndSelect('enrollments.user', 'user')
         .leftJoinAndSelect('course.subject', 'subject')
@@ -138,6 +130,8 @@ export class CourseService extends BaseTypeOrmService<Course> {
           'sessions.durationInMinutes',
           'sessions.status',
           'sessions.completedAt',
+          'quizzes.id',
+          'videos.id',
           'subject.id',
           'subject.name',
           'schedules.id',
@@ -189,6 +183,7 @@ export class CourseService extends BaseTypeOrmService<Course> {
         .leftJoinAndSelect('course.schedules', 'schedules')
         .leftJoinAndSelect('court.district', 'district')
         .leftJoinAndSelect('course.enrollments', 'enrollments')
+        .leftJoinAndSelect('course.createdBy', 'createdBy')
         .leftJoinAndSelect('enrollments.user', 'user');
 
       queryBuilder.where('course.status IN (:...statuses)', {
@@ -197,10 +192,6 @@ export class CourseService extends BaseTypeOrmService<Course> {
           CourseStatus.READY_OPENED,
           CourseStatus.FULL,
         ],
-      });
-
-      queryBuilder.andWhere('user.id NOT IN (:...userIds)', {
-        userIds: [this.request.user?.id as User['id']],
       });
 
       if (province) {
@@ -249,6 +240,8 @@ export class CourseService extends BaseTypeOrmService<Course> {
         'court.pricePerHour',
         'court.publicUrl',
         'court.address',
+        'createdBy.id',
+        'createdBy.fullName',
       ]);
 
       const [courses, total] = await queryBuilder.getManyAndCount();
@@ -339,6 +332,7 @@ export class CourseService extends BaseTypeOrmService<Course> {
         .getRepository(Course)
         .createQueryBuilder('course')
         .leftJoinAndSelect('course.enrollments', 'enrollments')
+        .leftJoinAndSelect('course.createdBy', 'createdBy')
         .leftJoinAndSelect('enrollments.user', 'user')
         .where('enrollments.user.id = :userId', {
           userId: this.request.user.id as User['id'],
@@ -367,6 +361,8 @@ export class CourseService extends BaseTypeOrmService<Course> {
           'course.totalEarnings',
           'course.createdAt',
           'course.updatedAt',
+          'createdBy.id',
+          'createdBy.fullName',
           'enrollments.enrolledAt',
         ]);
       const [courses, total] = await queryBuilder.getManyAndCount();
@@ -429,11 +425,20 @@ export class CourseService extends BaseTypeOrmService<Course> {
         );
       }
 
-      const subject = await manager.getRepository(Subject).findOne({
-        where: { id: subjectId, status: SubjectStatus.PUBLISHED },
-        relations: ['lessons'],
-        withDeleted: false,
-      });
+      const subjectQueryBuilder = manager
+        .getRepository(Subject)
+        .createQueryBuilder('subject')
+        .leftJoinAndSelect('subject.lessons', 'lessons')
+        .leftJoinAndSelect('lessons.quizzes', 'quizzes')
+        .leftJoinAndSelect('quizzes.questions', 'questions')
+        .leftJoinAndSelect('questions.options', 'options')
+        .leftJoinAndSelect('lessons.videos', 'videos')
+        .where('subject.id = :subjectId', { subjectId: subjectId })
+        .andWhere('subject.status = :status', {
+          status: SubjectStatus.PUBLISHED,
+        })
+        .andWhere('lessons.deletedAt IS NULL');
+      const subject = await subjectQueryBuilder.getOne();
       if (!subject) throw new BadRequestException('Không tìm thấy chủ đề');
       if (
         (subject.lessons && subject.lessons.length === 0) ||
@@ -705,11 +710,19 @@ export class CourseService extends BaseTypeOrmService<Course> {
       if (request.status === RequestStatus.APPROVED)
         throw new BadRequestException('Yêu cầu không được chờ duyệt');
 
-      const course = await manager.getRepository(Course).findOne({
-        where: { id: request.metadata.id },
-        withDeleted: false,
-        relations: ['subject', 'subject.lessons'],
-      });
+      const courseQueryBuilder = manager
+        .getRepository(Course)
+        .createQueryBuilder('course')
+        .leftJoinAndSelect('course.subject', 'subject')
+        .leftJoinAndSelect('subject.lessons', 'lessons')
+        .leftJoinAndSelect('lessons.videos', 'videos')
+        .leftJoinAndSelect('lessons.quizzes', 'quizzes')
+        .leftJoinAndSelect('quizzes.questions', 'questions')
+        .leftJoinAndSelect('questions.options', 'options')
+        .where('course.id = :courseId', { courseId: request.metadata.id })
+        .andWhere('course.deletedAt IS NULL');
+
+      const course = await courseQueryBuilder.getOne();
       if (!course) throw new BadRequestException('Không tìm thấy khóa học');
       if (course.totalSessions <= 0)
         throw new BadRequestException('Khóa học chưa có buổi học nào');
@@ -735,6 +748,7 @@ export class CourseService extends BaseTypeOrmService<Course> {
                 status: CoachVideoStatus.READY,
                 lesson: null,
                 session: session,
+                uploadedBy: course.createdBy,
               });
             }
             for (const quiz of lesson.quizzes) {
@@ -749,6 +763,7 @@ export class CourseService extends BaseTypeOrmService<Course> {
                 ...quiz,
                 lesson: null,
                 session: session,
+                createdBy: course.createdBy,
               });
             }
           }

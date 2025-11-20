@@ -62,39 +62,48 @@ export class SessionService extends BaseTypeOrmService<Session> {
   }
 
   async findOne(id: number): Promise<Session> {
-    const session = await this.sessionRepository.findOne({
-      where: { id: id },
-      withDeleted: false,
-      relations: [
-        'course',
-        'course.enrollments',
-        'course.enrollments.user',
-        'lesson',
-        'attendances',
-        'quizzes',
-        'quizzes.questions',
-        'quizzes.questions.options',
-        'videos',
-      ],
+    return await this.datasource.transaction(async (manager) => {
+      const queryBuilder = manager
+        .getRepository(Session)
+        .createQueryBuilder('session')
+        .leftJoinAndSelect('session.course', 'course')
+        .leftJoinAndSelect('course.enrollments', 'enrollments')
+        .leftJoinAndSelect('enrollments.user', 'user')
+        .leftJoinAndSelect('session.lesson', 'lesson')
+        .leftJoinAndSelect('session.attendances', 'attendances')
+        .leftJoinAndSelect('session.quizzes', 'quizzes')
+        .leftJoinAndSelect('quizzes.questions', 'questions')
+        .leftJoinAndSelect('questions.options', 'options')
+        .leftJoinAndSelect('session.videos', 'videos')
+        .where('session.id = :id', { id: id });
+
+      const session = await queryBuilder.getOne();
+
+      if (!session) throw new Error('Session not found');
+      return session;
     });
-
-    if (!session) throw new Error('Session not found');
-
-    return session;
   }
 
   async findByCourseId(courseId: number): Promise<Session[]> {
-    const sessions = await this.sessionRepository.find({
-      where: { course: { id: courseId } },
-      withDeleted: false,
-      relations: ['course', 'lesson', 'attendances', 'quizzes', 'videos'],
-      order: {
-        scheduleDate: 'ASC',
-        startTime: 'ASC',
-      },
-    });
+    return await this.datasource.transaction(async (manager) => {
+      const queryBuilder = manager
+        .getRepository(Session)
+        .createQueryBuilder('session')
+        .leftJoinAndSelect('session.course', 'course')
+        .leftJoinAndSelect('session.lesson', 'lesson')
+        .leftJoinAndSelect('session.attendances', 'attendances')
+        .leftJoinAndSelect('session.quizzes', 'quizzes')
+        .leftJoinAndSelect('quizzes.questions', 'questions')
+        .leftJoinAndSelect('questions.options', 'options')
+        .leftJoinAndSelect('session.videos', 'videos')
+        .where('course.id = :courseId', { courseId: courseId })
+        .orderBy('session.scheduleDate', 'ASC')
+        .addOrderBy('session.startTime', 'ASC');
 
-    return sessions;
+      const sessions = await queryBuilder.getMany();
+
+      return sessions;
+    });
   }
 
   async getSessionsForWeeklyCalendar(

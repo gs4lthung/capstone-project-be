@@ -122,16 +122,18 @@ export class VideoService {
         withDeleted: false,
       });
       if (!session) throw new BadRequestException('Không tìm thấy buổi tập');
-      if (session.course.status !== CourseStatus.ON_GOING) {
-        throw new BadRequestException(
-          'Không thể tải video lên cho các buổi học thuộc khóa học chưa diễn ra',
-        );
-      }
-      if (session.status !== SessionStatus.SCHEDULED) {
-        throw new BadRequestException(
-          'Không thể tải video lên cho các buổi học chưa lên lịch',
-        );
-      }
+      if (
+        session.course.status !== CourseStatus.ON_GOING &&
+        session.course.status !== CourseStatus.APPROVED &&
+        session.course.status !== CourseStatus.READY_OPENED &&
+        session.course.status !== CourseStatus.FULL
+      )
+        throw new BadRequestException('Không thể cập nhật quiz');
+      if (
+        session.status !== SessionStatus.SCHEDULED &&
+        session.status !== SessionStatus.PENDING
+      )
+        throw new BadRequestException('Không thể cập nhật quiz');
 
       const thumbnail = await this.ffmpegService.createVideoThumbnailVer2(
         videoFile.path,
@@ -175,9 +177,24 @@ export class VideoService {
     return await this.datasource.transaction(async (manager) => {
       const video = await manager.getRepository(Video).findOne({
         where: { id: id },
+        relations: ['session', 'lesson'],
         withDeleted: false,
       });
       if (!video) throw new BadRequestException('Không tìm thấy video');
+      if (video.session) {
+        if (
+          video.session.course.status !== CourseStatus.ON_GOING &&
+          video.session.course.status !== CourseStatus.APPROVED &&
+          video.session.course.status !== CourseStatus.READY_OPENED &&
+          video.session.course.status !== CourseStatus.FULL
+        )
+          throw new BadRequestException('Không thể cập nhật quiz');
+        if (
+          video.session.status !== SessionStatus.SCHEDULED &&
+          video.session.status !== SessionStatus.PENDING
+        )
+          throw new BadRequestException('Không thể cập nhật quiz');
+      }
       if (videoFile) {
         const thumnailUrl = await this.ffmpegService.createVideoThumbnailVer2(
           videoFile.path,
@@ -212,6 +229,16 @@ export class VideoService {
         withDeleted: false,
       });
       if (!video) throw new BadRequestException('Không tìm thấy video');
+      const totalVideos = await manager.getRepository(Video).count({
+        where: video.lesson
+          ? { lesson: { id: video.lesson.id } }
+          : { session: { id: video.session.id } },
+      });
+      if (totalVideos <= 1) {
+        throw new BadRequestException(
+          'Không thể xóa video. Một bài học/buổi học phải có ít nhất một video.',
+        );
+      }
       await manager.getRepository(Video).softDelete(video.id);
       return new CustomApiResponse<void>(HttpStatus.OK, 'Xóa video thành công');
     });
