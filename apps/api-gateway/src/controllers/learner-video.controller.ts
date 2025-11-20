@@ -17,6 +17,7 @@ import { AuthGuard } from '../guards/auth.guard';
 import { LearnerVideoService } from '../services/learner-video.service';
 import { CustomApiRequest } from '@app/shared/customs/custom-api-request';
 import { UploadLearnerVideoDto } from '@app/shared/dtos/files/file.dto';
+import { SaveAiFeedbackDto } from '@app/shared/dtos/ai-feedback/ai-feedback.dto';
 import { CheckRoles } from '@app/shared/decorators/check-roles.decorator';
 import { RoleGuard } from '../guards/role.guard';
 import { UserRole } from '@app/shared/enums/user.enum';
@@ -112,9 +113,9 @@ export class LearnerVideoController {
   @CheckRoles(UserRole.COACH)
   async saveAiFeedback(
     @Param('learnerVideoId') learnerVideoId: number,
-    @Body() aiText: any,
+    @Body() aiFeedback: SaveAiFeedbackDto,
   ) {
-    return this.learnerVideoService.saveAiFeedback(learnerVideoId, aiText);
+    return this.learnerVideoService.saveAiFeedback(learnerVideoId, aiFeedback);
   }
 
   @Post(':learnerVideoId/overlay-video/:coachVideoId')
