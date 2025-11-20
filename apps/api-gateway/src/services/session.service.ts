@@ -219,17 +219,23 @@ export class SessionService extends BaseTypeOrmService<Session> {
             sessions,
           );
         case UserRole.LEARNER:
-          const learnerSessions = await manager.getRepository(Session).find({
-            where: {
-              course: {
-                enrollments: {
-                  user: { id: this.request.user.id as User['id'] },
-                },
-              },
-              scheduleDate: Between(startOfWeek, endOfWeek),
-            },
-            relations: ['course'],
-          });
+          const learnerSessions = await manager
+            .getRepository(Session)
+            .createQueryBuilder('session')
+            .leftJoinAndSelect('session.course', 'course')
+            .leftJoinAndSelect('course.createdBy', 'createdBy')
+            .leftJoinAndSelect('course.enrollments', 'enrollments')
+            .leftJoinAndSelect('enrollments.user', 'user')
+            .where('user.id = :userId', {
+              userId: this.request.user.id as User['id'],
+            })
+            .andWhere('session.scheduleDate BETWEEN :startDate AND :endDate', {
+              startDate: startOfWeek,
+              endDate: endOfWeek,
+            })
+            .orderBy('session.scheduleDate', 'ASC')
+            .addOrderBy('session.startTime', 'ASC')
+            .getMany();
           return new CustomApiResponse<Session[]>(
             HttpStatus.OK,
             'Sessions retrieved successfully',
@@ -285,9 +291,7 @@ export class SessionService extends BaseTypeOrmService<Session> {
         throw new InternalServerErrorException('Giá trị cấu hình không hợp lệ');
 
       const sessionEarning =
-        (Number(course.totalEarnings) * (100 - feePercentage)) /
-        100 /
-        course.totalSessions;
+        Number(course.totalEarnings) / course.totalSessions;
       const sessionEarningRecord = manager
         .getRepository(SessionEarning)
         .create({
