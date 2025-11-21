@@ -137,8 +137,8 @@ export class AuthService {
           'role',
           'coach',
           'learner',
-          'learner.province',
-          'learner.district',
+          'province',
+          'district',
         ],
         select: [
           'id',

@@ -32,13 +32,13 @@ export const courtSeed = async (dataSource: DataSource) => {
   }
 };
 
-async function runSeed() {
-  await AppDataSource.initialize();
-  await courtSeed(AppDataSource);
-  await AppDataSource.destroy();
-}
+// async function runSeed() {
+//   await AppDataSource.initialize();
+//   await courtSeed(AppDataSource);
+//   await AppDataSource.destroy();
+// }
 
-runSeed().catch((error) => {
-  console.error('Error seeding courts:', error);
-  process.exit(1);
-});
+// runSeed().catch((error) => {
+//   console.error('Error seeding courts:', error);
+//   process.exit(1);
+// });

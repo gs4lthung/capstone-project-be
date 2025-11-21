@@ -519,13 +519,13 @@ export const subjectAndLessonSeed = async (datasource: DataSource) => {
   await subjectRepository.save(subjects);
 };
 
-async function runSeed() {
-  await AppDataSource.initialize();
-  await subjectAndLessonSeed(AppDataSource);
-  await AppDataSource.destroy();
-}
+// async function runSeed() {
+//   await AppDataSource.initialize();
+//   await subjectAndLessonSeed(AppDataSource);
+//   await AppDataSource.destroy();
+// }
 
-runSeed().catch((error) => {
-  console.error('Error running seed:', error);
-  process.exit(1);
-});
+// runSeed().catch((error) => {
+//   console.error('Error running seed:', error);
+//   process.exit(1);
+// });

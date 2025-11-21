@@ -4,6 +4,7 @@ import { DataSource, Repository } from 'typeorm';
 import { LearnerVideo } from '@app/database/entities/learner-video.entity';
 import { FfmpegService } from '@app/ffmpeg';
 import { UploadLearnerVideoDto } from '@app/shared/dtos/files/file.dto';
+import { SaveAiFeedbackDto } from '@app/shared/dtos/ai-feedback/ai-feedback.dto';
 import { User } from '@app/database/entities/user.entity';
 
 import { AiVideoComparisonResult } from '@app/database/entities/ai-video-comparison-result.entity';
@@ -96,7 +97,7 @@ export class LearnerVideoService {
     });
   }
 
-  async saveAiFeedback(learnerVideoId: number, aiText: any) {
+  async saveAiFeedback(learnerVideoId: number, aiFeedback: SaveAiFeedbackDto) {
     const learnerVideo = await this.learnerVideoRepo.findOne({
       where: { id: learnerVideoId },
       relations: ['session', 'session.lesson', 'session.lesson.videos'],
@@ -113,57 +114,61 @@ export class LearnerVideoService {
     }
 
     // Only set fields that have values
-    if (aiText.summary) {
-      aiResultRecord.summary = aiText.summary;
+    if (aiFeedback.summary) {
+      aiResultRecord.summary = aiFeedback.summary;
     }
-    if (aiText.coachNote) {
-      aiResultRecord.coachNote = aiText.coachNote;
-    }
-    if (
-      aiText.overallScoreForPlayer2 !== undefined &&
-      aiText.overallScoreForPlayer2 !== null
-    ) {
-      aiResultRecord.learnerScore = aiText.overallScoreForPlayer2;
+    if (aiFeedback.coachNote !== undefined && aiFeedback.coachNote !== null) {
+      aiResultRecord.coachNote = aiFeedback.coachNote;
     }
     if (
-      aiText.keyDifferences &&
-      Array.isArray(aiText.keyDifferences) &&
-      aiText.keyDifferences.length > 0
+      aiFeedback.overallScoreForPlayer2 !== undefined &&
+      aiFeedback.overallScoreForPlayer2 !== null
     ) {
-      aiResultRecord.keyDifferents = aiText.keyDifferences.map((kd: any) => ({
-        aspect: kd.aspect || kd.key || '',
-        impact: kd.impact || '',
-        coachTechnique: kd.coachTechnique || kd.coach_technique || '',
-        learnerTechnique: kd.learnerTechnique || kd.learner_technique || '',
+      aiResultRecord.learnerScore = aiFeedback.overallScoreForPlayer2;
+    }
+    if (
+      aiFeedback.keyDifferences &&
+      Array.isArray(aiFeedback.keyDifferences) &&
+      aiFeedback.keyDifferences.length > 0
+    ) {
+      aiResultRecord.keyDifferents = aiFeedback.keyDifferences.map((kd) => ({
+        aspect: kd.aspect,
+        impact: kd.impact,
+        coachTechnique: kd.coachTechnique,
+        learnerTechnique: kd.learnerTechnique,
       }));
     }
     if (
-      aiText.recommendationsForPlayer2 &&
-      Array.isArray(aiText.recommendationsForPlayer2) &&
-      aiText.recommendationsForPlayer2.length > 0
+      aiFeedback.recommendationsForPlayer2 &&
+      Array.isArray(aiFeedback.recommendationsForPlayer2) &&
+      aiFeedback.recommendationsForPlayer2.length > 0
     ) {
       aiResultRecord.recommendationDrills =
-        aiText.recommendationsForPlayer2.map((r: any) => {
+        aiFeedback.recommendationsForPlayer2.map((r) => {
           const drill: any = {};
-          if (r.drill?.title || r.name) {
-            drill.name = r.drill?.title || r.name || '';
+          if (r.drill?.title) {
+            drill.name = r.drill.title;
           }
-          if (r.drill?.description || r.description) {
-            drill.description = r.drill?.description || r.description;
+          if (r.drill?.description) {
+            drill.description = r.drill.description;
           }
-          if (r.drill?.practice_sets || r.practiceSets) {
+          if (r.drill?.practice_sets) {
+            const practiceSets = r.drill.practice_sets as
+              | string
+              | string[]
+              | number;
             drill.practiceSets =
-              typeof r.drill?.practice_sets === 'string'
-                ? r.drill.practice_sets
-                : Array.isArray(r.drill?.practice_sets)
-                  ? r.drill.practice_sets.join(', ')
-                  : r.drill?.practice_sets?.toString() || r.practiceSets;
+              typeof practiceSets === 'string'
+                ? practiceSets
+                : Array.isArray(practiceSets)
+                  ? practiceSets.join(', ')
+                  : String(practiceSets || '');
           }
           return drill;
         });
     }
-    if (aiText.comparison) {
-      const details = buildDetailsArrayFromComparison(aiText.comparison);
+    if (aiFeedback.comparison) {
+      const details = buildDetailsArrayFromComparison(aiFeedback.comparison);
       if (details && details.length > 0) {
         aiResultRecord.details = details;
       }
@@ -174,8 +179,8 @@ export class LearnerVideoService {
 
     // Only update learner progress if learnerScore is provided
     if (
-      aiText.overallScoreForPlayer2 !== undefined &&
-      aiText.overallScoreForPlayer2 !== null
+      aiFeedback.overallScoreForPlayer2 !== undefined &&
+      aiFeedback.overallScoreForPlayer2 !== null
     ) {
       const learnerProgress = await this.learnerProgressRepo.findOne({
         where: {
@@ -189,7 +194,8 @@ export class LearnerVideoService {
       });
       if (learnerProgress) {
         learnerProgress.avgAiAnalysisScore = Math.round(
-          (learnerProgress.avgAiAnalysisScore + aiText.overallScoreForPlayer2) /
+          (learnerProgress.avgAiAnalysisScore +
+            aiFeedback.overallScoreForPlayer2) /
             (await this.learnerVideoRepo.count({
               where: {
                 user: { id: learnerVideo.user.id },
