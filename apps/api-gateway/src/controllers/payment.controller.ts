@@ -46,7 +46,7 @@ export class PaymentController {
     return this.paymentService.createCoursePaymentLink(id);
   }
 
-  @Get('course/success')
+  @Get('courses/success')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     tags: ['Payments'],
@@ -69,7 +69,7 @@ export class PaymentController {
     });
   }
 
-  @Get('course/cancel')
+  @Get('courses/cancel')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     tags: ['Payments'],

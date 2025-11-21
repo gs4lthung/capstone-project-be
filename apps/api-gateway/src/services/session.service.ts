@@ -39,6 +39,7 @@ import { NotificationType } from '@app/shared/enums/notification.enum';
 import { EnrollmentStatus } from '@app/shared/enums/enrollment.enum';
 import { Enrollment } from '@app/database/entities/enrollment.entity';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { AttendanceStatus } from '@app/shared/enums/attendance.enum';
 
 @Injectable({ scope: Scope.REQUEST })
 export class SessionService extends BaseTypeOrmService<Session> {
@@ -62,39 +63,48 @@ export class SessionService extends BaseTypeOrmService<Session> {
   }
 
   async findOne(id: number): Promise<Session> {
-    const session = await this.sessionRepository.findOne({
-      where: { id: id },
-      withDeleted: false,
-      relations: [
-        'course',
-        'course.enrollments',
-        'course.enrollments.user',
-        'lesson',
-        'attendances',
-        'quizzes',
-        'quizzes.questions',
-        'quizzes.questions.options',
-        'videos',
-      ],
+    return await this.datasource.transaction(async (manager) => {
+      const queryBuilder = manager
+        .getRepository(Session)
+        .createQueryBuilder('session')
+        .leftJoinAndSelect('session.course', 'course')
+        .leftJoinAndSelect('course.enrollments', 'enrollments')
+        .leftJoinAndSelect('enrollments.user', 'user')
+        .leftJoinAndSelect('session.lesson', 'lesson')
+        .leftJoinAndSelect('session.attendances', 'attendances')
+        .leftJoinAndSelect('session.quizzes', 'quizzes')
+        .leftJoinAndSelect('quizzes.questions', 'questions')
+        .leftJoinAndSelect('questions.options', 'options')
+        .leftJoinAndSelect('session.videos', 'videos')
+        .where('session.id = :id', { id: id });
+
+      const session = await queryBuilder.getOne();
+
+      if (!session) throw new Error('Session not found');
+      return session;
     });
-
-    if (!session) throw new Error('Session not found');
-
-    return session;
   }
 
   async findByCourseId(courseId: number): Promise<Session[]> {
-    const sessions = await this.sessionRepository.find({
-      where: { course: { id: courseId } },
-      withDeleted: false,
-      relations: ['course', 'lesson', 'attendances', 'quizzes', 'videos'],
-      order: {
-        scheduleDate: 'ASC',
-        startTime: 'ASC',
-      },
-    });
+    return await this.datasource.transaction(async (manager) => {
+      const queryBuilder = manager
+        .getRepository(Session)
+        .createQueryBuilder('session')
+        .leftJoinAndSelect('session.course', 'course')
+        .leftJoinAndSelect('session.lesson', 'lesson')
+        .leftJoinAndSelect('session.attendances', 'attendances')
+        .leftJoinAndSelect('session.quizzes', 'quizzes')
+        .leftJoinAndSelect('quizzes.questions', 'questions')
+        .leftJoinAndSelect('questions.options', 'options')
+        .leftJoinAndSelect('session.videos', 'videos')
+        .where('course.id = :courseId', { courseId: courseId })
+        .orderBy('session.scheduleDate', 'ASC')
+        .addOrderBy('session.startTime', 'ASC');
 
-    return sessions;
+      const sessions = await queryBuilder.getMany();
+
+      return sessions;
+    });
   }
 
   async getSessionsForWeeklyCalendar(
@@ -210,17 +220,23 @@ export class SessionService extends BaseTypeOrmService<Session> {
             sessions,
           );
         case UserRole.LEARNER:
-          const learnerSessions = await manager.getRepository(Session).find({
-            where: {
-              course: {
-                enrollments: {
-                  user: { id: this.request.user.id as User['id'] },
-                },
-              },
-              scheduleDate: Between(startOfWeek, endOfWeek),
-            },
-            relations: ['course'],
-          });
+          const learnerSessions = await manager
+            .getRepository(Session)
+            .createQueryBuilder('session')
+            .leftJoinAndSelect('session.course', 'course')
+            .leftJoinAndSelect('course.createdBy', 'createdBy')
+            .leftJoinAndSelect('course.enrollments', 'enrollments')
+            .leftJoinAndSelect('enrollments.user', 'user')
+            .where('user.id = :userId', {
+              userId: this.request.user.id as User['id'],
+            })
+            .andWhere('session.scheduleDate BETWEEN :startDate AND :endDate', {
+              startDate: startOfWeek,
+              endDate: endOfWeek,
+            })
+            .orderBy('session.scheduleDate', 'ASC')
+            .addOrderBy('session.startTime', 'ASC')
+            .getMany();
           return new CustomApiResponse<Session[]>(
             HttpStatus.OK,
             'Sessions retrieved successfully',
@@ -276,9 +292,7 @@ export class SessionService extends BaseTypeOrmService<Session> {
         throw new InternalServerErrorException('Giá trị cấu hình không hợp lệ');
 
       const sessionEarning =
-        (Number(course.totalEarnings) * (100 - feePercentage)) /
-        100 /
-        course.totalSessions;
+        Number(course.totalEarnings) / course.totalSessions;
       const sessionEarningRecord = manager
         .getRepository(SessionEarning)
         .create({
@@ -294,20 +308,6 @@ export class SessionService extends BaseTypeOrmService<Session> {
         completedAt: new Date(),
       });
 
-      const learnerProgress = await manager
-        .getRepository(LearnerProgress)
-        .findOne({
-          where: {
-            course: course,
-            user: this.request.user as User,
-          },
-          withDeleted: false,
-        });
-      if (learnerProgress) {
-        learnerProgress.sessionsCompleted += 1;
-        await manager.getRepository(LearnerProgress).save(learnerProgress);
-      }
-
       for (const attendanceDto of data.attendances) {
         const attendance = manager.getRepository(Attendance).create({
           user: { id: attendanceDto.userId as User['id'] },
@@ -315,6 +315,22 @@ export class SessionService extends BaseTypeOrmService<Session> {
           status: attendanceDto.status,
         });
         await manager.getRepository(Attendance).save(attendance);
+
+        if (attendanceDto.status === AttendanceStatus.PRESENT) {
+          const learnerProgress = await manager
+            .getRepository(LearnerProgress)
+            .findOne({
+              where: {
+                course: course,
+                user: { id: attendanceDto.userId as User['id'] },
+              },
+              withDeleted: false,
+            });
+          if (learnerProgress) {
+            learnerProgress.sessionsCompleted += 1;
+            await manager.getRepository(LearnerProgress).save(learnerProgress);
+          }
+        }
 
         // Emit event for achievement tracking
         this.eventEmitter.emit('session.attended', {

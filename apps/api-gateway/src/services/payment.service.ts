@@ -30,6 +30,7 @@ import { BaseTypeOrmService } from '@app/shared/helpers/typeorm.helper';
 import { FindOptions } from '@app/shared/interfaces/find-options.interface';
 import { PaginateObject } from '@app/shared/dtos/paginate.dto';
 import { ConfigurationService } from './configuration.service';
+import { DateTimeUtils } from '@app/shared/utils/datetime.util';
 
 @Injectable({ scope: Scope.REQUEST })
 export class PaymentService extends BaseTypeOrmService<Payment> {
@@ -37,10 +38,6 @@ export class PaymentService extends BaseTypeOrmService<Payment> {
     @Inject(REQUEST) private readonly request: CustomApiRequest,
     @InjectRepository(Payment)
     private readonly paymentRepository: Repository<Payment>,
-    @InjectRepository(Course)
-    private readonly courseRepository: Repository<Course>,
-    @InjectRepository(Enrollment)
-    private readonly enrollmentRepository: Repository<Enrollment>,
     private readonly configurationService: ConfigurationService,
     private readonly payosService: PayosService,
     private readonly datasource: DataSource,
@@ -68,11 +65,15 @@ export class PaymentService extends BaseTypeOrmService<Payment> {
     id: number,
   ): Promise<CustomApiResponse<Payment>> {
     return await this.datasource.transaction(async (manager) => {
-      const course = await manager.getRepository(Course).findOne({
-        where: { id: id },
-        withDeleted: false,
-        relations: ['enrollments', 'createdBy'],
-      });
+      const course = await manager
+        .getRepository(Course)
+        .createQueryBuilder('course')
+        .where('course.id = :id', { id: id })
+        .andWhere('course.deletedAt IS NULL')
+        .leftJoinAndSelect('course.enrollments', 'enrollments')
+        .leftJoinAndSelect('enrollments.user', 'user')
+        .leftJoinAndSelect('course.createdBy', 'createdBy')
+        .getOne();
       if (!course) throw new BadRequestException('Không tìm thấy khóa học');
       if (
         course.status !== CourseStatus.APPROVED &&
@@ -86,13 +87,16 @@ export class PaymentService extends BaseTypeOrmService<Payment> {
 
       let enrollment: Enrollment, newEnrollment: Enrollment;
       if (hasLearnerEnrolled) {
-        enrollment = await manager.getRepository(Enrollment).findOne({
-          where: {
-            user: { id: this.request.user.id } as User,
-            course: { id: course.id } as Course,
-          },
-          withDeleted: false,
-        });
+        enrollment = await manager
+          .getRepository(Enrollment)
+          .createQueryBuilder('enrollment')
+          .where('enrollment.userId = :userId', {
+            userId: this.request.user.id,
+          })
+          .andWhere('enrollment.courseId = :courseId', { courseId: course.id })
+          .getOne();
+        if (!enrollment) throw new BadRequestException('Lỗi đăng ký khóa học');
+
         if (
           enrollment.status !== EnrollmentStatus.CANCELLED &&
           enrollment.status !== EnrollmentStatus.UNPAID
@@ -111,7 +115,7 @@ export class PaymentService extends BaseTypeOrmService<Payment> {
       }
 
       const payosResponse = await this.payosService.createPaymentLink({
-        orderCode: CryptoUtils.generateRandomNumber(10000, 99999),
+        orderCode: CryptoUtils.generateRandomNumber(10_000, 99_999),
         amount: parseInt((course.pricePerParticipant / 1000).toString()), /////////
         description: 'Thanh toán khóa học',
         expiredAt: new Date(Date.now() + 1000 * 60 * 60 * 24),
@@ -126,6 +130,9 @@ export class PaymentService extends BaseTypeOrmService<Payment> {
         qrCode: payosResponse.qrCode,
         status: PaymentStatus.PENDING,
         enrollment: enrollment ? enrollment : newEnrollment,
+        expiredAt: DateTimeUtils.convertUnixTimestampToDate(
+          payosResponse.expiredAt,
+        ),
       });
       await manager.getRepository(Payment).save(payment);
 
@@ -145,30 +152,39 @@ export class PaymentService extends BaseTypeOrmService<Payment> {
         return;
       }
 
-      const payment = await manager.getRepository(Payment).findOne({
-        where: { orderCode: data.orderCode },
-        relations: ['enrollment'],
-      });
+      const payment = await manager
+        .getRepository(Payment)
+        .createQueryBuilder('payment')
+        .where('payment.orderCode = :orderCode', { orderCode: data.orderCode })
+        .leftJoinAndSelect('payment.enrollment', 'enrollment')
+        .leftJoinAndSelect('enrollment.course', 'course')
+        .getOne();
       if (!payment) {
         return;
       }
 
       const hasSuccessfulPayment = await manager
         .getRepository(Payment)
-        .findOne({
-          where: {
-            enrollment: { id: payment.enrollment.id },
-            status: PaymentStatus.PAID,
-          },
-        });
+        .createQueryBuilder('payment')
+        .leftJoinAndSelect('payment.enrollment', 'enrollment')
+        .where('enrollment.id = :enrollmentId', {
+          enrollmentId: payment.enrollment.id,
+        })
+        .andWhere('payment.status = :status', { status: PaymentStatus.PAID })
+        .getOne();
+
       if (hasSuccessfulPayment) {
         return;
       }
 
-      const course = await manager.getRepository(Course).findOne({
-        where: { id: payment.enrollment.course.id },
-        relations: ['enrollments'],
-      });
+      const course = await manager
+        .getRepository(Course)
+        .createQueryBuilder('course')
+        .leftJoinAndSelect('course.enrollments', 'enrollments')
+        .where('course.id = :courseId', {
+          courseId: payment.enrollment.course.id,
+        })
+        .getOne();
 
       course.enrollments.map((enr) => {
         if (enr.id === payment.enrollment.id) {
@@ -236,10 +252,12 @@ export class PaymentService extends BaseTypeOrmService<Payment> {
         return;
       }
 
-      const payment = await manager.getRepository(Payment).findOne({
-        where: { orderCode: data.orderCode },
-        relations: ['enrollment'],
-      });
+      const payment = await manager
+        .getRepository(Payment)
+        .createQueryBuilder('payment')
+        .where('payment.orderCode = :orderCode', { orderCode: data.orderCode })
+        .leftJoinAndSelect('payment.enrollment', 'enrollment')
+        .getOne();
       if (!payment) {
         return;
       }

@@ -29,15 +29,6 @@ export class CronService {
     @InjectRepository(Course)
     private readonly courseRepository: Repository<Course>,
     @InjectRepository(Enrollment)
-    private readonly enrollmentRepository: Repository<Enrollment>,
-    @InjectRepository(LearnerProgress)
-    private readonly learnerProgressRepository: Repository<LearnerProgress>,
-    @InjectRepository(Configuration)
-    private readonly configurationRepository: Repository<Configuration>,
-    @InjectRepository(Payment)
-    private readonly paymentRepository: Repository<Payment>,
-    @InjectRepository(Wallet)
-    private readonly walletRepository: Repository<Wallet>,
     @InjectRepository(WalletTransaction)
     private readonly walletTransactionRepository: Repository<WalletTransaction>,
     private readonly notificationService: NotificationService,
