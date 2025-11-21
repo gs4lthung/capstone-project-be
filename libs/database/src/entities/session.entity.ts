@@ -30,6 +30,7 @@ import {
 import { Lesson } from './lesson.entity';
 import { Quiz } from './quiz.entity';
 import { Video } from './video.entity';
+import { Schedule } from './schedule.entity';
 
 @Entity('sessions')
 @Check(`start_time < end_time`)
@@ -126,4 +127,12 @@ export class Session {
     cascade: ['insert', 'update'],
   })
   videos: Video[];
+
+  @ManyToOne(() => Schedule, (schedule) => schedule.sessions, {
+    cascade: ['insert'],
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
+  @JoinColumn({ name: 'schedule_id' })
+  schedule: Schedule;
 }

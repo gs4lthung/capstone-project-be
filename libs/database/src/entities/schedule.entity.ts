@@ -3,11 +3,13 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Course } from './course.entity';
 import { ScheduleDayOfWeek } from '@app/shared/enums/schedule.enum';
 import { IsEnum, IsInt, Min } from 'class-validator';
+import { Session } from './session.entity';
 
 @Entity('schedules')
 export class Schedule {
@@ -38,4 +40,7 @@ export class Schedule {
   })
   @JoinColumn({ name: 'course_id' })
   course: Course;
+
+  @OneToMany(() => Session, (session) => session.schedule)
+  sessions: Session[];
 }

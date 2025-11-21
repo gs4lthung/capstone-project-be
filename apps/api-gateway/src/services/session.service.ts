@@ -26,7 +26,7 @@ import {
 } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Between, DataSource, Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { WalletService } from './wallet.service';
 import { ConfigurationService } from './configuration.service';
 import { SessionEarning } from '@app/database/entities/session-earning.entity';
@@ -457,6 +457,7 @@ export class SessionService extends BaseTypeOrmService<Session> {
             endTime: schedule.endTime,
             status: SessionStatus.PENDING,
             course: course,
+            schedule: schedule,
             lesson: subject
               ? subject.lessons.find(
                   (lesson) => lesson.lessonNumber === sessionNumber,
