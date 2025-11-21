@@ -71,10 +71,9 @@ export class AuthController {
     status: HttpStatus.OK,
     description: 'Current user information retrieved successfully',
   })
-  async me(
-    @CurrentUser() user: any,
-  ): Promise<CustomApiResponse<CurrentUserResponseDto>> {
-    const res = await this.authService.getCurrentUser(user.id);
+  @UseGuards(AuthGuard)
+  async me(): Promise<CustomApiResponse<CurrentUserResponseDto>> {
+    const res = await this.authService.getCurrentUser();
     return res;
   }
 
@@ -153,7 +152,7 @@ export class AuthController {
     return res.redirect(redirectUrl);
   }
 
-  @Post('refresh-token')
+  @Post('refresh')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     tags: ['Authentication'],

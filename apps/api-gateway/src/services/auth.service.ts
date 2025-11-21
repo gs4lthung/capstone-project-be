@@ -17,6 +17,7 @@ import {
 import { ResetPasswordDto } from '@app/shared/dtos/auth/reset-password.dto';
 import {
   HttpStatus,
+  Inject,
   Injectable,
   Scope,
   UnauthorizedException,
@@ -33,12 +34,15 @@ import { Learner } from '@app/database/entities/learner.entity';
 import { TwilioService } from '@app/twilio/twilio.service';
 import { Wallet } from '@app/database/entities/wallet.entity';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { REQUEST } from '@nestjs/core';
+import { CustomApiRequest } from '@app/shared/customs/custom-api-request';
 
 @Injectable({ scope: Scope.REQUEST })
 export class AuthService {
   private customerRoleId: number | null = null;
 
   constructor(
+    @Inject(REQUEST) private readonly request: CustomApiRequest,
     @InjectRepository(User) private readonly userRepository: Repository<User>,
     @InjectRepository(Role) private readonly roleRepository: Repository<Role>,
     private readonly mailService: MailService,
@@ -124,12 +128,10 @@ export class AuthService {
     );
   }
 
-  async getCurrentUser(
-    userId: number,
-  ): Promise<CustomApiResponse<CurrentUserResponseDto>> {
+  async getCurrentUser(): Promise<CustomApiResponse<CurrentUserResponseDto>> {
     try {
       const user = await this.userRepository.findOne({
-        where: { id: userId },
+        where: { id: this.request.user.id as User['id'] },
         withDeleted: false,
         relations: [
           'role',

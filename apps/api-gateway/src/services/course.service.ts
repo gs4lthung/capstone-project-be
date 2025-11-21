@@ -38,8 +38,6 @@ import {
   CreateCourseRequestDto,
   UpdateCourseDto,
 } from '@app/shared/dtos/course/course.dto';
-import { Province } from '@app/database/entities/province.entity';
-import { District } from '@app/database/entities/district.entity';
 import { CustomApiRequest } from '@app/shared/customs/custom-api-request';
 import { VideoConference } from '@app/database/entities/video-conference.entity';
 import { NotificationService } from './notification.service';

@@ -39,6 +39,7 @@ import { NotificationType } from '@app/shared/enums/notification.enum';
 import { EnrollmentStatus } from '@app/shared/enums/enrollment.enum';
 import { Enrollment } from '@app/database/entities/enrollment.entity';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { AttendanceStatus } from '@app/shared/enums/attendance.enum';
 
 @Injectable({ scope: Scope.REQUEST })
 export class SessionService extends BaseTypeOrmService<Session> {
@@ -307,20 +308,6 @@ export class SessionService extends BaseTypeOrmService<Session> {
         completedAt: new Date(),
       });
 
-      const learnerProgress = await manager
-        .getRepository(LearnerProgress)
-        .findOne({
-          where: {
-            course: course,
-            user: this.request.user as User,
-          },
-          withDeleted: false,
-        });
-      if (learnerProgress) {
-        learnerProgress.sessionsCompleted += 1;
-        await manager.getRepository(LearnerProgress).save(learnerProgress);
-      }
-
       for (const attendanceDto of data.attendances) {
         const attendance = manager.getRepository(Attendance).create({
           user: { id: attendanceDto.userId as User['id'] },
@@ -328,6 +315,22 @@ export class SessionService extends BaseTypeOrmService<Session> {
           status: attendanceDto.status,
         });
         await manager.getRepository(Attendance).save(attendance);
+
+        if (attendanceDto.status === AttendanceStatus.PRESENT) {
+          const learnerProgress = await manager
+            .getRepository(LearnerProgress)
+            .findOne({
+              where: {
+                course: course,
+                user: { id: attendanceDto.userId as User['id'] },
+              },
+              withDeleted: false,
+            });
+          if (learnerProgress) {
+            learnerProgress.sessionsCompleted += 1;
+            await manager.getRepository(LearnerProgress).save(learnerProgress);
+          }
+        }
 
         // Emit event for achievement tracking
         this.eventEmitter.emit('session.attended', {

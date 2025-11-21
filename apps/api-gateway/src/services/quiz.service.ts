@@ -307,6 +307,9 @@ export class QuizService extends BaseTypeOrmService<Quiz> {
           throw new BadRequestException('Không thể cập nhật quiz');
       }
 
+      await manager.getRepository(Quiz).update(question.quiz.id, {
+        totalQuestions: totalQuestions - 1,
+      });
       await manager.getRepository(Question).delete(questionId);
       return new CustomApiResponse<void>(
         HttpStatus.OK,
@@ -477,7 +480,9 @@ export class QuizService extends BaseTypeOrmService<Quiz> {
         }
       }
 
-      const score = (correctAnswers / quiz.totalQuestions) * 100;
+      const score = Number(
+        ((correctAnswers / quiz.totalQuestions) * 100).toFixed(2),
+      );
 
       const quizAttempt = this.quizAttemptRepository.create({
         session,
