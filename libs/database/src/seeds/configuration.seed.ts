@@ -42,13 +42,13 @@ export const configurationSeed = async (dataSource: DataSource) => {
   ]);
 };
 
-async function runSeed() {
-  await AppDataSource.initialize();
-  await configurationSeed(AppDataSource);
-  await AppDataSource.destroy();
-}
+// async function runSeed() {
+//   await AppDataSource.initialize();
+//   await configurationSeed(AppDataSource);
+//   await AppDataSource.destroy();
+// }
 
-runSeed().catch((error) => {
-  console.error('Error seeding configurations:', error);
-  process.exit(1);
-});
+// runSeed().catch((error) => {
+//   console.error('Error seeding configurations:', error);
+//   process.exit(1);
+// });
