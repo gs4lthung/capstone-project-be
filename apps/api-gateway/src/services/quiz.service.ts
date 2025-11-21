@@ -547,7 +547,7 @@ export class QuizService extends BaseTypeOrmService<Quiz> {
 
       return new CustomApiResponse<void>(
         HttpStatus.CREATED,
-        'QUIZ.ATTEMPT_SUCCESS',
+        'Đã nộp bài quiz thành công',
       );
     });
   }

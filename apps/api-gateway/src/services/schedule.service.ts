@@ -12,7 +12,6 @@ import { CourseStatus } from '@app/shared/enums/course.enum';
 import { SessionStatus } from '@app/shared/enums/session.enum';
 import { DateTimeUtils } from '@app/shared/utils/datetime.util';
 import {
-  BadGatewayException,
   BadRequestException,
   HttpStatus,
   Inject,
@@ -24,6 +23,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, In, Not, Repository } from 'typeorm';
 import { NotificationService } from './notification.service';
 import { NotificationType } from '@app/shared/enums/notification.enum';
+import { Configuration } from '@app/database/entities/configuration.entity';
 
 @Injectable({ scope: Scope.REQUEST })
 export class ScheduleService {
@@ -73,7 +73,7 @@ export class ScheduleService {
         relations: ['schedules', 'createdBy'],
       });
       if (!course) {
-        throw new BadGatewayException('Không tìm thấy khóa học');
+        throw new BadRequestException('Không tìm thấy khóa học');
       }
 
       const isNewScheduleValid = await this.isNewScheduleValid(
@@ -85,7 +85,7 @@ export class ScheduleService {
       );
 
       if (!isNewScheduleValid) {
-        throw new BadGatewayException(
+        throw new BadRequestException(
           'Lịch mới xung đột với lịch khóa học khác của giảng viên',
         );
       }
@@ -96,7 +96,7 @@ export class ScheduleService {
       });
 
       if (!replacedSchedule) {
-        throw new BadGatewayException('Không tìm thấy lịch cần thay thế');
+        throw new BadRequestException('Không tìm thấy lịch cần thay thế');
       }
 
       replacedSchedule.dayOfWeek = data.newSchedule.dayOfWeek;
@@ -151,6 +151,31 @@ export class ScheduleService {
     data: SessionNewScheduleDto,
   ): Promise<CustomApiResponse<void>> {
     return await this.datasource.transaction(async (manager) => {
+      const changeScheduleBeforeHours = await manager
+        .getRepository(Configuration)
+        .findOne({
+          where: { key: 'change_schedule_before_hours' },
+        });
+      if (!changeScheduleBeforeHours) {
+        throw new BadRequestException(
+          'Cấu hình thay đổi lịch không tồn tại, vui lòng liên hệ quản trị viên',
+        );
+      }
+
+      const changeScheduleBeforeHoursValue = Number(
+        changeScheduleBeforeHours.value,
+      );
+      const currentTime = new Date();
+
+      const changeScheduleDeadline = new Date(
+        currentTime.getTime() + changeScheduleBeforeHoursValue * 60 * 60 * 1000,
+      );
+      if (new Date(data.scheduledDate) < changeScheduleDeadline) {
+        throw new BadRequestException(
+          `Chỉ được phép thay đổi lịch trước ${changeScheduleBeforeHoursValue} giờ`,
+        );
+      }
+
       const session = await manager
         .getRepository(Session)
         .createQueryBuilder('session')
