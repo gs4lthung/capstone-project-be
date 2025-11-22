@@ -1,11 +1,15 @@
-import { Injectable, Scope, Inject, HttpStatus } from '@nestjs/common';
+import {
+  Injectable,
+  Scope,
+  Inject,
+  HttpStatus,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { REQUEST } from '@nestjs/core';
 import { CustomApiRequest } from '@app/shared/customs/custom-api-request';
 import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
-import { CustomRpcException } from '@app/shared/customs/custom-rpc-exception';
-import { ExceptionUtils } from '@app/shared/utils/exception.util';
 import { BaseTypeOrmService } from '@app/shared/helpers/typeorm.helper';
 import { FindOptions } from '@app/shared/interfaces/find-options.interface';
 import { BunnyService } from '@app/bunny';
@@ -151,18 +155,18 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
           size: icon.size,
           path: icon.path,
         });
-        
+
         if (!icon.path) {
           throw new Error('File path is required for Bunny upload');
         }
-        
+
         // Upload to Bunny CDN
         iconUrl = await this.bunnyService.uploadToStorage({
           id: Date.now(), // Use timestamp as unique ID
           type: 'icon',
           filePath: icon.path,
         });
-        
+
         console.log('🔷 [BUNNY] Upload success:', iconUrl);
       } catch (error) {
         console.error('🔷 [AWS] Upload failed:', error.message);
@@ -215,18 +219,18 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
           size: icon.size,
           path: icon.path,
         });
-        
+
         if (!icon.path) {
           throw new Error('File path is required for Bunny upload');
         }
-        
+
         // Upload to Bunny CDN
         iconUrl = await this.bunnyService.uploadToStorage({
           id: Date.now(), // Use timestamp as unique ID
           type: 'icon',
           filePath: icon.path,
         });
-        
+
         console.log('🔷 [BUNNY] Upload success:', iconUrl);
       } catch (error) {
         console.error('🔷 [BUNNY] Upload failed:', error.message);
@@ -264,9 +268,8 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
     // Validate comparison operator
     const validOperators = ['==', '!=', '>', '<', '>=', '<='];
     if (!validOperators.includes(data.comparisonOperator)) {
-      throw new CustomRpcException(
+      throw new Error(
         `Invalid comparison operator. Must be one of: ${validOperators.join(', ')}`,
-        HttpStatus.BAD_REQUEST,
       );
     }
 
@@ -274,23 +277,25 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
     let iconUrl: string | undefined = undefined;
     if (icon) {
       try {
-        console.log('🔷 [BUNNY] Starting upload to Bunny CDN (Property Check)...');
+        console.log(
+          '🔷 [BUNNY] Starting upload to Bunny CDN (Property Check)...',
+        );
         console.log('🔷 [BUNNY] File info:', {
           originalname: icon.originalname,
           size: icon.size,
           path: icon.path,
         });
-        
+
         if (!icon.path) {
           throw new Error('File path is required for Bunny upload');
         }
-        
+
         iconUrl = await this.bunnyService.uploadToStorage({
           id: Date.now(),
           type: 'icon',
           filePath: icon.path,
         });
-        
+
         console.log('🔷 [BUNNY] Upload success:', iconUrl);
       } catch (error) {
         console.error('🔷 [BUNNY] Upload failed:', error.message);
@@ -379,11 +384,7 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
 
     // Nếu không tìm thấy → throw error
     if (!achievement) {
-      throw new CustomRpcException(
-        'Achievement not found',
-        HttpStatus.NOT_FOUND,
-        `achievement:${id}`,
-      );
+      throw new BadRequestException('Achievement not found');
     }
 
     return achievement;
@@ -424,32 +425,31 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
     });
 
     if (!achievement) {
-      throw new CustomRpcException(
-        'Achievement not found',
-        HttpStatus.NOT_FOUND,
-      );
+      throw new BadRequestException('Achievement not found');
     }
 
     // Upload icon mới lên Bunny CDN nếu có file
     if (icon) {
       try {
-        console.log('🔷 [BUNNY] Starting upload to Bunny CDN (Update Event Count)...');
+        console.log(
+          '🔷 [BUNNY] Starting upload to Bunny CDN (Update Event Count)...',
+        );
         console.log('🔷 [BUNNY] File info:', {
           originalname: icon.originalname,
           size: icon.size,
           path: icon.path,
         });
-        
+
         if (!icon.path) {
           throw new Error('File path is required for Bunny upload');
         }
-        
+
         const iconUrl = await this.bunnyService.uploadToStorage({
           id: Date.now(),
           type: 'icon',
           filePath: icon.path,
         });
-        
+
         console.log('🔷 [BUNNY] Upload success:', iconUrl);
         data.iconUrl = iconUrl; // Override iconUrl trong data
       } catch (error) {
@@ -491,32 +491,31 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
     });
 
     if (!achievement) {
-      throw new CustomRpcException(
-        'Achievement not found',
-        HttpStatus.NOT_FOUND,
-      );
+      throw new BadRequestException('Achievement not found');
     }
 
     // Upload icon mới lên Bunny CDN nếu có file
     if (icon) {
       try {
-        console.log('🔷 [BUNNY] Starting upload to Bunny CDN (Update Streak)...');
+        console.log(
+          '🔷 [BUNNY] Starting upload to Bunny CDN (Update Streak)...',
+        );
         console.log('🔷 [BUNNY] File info:', {
           originalname: icon.originalname,
           size: icon.size,
           path: icon.path,
         });
-        
+
         if (!icon.path) {
           throw new Error('File path is required for Bunny upload');
         }
-        
+
         const iconUrl = await this.bunnyService.uploadToStorage({
           id: Date.now(),
           type: 'icon',
           filePath: icon.path,
         });
-        
+
         console.log('🔷 [BUNNY] Upload success:', iconUrl);
         data.iconUrl = iconUrl;
       } catch (error) {
@@ -549,9 +548,8 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
     if (data.comparisonOperator) {
       const validOperators = ['==', '!=', '>', '<', '>=', '<='];
       if (!validOperators.includes(data.comparisonOperator)) {
-        throw new CustomRpcException(
+        throw new BadRequestException(
           `Invalid comparison operator. Must be one of: ${validOperators.join(', ')}`,
-          HttpStatus.BAD_REQUEST,
         );
       }
     }
@@ -562,10 +560,7 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
     });
 
     if (!achievement) {
-      throw new CustomRpcException(
-        'Achievement not found',
-        HttpStatus.NOT_FOUND,
-      );
+      throw new BadRequestException('Achievement not found');
     }
 
     // Upload icon mới lên Bunny CDN nếu có file
@@ -579,17 +574,17 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
           size: icon.size,
           path: icon.path,
         });
-        
+
         if (!icon.path) {
           throw new Error('File path is required for Bunny upload');
         }
-        
+
         const iconUrl = await this.bunnyService.uploadToStorage({
           id: Date.now(),
           type: 'icon',
           filePath: icon.path,
         });
-        
+
         console.log('🔷 [BUNNY] Upload success:', iconUrl);
         data.iconUrl = iconUrl;
       } catch (error) {
@@ -634,10 +629,7 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
     });
 
     if (!achievement) {
-      throw new CustomRpcException(
-        'Achievement not found',
-        HttpStatus.NOT_FOUND,
-      );
+      throw new BadRequestException('Achievement not found');
     }
 
     /**
@@ -687,7 +679,7 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
         'ACHIEVEMENT.ACTIVATE_SUCCESS',
       );
     } catch (error) {
-      throw ExceptionUtils.wrapAsRpcException(error);
+      throw new BadRequestException(error);
     }
   }
 
@@ -917,7 +909,7 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
         activeAchievements,
       };
     } catch (error) {
-      throw ExceptionUtils.wrapAsRpcException(error);
+      throw new BadRequestException(error);
     }
   }
 
@@ -975,7 +967,7 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
 
       return result;
     } catch (error) {
-      throw ExceptionUtils.wrapAsRpcException(error);
+      throw new BadRequestException(error);
     }
   }
 
@@ -1037,7 +1029,7 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
         total: parseInt(totalUsersWithAchievements.total || 0),
       };
     } catch (error) {
-      throw ExceptionUtils.wrapAsRpcException(error);
+      throw new BadRequestException(error);
     }
   }
 }

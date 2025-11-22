@@ -4,16 +4,16 @@ import { DataSource, Repository } from 'typeorm';
 import { LearnerVideo } from '@app/database/entities/learner-video.entity';
 import { FfmpegService } from '@app/ffmpeg';
 import { UploadLearnerVideoDto } from '@app/shared/dtos/files/file.dto';
-import { SaveAiFeedbackDto } from '@app/shared/dtos/ai-feedback/ai-feedback.dto';
 import { User } from '@app/database/entities/user.entity';
 
 import { AiVideoComparisonResult } from '@app/database/entities/ai-video-comparison-result.entity';
-import { Video } from '@app/database/entities/video.entity';
-import { buildDetailsArrayFromComparison } from '@app/shared/helpers/buildDetailArray.helper';
 import { LearnerProgress } from '@app/database/entities/learner-progress.entity';
 import { LearnerVideoStatus } from '@app/shared/enums/learner.enum';
 import { BunnyService } from '@app/bunny';
 import { FileUtils } from '@app/shared/utils/file.util';
+import { buildDetailsArrayFromComparison } from '@app/shared/helpers/buildDetailArray.helper';
+import { SaveAiFeedbackDto } from '@app/shared/dtos/ai-feedback/ai-feedback.dto';
+import { Video } from '@app/database/entities/video.entity';
 
 @Injectable()
 export class LearnerVideoService {
@@ -37,14 +37,31 @@ export class LearnerVideoService {
     return this.datasource.transaction(async (manager) => {
       if (!videoFile) throw new BadRequestException('No video file uploaded');
 
+      const thumbnailPath = await this.ffmpegService.createVideoThumbnailVer2(
+        videoFile.path,
+        FileUtils.excludeFileFromPath(videoFile.path),
+      );
+
+      const thumbnailPublicUrl = await this.bunnyService.uploadToStorage({
+        id: Date.now(),
+        type: 'video_thumbnail',
+        filePath: thumbnailPath,
+      });
+
+      const encodeH264FilePath = await this.ffmpegService.transcodeToH264Aac(
+        videoFile.path,
+        FileUtils.excludeFileFromPath(videoFile.path),
+      );
+
       const videoPublicUrl = await this.bunnyService.uploadToStorage({
         id: Date.now(),
         type: 'video',
-        filePath: videoFile.path,
+        filePath: encodeH264FilePath,
       });
 
       const learnerVideo = manager.getRepository(LearnerVideo).create({
         publicUrl: videoPublicUrl,
+        thumbnailUrl: thumbnailPublicUrl,
         duration: data.duration,
         tags: data.tags,
         status: LearnerVideoStatus.READY,
@@ -52,16 +69,6 @@ export class LearnerVideoService {
         session: data.sessionId ? { id: data.sessionId } : undefined,
         video: data.coachVideoId ? { id: data.coachVideoId } : undefined,
       });
-
-      const coachVideo = await manager
-        .getRepository(Video)
-        .findOne({ where: { id: data.coachVideoId } });
-
-      this.ffmpegService
-        .overlayVideoOnVideo(videoPublicUrl, coachVideo.publicUrl)
-        .catch((err) => {
-          console.error('Error overlaying video:', err);
-        });
 
       return await manager.getRepository(LearnerVideo).save(learnerVideo);
     });

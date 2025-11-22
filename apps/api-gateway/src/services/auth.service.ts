@@ -2,7 +2,6 @@ import { ConfigService } from '@app/config';
 import { Role } from '@app/database/entities/role.entity';
 import { User } from '@app/database/entities/user.entity';
 import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
-import { CustomRpcException } from '@app/shared/customs/custom-rpc-exception';
 import { GoogleUserDto } from '@app/shared/dtos/auth/google-user.dto';
 import { JwtPayloadDto } from '@app/shared/dtos/auth/jwt.payload.dto';
 import {
@@ -16,9 +15,13 @@ import {
 } from '@app/shared/dtos/auth/register.dto';
 import { ResetPasswordDto } from '@app/shared/dtos/auth/reset-password.dto';
 import {
+  BadRequestException,
+  ConflictException,
   HttpStatus,
   Inject,
   Injectable,
+  InternalServerErrorException,
+  NotFoundException,
   Scope,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -26,7 +29,6 @@ import { JwtService, TokenExpiredError } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
-import { ExceptionUtils } from '@app/shared/utils/exception.util';
 import { MailSendDto } from '@app/shared/dtos/mails/mail-send.dto';
 import { UserRole } from '@app/shared/enums/user.enum';
 import { MailService } from './mail.service';
@@ -91,13 +93,13 @@ export class AuthService {
     };
 
     const accessToken = await this.jwtService.signAsync(payload, {
-      secret: this.configService.get('jwt').access_token.secret,
-      expiresIn: this.configService.get('jwt').access_token.expiration,
+      secret: this.configService.get('jwt').access_token.secret as string,
+      expiresIn: this.configService.get('jwt').access_token.expiration as any,
     });
 
     const refreshToken = await this.jwtService.signAsync(payload, {
-      secret: this.configService.get('jwt').refresh_token.secret,
-      expiresIn: this.configService.get('jwt').refresh_token.expiration,
+      secret: this.configService.get('jwt').refresh_token.secret as string,
+      expiresIn: this.configService.get('jwt').refresh_token.expiration as any,
     });
 
     const refreshTokenHash = await bcrypt.hash(
@@ -133,13 +135,7 @@ export class AuthService {
       const user = await this.userRepository.findOne({
         where: { id: this.request.user.id as User['id'] },
         withDeleted: false,
-        relations: [
-          'role',
-          'coach',
-          'learner',
-          'province',
-          'district',
-        ],
+        relations: ['role', 'coach', 'learner', 'province', 'district'],
         select: [
           'id',
           'fullName',
@@ -172,10 +168,7 @@ export class AuthService {
         },
       );
     } catch {
-      throw new CustomRpcException(
-        'AUTH.INVALID_TOKEN',
-        HttpStatus.UNAUTHORIZED,
-      );
+      throw new UnauthorizedException('Unauthorized');
     }
   }
 
@@ -195,21 +188,20 @@ export class AuthService {
         select: ['id', 'fullName', 'email', 'refreshToken'],
       });
 
-      if (!user)
-        throw new CustomRpcException('INVALID.TOKEN', HttpStatus.UNAUTHORIZED);
+      if (!user) throw new UnauthorizedException('Unauthorized');
 
       const isMatch = await bcrypt.compare(
         data.refreshToken,
         user.refreshToken,
       );
-      if (!isMatch)
-        throw new CustomRpcException('INVALID.TOKEN', HttpStatus.UNAUTHORIZED);
+      if (!isMatch) throw new UnauthorizedException('Unauthorized');
 
       const newAccessToken = await this.jwtService.signAsync(
         { id: user.id },
         {
           secret: this.configService.get('jwt').access_token.secret,
-          expiresIn: this.configService.get('jwt').access_token.expiration,
+          expiresIn: this.configService.get('jwt').access_token
+            .expiration as any,
         },
       );
 
@@ -220,12 +212,9 @@ export class AuthService {
       );
     } catch (error) {
       if (error instanceof TokenExpiredError) {
-        throw new CustomRpcException(
-          'AUTH.INVALID_TOKEN',
-          HttpStatus.UNAUTHORIZED,
-        );
+        throw new UnauthorizedException('Unauthorized');
       }
-      throw ExceptionUtils.wrapAsRpcException(error);
+      throw new Error(error);
     }
   }
 
@@ -277,7 +266,7 @@ export class AuthService {
       };
       return `${this.configService.get('front_end').url}/login?accessToken=${await this.jwtService.signAsync(payload)}`;
     } catch (error) {
-      throw ExceptionUtils.wrapAsRpcException(error);
+      throw new Error(error);
     }
   }
   //#endregion
@@ -290,11 +279,7 @@ export class AuthService {
         const isEmailExists = await this.userRepository.findOne({
           where: { email: data.email },
         });
-        if (isEmailExists)
-          throw new CustomRpcException(
-            'AUTH.EMAIL_ALREADY_EXISTS',
-            HttpStatus.CONFLICT,
-          );
+        if (isEmailExists) throw new ConflictException('Email already exists');
       }
 
       if (data.phoneNumber) {
@@ -302,10 +287,7 @@ export class AuthService {
           where: { phoneNumber: data.phoneNumber },
         });
         if (isPhoneExists)
-          throw new CustomRpcException(
-            'AUTH.PHONE_ALREADY_EXISTS',
-            HttpStatus.CONFLICT,
-          );
+          throw new ConflictException('Phone number already exists');
       }
 
       const passwordHashed = await bcrypt.hash(
@@ -344,8 +326,8 @@ export class AuthService {
           payload,
           {
             secret: this.configService.get('jwt').verify_email_token.secret,
-            expiresIn:
-              this.configService.get('jwt').verify_email_token.expiration,
+            expiresIn: this.configService.get('jwt').verify_email_token
+              .expiration as any,
           },
         );
 
@@ -381,10 +363,7 @@ export class AuthService {
       });
 
       if (!user) {
-        throw new CustomRpcException(
-          'AUTH.INVALID_TOKEN',
-          HttpStatus.UNAUTHORIZED,
-        );
+        throw new UnauthorizedException('Unauthorized');
       }
 
       user.isEmailVerified = true;
@@ -394,7 +373,7 @@ export class AuthService {
 
       return `${this.configService.get('front_end').verify_email_url}`;
     } catch (error) {
-      throw ExceptionUtils.wrapAsRpcException(error);
+      throw new Error(error);
     }
   }
 
@@ -407,10 +386,7 @@ export class AuthService {
       });
 
       if (!user) {
-        throw new CustomRpcException(
-          'AUTH.INVALID_VERIFICATION',
-          HttpStatus.NOT_FOUND,
-        );
+        throw new NotFoundException('Invalid verification');
       }
 
       const payload: JwtPayloadDto = {
@@ -418,7 +394,8 @@ export class AuthService {
       };
       const emailVerificationToken = await this.jwtService.signAsync(payload, {
         secret: this.configService.get('jwt').verify_email_token.secret,
-        expiresIn: this.configService.get('jwt').verify_email_token.expiration,
+        expiresIn: this.configService.get('jwt').verify_email_token
+          .expiration as any,
       });
 
       user.emailVerificationToken = emailVerificationToken;
@@ -431,7 +408,7 @@ export class AuthService {
         'AUTH.EMAIL_SEND_SUCCESS',
       );
     } catch (error) {
-      throw ExceptionUtils.wrapAsRpcException(error);
+      throw new Error(error);
     }
   }
 
@@ -459,13 +436,10 @@ export class AuthService {
       where: { phoneNumber: data.phoneNumber },
     });
     if (!user) {
-      throw new CustomRpcException('AUTH.USER_NOT_FOUND', HttpStatus.NOT_FOUND);
+      throw new NotFoundException('User not found');
     }
     if (user.isPhoneVerified) {
-      throw new CustomRpcException(
-        'AUTH.PHONE_ALREADY_VERIFIED',
-        HttpStatus.BAD_REQUEST,
-      );
+      throw new BadRequestException('Phone number already verified');
     }
 
     const isVerificationValid = await this.twilioService.verifyPhoneNumber(
@@ -473,10 +447,7 @@ export class AuthService {
       data.code,
     );
     if (!isVerificationValid) {
-      throw new CustomRpcException(
-        'AUTH.INVALID_VERIFICATION_CODE',
-        HttpStatus.BAD_REQUEST,
-      );
+      throw new BadRequestException('Invalid verification code');
     }
     user.isPhoneVerified = true;
     user.isActive = true;
@@ -495,7 +466,7 @@ export class AuthService {
       where: { phoneNumber: data.phoneNumber, isPhoneVerified: false },
     });
     if (!user) {
-      throw new CustomRpcException('AUTH.USER_NOT_FOUND', HttpStatus.NOT_FOUND);
+      throw new NotFoundException('User not found');
     }
     await this.twilioService.sendSMS(data.phoneNumber);
 
@@ -519,18 +490,16 @@ export class AuthService {
       });
 
       if (!user) {
-        throw new CustomRpcException(
-          'AUTH.USER_NOT_FOUND',
-          HttpStatus.NOT_FOUND,
-        );
+        throw new NotFoundException('User not found');
       }
 
       const resetPasswordToken = await this.jwtService.signAsync(
         { id: user.id },
         {
-          secret: this.configService.get('jwt').reset_password_token.secret,
-          expiresIn:
-            this.configService.get('jwt').reset_password_token.expiration,
+          secret: this.configService.get('jwt').reset_password_token
+            .secret as string,
+          expiresIn: this.configService.get('jwt').reset_password_token
+            .expiration as any,
         },
       );
 
@@ -552,7 +521,7 @@ export class AuthService {
         'AUTH.RESET_PASSWORD_EMAIL_SENT',
       );
     } catch (error) {
-      throw ExceptionUtils.wrapAsRpcException(error);
+      throw new Error(error);
     }
   }
 
@@ -566,10 +535,7 @@ export class AuthService {
       });
 
       if (!user) {
-        throw new CustomRpcException(
-          'AUTH.INVALID_TOKEN',
-          HttpStatus.UNAUTHORIZED,
-        );
+        throw new UnauthorizedException('Unauthorized');
       }
 
       const passwordHashed = await bcrypt.hash(
@@ -585,7 +551,7 @@ export class AuthService {
         'AUTH.PASSWORD_RESET_SUCCESS',
       );
     } catch (error) {
-      throw ExceptionUtils.wrapAsRpcException(error);
+      throw new Error(error);
     }
   }
 
@@ -599,10 +565,7 @@ export class AuthService {
     });
 
     if (!role) {
-      throw new CustomRpcException(
-        'Role not found',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+      throw new InternalServerErrorException('Role not found');
     }
 
     this.customerRoleId = role.id;

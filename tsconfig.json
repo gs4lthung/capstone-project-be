@@ -66,12 +66,6 @@
       "@app/ffmpeg/*": [
         "libs/ffmpeg/src/*"
       ],
-      "@app/aws": [
-        "libs/aws/src"
-      ],
-      "@app/aws/*": [
-        "libs/aws/src/*"
-      ],
       "@app/twilio": [
         "libs/twilio/src"
       ],
@@ -95,7 +89,7 @@
       ],
       "@app/bunny/*": [
         "libs/bunny/src/*"
-      ]
+      ],
     }
   }
 }

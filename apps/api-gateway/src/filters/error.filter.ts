@@ -14,8 +14,6 @@ import { ConfigService } from '@app/config';
 import { CustomApiRequest } from '@app/shared/customs/custom-api-request';
 import { ContextUtils } from '@app/shared/utils/context.util';
 import { ProtocolEnum } from '@app/shared/enums/protocol.enum';
-import { User } from '@app/database/entities/user.entity';
-import { CustomRpcException } from '@app/shared/customs/custom-rpc-exception';
 
 @Catch()
 export class ErrorLoggingFilter implements ExceptionFilter {
@@ -26,7 +24,7 @@ export class ErrorLoggingFilter implements ExceptionFilter {
     private readonly errorRepository: Repository<Error>,
   ) {}
 
-  async catch(exception: CustomRpcException, host: ArgumentsHost) {
+  async catch(exception: any, host: ArgumentsHost) {
     const logger = new Logger(ErrorLoggingFilter.name);
 
     const contextType = ContextUtils.getRequestContextType(host.getType());
@@ -34,7 +32,6 @@ export class ErrorLoggingFilter implements ExceptionFilter {
 
     let response: Response;
     let request: CustomApiRequest;
-    let requestUrl: string;
 
     // Handle different context types
     switch (contextType) {
@@ -42,13 +39,11 @@ export class ErrorLoggingFilter implements ExceptionFilter {
         const ctx = host.switchToHttp();
         response = ctx.getResponse<Response>();
         request = ctx.getRequest<CustomApiRequest>();
-        requestUrl = request.url;
         break;
       case ProtocolEnum.WS:
         const wsCtx = host.switchToWs();
         response = wsCtx.getClient<Response>();
         request = wsCtx.getData<CustomApiRequest>();
-        requestUrl = request.url || `/${ProtocolEnum.WS}`;
         break;
       default:
         logger.error('Unsupported context type:', contextType);
@@ -88,13 +83,6 @@ export class ErrorLoggingFilter implements ExceptionFilter {
         'Error details',
         `Code: ${statusCode}, Message: ${message}, Stack: ${stack}`,
       );
-    }
-
-    // Extract user information if available
-    const user = request.user as User;
-    let userId: number | null = null;
-    if (user && 'id' in user) {
-      userId = user.id;
     }
 
     // Store error in database

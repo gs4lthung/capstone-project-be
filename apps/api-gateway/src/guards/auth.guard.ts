@@ -2,14 +2,13 @@ import { ConfigService } from '@app/config';
 import { User } from '@app/database/entities/user.entity';
 import { JwtPayloadDto } from '@app/shared/dtos/auth/jwt.payload.dto';
 import { ProtocolEnum } from '@app/shared/enums/protocol.enum';
-import { CustomRpcException } from '@app/shared/customs/custom-rpc-exception';
 import { AuthUtils } from '@app/shared/utils/auth.util';
 import { ContextUtils } from '@app/shared/utils/context.util';
-import { ExceptionUtils } from '@app/shared/utils/exception.util';
 import {
+  BadGatewayException,
+  BadRequestException,
   CanActivate,
   ExecutionContext,
-  HttpStatus,
   Injectable,
 } from '@nestjs/common';
 import { JwtService, TokenExpiredError } from '@nestjs/jwt';
@@ -37,11 +36,7 @@ export class AuthGuard implements CanActivate {
           request = context.switchToWs().getClient<Request>();
           break;
         default:
-          throw new CustomRpcException(
-            'Unsupported context type',
-            HttpStatus.INTERNAL_SERVER_ERROR,
-            'Error in AuthGuard: Unsupported context type',
-          );
+          throw new BadGatewayException('Unsupported context type');
       }
 
       let token = '';
@@ -57,10 +52,7 @@ export class AuthGuard implements CanActivate {
           break;
       }
       if (!token) {
-        throw new CustomRpcException(
-          'AUTH.INVALID_TOKEN',
-          HttpStatus.UNAUTHORIZED,
-        );
+        throw new BadRequestException('AUTH.TOKEN_MISSING_IN_REQUEST');
       }
 
       const payload: JwtPayloadDto = await this.jwtService.verifyAsync(token, {
@@ -72,10 +64,7 @@ export class AuthGuard implements CanActivate {
         withDeleted: false,
       });
       if (!isUserExists) {
-        throw new CustomRpcException(
-          'AUTH.INVALID_TOKEN',
-          HttpStatus.UNAUTHORIZED,
-        );
+        throw new BadRequestException('AUTH.USER_NOT_FOUND');
       }
 
       request.user = { id: payload.id };
@@ -86,11 +75,8 @@ export class AuthGuard implements CanActivate {
       }
     } catch (error) {
       if (error instanceof TokenExpiredError)
-        throw new CustomRpcException(
-          'AUTH.INVALID_TOKEN',
-          HttpStatus.UNAUTHORIZED,
-        );
-      throw ExceptionUtils.wrapAsRpcException(error);
+        throw new BadRequestException('AUTH.TOKEN_EXPIRED');
+      throw error;
     }
     return true;
   }

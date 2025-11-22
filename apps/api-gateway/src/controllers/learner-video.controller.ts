@@ -17,11 +17,11 @@ import { AuthGuard } from '../guards/auth.guard';
 import { LearnerVideoService } from '../services/learner-video.service';
 import { CustomApiRequest } from '@app/shared/customs/custom-api-request';
 import { UploadLearnerVideoDto } from '@app/shared/dtos/files/file.dto';
-import { SaveAiFeedbackDto } from '@app/shared/dtos/ai-feedback/ai-feedback.dto';
 import { CheckRoles } from '@app/shared/decorators/check-roles.decorator';
 import { RoleGuard } from '../guards/role.guard';
 import { UserRole } from '@app/shared/enums/user.enum';
 import { ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { SaveAiFeedbackDto } from '@app/shared/dtos/ai-feedback/ai-feedback.dto';
 
 @Controller('learner-videos')
 export class LearnerVideoController {
@@ -96,19 +96,7 @@ export class LearnerVideoController {
     return this.learnerVideoService.findOneFull(id);
   }
 
-  @Post(':learnerVideoId/ai-feedback')
-  @HttpCode(HttpStatus.OK)
-  @ApiBearerAuth()
-  @ApiOperation({
-    tags: ['Learner Videos'],
-    summary: 'Save AI feedback for learner video',
-    description:
-      'Save AI-generated feedback and analysis results for a learner video',
-  })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'AI feedback saved successfully',
-  })
+  @Post(':id/ai-feedback')
   @UseGuards(AuthGuard, RoleGuard)
   @CheckRoles(UserRole.COACH)
   async saveAiFeedback(

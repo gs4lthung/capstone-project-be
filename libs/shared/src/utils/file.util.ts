@@ -1,6 +1,4 @@
-import { HttpStatus } from '@nestjs/common';
 import * as path from 'path';
-import { CustomRpcException } from '../customs/custom-rpc-exception';
 import * as multer from 'multer';
 import { Logger } from '@nestjs/common';
 import * as fs from 'fs';
@@ -12,7 +10,7 @@ export class FileUtils {
   static fileFilter(
     req: Request,
     file: { fieldname: string; mimetype: string; originalname: string },
-    cb: (arg0: CustomRpcException, arg1: boolean) => void,
+    cb: (arg0: Error, arg1: boolean) => void,
   ) {
     const allowedImageTypes = /jpeg|jpg|png|gif/;
     const allowedVideoTypes =
@@ -40,7 +38,7 @@ export class FileUtils {
 
     const errorMessage = `Invalid format. ${formatMessage}`;
 
-    cb(new CustomRpcException(errorMessage, HttpStatus.BAD_GATEWAY), false);
+    cb(new Error(errorMessage), false);
   }
 
   static fileStorage = multer.diskStorage({

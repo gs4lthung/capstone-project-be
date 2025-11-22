@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService as NestConfigService } from '@nestjs/config';
 
+export type JwtExpirationTime = '15m' | '7d' | '1h' | string;
+
 export interface Config {
   node_env: 'dev' | 'prod' | 'test';
   app: {
@@ -29,19 +31,19 @@ export interface Config {
   jwt: {
     access_token: {
       secret: string;
-      expiration: string;
+      expiration: JwtExpirationTime;
     };
     refresh_token: {
       secret: string;
-      expiration: string;
+      expiration: JwtExpirationTime;
     };
     verify_email_token: {
       secret: string;
-      expiration: string;
+      expiration: JwtExpirationTime;
     };
     reset_password_token: {
       secret: string;
-      expiration: string;
+      expiration: JwtExpirationTime;
     };
   };
   rate_limiter?: {
@@ -100,6 +102,9 @@ export interface Config {
       zone_id: number;
       password: string;
     };
+  };
+  gemini?: {
+    api_key?: string;
   };
 }
 
@@ -287,6 +292,9 @@ export class ConfigService {
           ),
           password: this.nestConfigService.get('BUNNY_STORAGE_PASSWORD', ''),
         },
+      },
+      gemini: {
+        api_key: this.nestConfigService.get('GEMINI_API_KEY', ''),
       },
     };
   }
