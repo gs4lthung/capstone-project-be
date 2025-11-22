@@ -429,7 +429,7 @@ export class FfmpegService {
           `Overlay dimensions: ${overlayDimensions.width}x${overlayDimensions.height}`,
         );
 
-        const outputDir = 'uploads/videos';
+        const outputDir = path.resolve('uploads', 'videos');
         if (!fs.existsSync(outputDir)) {
           fs.mkdirSync(outputDir, { recursive: true });
         }
@@ -552,6 +552,147 @@ export class FfmpegService {
         );
         reject(err);
       }
+    });
+  }
+
+  async transcodeToH264Aac(
+    inputPath: string,
+    outputPathOrDir?: string,
+  ): Promise<string> {
+    if (!fs.existsSync(inputPath)) {
+      this.logger.error(`File not found: ${inputPath}`);
+      throw new Error(`File not found: ${inputPath}`);
+    }
+
+    // Determine output directory and file path
+    let outDir: string;
+    let outFile: string;
+
+    if (outputPathOrDir) {
+      // Check if outputPathOrDir is a directory or a file path
+      if (
+        fs.existsSync(outputPathOrDir) &&
+        fs.statSync(outputPathOrDir).isDirectory()
+      ) {
+        // It's a directory
+        outDir = outputPathOrDir;
+        outFile = path.join(
+          outDir,
+          `${path.basename(inputPath, path.extname(inputPath))}_transcoded_${Date.now()}.mp4`,
+        );
+      } else {
+        // It's a file path or doesn't exist yet - use parent directory
+        outDir = path.dirname(outputPathOrDir);
+        outFile = outputPathOrDir;
+      }
+    } else {
+      // Default: use uploads/videos directory
+      outDir = path.resolve('uploads', 'videos');
+      outFile = path.join(
+        outDir,
+        `${path.basename(inputPath, path.extname(inputPath))}_transcoded_${Date.now()}.mp4`,
+      );
+    }
+
+    if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
+
+    return new Promise<string>((resolve, reject) => {
+      const args = [
+        '-i',
+        inputPath,
+        '-c:v',
+        'libx264',
+        '-profile:v',
+        'main',
+        '-preset',
+        'fast',
+        '-b:v',
+        '3000k',
+        '-maxrate',
+        '3000k',
+        '-bufsize',
+        '6000k',
+        '-vf',
+        'scale=1280:-2',
+        '-g',
+        '60',
+        '-c:a',
+        'aac',
+        '-b:a',
+        '128k',
+        outFile,
+      ];
+
+      const proc = spawn('ffmpeg', args);
+
+      if (proc.stdout) {
+        proc.stdout.on('data', (chunk: Buffer) => {
+          const text = chunk.toString().trim();
+          if (text) this.logger.log(`FFmpeg stdout: ${text}`);
+        });
+      }
+
+      if (proc.stderr) {
+        proc.stderr.on('data', (chunk: Buffer) => {
+          const text = chunk.toString();
+          if (text.trim()) this.logger.log(`FFmpeg stderr: ${text.trim()}`);
+
+          // Optional simple progress extraction
+          const timeMatch = text.match(/time=\s*([0-9:.]+)/);
+          if (timeMatch)
+            this.logger.log(`FFmpeg progress - time: ${timeMatch[1]}`);
+        });
+      }
+
+      proc.on('close', (code) => {
+        if (code === 0) {
+          this.logger.log(`Transcoding completed: ${outFile}`);
+          resolve(outFile);
+        } else {
+          this.logger.error(`FFmpeg exited with code ${code}`);
+          reject(new Error(`FFmpeg exited with code ${code}`));
+        }
+      });
+
+      proc.on('error', (err) => {
+        this.logger.error(`FFmpeg process error: ${err.message}`);
+        reject(err);
+      });
+    });
+  }
+
+  getVideoMetadataProbe(url: string): Promise<ffmpeg.FfprobeData> {
+    return new Promise((resolve, reject) => {
+      ffmpeg.ffprobe(url, (err, metadata) => {
+        if (err) reject(err);
+        else resolve(metadata);
+      });
+    });
+  }
+
+  async extractFrames(
+    videoPath: string,
+    outputDir: string = 'uploads/videos',
+    fps = 60,
+  ) {
+    return new Promise<void>((resolve, reject) => {
+      ffmpeg(videoPath)
+        .outputOptions([
+          '-vf',
+          `fps=${fps}`, // Set frame extraction rate
+          '-qscale:v',
+          '2', // Output quality (lower is better)
+        ])
+        .output(`${outputDir}/frame-%04d.jpg`)
+        .on('end', () => {
+          console.log('Frames extracted successfully');
+          resolve();
+        })
+        .on('error', (err) => {
+          console.error('Error extracting frames:', err);
+          reject(err);
+        })
+        .run();
     });
   }
 }

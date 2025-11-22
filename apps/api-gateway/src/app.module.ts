@@ -125,7 +125,6 @@ import { CourtController } from './controllers/court.controller';
 import { Court } from '@app/database/entities/court.entity';
 import { BunnyModule } from '@app/bunny';
 import { NotificationController } from './controllers/notification.controller';
-
 @Module({
   imports: [
     ConfigModule,

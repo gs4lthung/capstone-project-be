@@ -162,8 +162,8 @@ export class CoachService extends BaseTypeOrmService<Coach> {
           payload,
           {
             secret: this.configService.get('jwt').verify_email_token.secret,
-            expiresIn:
-              this.configService.get('jwt').verify_email_token.expiration,
+            expiresIn: this.configService.get('jwt').verify_email_token
+              .expiration as any,
           },
         );
 

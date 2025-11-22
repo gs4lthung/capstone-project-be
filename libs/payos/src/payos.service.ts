@@ -5,7 +5,6 @@ import {
 } from '@app/shared/dtos/payments/payment.dto';
 import { CryptoUtils } from '@app/shared/utils/crypto.util';
 import { DateTimeUtils } from '@app/shared/utils/datetime.util';
-import { ExceptionUtils } from '@app/shared/utils/exception.util';
 import { Injectable, Logger } from '@nestjs/common';
 import { CreatePaymentLinkResponse, PaymentLink, PayOS } from '@payos/node';
 
@@ -55,7 +54,7 @@ export class PayosService {
       return response;
     } catch (error) {
       this.logger.error(error);
-      throw ExceptionUtils.wrapAsRpcException(error);
+      throw error;
     }
   }
 
@@ -63,7 +62,7 @@ export class PayosService {
     try {
       return await this.payOS.paymentRequests.get(orderCode);
     } catch (error) {
-      throw ExceptionUtils.wrapAsRpcException(error);
+      throw error;
     }
   }
 
@@ -72,7 +71,7 @@ export class PayosService {
       const response = await this.payOS.webhooks.confirm(url);
       console.log('Webhook confirmed:', response);
     } catch (error) {
-      throw ExceptionUtils.wrapAsRpcException(error);
+      throw error;
     }
   }
 
@@ -85,7 +84,7 @@ export class PayosService {
       console.log('Payout response:', response);
       return response;
     } catch (error) {
-      throw ExceptionUtils.wrapAsRpcException(error);
+      throw error;
     }
   }
 }

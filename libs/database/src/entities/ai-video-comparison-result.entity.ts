@@ -41,9 +41,6 @@ class AiVideoComparisonDetails {
   @IsNotEmpty()
   advanced: string;
 
-  @IsEnum(['LEARNER', 'COACH'])
-  userRole: string;
-
   @IsOptional()
   @ArrayNotEmpty()
   @IsString({ each: true })
@@ -81,10 +78,6 @@ class AiVideoComparisonKeyDifferent {
   @IsString()
   @IsNotEmpty()
   impact: string;
-
-  @IsString()
-  @IsNotEmpty()
-  coachTechnique: string;
 
   @IsString()
   @IsNotEmpty()

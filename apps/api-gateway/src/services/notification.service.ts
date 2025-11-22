@@ -1,12 +1,11 @@
 import { Notification } from '@app/database/entities/notification.entity';
 import { User } from '@app/database/entities/user.entity';
-import { CustomRpcException } from '@app/shared/customs/custom-rpc-exception';
 import { PaginateObject } from '@app/shared/dtos/paginate.dto';
 import { UserRole } from '@app/shared/enums/user.enum';
 import { BaseTypeOrmService } from '@app/shared/helpers/typeorm.helper';
 import { FindOptions } from '@app/shared/interfaces/find-options.interface';
 import { SendNotification } from '@app/shared/interfaces/send-notification.interface';
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
@@ -29,11 +28,7 @@ export class NotificationService extends BaseTypeOrmService<Notification> {
         where: { id: notificationId },
         withDeleted: false,
       });
-      if (!notification)
-        throw new CustomRpcException(
-          'NOT_FOUND',
-          HttpStatus.INTERNAL_SERVER_ERROR,
-        );
+      if (!notification) throw new BadRequestException('NOT_FOUND');
       notification.isRead = true;
       await this.notificationRepository.save(notification);
     });
@@ -77,11 +72,7 @@ export class NotificationService extends BaseTypeOrmService<Notification> {
         where: { id: data.userId },
         withDeleted: false,
       });
-      if (!user)
-        throw new CustomRpcException(
-          'NOT_FOUND',
-          HttpStatus.INTERNAL_SERVER_ERROR,
-        );
+      if (!user) throw new BadRequestException('NOT_FOUND');
 
       const notification = manager.getRepository(Notification).create({
         title: data.title,

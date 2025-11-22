@@ -1,14 +1,7 @@
 import { User } from '@app/database/entities/user.entity';
 import { ProtocolEnum } from '@app/shared/enums/protocol.enum';
-import { CustomRpcException } from '@app/shared/customs/custom-rpc-exception';
 import { ContextUtils } from '@app/shared/utils/context.util';
-import { ExceptionUtils } from '@app/shared/utils/exception.util';
-import {
-  CanActivate,
-  ExecutionContext,
-  HttpStatus,
-  Injectable,
-} from '@nestjs/common';
+import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -45,12 +38,7 @@ export class RoleGuard implements CanActivate {
           request = context.switchToWs().getClient<Request>();
           break;
         default:
-          throw new CustomRpcException(
-            'Unsupported context type',
-            HttpStatus.INTERNAL_SERVER_ERROR,
-            'Error in AuthGuard: Unsupported context type',
-            true,
-          );
+          throw new Error('Unsupported context type');
       }
 
       const userId = request.user?.id || request.user?.['id'];
@@ -61,12 +49,12 @@ export class RoleGuard implements CanActivate {
       });
 
       if (!user || !user.role) {
-        throw new CustomRpcException('FORBIDDEN', HttpStatus.FORBIDDEN);
+        throw new Error('FORBIDDEN');
       }
 
       const hasRole = this.requiredRoles.includes(user.role.name);
       if (!hasRole) {
-        throw new CustomRpcException('FORBIDDEN', HttpStatus.FORBIDDEN);
+        throw new Error('FORBIDDEN');
       }
 
       switch (user.role.name) {
@@ -75,17 +63,14 @@ export class RoleGuard implements CanActivate {
             user.coach[0].verificationStatus !==
             CoachVerificationStatus.VERIFIED
           ) {
-            throw new CustomRpcException(
-              'Coach is not verified',
-              HttpStatus.FORBIDDEN,
-            );
+            throw new Error('FORBIDDEN');
           }
           break;
         default:
           break;
       }
     } catch (error) {
-      throw ExceptionUtils.wrapAsRpcException(error);
+      throw error;
     }
     return true;
   }
