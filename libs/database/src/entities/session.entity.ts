@@ -9,6 +9,7 @@ import {
   JoinColumn,
   ManyToOne,
   OneToMany,
+  OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
@@ -118,15 +119,15 @@ export class Session {
   @JoinColumn({ name: 'lesson_id' })
   lesson: Lesson;
 
-  @OneToMany(() => Quiz, (quiz) => quiz.session, {
+  @OneToOne(() => Quiz, (quiz) => quiz.session, {
     cascade: ['insert', 'update'],
   })
-  quizzes: Quiz[];
+  quiz: Quiz;
 
-  @OneToMany(() => Video, (video) => video.session, {
+  @OneToOne(() => Video, (video) => video.session, {
     cascade: ['insert', 'update'],
   })
-  videos: Video[];
+  video: Video;
 
   @ManyToOne(() => Schedule, (schedule) => schedule.sessions, {
     cascade: ['insert'],

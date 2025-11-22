@@ -6,6 +6,7 @@ import {
   JoinColumn,
   ManyToOne,
   OneToMany,
+  OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { User } from './user.entity';
@@ -61,11 +62,11 @@ export class Video {
   })
   uploadedBy: User;
 
-  @ManyToOne(() => Lesson, (lesson) => lesson.videos, { nullable: true })
+  @OneToOne(() => Lesson, (lesson) => lesson.video, { nullable: true })
   @JoinColumn({ name: 'lesson_id' })
   lesson: Lesson;
 
-  @ManyToOne(() => Session, (session) => session.videos, { nullable: true })
+  @OneToOne(() => Session, (session) => session.video, { nullable: true })
   @JoinColumn({ name: 'session_id' })
   session: Session;
 

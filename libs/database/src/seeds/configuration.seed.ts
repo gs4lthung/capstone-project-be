@@ -1,5 +1,6 @@
 import { DataSource } from 'typeorm';
 import { Configuration } from '../entities/configuration.entity';
+import { AppDataSource } from '../data-source';
 
 export const configurationSeed = async (dataSource: DataSource) => {
   const configurationRepository = dataSource.getRepository(Configuration);

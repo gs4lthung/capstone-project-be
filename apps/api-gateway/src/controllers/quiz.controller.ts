@@ -58,8 +58,8 @@ export class QuizController {
     description: 'List of quizzes',
   })
   @UseGuards(AuthGuard)
-  async getQuizzesByLesson(@Param('id') id: number) {
-    return this.quizService.getQuizzesByLesson(id);
+  async getQuizByLesson(@Param('id') id: number) {
+    return this.quizService.getQuizByLesson(id);
   }
 
   @Get('sessions/:id')
@@ -75,8 +75,8 @@ export class QuizController {
     description: 'List of quizzes',
   })
   @UseGuards(AuthGuard)
-  async getQuizzesBySession(@Param('id') id: number) {
-    return this.quizService.getQuizzesBySession(id);
+  async getQuizBySession(@Param('id') id: number) {
+    return this.quizService.getQuizBySession(id);
   }
 
   @Post('lessons/:id')

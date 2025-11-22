@@ -6,6 +6,7 @@ import {
   JoinColumn,
   ManyToOne,
   OneToMany,
+  OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Question } from './question.entity';
@@ -43,11 +44,11 @@ export class Quiz {
   @DeleteDateColumn({ name: 'deleted_at' })
   deletedAt?: Date;
 
-  @ManyToOne(() => Lesson, (lesson) => lesson.quizzes, { nullable: true })
+  @OneToOne(() => Lesson, (lesson) => lesson.quiz, { nullable: true })
   @JoinColumn({ name: 'lesson_id' })
   lesson: Lesson;
 
-  @ManyToOne(() => Session, (session) => session.quizzes, { nullable: true })
+  @OneToOne(() => Session, (session) => session.quiz, { nullable: true })
   @JoinColumn({ name: 'session_id' })
   session: Session;
 }

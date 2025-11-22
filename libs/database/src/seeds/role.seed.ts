@@ -22,13 +22,13 @@ export const roleSeed = async (dataSource: DataSource) => {
   }
 };
 
-// async function runSeed() {
-//   await AppDataSource.initialize();
-//   await roleSeed(AppDataSource);
-//   await AppDataSource.destroy();
-// }
+async function runSeed() {
+  await AppDataSource.initialize();
+  await roleSeed(AppDataSource);
+  await AppDataSource.destroy();
+}
 
-// runSeed().catch((error) => {
-//   console.error('Error seeding roles:', error);
-//   process.exit(1);
-// });
+runSeed().catch((error) => {
+  console.error('Error seeding roles:', error);
+  process.exit(1);
+});

@@ -47,6 +47,7 @@ import { ConfigurationService } from './configuration.service';
 import { DateTimeUtils } from '@app/shared/utils/datetime.util';
 import { Court } from '@app/database/entities/court.entity';
 import { CoachVideoStatus } from '@app/shared/enums/coach.enum';
+import { CryptoUtils } from '@app/shared/utils/crypto.util';
 
 @Injectable({ scope: Scope.REQUEST })
 export class CourseService extends BaseTypeOrmService<Course> {
@@ -86,8 +87,8 @@ export class CourseService extends BaseTypeOrmService<Course> {
         .getRepository(Course)
         .createQueryBuilder('course')
         .leftJoinAndSelect('course.sessions', 'sessions')
-        .leftJoinAndSelect('sessions.quizzes', 'quizzes')
-        .leftJoinAndSelect('sessions.videos', 'videos')
+        .leftJoinAndSelect('sessions.quiz', 'quiz')
+        .leftJoinAndSelect('sessions.video', 'video')
         .leftJoinAndSelect('course.enrollments', 'enrollments')
         .leftJoinAndSelect('enrollments.user', 'user')
         .leftJoinAndSelect('course.subject', 'subject')
@@ -128,8 +129,8 @@ export class CourseService extends BaseTypeOrmService<Course> {
           'sessions.durationInMinutes',
           'sessions.status',
           'sessions.completedAt',
-          'quizzes.id',
-          'videos.id',
+          'quiz.id',
+          'video.id',
           'subject.id',
           'subject.name',
           'schedules.id',
@@ -380,7 +381,6 @@ export class CourseService extends BaseTypeOrmService<Course> {
     data: CreateCourseRequestDto,
     file?: Express.Multer.File,
   ): Promise<CustomApiResponse<void>> {
-    console.log(file);
     return await this.datasource.transaction(async (manager) => {
       const court = await manager.getRepository(Court).findOne({
         where: { id: data.court },
@@ -427,10 +427,10 @@ export class CourseService extends BaseTypeOrmService<Course> {
         .getRepository(Subject)
         .createQueryBuilder('subject')
         .leftJoinAndSelect('subject.lessons', 'lessons')
-        .leftJoinAndSelect('lessons.quizzes', 'quizzes')
-        .leftJoinAndSelect('quizzes.questions', 'questions')
+        .leftJoinAndSelect('lessons.quiz', 'quiz')
+        .leftJoinAndSelect('quiz.questions', 'questions')
         .leftJoinAndSelect('questions.options', 'options')
-        .leftJoinAndSelect('lessons.videos', 'videos')
+        .leftJoinAndSelect('lessons.video', 'video')
         .where('subject.id = :subjectId', { subjectId: subjectId })
         .andWhere('subject.status = :status', {
           status: SubjectStatus.PUBLISHED,
@@ -481,10 +481,7 @@ export class CourseService extends BaseTypeOrmService<Course> {
       let publicUrl: string | undefined;
       if (file?.path) {
         publicUrl = await this.bunnyService.uploadToStorage({
-          id:
-            typeof this.request.user?.id === 'number'
-              ? this.request.user.id
-              : Number(this.request.user?.id ?? Date.now()),
+          id: CryptoUtils.generateRandomNumber(10_000, 999_999),
           type: 'course_image',
           filePath: file.path,
         });
@@ -712,10 +709,11 @@ export class CourseService extends BaseTypeOrmService<Course> {
         .getRepository(Course)
         .createQueryBuilder('course')
         .leftJoinAndSelect('course.subject', 'subject')
+        .leftJoinAndSelect('course.createdBy', 'createdBy')
         .leftJoinAndSelect('subject.lessons', 'lessons')
-        .leftJoinAndSelect('lessons.videos', 'videos')
-        .leftJoinAndSelect('lessons.quizzes', 'quizzes')
-        .leftJoinAndSelect('quizzes.questions', 'questions')
+        .leftJoinAndSelect('lessons.video', 'video')
+        .leftJoinAndSelect('lessons.quiz', 'quiz')
+        .leftJoinAndSelect('quiz.questions', 'questions')
         .leftJoinAndSelect('questions.options', 'options')
         .where('course.id = :courseId', { courseId: request.metadata.id })
         .andWhere('course.deletedAt IS NULL');
@@ -737,33 +735,28 @@ export class CourseService extends BaseTypeOrmService<Course> {
         for (const lesson of course.subject.lessons) {
           const session = sessions.find((ses) => ses.lesson.id === lesson.id);
           if (session) {
-            session.videos = [];
-            session.quizzes = [];
-            for (const video of lesson.videos) {
-              delete video.id;
-              session.videos.push({
-                ...video,
-                status: CoachVideoStatus.READY,
-                lesson: null,
-                session: session,
-                uploadedBy: course.createdBy,
-              });
-            }
-            for (const quiz of lesson.quizzes) {
-              delete quiz.id;
-              for (const question of quiz.questions) {
-                delete question.id;
-                for (const option of question.options) {
-                  delete option.id;
-                }
+            delete lesson.video.id;
+            session.video = {
+              ...lesson.video,
+              status: CoachVideoStatus.READY,
+              lesson: null,
+              session: session,
+              uploadedBy: course.createdBy,
+            };
+
+            delete lesson.quiz.id;
+            for (const question of lesson.quiz.questions) {
+              delete question.id;
+              for (const option of question.options) {
+                delete option.id;
               }
-              session.quizzes.push({
-                ...quiz,
-                lesson: null,
-                session: session,
-                createdBy: course.createdBy,
-              });
             }
+            session.quiz = {
+              ...lesson.quiz,
+              lesson: null,
+              session: session,
+              createdBy: course.createdBy,
+            };
           }
         }
 

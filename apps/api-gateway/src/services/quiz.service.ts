@@ -54,28 +54,28 @@ export class QuizService extends BaseTypeOrmService<Quiz> {
     super(quizRepository);
   }
 
-  async getQuizzesByLesson(lessonId: number): Promise<Quiz[]> {
+  async getQuizByLesson(lessonId: number): Promise<Quiz> {
     const lesson = await this.lessonRepository.findOne({
       where: { id: lessonId },
       withDeleted: false,
     });
     if (!lesson) throw new BadRequestException('Không tìm thấy bài học');
 
-    return this.quizRepository.find({
+    return this.quizRepository.findOne({
       where: { lesson: { id: lessonId } },
       relations: ['questions', 'questions.options', 'createdBy'],
       withDeleted: false,
     });
   }
 
-  async getQuizzesBySession(sessionId: number): Promise<Quiz[]> {
+  async getQuizBySession(sessionId: number): Promise<Quiz> {
     const session = await this.sessionRepository.findOne({
       where: { id: sessionId },
       withDeleted: false,
     });
     if (!session) throw new BadRequestException('Không tìm thấy buổi học');
 
-    return this.quizRepository.find({
+    return this.quizRepository.findOne({
       where: { session: { id: sessionId } },
       relations: ['questions', 'questions.options', 'createdBy'],
       withDeleted: false,
@@ -89,11 +89,13 @@ export class QuizService extends BaseTypeOrmService<Quiz> {
     return await this.datasource.transaction(async (manager) => {
       const lesson = await this.lessonRepository.findOne({
         where: { id: lessonId },
+        relations: ['quiz'],
         withDeleted: false,
       });
       if (!lesson) throw new BadRequestException('Không tìm thấy bài học');
+      if (lesson.quiz) throw new BadRequestException('Bài học đã có quiz rồi');
 
-      lesson.quizzes.push({
+      lesson.quiz = manager.getRepository(Quiz).create({
         ...data,
         totalQuestions: data.questions.length,
         createdBy: this.request.user as User,
@@ -129,8 +131,10 @@ export class QuizService extends BaseTypeOrmService<Quiz> {
         throw new BadRequestException(
           'Không thể tạo quiz cho các buổi học chưa lên lịch hoặc đã bị hủy',
         );
+      if (session.quiz)
+        throw new BadRequestException('Buổi học đã có quiz rồi');
 
-      session.quizzes.push({
+      session.quiz = manager.getRepository(Quiz).create({
         ...data,
         totalQuestions: data.questions.length,
         createdBy: this.request.user as User,
@@ -329,30 +333,8 @@ export class QuizService extends BaseTypeOrmService<Quiz> {
       if (quiz.createdBy.id !== this.request.user.id)
         throw new ForbiddenException('Không có quyền truy cập quiz này');
 
-      const totalQuizzes = await this.quizRepository.count({
-        where: quiz.session
-          ? { session: { id: quiz.session.id } }
-          : { lesson: { id: quiz.lesson.id } },
-      });
-      if (totalQuizzes <= 1) {
-        throw new BadRequestException(
-          'Không thể xóa quiz. Một buổi học hoặc bài học phải có ít nhất một quiz.',
-        );
-      }
-
       if (quiz.session) {
-        if (
-          quiz.session.course.status !== CourseStatus.ON_GOING &&
-          quiz.session.course.status !== CourseStatus.APPROVED &&
-          quiz.session.course.status !== CourseStatus.READY_OPENED &&
-          quiz.session.course.status !== CourseStatus.FULL
-        )
-          throw new BadRequestException('Không thể cập nhật quiz');
-        if (
-          quiz.session.status !== SessionStatus.SCHEDULED &&
-          quiz.session.status !== SessionStatus.PENDING
-        )
-          throw new BadRequestException('Không thể cập nhật quiz');
+        throw new BadRequestException('Không thể xóa quiz của buổi học');
       }
       await manager.getRepository(Quiz).softDelete(quiz);
 
@@ -506,22 +488,30 @@ export class QuizService extends BaseTypeOrmService<Quiz> {
         .getRepository(LearnerProgress)
         .findOne({
           where: {
-            user: this.request.user as User,
-            course: session.course,
+            user: { id: (this.request.user as User).id },
+            course: { id: session.course.id },
           },
-          withDeleted: false,
         });
       if (learnerProgress) {
-        learnerProgress.avgQuizScore = Math.round(
-          (learnerProgress.avgQuizScore + score) /
-            (await manager.getRepository(QuizAttempt).count({
-              where: {
-                attemptedBy: { id: (this.request.user as User).id },
-                session: { course: { id: session.course.id } },
-              },
-            })),
-        );
-        await manager.getRepository(LearnerProgress).save(learnerProgress);
+        // Get all quiz attempts for this user in this course (including the one just saved)
+        const allAttempts = await manager.getRepository(QuizAttempt).find({
+          where: {
+            attemptedBy: { id: (this.request.user as User).id },
+            session: { course: { id: session.course.id } },
+          },
+        });
+
+        if (allAttempts.length > 0) {
+          // Calculate new average from all attempts
+          const totalScore = allAttempts.reduce(
+            (sum, attempt) => sum + attempt.score,
+            0,
+          );
+          const newAvgQuizScore = Math.round(totalScore / allAttempts.length);
+
+          learnerProgress.avgQuizScore = newAvgQuizScore;
+          await manager.getRepository(LearnerProgress).save(learnerProgress);
+        }
 
         // ═══════════════════════════════════════════════════════════════════
         // EMIT EVENT: quiz.completed
@@ -545,9 +535,10 @@ export class QuizService extends BaseTypeOrmService<Quiz> {
         type: NotificationType.INFO,
       });
 
-      return new CustomApiResponse<void>(
+      return new CustomApiResponse<{ score: number }>(
         HttpStatus.CREATED,
         'Đã nộp bài quiz thành công',
+        { score: score },
       );
     });
   }

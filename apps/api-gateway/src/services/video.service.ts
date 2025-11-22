@@ -38,28 +38,28 @@ export class VideoService {
     private readonly datasource: DataSource,
   ) {}
 
-  async getVideosByLesson(lessonId: number): Promise<Video[]> {
+  async getVideoByLesson(lessonId: number): Promise<Video> {
     const lesson = await this.lessonRepository.findOne({
       where: { id: lessonId },
       withDeleted: false,
     });
     if (!lesson) throw new BadRequestException('Không tìm thấy bài học');
 
-    return this.videoRepository.find({
+    return this.videoRepository.findOne({
       where: { lesson: { id: lessonId } },
       relations: ['uploadedBy'],
       withDeleted: false,
     });
   }
 
-  async getVideosBySession(sessionId: number): Promise<Video[]> {
+  async getVideoBySession(sessionId: number): Promise<Video> {
     const session = await this.sessionRepository.findOne({
       where: { id: sessionId },
       withDeleted: false,
     });
     if (!session) throw new BadRequestException('Không tìm thấy buổi học');
 
-    return this.videoRepository.find({
+    return this.videoRepository.findOne({
       where: { session: { id: sessionId } },
       relations: ['uploadedBy'],
       withDeleted: false,
@@ -87,6 +87,8 @@ export class VideoService {
         withDeleted: false,
       });
       if (!lesson) throw new BadRequestException('Không tìm thấy bài học');
+      if (lesson.video)
+        throw new BadRequestException('Bài học đã có video rồi');
 
       const videoPublicUrl = await this.bunnyService.uploadToStorage({
         id: CryptoUtils.generateRandomNumber(1000000, 999999),
@@ -94,7 +96,7 @@ export class VideoService {
         type: 'video',
       });
 
-      lesson.videos.push({
+      lesson.video = manager.getRepository(Video).create({
         ...data,
         publicUrl: videoPublicUrl,
         status: CoachVideoStatus.READY,
@@ -134,6 +136,8 @@ export class VideoService {
         session.status !== SessionStatus.PENDING
       )
         throw new BadRequestException('Không thể cập nhật quiz');
+      if (session.video)
+        throw new BadRequestException('Buổi học đã có video rồi');
 
       const thumbnail = await this.ffmpegService.createVideoThumbnailVer2(
         videoFile.path,
@@ -152,7 +156,7 @@ export class VideoService {
         type: 'video',
       });
 
-      session.videos.push({
+      session.video = manager.getRepository(Video).create({
         ...data,
         publicUrl: videoPublicUrl,
         thumbnailUrl: uploadedThumbnail,

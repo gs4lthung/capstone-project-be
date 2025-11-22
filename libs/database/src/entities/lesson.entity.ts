@@ -13,6 +13,7 @@ import {
   JoinColumn,
   ManyToOne,
   OneToMany,
+  OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
@@ -60,15 +61,15 @@ export class Lesson {
   @OneToMany(() => Session, (session) => session.lesson)
   sessions: Session[];
 
-  @OneToMany(() => Video, (video) => video.lesson, {
+  @OneToOne(() => Video, (video) => video.lesson, {
     cascade: ['insert', 'update'],
   })
-  videos: Video[];
+  video: Video;
 
-  @OneToMany(() => Quiz, (quiz) => quiz.lesson, {
+  @OneToOne(() => Quiz, (quiz) => quiz.lesson, {
     cascade: ['insert', 'update'],
   })
-  quizzes: Quiz[];
+  quiz: Quiz;
 
   @ManyToOne(() => Subject, (subject) => subject.lessons, {
     onDelete: 'CASCADE',

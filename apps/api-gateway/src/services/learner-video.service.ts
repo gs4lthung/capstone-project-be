@@ -24,8 +24,6 @@ export class LearnerVideoService {
     private readonly learnerProgressRepo: Repository<LearnerProgress>,
     @InjectRepository(AiVideoComparisonResult)
     private readonly aiVideoComparisonResultRepo: Repository<AiVideoComparisonResult>,
-    @InjectRepository(Video)
-    private readonly videoRepo: Repository<Video>,
     private readonly ffmpegService: FfmpegService,
     private readonly bunnyService: BunnyService,
     private readonly datasource: DataSource,
@@ -45,8 +43,6 @@ export class LearnerVideoService {
         filePath: videoFile.path,
       });
 
-      console.log(data);
-
       const learnerVideo = manager.getRepository(LearnerVideo).create({
         publicUrl: videoPublicUrl,
         duration: data.duration,
@@ -56,6 +52,16 @@ export class LearnerVideoService {
         session: data.sessionId ? { id: data.sessionId } : undefined,
         video: data.coachVideoId ? { id: data.coachVideoId } : undefined,
       });
+
+      const coachVideo = await manager
+        .getRepository(Video)
+        .findOne({ where: { id: data.coachVideoId } });
+
+      this.ffmpegService
+        .overlayVideoOnVideo(videoPublicUrl, coachVideo.publicUrl)
+        .catch((err) => {
+          console.error('Error overlaying video:', err);
+        });
 
       return await manager.getRepository(LearnerVideo).save(learnerVideo);
     });
@@ -100,10 +106,10 @@ export class LearnerVideoService {
   async saveAiFeedback(learnerVideoId: number, aiFeedback: SaveAiFeedbackDto) {
     const learnerVideo = await this.learnerVideoRepo.findOne({
       where: { id: learnerVideoId },
-      relations: ['session', 'session.lesson', 'session.lesson.videos'],
+      relations: ['session', 'session.lesson', 'session.lesson.video'],
     });
     if (!learnerVideo) throw new BadRequestException('LearnerVideo not found');
-    const coachVideo = learnerVideo.session?.lesson?.videos?.[0] as Video;
+    const coachVideo = learnerVideo.session?.lesson?.video as Video;
     const aiResultRecord: any = {
       learnerVideo,
     };
@@ -217,7 +223,7 @@ export class LearnerVideoService {
     return this.datasource.transaction(async (manager) => {
       const learnerVideo = await manager.getRepository(LearnerVideo).findOne({
         where: { id: learnerVideoId },
-        relations: ['session', 'session.lesson', 'session.lesson.videos'],
+        relations: ['session', 'session.lesson', 'session.lesson.video'],
       });
       if (!learnerVideo)
         throw new BadRequestException('LearnerVideo not found');

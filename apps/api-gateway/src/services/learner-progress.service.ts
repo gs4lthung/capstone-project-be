@@ -1,18 +1,11 @@
 import { LearnerProgress } from '@app/database/entities/learner-progress.entity';
-import { User } from '@app/database/entities/user.entity';
 import { CustomApiRequest } from '@app/shared/customs/custom-api-request';
 import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
 import { PaginateObject } from '@app/shared/dtos/paginate.dto';
-import { UserRole } from '@app/shared/enums/user.enum';
+import { CourseStatus } from '@app/shared/enums/course.enum';
 import { BaseTypeOrmService } from '@app/shared/helpers/typeorm.helper';
 import { FindOptions } from '@app/shared/interfaces/find-options.interface';
-import {
-  BadRequestException,
-  HttpStatus,
-  Inject,
-  Injectable,
-  Scope,
-} from '@nestjs/common';
+import { HttpStatus, Inject, Injectable, Scope } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
@@ -39,37 +32,53 @@ export class LearnerProgressService extends BaseTypeOrmService<LearnerProgress> 
   }
 
   async getProgressForCourse(
-    courseId: number,
+    courseStatus: CourseStatus,
   ): Promise<CustomApiResponse<LearnerProgress[]>> {
     return await this.datasource.transaction(async (manager) => {
       let progresses: LearnerProgress[] = [];
-
-      const user = this.request.user as User;
-      if (!user) throw new BadRequestException('User not found');
-
-      switch (user.role.name) {
-        case UserRole.LEARNER:
-          progresses = await manager.getRepository(LearnerProgress).find({
-            where: {
-              course: { id: courseId },
-              user: user,
-            },
-          });
-          break;
-        case UserRole.COACH:
-          progresses = await manager.getRepository(LearnerProgress).find({
-            where: {
-              course: { id: courseId },
-            },
-          });
-          break;
-      }
+      progresses = await manager
+        .getRepository(LearnerProgress)
+        .createQueryBuilder('learnerProgress')
+        .leftJoinAndSelect('learnerProgress.user', 'user')
+        .leftJoinAndSelect('learnerProgress.course', 'course')
+        .leftJoinAndSelect('course.createdBy', 'createdBy')
+        .where('course.status = :courseStatus', { courseStatus })
+        .andWhere('createdBy.id = :userId', { userId: this.request.user.id })
+        .getMany();
 
       return new CustomApiResponse<LearnerProgress[]>(
         HttpStatus.OK,
         'Learner progresses retrieved successfully',
         progresses,
       );
+    });
+  }
+
+  async getLearnerProgressDetails(
+    userId: number,
+    courseId: number,
+  ): Promise<LearnerProgress> {
+    return await this.datasource.transaction(async (manager) => {
+      const progress = await manager
+        .getRepository(LearnerProgress)
+        .createQueryBuilder('learnerProgress')
+        .leftJoinAndSelect('learnerProgress.user', 'user')
+        .leftJoinAndSelect('user.quizAttempts', 'quizAttempts')
+        .leftJoinAndSelect('quizAttempts.learnerAnswers', 'learnerAnswers')
+        .leftJoinAndSelect('learnerAnswers.question', 'question')
+        .leftJoinAndSelect('learnerAnswers.questionOption', 'questionOption')
+        .leftJoinAndSelect('learnerProgress.course', 'course')
+        .leftJoinAndSelect('course.sessions', 'sessions')
+        .leftJoinAndSelect('sessions.video', 'video')
+        .leftJoinAndSelect('sessions.quiz', 'quiz')
+        .leftJoinAndSelect('quiz.questions', 'questions')
+        .leftJoinAndSelect('questions.options', 'options')
+        .leftJoinAndSelect('course.createdBy', 'createdBy')
+        .where('user.id = :userId', { userId })
+        .andWhere('course.id = :courseId', { courseId })
+        .getOne();
+      console.log('Progress:', progress.user.quizAttempts[0].learnerAnswers);
+      return progress;
     });
   }
 }

@@ -98,12 +98,7 @@ export class SubjectService extends BaseTypeOrmService<Subject> {
 
       if (data.status === SubjectStatus.PUBLISHED) {
         for (const lesson of subject.lessons) {
-          if (
-            !lesson.videos ||
-            lesson.videos.length === 0 ||
-            !lesson.quizzes ||
-            lesson.quizzes.length === 0
-          ) {
+          if (!lesson.video || !lesson.quiz) {
             throw new BadRequestException(
               'Không thể xuất bản chủ đề khi còn bài học chưa có video hoặc quiz',
             );
