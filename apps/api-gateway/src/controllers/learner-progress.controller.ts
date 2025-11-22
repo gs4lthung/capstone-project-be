@@ -3,7 +3,7 @@ import {
   Get,
   HttpCode,
   HttpStatus,
-  Param,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { LearnerProgressService } from '../services/learner-progress.service';
@@ -16,6 +16,7 @@ import { Sorting } from '@app/shared/interfaces/sorting.interface';
 import { Filtering } from '@app/shared/interfaces/filtering.interface';
 import { FilteringParams } from '@app/shared/decorators/filtering-params.decorator';
 import { FindOptions } from '@app/shared/interfaces/find-options.interface';
+import { CourseStatus } from '@app/shared/enums/course.enum';
 
 @Controller('learner-progresses')
 export class LearnerProgressController {
@@ -48,7 +49,7 @@ export class LearnerProgressController {
     } as FindOptions);
   }
 
-  @Get('courses/:id')
+  @Get('/coaches')
   @HttpCode(HttpStatus.OK)
   @ApiBearerAuth()
   @ApiOperation({
@@ -60,7 +61,34 @@ export class LearnerProgressController {
     status: HttpStatus.OK,
     description: 'Learner progresses retrieved successfully',
   })
-  async getProgressForCourse(@Param('id') courseId: number) {
-    return this.learnerProgressService.getProgressForCourse(courseId);
+  @UseGuards(AuthGuard)
+  async getProgressForCourse(@Query('courseStatus') courseStatus: string) {
+    return this.learnerProgressService.getProgressForCourse(
+      courseStatus as CourseStatus,
+    );
+  }
+
+  @Get('/coaches/details')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiOperation({
+    tags: ['Learner Progresses'],
+    summary: 'Get detailed learner progress for a specific user and course',
+    description:
+      'Retrieve detailed learner progress data for the specified user and course',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Learner progress details retrieved successfully',
+  })
+  @UseGuards(AuthGuard)
+  async getLearnerProgressDetails(
+    @Query('userId') userId: number,
+    @Query('courseId') courseId: number,
+  ) {
+    return this.learnerProgressService.getLearnerProgressDetails(
+      userId,
+      courseId,
+    );
   }
 }

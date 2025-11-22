@@ -9,6 +9,7 @@ import {
   JoinColumn,
   ManyToOne,
   OneToMany,
+  OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
@@ -30,6 +31,7 @@ import {
 import { Lesson } from './lesson.entity';
 import { Quiz } from './quiz.entity';
 import { Video } from './video.entity';
+import { Schedule } from './schedule.entity';
 
 @Entity('sessions')
 @Check(`start_time < end_time`)
@@ -117,13 +119,21 @@ export class Session {
   @JoinColumn({ name: 'lesson_id' })
   lesson: Lesson;
 
-  @OneToMany(() => Quiz, (quiz) => quiz.session, {
+  @OneToOne(() => Quiz, (quiz) => quiz.session, {
     cascade: ['insert', 'update'],
   })
-  quizzes: Quiz[];
+  quiz: Quiz;
 
-  @OneToMany(() => Video, (video) => video.session, {
+  @OneToOne(() => Video, (video) => video.session, {
     cascade: ['insert', 'update'],
   })
-  videos: Video[];
+  video: Video;
+
+  @ManyToOne(() => Schedule, (schedule) => schedule.sessions, {
+    cascade: ['insert'],
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
+  @JoinColumn({ name: 'schedule_id' })
+  schedule: Schedule;
 }

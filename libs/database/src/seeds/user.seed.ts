@@ -135,13 +135,13 @@ export const userSeed = async (dataSource: DataSource) => {
 import * as bcrypt from 'bcrypt';
 import { AppDataSource } from '../data-source';
 
-// async function runSeed() {
-//   await AppDataSource.initialize();
-//   await userSeed(AppDataSource);
-//   await AppDataSource.destroy();
-// }
+async function runSeed() {
+  await AppDataSource.initialize();
+  await userSeed(AppDataSource);
+  await AppDataSource.destroy();
+}
 
-// runSeed().catch((error) => {
-//   console.error('Error seeding users:', error);
-//   process.exit(1);
-// });
+runSeed().catch((error) => {
+  console.error('Error seeding users:', error);
+  process.exit(1);
+});

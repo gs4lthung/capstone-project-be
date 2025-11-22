@@ -39,7 +39,7 @@ export class VideoController {
   })
   @UseGuards(AuthGuard)
   async getVideosByLesson(@Param('id') id: number) {
-    return this.videoService.getVideosByLesson(id);
+    return this.videoService.getVideoByLesson(id);
   }
 
   @Get('sessions/:id')
@@ -56,7 +56,7 @@ export class VideoController {
   })
   @UseGuards(AuthGuard)
   async getVideosBySession(@Param('id') id: number) {
-    return this.videoService.getVideosBySession(id);
+    return this.videoService.getVideoBySession(id);
   }
 
   @Get(':id')

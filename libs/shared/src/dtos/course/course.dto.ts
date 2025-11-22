@@ -9,7 +9,7 @@ import {
   ValidateNested,
   IsNotEmpty,
 } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Type, Transform } from 'class-transformer';
 import { PartialType } from '@nestjs/mapped-types';
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -113,6 +113,16 @@ export class CreateCourseRequestDto {
   @IsOptional()
   @ArrayNotEmpty()
   @ValidateNested({ each: true })
+  @Transform(({ value }) => {
+    if (typeof value === 'string') {
+      try {
+        return JSON.parse(value);
+      } catch {
+        return value;
+      }
+    }
+    return value;
+  })
   @Type(() => CreateScheduleDto)
   schedules?: CreateScheduleDto[];
 }

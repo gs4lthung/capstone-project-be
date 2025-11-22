@@ -39,16 +39,23 @@ export const configurationSeed = async (dataSource: DataSource) => {
       description: 'Maximum number of participants allowed per course',
       dataType: 'number',
     },
+    {
+      key: 'change_schedule_before_hours',
+      value: '48',
+      description:
+        'Number of hours before schedule time to allow changing the schedule',
+      dataType: 'number',
+    },
   ]);
 };
 
-// async function runSeed() {
-//   await AppDataSource.initialize();
-//   await configurationSeed(AppDataSource);
-//   await AppDataSource.destroy();
-// }
+async function runSeed() {
+  await AppDataSource.initialize();
+  await configurationSeed(AppDataSource);
+  await AppDataSource.destroy();
+}
 
-// runSeed().catch((error) => {
-//   console.error('Error seeding configurations:', error);
-//   process.exit(1);
-// });
+runSeed().catch((error) => {
+  console.error('Error seeding configurations:', error);
+  process.exit(1);
+});

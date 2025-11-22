@@ -47,18 +47,13 @@ export const seedLocations = async (dataSource: DataSource) => {
   console.log('  ✅ Location seeding completed successfully!');
 };
 
-// ============================================
-// Run this file directly (optional)
-// ============================================
-// Uncomment below to run this seed file standalone
+async function runSeed() {
+  await AppDataSource.initialize();
+  await seedLocations(AppDataSource);
+  await AppDataSource.destroy();
+}
 
-// async function runSeed() {
-//   await AppDataSource.initialize();
-//   await seedLocations(AppDataSource);
-//   await AppDataSource.destroy();
-// }
-
-// runSeed().catch((error) => {
-//   console.error('Error seeding locations:', error);
-//   process.exit(1);
-// });
+runSeed().catch((error) => {
+  console.error('Error seeding locations:', error);
+  process.exit(1);
+});

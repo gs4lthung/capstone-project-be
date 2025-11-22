@@ -26,7 +26,7 @@ import {
 } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Between, DataSource, Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { WalletService } from './wallet.service';
 import { ConfigurationService } from './configuration.service';
 import { SessionEarning } from '@app/database/entities/session-earning.entity';
@@ -72,10 +72,10 @@ export class SessionService extends BaseTypeOrmService<Session> {
         .leftJoinAndSelect('enrollments.user', 'user')
         .leftJoinAndSelect('session.lesson', 'lesson')
         .leftJoinAndSelect('session.attendances', 'attendances')
-        .leftJoinAndSelect('session.quizzes', 'quizzes')
-        .leftJoinAndSelect('quizzes.questions', 'questions')
+        .leftJoinAndSelect('session.quiz', 'quiz')
+        .leftJoinAndSelect('quiz.questions', 'questions')
         .leftJoinAndSelect('questions.options', 'options')
-        .leftJoinAndSelect('session.videos', 'videos')
+        .leftJoinAndSelect('session.video', 'video')
         .where('session.id = :id', { id: id });
 
       const session = await queryBuilder.getOne();
@@ -93,10 +93,10 @@ export class SessionService extends BaseTypeOrmService<Session> {
         .leftJoinAndSelect('session.course', 'course')
         .leftJoinAndSelect('session.lesson', 'lesson')
         .leftJoinAndSelect('session.attendances', 'attendances')
-        .leftJoinAndSelect('session.quizzes', 'quizzes')
-        .leftJoinAndSelect('quizzes.questions', 'questions')
+        .leftJoinAndSelect('session.quiz', 'quiz')
+        .leftJoinAndSelect('quiz.questions', 'questions')
         .leftJoinAndSelect('questions.options', 'options')
-        .leftJoinAndSelect('session.videos', 'videos')
+        .leftJoinAndSelect('session.video', 'video')
         .where('course.id = :courseId', { courseId: courseId })
         .orderBy('session.scheduleDate', 'ASC')
         .addOrderBy('session.startTime', 'ASC');
@@ -151,10 +151,10 @@ export class SessionService extends BaseTypeOrmService<Session> {
             .leftJoinAndSelect('course.court', 'court')
             .leftJoinAndSelect('court.province', 'province')
             .leftJoinAndSelect('court.district', 'district')
-            .leftJoinAndSelect('session.quizzes', 'quizzes')
-            .leftJoinAndSelect('quizzes.questions', 'questions')
+            .leftJoinAndSelect('session.quiz', 'quiz')
+            .leftJoinAndSelect('quiz.questions', 'questions')
             .leftJoinAndSelect('questions.options', 'options')
-            .leftJoinAndSelect('session.videos', 'videos')
+            .leftJoinAndSelect('session.video', 'video')
             .where('course.createdBy.id = :coachId', {
               coachId: this.request.user.id as User['id'],
             })
@@ -178,24 +178,24 @@ export class SessionService extends BaseTypeOrmService<Session> {
               'course.id',
               'course.name',
               'course.description',
-              'quizzes.id',
-              'quizzes.title',
+              'quiz.id',
+              'quiz.title',
               'questions.id',
               'questions.title',
               'questions.explanation',
               'options.id',
               'options.content',
               'options.isCorrect',
-              'videos.id',
-              'videos.title',
-              'videos.description',
-              'videos.duration',
-              'videos.drillName',
-              'videos.drillDescription',
-              'videos.drillPracticeSets',
-              'videos.publicUrl',
-              'videos.thumbnailUrl',
-              'videos.status',
+              'video.id',
+              'video.title',
+              'video.description',
+              'video.duration',
+              'video.drillName',
+              'video.drillDescription',
+              'video.drillPracticeSets',
+              'video.publicUrl',
+              'video.thumbnailUrl',
+              'video.status',
               'court.id',
               'court.name',
               'court.phoneNumber',
@@ -321,10 +321,11 @@ export class SessionService extends BaseTypeOrmService<Session> {
             .getRepository(LearnerProgress)
             .findOne({
               where: {
-                course: course,
+                course: {
+                  id: course.id,
+                },
                 user: { id: attendanceDto.userId as User['id'] },
               },
-              withDeleted: false,
             });
           if (learnerProgress) {
             learnerProgress.sessionsCompleted += 1;
@@ -457,6 +458,7 @@ export class SessionService extends BaseTypeOrmService<Session> {
             endTime: schedule.endTime,
             status: SessionStatus.PENDING,
             course: course,
+            schedule: schedule,
             lesson: subject
               ? subject.lessons.find(
                   (lesson) => lesson.lessonNumber === sessionNumber,

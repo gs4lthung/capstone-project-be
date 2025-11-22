@@ -1,8 +1,11 @@
 import {
+  Body,
   Controller,
   Get,
   HttpCode,
   HttpStatus,
+  Param,
+  Put,
   UseGuards,
 } from '@nestjs/common';
 import { ScheduleService } from '../services/schedule.service';
@@ -13,10 +16,27 @@ import { AuthGuard } from '../guards/auth.guard';
 import { RoleGuard } from '../guards/role.guard';
 import { CheckRoles } from '@app/shared/decorators/check-roles.decorator';
 import { UserRole } from '@app/shared/enums/user.enum';
+import {
+  ChangeScheduleDto,
+  SessionNewScheduleDto,
+} from '@app/shared/dtos/schedules/schedule.dto';
 
 @Controller('schedules')
 export class ScheduleController {
   constructor(private readonly scheduleService: ScheduleService) {}
+
+  @Get('courses/:courseId')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    tags: ['Schedules'],
+    summary: 'Get schedule by course ID',
+    description: 'Retrieve the schedule for a specific course by its ID',
+  })
+  async getScheduleByCourse(
+    @Body('courseId') courseId: number,
+  ): Promise<Schedule[]> {
+    return this.scheduleService.getScheduleByCourse(courseId);
+  }
 
   @Get('coaches/available')
   @HttpCode(HttpStatus.OK)
@@ -34,5 +54,45 @@ export class ScheduleController {
   @UseGuards(AuthGuard, RoleGuard)
   async getAvailableSchedulesByCoach(): Promise<CustomApiResponse<Schedule[]>> {
     return this.scheduleService.getAvailableSchedulesByCoach();
+  }
+
+  @Put('change')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    tags: ['Schedules'],
+    summary: 'Change schedule for a course',
+    description: 'Change the schedule of a specific course',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Schedule changed successfully',
+  })
+  @CheckRoles(UserRole.COACH)
+  @UseGuards(AuthGuard, RoleGuard)
+  async changeSchedule(
+    @Body() data: ChangeScheduleDto,
+  ): Promise<CustomApiResponse<void>> {
+    return this.scheduleService.changeSchedule(data);
+  }
+
+  @Put('sessions/:id/new-schedule')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    tags: ['Schedules'],
+    summary: 'Create new schedule for sessions',
+    description: 'Create a new schedule for specific sessions',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'New schedule created successfully for sessions',
+  })
+  @CheckRoles(UserRole.COACH)
+  @UseGuards(AuthGuard, RoleGuard)
+  async createNewScheduleForSessions(
+    @Param('id') id: number,
+    @Body() data: SessionNewScheduleDto,
+  ): Promise<CustomApiResponse<void>> {
+    console.log('Creating new schedule for sessions with data:', data);
+    return this.scheduleService.changeSessionSchedule(id, data);
   }
 }
