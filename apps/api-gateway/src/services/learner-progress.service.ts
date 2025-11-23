@@ -64,6 +64,11 @@ export class LearnerProgressService extends BaseTypeOrmService<LearnerProgress> 
         .createQueryBuilder('learnerProgress')
         .leftJoinAndSelect('learnerProgress.user', 'user')
         .leftJoinAndSelect('user.quizAttempts', 'quizAttempts')
+        .leftJoinAndSelect('user.learnerVideos', 'learnerVideos')
+        .leftJoinAndSelect(
+          'learnerVideos.aiVideoComparisonResults',
+          'aiVideoComparisonResults',
+        )
         .leftJoinAndSelect('quizAttempts.learnerAnswers', 'learnerAnswers')
         .leftJoinAndSelect('learnerAnswers.question', 'question')
         .leftJoinAndSelect('learnerAnswers.questionOption', 'questionOption')
