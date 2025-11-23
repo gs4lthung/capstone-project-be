@@ -117,14 +117,13 @@ import { PlatformAnalysisController } from './controllers/platform-analysis.cont
 import { LearnerVideoController } from './controllers/learner-video.controller';
 import { LearnerVideoService } from './services/learner-video.service';
 import { LearnerVideo } from '@app/database/entities/learner-video.entity';
-import { AiVideoComparisonResult } from '@app/database/entities/ai-video-comparison-result.entity';
-import { AiVideoCompareResultController } from './controllers/ai-video-compare-result.controller';
-import { AiVideoCompareResultService } from './services/ai-video-compare-result.service';
 import { CourtService } from './services/court.service';
+import { AiVideoCompareResultModule } from '@app/ai-video-compare-result';
 import { CourtController } from './controllers/court.controller';
 import { Court } from '@app/database/entities/court.entity';
 import { BunnyModule } from '@app/bunny';
 import { NotificationController } from './controllers/notification.controller';
+import { AiVideoCompareResultController } from './controllers/ai-video-compare-result.controller';
 @Module({
   imports: [
     ConfigModule,
@@ -147,6 +146,7 @@ import { NotificationController } from './controllers/notification.controller';
     PayosModule,
     TwilioModule,
     AgoraModule,
+    AiVideoCompareResultModule,
     MailerModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -216,7 +216,6 @@ import { NotificationController } from './controllers/notification.controller';
       Province,
       District,
       LearnerVideo,
-      AiVideoComparisonResult,
     ]),
     ErrorModule,
     ThrottlerModule.forRootAsync({
@@ -297,7 +296,6 @@ import { NotificationController } from './controllers/notification.controller';
     AttendanceService,
     PlatformAnalysisService,
     LearnerVideoService,
-    AiVideoCompareResultService,
   ],
 })
 export class AppModule {}

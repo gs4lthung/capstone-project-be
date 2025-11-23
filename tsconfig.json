@@ -90,6 +90,12 @@
       "@app/bunny/*": [
         "libs/bunny/src/*"
       ],
+      "@app/ai-video-compare-result": [
+        "libs/ai-video-compare-result/src"
+      ],
+      "@app/ai-video-compare-result/*": [
+        "libs/ai-video-compare-result/src/*"
+      ],
     }
   }
 }

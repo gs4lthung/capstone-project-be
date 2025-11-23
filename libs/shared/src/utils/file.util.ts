@@ -18,7 +18,7 @@ export class FileUtils {
 
     let allowedTypes: RegExp, formatMessage: string;
 
-    if (file.fieldname === 'video') {
+    if (file.fieldname === 'video' || file.fieldname === 'videos') {
       allowedTypes = allowedVideoTypes;
       formatMessage = 'Allowed formats: mp3, mp4, avi, flv, wmv, mov, mkv';
     } else {
@@ -52,6 +52,7 @@ export class FileUtils {
           destination = `uploads/users/${customReq.user.id}/avatar`;
           break;
         case 'video':
+        case 'videos':
           destination = `uploads/videos`;
           break;
         case 'video_thumbnail':
@@ -93,6 +94,7 @@ export class FileUtils {
           fileName = `avatar_${baseName}${extension}`;
           break;
         case 'video':
+        case 'videos':
           fileName = `video_${baseName}${extension}`;
           break;
         case 'video_thumbnail':
