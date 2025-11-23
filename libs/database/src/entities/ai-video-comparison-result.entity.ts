@@ -16,6 +16,7 @@ import {
   IsEnum,
   IsInt,
   IsNotEmpty,
+  IsNumber,
   IsOptional,
   IsString,
   Max,
@@ -50,6 +51,14 @@ class AiVideoComparisonDetails {
   @ArrayNotEmpty()
   @IsString({ each: true })
   weaknesses?: string[];
+
+  @IsOptional()
+  @IsString()
+  userRole?: string;
+
+  @IsOptional()
+  @IsNumber()
+  timestamp?: number;
 }
 
 class AiVideoComparisonRecommendationDrill {

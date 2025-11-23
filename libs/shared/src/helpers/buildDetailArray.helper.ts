@@ -25,6 +25,12 @@ export function buildDetailsArrayFromComparison(comparison: any) {
       if (value.player1?.weaknesses?.length > 0) {
         coachDetail.weaknesses = value.player1.weaknesses;
       }
+      if (
+        value.player1?.timestamp !== undefined &&
+        value.player1?.timestamp !== null
+      ) {
+        coachDetail.timestamp = value.player1.timestamp;
+      }
       details.push(coachDetail);
     }
 
@@ -40,6 +46,12 @@ export function buildDetailsArrayFromComparison(comparison: any) {
       }
       if (value.player2?.weaknesses?.length > 0) {
         learnerDetail.weaknesses = value.player2.weaknesses;
+      }
+      if (
+        value.player2?.timestamp !== undefined &&
+        value.player2?.timestamp !== null
+      ) {
+        learnerDetail.timestamp = value.player2.timestamp;
       }
       details.push(learnerDetail);
     }
