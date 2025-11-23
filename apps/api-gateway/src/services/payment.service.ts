@@ -97,10 +97,7 @@ export class PaymentService extends BaseTypeOrmService<Payment> {
           .getOne();
         if (!enrollment) throw new BadRequestException('Lỗi đăng ký khóa học');
 
-        if (
-          enrollment.status !== EnrollmentStatus.CANCELLED &&
-          enrollment.status !== EnrollmentStatus.UNPAID
-        ) {
+        if (enrollment.status !== EnrollmentStatus.UNPAID) {
           throw new BadRequestException('Bạn đã đăng ký khóa học này rồi');
         }
         enrollment.status = EnrollmentStatus.UNPAID;
