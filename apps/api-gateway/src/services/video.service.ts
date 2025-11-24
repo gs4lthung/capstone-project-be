@@ -90,6 +90,17 @@ export class VideoService {
       if (lesson.video)
         throw new BadRequestException('Bài học đã có video rồi');
 
+      const thumbnail = await this.ffmpegService.createVideoThumbnailVer2(
+        videoFile.path,
+        FileUtils.excludeFileFromPath(videoFile.path),
+      );
+
+      const thumbnailPublicUrl = await this.bunnyService.uploadToStorage({
+        id: CryptoUtils.generateRandomNumber(10_000, 99_999),
+        filePath: thumbnail,
+        type: 'video_thumbnail',
+      });
+
       const videoPublicUrl = await this.bunnyService.uploadToStorage({
         id: CryptoUtils.generateRandomNumber(10_000, 99_999),
         filePath: videoFile.path,
@@ -99,6 +110,7 @@ export class VideoService {
       lesson.video = manager.getRepository(Video).create({
         ...data,
         publicUrl: videoPublicUrl,
+        thumbnailUrl: thumbnailPublicUrl,
         status: CoachVideoStatus.READY,
         uploadedBy: this.request.user as User,
       } as Video);
