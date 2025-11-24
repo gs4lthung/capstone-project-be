@@ -2,56 +2,31 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@app/config';
 import { PoseLandmark } from './ai-pose.service';
+import { AiVideoComparisonResultSchema } from '@app/shared/dtos/ai-feedback/gemini-call.dto';
+import { AiVideoComparisonResult } from '@app/database/entities/ai-video-comparison-result.entity';
 
-export interface VideoComparisonResult {
-  comparison: {
-    preparation: {
-      player1: { analysis: string; timestamp: number };
-      player2: {
-        analysis: string;
-        strengths: string[];
-        weaknesses: string[];
-        timestamp: number;
-      };
-      advantage: string;
-    };
-    swingAndContact: {
-      player1: { analysis: string; timestamp: number };
-      player2: {
-        analysis: string;
-        strengths: string[];
-        weaknesses: string[];
-        timestamp: number;
-      };
-      advantage: string;
-    };
-    followThrough: {
-      player1: { analysis: string; timestamp: number };
-      player2: {
-        analysis: string;
-        strengths: string[];
-        weaknesses: string[];
-        timestamp: number;
-      };
-      advantage: string;
-    };
-  };
-  keyDifferences: Array<{
+// Interface matching the Gemini API response schema
+interface GeminiApiResponse {
+  details: Array<{
+    type: string;
+    advanced: string;
+    strengths: string[];
+    weaknesses: string[];
+    learnerTimestamp: number;
+    coachTimestamp: number;
+  }>;
+  keyDifferents: Array<{
     aspect: string;
-    player1_technique: string;
-    player2_technique: string;
+    learnerTechnique: string;
     impact: string;
   }>;
   summary: string;
-  recommendationsForPlayer2: Array<{
-    recommendation: string;
-    drill: {
-      title: string;
-      description: string;
-      practice_sets: string;
-    };
+  recommendationDrills: Array<{
+    name: string;
+    description: string;
+    practiceSets: string;
   }>;
-  overallScoreForPlayer2: number;
+  learnerScore: number;
 }
 
 @Injectable()
@@ -75,11 +50,11 @@ export class AiGeminiService {
     coachTimestamps: number[],
     learnerPoses: PoseLandmark[][],
     learnerTimestamps: number[],
-  ): Promise<VideoComparisonResult> {
+  ): Promise<GeminiApiResponse> {
     const prompt = `
 Bạn là một huấn luyện viên pickleball AI, chuyên đưa ra phản hồi so sánh nhanh chóng, súc tích cho người dùng di động.
 
-Nhiệm vụ: So sánh dữ liệu JSON của "Huấn luyện viên" (player1, tham chiếu) và "Học viên" (player2). Tập trung vào việc giúp Học viên cải thiện bằng cách phân tích hình học và chuyển động giữa các điểm khớp.
+Nhiệm vụ: So sánh dữ liệu JSON của "Huấn luyện viên" (player1, tham chiếu) và "Học viên" (player2). Dữ liệu trả ra chỉ dành cho phân tích cho học viên và trả ra "Học viên" thay vì "Player 2". Tập trung vào việc giúp Học viên cải thiện bằng cách phân tích hình học và chuyển động giữa các điểm khớp.
 
 YÊU CẦU QUAN TRỌNG:
 - **SÚC TÍCH TỐI ĐA:** Toàn bộ phản hồi PHẢI CỰC KỲ ngắn gọn. Sử dụng các gạch đầu dòng và câu ngắn. TRÁNH các đoạn văn dài.
@@ -87,7 +62,7 @@ YÊU CẦU QUAN TRỌNG:
 - **Khác biệt chính ('keyDifferences'):** Liệt kê 2-3 điểm khác biệt quan trọng nhất một cách ngắn gọn.
 - **Tóm tắt ('summary'):** Một câu duy nhất.
 - **Đề xuất & Bài tập ('recommendationsForPlayer2'):** Đề xuất phải trực tiếp. Mô tả bài tập ('drill.description') chỉ nên là các bước chính, không quá 2 câu.
-- **Dấu thời gian:** Luôn bao gồm dấu thời gian chính xác cho mỗi giai đoạn, được cung cấp dưới đây.
+- **Dấu thời gian ('timestamp'):** QUAN TRỌNG! Với mỗi giai đoạn (preparation, swingAndContact, followThrough), hãy xác định chính xác thời điểm (giây) xảy ra trong video của HLV (\`coachTimestamp\`) và Học viên (\`learnerTimestamp\`). Đây là lúc hành động diễn ra rõ nhất.
 - **Điểm số:** Chấm điểm trên thang 100 điểm.
 
 DỮ LIỆU ĐẦU VÀO:
@@ -109,11 +84,19 @@ Hãy trả lời CHỈ bằng một đối tượng JSON bằng tiếng Việt t
         ],
         generationConfig: {
           response_mime_type: 'application/json',
-          response_schema: this.getComparisonSchema(),
+          response_schema: AiVideoComparisonResultSchema,
         },
       });
 
-      return this.parseJsonResponse<VideoComparisonResult>(response);
+      const jsonRes = this.parseJsonResponse<GeminiApiResponse>(response);
+
+      return {
+        details: jsonRes.details,
+        keyDifferents: jsonRes.keyDifferents,
+        summary: jsonRes.summary,
+        recommendationDrills: jsonRes.recommendationDrills,
+        learnerScore: jsonRes.learnerScore,
+      };
     } catch (error) {
       this.logger.error('❌ Gemini API call failed:', error);
       throw new Error('AI không thể xử lý dữ liệu. Vui lòng thử lại sau.');
@@ -179,17 +162,9 @@ Hãy trả lời CHỈ bằng một đối tượng JSON bằng tiếng Việt t
         }
 
         const data: any = await response.json();
-        const text =
-          data?.candidates?.[0]?.content?.parts
-            ?.map((p: any) => p.text ?? '')
-            .join('') ?? '';
-
-        if (!text) {
-          throw new Error('Empty response from Gemini');
-        }
 
         this.logger.log(`✅ Gemini API success on attempt ${attempt}`);
-        return text;
+        return data?.candidates?.[0]?.content?.parts?.[0]?.text;
       } catch (error) {
         if (attempt < retries && error instanceof TypeError) {
           this.logger.log(`⏳ Network error, retrying in 3s...`);
@@ -215,155 +190,5 @@ Hãy trả lời CHỈ bằng một đối tượng JSON bằng tiếng Việt t
 
   private sleep(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
-  }
-
-  private getComparisonSchema() {
-    return {
-      type: 'object',
-      properties: {
-        comparison: {
-          type: 'object',
-          properties: {
-            preparation: {
-              type: 'object',
-              properties: {
-                player1: {
-                  type: 'object',
-                  properties: {
-                    analysis: { type: 'string' },
-                    timestamp: { type: 'number' },
-                  },
-                  required: ['analysis', 'timestamp'],
-                },
-                player2: {
-                  type: 'object',
-                  properties: {
-                    analysis: { type: 'string' },
-                    strengths: { type: 'array', items: { type: 'string' } },
-                    weaknesses: { type: 'array', items: { type: 'string' } },
-                    timestamp: { type: 'number' },
-                  },
-                  required: [
-                    'analysis',
-                    'strengths',
-                    'weaknesses',
-                    'timestamp',
-                  ],
-                },
-                advantage: { type: 'string' },
-              },
-              required: ['player1', 'player2', 'advantage'],
-            },
-            swingAndContact: {
-              type: 'object',
-              properties: {
-                player1: {
-                  type: 'object',
-                  properties: {
-                    analysis: { type: 'string' },
-                    timestamp: { type: 'number' },
-                  },
-                  required: ['analysis', 'timestamp'],
-                },
-                player2: {
-                  type: 'object',
-                  properties: {
-                    analysis: { type: 'string' },
-                    strengths: { type: 'array', items: { type: 'string' } },
-                    weaknesses: { type: 'array', items: { type: 'string' } },
-                    timestamp: { type: 'number' },
-                  },
-                  required: [
-                    'analysis',
-                    'strengths',
-                    'weaknesses',
-                    'timestamp',
-                  ],
-                },
-                advantage: { type: 'string' },
-              },
-              required: ['player1', 'player2', 'advantage'],
-            },
-            followThrough: {
-              type: 'object',
-              properties: {
-                player1: {
-                  type: 'object',
-                  properties: {
-                    analysis: { type: 'string' },
-                    timestamp: { type: 'number' },
-                  },
-                  required: ['analysis', 'timestamp'],
-                },
-                player2: {
-                  type: 'object',
-                  properties: {
-                    analysis: { type: 'string' },
-                    strengths: { type: 'array', items: { type: 'string' } },
-                    weaknesses: { type: 'array', items: { type: 'string' } },
-                    timestamp: { type: 'number' },
-                  },
-                  required: [
-                    'analysis',
-                    'strengths',
-                    'weaknesses',
-                    'timestamp',
-                  ],
-                },
-                advantage: { type: 'string' },
-              },
-              required: ['player1', 'player2', 'advantage'],
-            },
-          },
-          required: ['preparation', 'swingAndContact', 'followThrough'],
-        },
-        keyDifferences: {
-          type: 'array',
-          items: {
-            type: 'object',
-            properties: {
-              aspect: { type: 'string' },
-              player1_technique: { type: 'string' },
-              player2_technique: { type: 'string' },
-              impact: { type: 'string' },
-            },
-            required: [
-              'aspect',
-              'player1_technique',
-              'player2_technique',
-              'impact',
-            ],
-          },
-        },
-        summary: { type: 'string' },
-        recommendationsForPlayer2: {
-          type: 'array',
-          items: {
-            type: 'object',
-            properties: {
-              recommendation: { type: 'string' },
-              drill: {
-                type: 'object',
-                properties: {
-                  title: { type: 'string' },
-                  description: { type: 'string' },
-                  practice_sets: { type: 'string' },
-                },
-                required: ['title', 'description', 'practice_sets'],
-              },
-            },
-            required: ['recommendation', 'drill'],
-          },
-        },
-        overallScoreForPlayer2: { type: 'number' },
-      },
-      required: [
-        'comparison',
-        'keyDifferences',
-        'summary',
-        'recommendationsForPlayer2',
-        'overallScoreForPlayer2',
-      ],
-    };
   }
 }

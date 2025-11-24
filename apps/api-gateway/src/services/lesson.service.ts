@@ -70,6 +70,7 @@ export class LessonService extends BaseTypeOrmService<Lesson> {
     return await this.datasource.transaction(async (manager) => {
       const subject = await manager.getRepository(Subject).findOne({
         where: { id: subjectId },
+        relations: ['createdBy', 'lessons'],
         withDeleted: false,
       });
       if (!subject) throw new BadRequestException('Không tìm thấy khóa học');

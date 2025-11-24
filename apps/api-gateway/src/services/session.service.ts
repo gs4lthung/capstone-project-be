@@ -72,6 +72,7 @@ export class SessionService extends BaseTypeOrmService<Session> {
         .leftJoinAndSelect('enrollments.user', 'user')
         .leftJoinAndSelect('session.lesson', 'lesson')
         .leftJoinAndSelect('session.attendances', 'attendances')
+        .leftJoinAndSelect('attendances.user', 'attendanceUser')
         .leftJoinAndSelect('session.quiz', 'quiz')
         .leftJoinAndSelect('quiz.questions', 'questions')
         .leftJoinAndSelect('questions.options', 'options')
@@ -93,6 +94,7 @@ export class SessionService extends BaseTypeOrmService<Session> {
         .leftJoinAndSelect('session.course', 'course')
         .leftJoinAndSelect('session.lesson', 'lesson')
         .leftJoinAndSelect('session.attendances', 'attendances')
+        .leftJoinAndSelect('attendances.user', 'attendanceUser')
         .leftJoinAndSelect('session.quiz', 'quiz')
         .leftJoinAndSelect('quiz.questions', 'questions')
         .leftJoinAndSelect('questions.options', 'options')
@@ -326,10 +328,30 @@ export class SessionService extends BaseTypeOrmService<Session> {
                 },
                 user: { id: attendanceDto.userId as User['id'] },
               },
+              relations: ['course', 'user'],
             });
+
+          console.log('[CompleteSession] LearnerProgress query:', {
+            courseId: course.id,
+            userId: attendanceDto.userId,
+            found: !!learnerProgress,
+            currentSessionsCompleted: learnerProgress?.sessionsCompleted,
+          });
+
           if (learnerProgress) {
             learnerProgress.sessionsCompleted += 1;
+            console.log(
+              '[CompleteSession] Updating sessionsCompleted to:',
+              learnerProgress.sessionsCompleted,
+            );
             await manager.getRepository(LearnerProgress).save(learnerProgress);
+          } else {
+            console.warn(
+              '[CompleteSession] LearnerProgress not found for userId:',
+              attendanceDto.userId,
+              'courseId:',
+              course.id,
+            );
           }
         }
 
@@ -389,7 +411,9 @@ export class SessionService extends BaseTypeOrmService<Session> {
       }
 
       for (const enrollment of course.enrollments) {
-        enrollment.status = EnrollmentStatus.DONE;
+        if (completedSessions === totalSessions) {
+          enrollment.status = EnrollmentStatus.DONE;
+        }
         await manager.getRepository(Enrollment).save(enrollment);
         await this.notificationService.sendNotification({
           userId: enrollment.user.id,
