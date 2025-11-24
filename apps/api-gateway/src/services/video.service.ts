@@ -181,7 +181,7 @@ export class VideoService {
     return await this.datasource.transaction(async (manager) => {
       const video = await manager.getRepository(Video).findOne({
         where: { id: id },
-        relations: ['session', 'lesson'],
+        relations: ['session', 'lesson', 'session.course'],
         withDeleted: false,
       });
       if (!video) throw new BadRequestException('Không tìm thấy video');

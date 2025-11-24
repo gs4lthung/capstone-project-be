@@ -157,6 +157,12 @@ export class AiVideoCompareResultController {
     };
   }
 
+  @Get('users/:userId')
+  @UseGuards(AuthGuard)
+  async getAllByUserId(@Param('userId') userId: number) {
+    return this.aiService.findAllByUserId(userId);
+  }
+
   @Get(':id')
   async getById(@Param('id') id: number) {
     return this.aiService.findById(id);
