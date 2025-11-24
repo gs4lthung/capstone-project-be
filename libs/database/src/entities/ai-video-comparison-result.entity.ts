@@ -53,12 +53,12 @@ class AiVideoComparisonDetails {
   weaknesses?: string[];
 
   @IsOptional()
-  @IsString()
-  userRole?: string;
+  @IsNumber()
+  learnerTimestamp?: number;
 
   @IsOptional()
   @IsNumber()
-  timestamp?: number;
+  coachTimestamp?: number;
 }
 
 class AiVideoComparisonRecommendationDrill {

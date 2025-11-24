@@ -386,6 +386,30 @@ export class QuizService extends BaseTypeOrmService<Quiz> {
     });
   }
 
+  async findQuizAttemptsByUser(
+    quizId: number,
+    userId: number,
+  ): Promise<QuizAttempt[]> {
+    const quiz = await this.quizRepository.findOne({
+      where: { id: quizId },
+      relations: ['session'],
+      withDeleted: false,
+    });
+    if (!quiz) throw new BadRequestException('Quiz not found');
+    if (!quiz.session)
+      throw new BadRequestException('Quiz không thuộc về buổi học nào');
+    return this.quizAttemptRepository.find({
+      where: { session: { id: quiz.session.id }, attemptedBy: { id: userId } },
+      relations: [
+        'attemptedBy',
+        'learnerAnswers',
+        'learnerAnswers.question',
+        'learnerAnswers.questionOption',
+      ],
+      withDeleted: false,
+    });
+  }
+
   async learnerAttemptQuiz(quizId: number, data: LearnerAttemptQuizDto) {
     return await this.datasource.transaction(async (manager) => {
       const quiz = await this.quizRepository.findOne({

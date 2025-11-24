@@ -9,6 +9,7 @@ import {
   Max,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import { AiVideoComparisonDetailsType } from './gemini-call.dto';
 
 class ComparisonPlayer {
   @ApiProperty({
@@ -220,5 +221,29 @@ export class SaveAiFeedbackDto {
   })
   @IsOptional()
   @IsString()
+  coachNote?: string | null;
+}
+
+export interface GeminiApiResponse {
+  details: Array<{
+    type: AiVideoComparisonDetailsType;
+    advanced: string;
+    strengths: string[];
+    weaknesses: string[];
+    learnerTimestamp: number;
+    coachTimestamp: number;
+  }>;
+  keyDifferents: Array<{
+    aspect: string;
+    learnerTechnique: string;
+    impact: string;
+  }>;
+  summary: string;
+  recommendationDrills: Array<{
+    name: string;
+    description: string;
+    practiceSets: string;
+  }>;
+  learnerScore: number;
   coachNote?: string | null;
 }

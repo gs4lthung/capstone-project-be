@@ -21,7 +21,10 @@ import { CheckRoles } from '@app/shared/decorators/check-roles.decorator';
 import { RoleGuard } from '../guards/role.guard';
 import { UserRole } from '@app/shared/enums/user.enum';
 import { ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { SaveAiFeedbackDto } from '@app/shared/dtos/ai-feedback/ai-feedback.dto';
+import {
+  GeminiApiResponse,
+  SaveAiFeedbackDto,
+} from '@app/shared/dtos/ai-feedback/ai-feedback.dto';
 
 @Controller('learner-videos')
 export class LearnerVideoController {
@@ -55,6 +58,29 @@ export class LearnerVideoController {
       message: 'LEARNER_VIDEO.UPLOAD_SUCCESS',
       data: result,
     };
+  }
+
+  @Get('user/:userId/coach-video/:coachVideoId')
+  @ApiBearerAuth()
+  @ApiOperation({
+    tags: ['Learner Videos'],
+    summary: 'Get learner videos by user and coach video',
+    description: 'Get all learner videos for a specific user and coach video',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'List of learner videos',
+  })
+  @UseGuards(AuthGuard, RoleGuard)
+  @CheckRoles(UserRole.COACH)
+  async getLearnerVideosByUserAndCoachVideo(
+    @Param('userId') userId: number,
+    @Param('coachVideoId') coachVideoId: number,
+  ) {
+    return this.learnerVideoService.findLearnerVideosByUser(
+      userId,
+      coachVideoId,
+    );
   }
 
   @Get()
@@ -101,7 +127,7 @@ export class LearnerVideoController {
   @CheckRoles(UserRole.COACH)
   async saveAiFeedback(
     @Param('learnerVideoId') learnerVideoId: number,
-    @Body() aiFeedback: SaveAiFeedbackDto,
+    @Body() aiFeedback: GeminiApiResponse,
   ) {
     return this.learnerVideoService.saveAiFeedback(learnerVideoId, aiFeedback);
   }
