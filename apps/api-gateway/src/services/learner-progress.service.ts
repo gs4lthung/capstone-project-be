@@ -63,26 +63,19 @@ export class LearnerProgressService extends BaseTypeOrmService<LearnerProgress> 
         .getRepository(LearnerProgress)
         .createQueryBuilder('learnerProgress')
         .leftJoinAndSelect('learnerProgress.user', 'user')
-        .leftJoinAndSelect('user.quizAttempts', 'quizAttempts')
-        .leftJoinAndSelect('user.learnerVideos', 'learnerVideos')
-        .leftJoinAndSelect(
-          'learnerVideos.aiVideoComparisonResults',
-          'aiVideoComparisonResults',
-        )
-        .leftJoinAndSelect('quizAttempts.learnerAnswers', 'learnerAnswers')
-        .leftJoinAndSelect('learnerAnswers.question', 'question')
-        .leftJoinAndSelect('learnerAnswers.questionOption', 'questionOption')
         .leftJoinAndSelect('learnerProgress.course', 'course')
         .leftJoinAndSelect('course.sessions', 'sessions')
         .leftJoinAndSelect('sessions.video', 'video')
         .leftJoinAndSelect('sessions.quiz', 'quiz')
+        .leftJoinAndSelect('sessions.learnerVideos', 'learnerVideos')
+        .leftJoinAndSelect('learnerVideos.user', 'learnerVideoUser')
+        .andWhere('learnerVideoUser.id = :userId', { userId })
         .leftJoinAndSelect('quiz.questions', 'questions')
         .leftJoinAndSelect('questions.options', 'options')
         .leftJoinAndSelect('course.createdBy', 'createdBy')
         .where('user.id = :userId', { userId })
         .andWhere('course.id = :courseId', { courseId })
         .getOne();
-      console.log('Progress:', progress.user.quizAttempts[0].learnerAnswers);
       return progress;
     });
   }

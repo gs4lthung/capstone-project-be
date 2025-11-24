@@ -55,6 +55,61 @@ export class AiPoseService implements OnModuleInit {
   }
 
   /**
+   * Extract pose data from video at all frames (sampled by FPS)
+   */
+  async extractAllPosesFromVideo(
+    videoBuffer: Buffer,
+    fps: number = 2,
+  ): Promise<{ poses: PoseLandmark[][]; timestamps: number[] }> {
+    const videoId = Date.now();
+    const videoPath = path.join(this.tempDir, `video-${videoId}.mp4`);
+
+    try {
+      // Save video to temp file
+      await writeFile(videoPath, videoBuffer);
+      this.logger.log(`📹 Video saved: ${videoPath}`);
+
+      // Get video duration first
+      const duration = await this.getVideoDuration(videoBuffer);
+      this.logger.log(`⏱️ Video duration: ${duration}s`);
+
+      // Generate timestamps based on FPS
+      const interval = 1 / fps;
+      const timestamps: number[] = [];
+      for (let t = 0; t < duration; t += interval) {
+        timestamps.push(parseFloat(t.toFixed(2)));
+      }
+
+      // Reuse existing extraction logic but we need to call it slightly differently
+      // because extractPosesFromVideo expects timestamps and returns just poses.
+      // We want to return both poses and the generated timestamps.
+
+      // We can actually reuse extractPosesFromVideo logic here but we need to avoid saving the file twice.
+      // Since extractPosesFromVideo saves the file again, let's just use the logic inside it.
+      // Actually, better to just call extractPosesFromVideo and pass the generated timestamps.
+      // But extractPosesFromVideo takes a buffer, so it will save it again.
+      // To avoid double saving, let's refactor slightly or just accept the small overhead for now to keep it clean.
+
+      const poses = await this.extractPosesFromVideo(videoBuffer, timestamps);
+
+      return {
+        poses,
+        timestamps,
+      };
+    } catch (error) {
+      this.logger.error('❌ Error extracting all poses from video:', error);
+      if (fs.existsSync(videoPath)) {
+        await unlink(videoPath);
+      }
+      throw error;
+    } finally {
+      if (fs.existsSync(videoPath)) {
+        await unlink(videoPath);
+      }
+    }
+  }
+
+  /**
    * Extract pose data from video at specific timestamps
    */
   async extractPosesFromVideo(
@@ -111,10 +166,10 @@ export class AiPoseService implements OnModuleInit {
             imageTensor = decodedTensor as tf.Tensor3D;
           }
 
-          const poses = await detector.estimatePoses(imageTensor);
+          const poses = await detector.estimatePoses(imageTensor as any);
 
           if (poses && poses.length > 0 && poses[0].keypoints) {
-            const landmarks: PoseLandmark[] = poses[0].keypoints.map(
+            const landmarks: PoseLandmark[] = poses[0].keypoints?.map(
               (kp: any) => ({
                 name: kp.name,
                 x: kp.x / imageTensor.shape[1],

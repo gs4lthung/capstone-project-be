@@ -28,6 +28,26 @@ import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
 export class QuizController {
   constructor(private readonly quizService: QuizService) {}
 
+  @Get(':id/attempts/users/:userId')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiOperation({
+    tags: ['Quizzes'],
+    summary: 'Get quiz attempts by quiz id and user id',
+    description: 'Get all attempts of a quiz by user',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'List of quiz attempts',
+  })
+  @UseGuards(AuthGuard)
+  async getQuizAttemptsByQuizAndUser(
+    @Param('id') id: number,
+    @Param('userId') userId: number,
+  ) {
+    return this.quizService.findQuizAttemptsByUser(id, userId);
+  }
+
   @Get(':id/attempts')
   @HttpCode(HttpStatus.OK)
   @ApiBearerAuth()

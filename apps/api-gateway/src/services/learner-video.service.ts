@@ -12,7 +12,10 @@ import { LearnerVideoStatus } from '@app/shared/enums/learner.enum';
 import { BunnyService } from '@app/bunny';
 import { FileUtils } from '@app/shared/utils/file.util';
 import { buildDetailsArrayFromComparison } from '@app/shared/helpers/buildDetailArray.helper';
-import { SaveAiFeedbackDto } from '@app/shared/dtos/ai-feedback/ai-feedback.dto';
+import {
+  GeminiApiResponse,
+  SaveAiFeedbackDto,
+} from '@app/shared/dtos/ai-feedback/ai-feedback.dto';
 import { Video } from '@app/database/entities/video.entity';
 
 @Injectable()
@@ -110,117 +113,61 @@ export class LearnerVideoService {
     });
   }
 
-  async saveAiFeedback(learnerVideoId: number, aiFeedback: SaveAiFeedbackDto) {
+  async findLearnerVideosByUser(userId: number, coachVideoId: number) {
+    return this.learnerVideoRepo.find({
+      where: { user: { id: userId }, video: { id: coachVideoId } },
+      relations: ['aiVideoComparisonResults', 'video'],
+      order: { createdAt: 'DESC' },
+    });
+  }
+
+  async saveAiFeedback(learnerVideoId: number, aiFeedback: GeminiApiResponse) {
     const learnerVideo = await this.learnerVideoRepo.findOne({
       where: { id: learnerVideoId },
-      relations: ['session', 'session.lesson', 'session.lesson.video'],
+      relations: ['video', 'user', 'session', 'session.course'],
     });
     if (!learnerVideo) throw new BadRequestException('LearnerVideo not found');
-    const coachVideo = learnerVideo.session?.lesson?.video as Video;
-    const aiResultRecord: any = {
-      learnerVideo,
-    };
 
-    // Only set video if it exists
-    if (coachVideo) {
-      aiResultRecord.video = coachVideo;
+    if (!learnerVideo.session?.course) {
+      throw new BadRequestException('LearnerVideo session or course not found');
     }
 
-    // Only set fields that have values
-    if (aiFeedback.summary) {
-      aiResultRecord.summary = aiFeedback.summary;
-    }
-    if (aiFeedback.coachNote !== undefined && aiFeedback.coachNote !== null) {
-      aiResultRecord.coachNote = aiFeedback.coachNote;
-    }
-    if (
-      aiFeedback.overallScoreForPlayer2 !== undefined &&
-      aiFeedback.overallScoreForPlayer2 !== null
-    ) {
-      aiResultRecord.learnerScore = aiFeedback.overallScoreForPlayer2;
-    }
-    if (
-      aiFeedback.keyDifferences &&
-      Array.isArray(aiFeedback.keyDifferences) &&
-      aiFeedback.keyDifferences.length > 0
-    ) {
-      aiResultRecord.keyDifferents = aiFeedback.keyDifferences.map((kd) => ({
-        aspect: kd.aspect,
-        impact: kd.impact,
-        coachTechnique: kd.coachTechnique,
-        learnerTechnique: kd.learnerTechnique,
-      }));
-    }
-    if (
-      aiFeedback.recommendationsForPlayer2 &&
-      Array.isArray(aiFeedback.recommendationsForPlayer2) &&
-      aiFeedback.recommendationsForPlayer2.length > 0
-    ) {
-      aiResultRecord.recommendationDrills =
-        aiFeedback.recommendationsForPlayer2.map((r) => {
-          const drill: any = {};
-          if (r.drill?.title) {
-            drill.name = r.drill.title;
-          }
-          if (r.drill?.description) {
-            drill.description = r.drill.description;
-          }
-          if (r.drill?.practice_sets) {
-            const practiceSets = r.drill.practice_sets as
-              | string
-              | string[]
-              | number;
-            drill.practiceSets =
-              typeof practiceSets === 'string'
-                ? practiceSets
-                : Array.isArray(practiceSets)
-                  ? practiceSets.join(', ')
-                  : String(practiceSets || '');
-          }
-          return drill;
-        });
-    }
-    if (aiFeedback.comparison) {
-      const details = buildDetailsArrayFromComparison(aiFeedback.comparison);
-      if (details && details.length > 0) {
-        aiResultRecord.details = details;
-      }
-    }
+    const learnerProgress = await this.learnerProgressRepo.findOne({
+      where: {
+        user: { id: learnerVideo.user.id },
+        course: { id: learnerVideo.session.course.id },
+      },
+      relations: ['course'],
+    });
 
-    const createdRecord =
-      this.aiVideoComparisonResultRepo.create(aiResultRecord);
-
-    // Only update learner progress if learnerScore is provided
-    if (
-      aiFeedback.overallScoreForPlayer2 !== undefined &&
-      aiFeedback.overallScoreForPlayer2 !== null
-    ) {
-      const learnerProgress = await this.learnerProgressRepo.findOne({
-        where: {
-          user: {
-            learner: {
-              id: learnerVideo.user.id,
+    if (learnerProgress) {
+      // Get the count of previous AI comparison results for this user and course
+      const previousAiResultsCount =
+        await this.aiVideoComparisonResultRepo.count({
+          where: {
+            learnerVideo: {
+              user: { id: learnerVideo.user.id },
+              session: { course: { id: learnerProgress.course.id } },
             },
           },
-          course: { sessions: { id: learnerVideo.session.id } },
-        },
-      });
-      if (learnerProgress) {
-        learnerProgress.avgAiAnalysisScore = Math.round(
-          (learnerProgress.avgAiAnalysisScore +
-            aiFeedback.overallScoreForPlayer2) /
-            (await this.learnerVideoRepo.count({
-              where: {
-                user: { id: learnerVideo.user.id },
-                session: { course: { id: learnerProgress.course.id } },
-              },
-            })),
-        );
-        await this.learnerProgressRepo.save(learnerProgress);
-      }
+        });
+
+      // Calculate the new average:
+      // newAvg = ((previousAvg * previousCount) + newScore) / (previousCount + 1)
+      const previousAvg = learnerProgress.avgAiAnalysisScore || 0;
+      const newAvg =
+        (previousAvg * previousAiResultsCount + aiFeedback.learnerScore) /
+        (previousAiResultsCount + 1);
+
+      learnerProgress.avgAiAnalysisScore = Math.round(newAvg);
+      await this.learnerProgressRepo.save(learnerProgress);
     }
 
-    return this.aiVideoComparisonResultRepo.save(createdRecord);
+    return this.aiVideoComparisonResultRepo.save({
+      ...aiFeedback,
+      learnerVideo,
+      video: learnerVideo.video,
+    });
   }
 
   async generateOverlayVideo(
