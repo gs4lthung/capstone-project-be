@@ -91,7 +91,7 @@ export class VideoService {
         throw new BadRequestException('Bài học đã có video rồi');
 
       const videoPublicUrl = await this.bunnyService.uploadToStorage({
-        id: CryptoUtils.generateRandomNumber(1000000, 999999),
+        id: CryptoUtils.generateRandomNumber(10_000, 99_999),
         filePath: videoFile.path,
         type: 'video',
       });
@@ -145,13 +145,13 @@ export class VideoService {
       );
 
       const uploadedThumbnail = await this.bunnyService.uploadToStorage({
-        id: CryptoUtils.generateRandomNumber(1000000, 999999),
+        id: CryptoUtils.generateRandomNumber(10_000, 99_999),
         filePath: thumbnail,
         type: 'video_thumbnail',
       });
 
       const videoPublicUrl = await this.bunnyService.uploadToStorage({
-        id: CryptoUtils.generateRandomNumber(1000000, 999999),
+        id: CryptoUtils.generateRandomNumber(10_000, 99_999),
         filePath: videoFile.path,
         type: 'video',
       });

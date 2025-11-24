@@ -155,7 +155,11 @@ export class StudentAnalysisService {
             createdBy: { id: user.id },
           },
           enrolledAt: Between(startDate, endDate),
-          status: In([EnrollmentStatus.LEARNING, EnrollmentStatus.CONFIRMED]),
+          status: In([
+            EnrollmentStatus.LEARNING,
+            EnrollmentStatus.CONFIRMED,
+            EnrollmentStatus.DONE,
+          ]),
         },
       });
 
@@ -171,7 +175,11 @@ export class StudentAnalysisService {
             createdBy: { id: user.id },
           },
           enrolledAt: Between(lastMonthStartDate, lastMonthEndDate),
-          status: In([EnrollmentStatus.LEARNING, EnrollmentStatus.CONFIRMED]),
+          status: In([
+            EnrollmentStatus.LEARNING,
+            EnrollmentStatus.CONFIRMED,
+            EnrollmentStatus.DONE,
+          ]),
         },
       });
 
@@ -211,10 +219,17 @@ export class StudentAnalysisService {
           where: {
             course: { createdBy: { id: user.id } },
             enrolledAt: Between(startDate, endDate),
-            status: In([EnrollmentStatus.LEARNING, EnrollmentStatus.CONFIRMED]),
+            status: In([
+              EnrollmentStatus.LEARNING,
+              EnrollmentStatus.CONFIRMED,
+              EnrollmentStatus.DONE,
+            ]),
           },
         });
-        monthlyData.push({ month: `${month}/${currentYear}`, learnerCount });
+        monthlyData.push({
+          month: `${month}/${currentYear}`,
+          data: learnerCount,
+        });
       }
 
       return new CustomApiResponse<MonthlyResponseDto>(

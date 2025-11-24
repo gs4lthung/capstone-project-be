@@ -411,7 +411,9 @@ export class SessionService extends BaseTypeOrmService<Session> {
       }
 
       for (const enrollment of course.enrollments) {
-        enrollment.status = EnrollmentStatus.DONE;
+        if (completedSessions === totalSessions) {
+          enrollment.status = EnrollmentStatus.DONE;
+        }
         await manager.getRepository(Enrollment).save(enrollment);
         await this.notificationService.sendNotification({
           userId: enrollment.user.id,
