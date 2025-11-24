@@ -27,6 +27,7 @@ import { UserService } from '../services/user.service';
 import { AuthGuard } from '../guards/auth.guard';
 import { RoleGuard } from '../guards/role.guard';
 import { CreateUserDto } from '@app/shared/dtos/users/create-user.dto';
+import { UpdateUserProfileDto } from '@app/shared/dtos/users/update-user-profile.dto';
 import { PaginateObject } from '@app/shared/dtos/paginate.dto';
 import { User } from '@app/database/entities/user.entity';
 import { PaginationParams } from '@app/shared/decorators/pagination-params.decorator';
@@ -120,6 +121,25 @@ export class UserController {
     @Body() data: CreateUserDto,
   ): Promise<CustomApiResponse<void>> {
     return this.userService.create(data);
+  }
+
+  @Put('profile')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiOperation({
+    tags: ['Users'],
+    summary: 'Update my profile',
+    description: 'Update personal information of current user',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'User profile updated successfully',
+  })
+  @UseGuards(AuthGuard)
+  async updateProfile(
+    @Body() data: UpdateUserProfileDto,
+  ): Promise<CustomApiResponse<void>> {
+    return this.userService.updateProfile(data);
   }
 
   @Put('me/avatar')

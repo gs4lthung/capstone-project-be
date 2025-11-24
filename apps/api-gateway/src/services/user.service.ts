@@ -12,6 +12,7 @@ import { FindOptions } from '@app/shared/interfaces/find-options.interface';
 import { REQUEST } from '@nestjs/core';
 import { CustomApiRequest } from '@app/shared/customs/custom-api-request';
 import { CreateUserDto } from '@app/shared/dtos/users/create-user.dto';
+import { UpdateUserProfileDto } from '@app/shared/dtos/users/update-user-profile.dto';
 import { ConfigService } from '@app/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Role } from '@app/database/entities/role.entity';
@@ -102,6 +103,60 @@ export class UserService extends BaseTypeOrmService<User> {
     return new CustomApiResponse<void>(
       HttpStatus.OK,
       'USER.UPDATE_USER_AVATAR_SUCCESS',
+    );
+  }
+
+  async updateProfile(
+    data: UpdateUserProfileDto,
+  ): Promise<CustomApiResponse<void>> {
+    const userId = this.request.user.id as User['id'];
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+      withDeleted: false,
+    });
+    if (!user) throw new BadRequestException('USER.NOT_FOUND');
+
+    const updatePayload: Partial<User> = {};
+
+    if (data.fullName) {
+      updatePayload.fullName = data.fullName;
+    }
+
+    if (data.email && data.email !== user.email) {
+      const existingEmail = await this.userRepository.findOne({
+        where: { email: data.email },
+        withDeleted: false,
+      });
+      if (existingEmail && existingEmail.id !== userId) {
+        throw new BadRequestException('USER.EMAIL_ALREADY_EXISTS');
+      }
+      updatePayload.email = data.email;
+      updatePayload.isEmailVerified = false;
+    }
+
+    if (data.phoneNumber && data.phoneNumber !== user.phoneNumber) {
+      const existingPhone = await this.userRepository.findOne({
+        where: { phoneNumber: data.phoneNumber },
+        withDeleted: false,
+      });
+      if (existingPhone && existingPhone.id !== userId) {
+        throw new BadRequestException('USER.PHONE_ALREADY_EXISTS');
+      }
+      updatePayload.phoneNumber = data.phoneNumber;
+      updatePayload.isPhoneVerified = false;
+    }
+
+    if (Object.keys(updatePayload).length === 0) {
+      return new CustomApiResponse<void>(
+        HttpStatus.OK,
+        'USER.UPDATE_PROFILE_SUCCESS',
+      );
+    }
+
+    await this.userRepository.update(userId, updatePayload);
+    return new CustomApiResponse<void>(
+      HttpStatus.OK,
+      'USER.UPDATE_PROFILE_SUCCESS',
     );
   }
 

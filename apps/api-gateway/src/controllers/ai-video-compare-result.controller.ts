@@ -221,11 +221,11 @@ export class AiVideoCompareResultController {
     try {
       [coachPoses, learnerPoses] = await Promise.all([
         this.poseService.extractPosesFromVideo(coachBuffer, coachTimestamps),
-        this.poseService.extractPosesFromVideo(
+      this.poseService.extractPosesFromVideo(
           learnerBuffer,
-          learnerTimestamps,
-        ),
-      ]);
+        learnerTimestamps,
+      ),
+    ]);
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error';
