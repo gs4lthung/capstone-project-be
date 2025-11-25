@@ -16,6 +16,8 @@ import { UpdateUserProfileDto } from '@app/shared/dtos/users/update-user-profile
 import { ConfigService } from '@app/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Role } from '@app/database/entities/role.entity';
+import { Province } from '@app/database/entities/province.entity';
+import { District } from '@app/database/entities/district.entity';
 import { Repository } from 'typeorm';
 import { BaseTypeOrmService } from '@app/shared/helpers/typeorm.helper';
 import { UserRole } from '@app/shared/enums/user.enum';
@@ -30,6 +32,10 @@ export class UserService extends BaseTypeOrmService<User> {
     private readonly bunnyService: BunnyService,
     @InjectRepository(User) private readonly userRepository: Repository<User>,
     @InjectRepository(Role) private readonly roleRepository: Repository<Role>,
+    @InjectRepository(Province)
+    private readonly provinceRepository: Repository<Province>,
+    @InjectRepository(District)
+    private readonly districtRepository: Repository<District>,
   ) {
     super(userRepository);
   }
@@ -146,17 +152,51 @@ export class UserService extends BaseTypeOrmService<User> {
       updatePayload.isPhoneVerified = false;
     }
 
+    if (data.provinceId !== undefined) {
+      const province = await this.provinceRepository.findOne({
+        where: { id: data.provinceId },
+      });
+      if (!province) {
+        throw new BadRequestException('Không tìm thấy tỉnh thành');
+      }
+      updatePayload.province = province;
+    }
+
+    if (data.districtId !== undefined) {
+      const district = await this.districtRepository.findOne({
+        where: { id: data.districtId },
+        relations: ['province'],
+      });
+      if (!district) {
+        throw new BadRequestException('Không tìm thấy quận huyện');
+      }
+
+      if (
+        data.provinceId &&
+        district.province &&
+        district.province.id !== data.provinceId
+      ) {
+        throw new BadRequestException('Quận huyện không thuộc tỉnh thành');
+      }
+
+      updatePayload.district = district;
+
+      if (!data.provinceId && district.province) {
+        updatePayload.province = district.province;
+      }
+    }
+
     if (Object.keys(updatePayload).length === 0) {
       return new CustomApiResponse<void>(
         HttpStatus.OK,
-        'USER.UPDATE_PROFILE_SUCCESS',
+        'Cập nhật hồ sơ thành công',
       );
     }
 
     await this.userRepository.update(userId, updatePayload);
     return new CustomApiResponse<void>(
       HttpStatus.OK,
-      'USER.UPDATE_PROFILE_SUCCESS',
+      'Cập nhật hồ sơ thành công',
     );
   }
 
@@ -166,14 +206,14 @@ export class UserService extends BaseTypeOrmService<User> {
     });
 
     if (!isUserExists) {
-      throw new BadRequestException('USER.NOT_FOUND');
+      throw new BadRequestException('Không tìm thấy người dùng');
     }
 
     await this.userRepository.softDelete(id);
 
     return new CustomApiResponse<void>(
       HttpStatus.OK,
-      'USER.DELETE_USER_SUCCESS',
+      'Xóa người dùng thành công',
     );
   }
 
@@ -183,14 +223,14 @@ export class UserService extends BaseTypeOrmService<User> {
     });
 
     if (!isUserExists) {
-      throw new BadRequestException('USER.NOT_FOUND');
+      throw new BadRequestException('Không tìm thấy người dùng');
     }
 
     await this.userRepository.delete(id);
 
     return new CustomApiResponse<void>(
       HttpStatus.OK,
-      'USER.DELETE_USER_SUCCESS',
+      'Xóa người dùng thành công',
     );
   }
 
@@ -201,14 +241,14 @@ export class UserService extends BaseTypeOrmService<User> {
     });
 
     if (!isUserExists) {
-      throw new BadRequestException('USER.NOT_FOUND');
+      throw new BadRequestException('Không tìm thấy người dùng');
     }
 
     await this.userRepository.restore(id);
 
     return new CustomApiResponse<void>(
       HttpStatus.OK,
-      'USER.RESTORE_USER_SUCCESS',
+      'Khôi phục người dùng thành công',
     );
   }
 }
