@@ -87,12 +87,17 @@ export class SubjectService extends BaseTypeOrmService<Subject> {
   ): Promise<CustomApiResponse<void>> {
     console.log('Update subject called with id:', id, 'and data:', data);
     return await this.datasource.transaction(async (manager) => {
-      const subject = await manager.getRepository(Subject).findOne({
-        where: { id: id },
-        withDeleted: false,
-        relations: ['createdBy'],
-      });
+      const subject = await manager
+        .getRepository(Subject)
+        .createQueryBuilder('subject')
+        .leftJoinAndSelect('subject.lessons', 'lessons')
+        .leftJoinAndSelect('lessons.video', 'video')
+        .leftJoinAndSelect('lessons.quiz', 'quiz')
+        .leftJoinAndSelect('subject.createdBy', 'createdBy')
+        .where('subject.id = :id', { id })
+        .getOne();
       if (!subject) throw new BadRequestException('Không tìm thấy khóa học');
+      console.log(subject.lessons);
       if (subject.createdBy.id !== this.request.user.id)
         throw new ForbiddenException('Không có quyền truy cập chủ đề này');
 

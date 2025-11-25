@@ -291,6 +291,7 @@ export class CourseService extends BaseTypeOrmService<Course> {
           'course.minParticipants',
           'course.maxParticipants',
           'course.totalEarnings',
+          'course.totalSessions',
           'course.createdAt',
           'course.updatedAt',
           'schedules.id',
@@ -307,8 +308,6 @@ export class CourseService extends BaseTypeOrmService<Course> {
         ]);
 
       const [courses, total] = await queryBuilder.getManyAndCount();
-
-      console.log(courses);
 
       const result = new PaginateObject<Course>();
       Object.assign(result, {
@@ -358,6 +357,7 @@ export class CourseService extends BaseTypeOrmService<Course> {
           'course.minParticipants',
           'course.maxParticipants',
           'course.totalEarnings',
+          'course.totalSessions',
           'course.createdAt',
           'course.updatedAt',
           'createdBy.id',
