@@ -4,25 +4,28 @@ import { EventCountAchievement } from '../entities/event-count-achievement.entit
 import { StreakAchievement } from '../entities/streak-achievement.entity';
 import { PropertyCheckAchievement } from '../entities/property-check-achievement.entity';
 import { User } from '../entities/user.entity';
+import { AppDataSource } from '../data-source';
 
 /**
  * ============================================
  * ACHIEVEMENT SEED DATA
  * ============================================
  * Seed này tạo các achievement mẫu cho hệ thống
- * 
+ *
  * Bao gồm:
  * - 7 EVENT_COUNT achievements (đếm số lần)
  * - 7 STREAK achievements (chuỗi liên tiếp)
  * - 7 PROPERTY_CHECK achievements (kiểm tra điều kiện)
- * 
+ *
  * Total: 21 achievements
  */
 export const achievementSeed = async (dataSource: DataSource) => {
   const achievementRepository = dataSource.getRepository(Achievement);
   const eventCountRepository = dataSource.getRepository(EventCountAchievement);
   const streakRepository = dataSource.getRepository(StreakAchievement);
-  const propertyCheckRepository = dataSource.getRepository(PropertyCheckAchievement);
+  const propertyCheckRepository = dataSource.getRepository(
+    PropertyCheckAchievement,
+  );
   const userRepository = dataSource.getRepository(User);
 
   console.log('🏆 Starting Achievement seed...');
@@ -48,7 +51,9 @@ export const achievementSeed = async (dataSource: DataSource) => {
   // ============================================
   const existingCount = await achievementRepository.count();
   if (existingCount > 0) {
-    console.log(`⚠️  Achievements already seeded (${existingCount} records). Skipping...`);
+    console.log(
+      `⚠️  Achievements already seeded (${existingCount} records). Skipping...`,
+    );
     return;
   }
 
@@ -126,7 +131,9 @@ export const achievementSeed = async (dataSource: DataSource) => {
   for (const data of eventCountAchievements) {
     const achievement = eventCountRepository.create(data);
     await eventCountRepository.save(achievement);
-    console.log(`  ✓ Created: ${data.name} (${data.eventName}, target: ${data.targetCount})`);
+    console.log(
+      `  ✓ Created: ${data.name} (${data.eventName}, target: ${data.targetCount})`,
+    );
   }
 
   // ============================================
@@ -210,7 +217,9 @@ export const achievementSeed = async (dataSource: DataSource) => {
   for (const data of streakAchievements) {
     const achievement = streakRepository.create(data);
     await streakRepository.save(achievement);
-    console.log(`  ✓ Created: ${data.name} (${data.targetStreakLength} ${data.streakUnit} streak)`);
+    console.log(
+      `  ✓ Created: ${data.name} (${data.targetStreakLength} ${data.streakUnit} streak)`,
+    );
   }
 
   // ============================================
@@ -234,7 +243,8 @@ export const achievementSeed = async (dataSource: DataSource) => {
     {
       name: 'Học Sinh Xuất Sắc',
       description: 'Đạt điểm trung bình quiz >= 90%',
-      iconUrl: 'https://api.dicebear.com/7.x/icons/svg?seed=outstanding-student',
+      iconUrl:
+        'https://api.dicebear.com/7.x/icons/svg?seed=outstanding-student',
       eventName: 'QUIZ_COMPLETED',
       entityName: 'LearnerProgress',
       propertyName: 'avgQuizScore',
@@ -308,7 +318,9 @@ export const achievementSeed = async (dataSource: DataSource) => {
   for (const data of propertyCheckAchievements) {
     const achievement = propertyCheckRepository.create(data);
     await propertyCheckRepository.save(achievement);
-    console.log(`  ✓ Created: ${data.name} (${data.propertyName} ${data.comparisonOperator} ${data.targetValue})`);
+    console.log(
+      `  ✓ Created: ${data.name} (${data.propertyName} ${data.comparisonOperator} ${data.targetValue})`,
+    );
   }
 
   // ============================================
@@ -324,3 +336,13 @@ export const achievementSeed = async (dataSource: DataSource) => {
   console.log('='.repeat(50) + '\n');
 };
 
+async function runSeed() {
+  await AppDataSource.initialize();
+  await achievementSeed(AppDataSource);
+  await AppDataSource.destroy();
+}
+
+runSeed().catch((error) => {
+  console.error('Error seeding banks:', error);
+  process.exit(1);
+});

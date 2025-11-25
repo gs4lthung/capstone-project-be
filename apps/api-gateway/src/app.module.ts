@@ -124,6 +124,8 @@ import { Court } from '@app/database/entities/court.entity';
 import { BunnyModule } from '@app/bunny';
 import { NotificationController } from './controllers/notification.controller';
 import { AiVideoCompareResultController } from './controllers/ai-video-compare-result.controller';
+import { LearnerController } from './controllers/learner.controller';
+import { LearnerService } from './services/learner.service';
 @Module({
   imports: [
     ConfigModule,
@@ -260,6 +262,7 @@ import { AiVideoCompareResultController } from './controllers/ai-video-compare-r
     LearnerVideoController,
     AiVideoCompareResultController,
     NotificationController,
+    LearnerController,
   ],
   providers: [
     AppService,
@@ -296,6 +299,7 @@ import { AiVideoCompareResultController } from './controllers/ai-video-compare-r
     AttendanceService,
     PlatformAnalysisService,
     LearnerVideoService,
+    LearnerService,
   ],
 })
 export class AppModule {}
