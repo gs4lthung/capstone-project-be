@@ -1,13 +1,9 @@
-import { Course } from '@app/database/entities/course.entity';
 import { Schedule } from '@app/database/entities/schedule.entity';
 import { Session } from '@app/database/entities/session.entity';
 import { User } from '@app/database/entities/user.entity';
 import { CustomApiRequest } from '@app/shared/customs/custom-api-request';
 import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
-import {
-  ChangeScheduleDto,
-  SessionNewScheduleDto,
-} from '@app/shared/dtos/schedules/schedule.dto';
+import { SessionNewScheduleDto } from '@app/shared/dtos/schedules/schedule.dto';
 import { CourseStatus } from '@app/shared/enums/course.enum';
 import { SessionStatus } from '@app/shared/enums/session.enum';
 import { DateTimeUtils } from '@app/shared/utils/datetime.util';
@@ -62,88 +58,6 @@ export class ScheduleService {
       message: 'Schedules retrieved successfully',
       metadata: schedules,
     };
-  }
-
-  async changeSchedule(
-    data: ChangeScheduleDto,
-  ): Promise<CustomApiResponse<void>> {
-    return await this.datasource.transaction(async (manager) => {
-      const course = await manager.getRepository(Course).findOne({
-        where: { id: data.course },
-        relations: ['schedules', 'createdBy'],
-      });
-      if (!course) {
-        throw new BadRequestException('Không tìm thấy khóa học');
-      }
-
-      const isNewScheduleValid = await this.isNewScheduleValid(
-        data.newSchedule as Schedule,
-        course.createdBy.id,
-        course.startDate,
-        course.endDate,
-        course.id,
-      );
-
-      if (!isNewScheduleValid) {
-        throw new BadRequestException(
-          'Lịch mới xung đột với lịch khóa học khác của giảng viên',
-        );
-      }
-
-      const replacedSchedule = await manager.getRepository(Schedule).findOne({
-        where: { id: data.replaceScheduleId },
-        relations: ['sessions'],
-      });
-
-      if (!replacedSchedule) {
-        throw new BadRequestException('Không tìm thấy lịch cần thay thế');
-      }
-
-      replacedSchedule.dayOfWeek = data.newSchedule.dayOfWeek;
-      replacedSchedule.startTime = data.newSchedule.startTime;
-      replacedSchedule.endTime = data.newSchedule.endTime;
-      await manager.getRepository(Schedule).save(replacedSchedule);
-
-      for (const session of replacedSchedule.sessions) {
-        if (session.status === SessionStatus.COMPLETED) {
-          continue;
-        }
-        session.schedule = replacedSchedule;
-        session.startTime = replacedSchedule.startTime;
-        session.endTime = replacedSchedule.endTime;
-
-        const dayMap: { [key: string]: number } = {
-          Sunday: 0,
-          Monday: 1,
-          Tuesday: 2,
-          Wednesday: 3,
-          Thursday: 4,
-          Friday: 5,
-          Saturday: 6,
-        };
-
-        const currentDate = new Date(course.startDate);
-        const endDate = new Date(course.endDate);
-
-        while (currentDate <= endDate) {
-          const scheduleDay = dayMap[data.newSchedule.dayOfWeek];
-
-          if (currentDate.getDay() === scheduleDay) {
-            session.scheduleDate = new Date(currentDate);
-          }
-
-          currentDate.setDate(currentDate.getDate() + 1);
-        }
-        await manager.getRepository(Session).save(session);
-      }
-
-      await manager.getRepository(Schedule).remove(replacedSchedule);
-
-      return new CustomApiResponse<void>(
-        HttpStatus.OK,
-        'Thay đổi lịch thành công',
-      );
-    });
   }
 
   async changeSessionSchedule(

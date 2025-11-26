@@ -427,6 +427,7 @@ export class CourseService extends BaseTypeOrmService<Course> {
         .getRepository(Subject)
         .createQueryBuilder('subject')
         .leftJoinAndSelect('subject.lessons', 'lessons')
+        .leftJoinAndSelect('subject.courses', 'courses')
         .leftJoinAndSelect('lessons.quiz', 'quiz')
         .leftJoinAndSelect('quiz.questions', 'questions')
         .leftJoinAndSelect('questions.options', 'options')
