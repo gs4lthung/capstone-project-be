@@ -26,7 +26,10 @@ import {
   Request,
   RequestMetadata,
 } from '@app/database/entities/request.entity';
-import { CourseStatus } from '@app/shared/enums/course.enum';
+import {
+  CourseLearningFormat,
+  CourseStatus,
+} from '@app/shared/enums/course.enum';
 import { Enrollment } from '@app/database/entities/enrollment.entity';
 import { EnrollmentStatus } from '@app/shared/enums/enrollment.enum';
 import { Schedule } from '@app/database/entities/schedule.entity';
@@ -87,6 +90,7 @@ export class CourseService extends BaseTypeOrmService<Course> {
         .getRepository(Course)
         .createQueryBuilder('course')
         .leftJoinAndSelect('course.sessions', 'sessions')
+        .leftJoinAndSelect('course.createdBy', 'createdBy')
         .leftJoinAndSelect('sessions.quiz', 'quiz')
         .leftJoinAndSelect('sessions.video', 'video')
         .leftJoinAndSelect('course.enrollments', 'enrollments')
@@ -154,6 +158,9 @@ export class CourseService extends BaseTypeOrmService<Course> {
           'enrollments.enrolledAt',
           'user.id',
           'user.fullName',
+          'createdBy.id',
+          'createdBy.fullName',
+          'createdBy.phoneNumber',
         ]);
 
       const course = await queryBuilder.getOne();
@@ -909,7 +916,6 @@ export class CourseService extends BaseTypeOrmService<Course> {
           course: { id: course.id },
           user: { id: this.request.user.id as User['id'] },
         },
-        withDeleted: false,
       });
       if (!enrollment) throw new BadRequestException('Không tìm thấy đăng ký');
       if (
@@ -934,22 +940,42 @@ export class CourseService extends BaseTypeOrmService<Course> {
 
       course.currentParticipants -= 1;
 
-      const enrollmentsToUpdate = course.enrollments.filter(
-        (e) => e.status === EnrollmentStatus.PENDING_GROUP,
-      );
-      enrollmentsToUpdate.forEach(
-        (e) => (e.status = EnrollmentStatus.CONFIRMED),
-      );
-      await manager.getRepository(Enrollment).save(enrollmentsToUpdate);
-
-      if (
-        course.currentParticipants >= course.minParticipants &&
-        course.currentParticipants < course.maxParticipants
-      ) {
-        course.status = CourseStatus.READY_OPENED;
-      } else if (course.currentParticipants >= course.maxParticipants) {
-        course.status = CourseStatus.FULL;
+      switch (course.learningFormat) {
+        case CourseLearningFormat.INDIVIDUAL:
+          course.status = CourseStatus.APPROVED;
+          break;
+        case CourseLearningFormat.GROUP:
+          if (
+            course.currentParticipants >= course.minParticipants &&
+            course.currentParticipants < course.maxParticipants
+          ) {
+            course.status = CourseStatus.READY_OPENED;
+            for (const enr of course.enrollments) {
+              if (enr.status === EnrollmentStatus.PENDING_GROUP) {
+                enr.status = EnrollmentStatus.CONFIRMED;
+                await this.enrollmentRepository.save(enr);
+              }
+            }
+          } else if (course.currentParticipants >= course.maxParticipants) {
+            course.status = CourseStatus.FULL;
+            for (const enr of course.enrollments) {
+              if (enr.status === EnrollmentStatus.PENDING_GROUP) {
+                enr.status = EnrollmentStatus.CONFIRMED;
+                await this.enrollmentRepository.save(enr);
+              }
+            }
+          } else if (course.currentParticipants < course.minParticipants) {
+            course.status = CourseStatus.APPROVED;
+            for (const enr of course.enrollments) {
+              if (enr.status === EnrollmentStatus.CONFIRMED) {
+                enr.status = EnrollmentStatus.PENDING_GROUP;
+                await this.enrollmentRepository.save(enr);
+              }
+            }
+          }
+          break;
       }
+
       await manager.getRepository(Course).save(course);
 
       await this.notificationService.sendNotification({
@@ -957,7 +983,7 @@ export class CourseService extends BaseTypeOrmService<Course> {
         title: 'Học viên hủy đăng ký khóa học',
         body: `Một học viên đã hủy đăng ký khóa học của bạn.`,
         navigateTo: `/coach/courses/${course.id}`,
-        type: NotificationType.WARNING,
+        type: NotificationType.INFO,
       });
 
       return new CustomApiResponse<void>(

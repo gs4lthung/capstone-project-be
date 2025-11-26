@@ -3,7 +3,6 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@app/config';
 import { PoseLandmark } from './ai-pose.service';
 import { AiVideoComparisonResultSchema } from '@app/shared/dtos/ai-feedback/gemini-call.dto';
-import { AiVideoComparisonResult } from '@app/database/entities/ai-video-comparison-result.entity';
 
 // Interface matching the Gemini API response schema
 interface GeminiApiResponse {
@@ -51,6 +50,27 @@ export class AiGeminiService {
     learnerPoses: PoseLandmark[][],
     learnerTimestamps: number[],
   ): Promise<GeminiApiResponse> {
+    // Validate input data
+    if (
+      !coachPoses ||
+      !learnerPoses ||
+      coachPoses.length === 0 ||
+      learnerPoses.length === 0
+    ) {
+      this.logger.warn('⚠️ Invalid pose data received');
+      return this.getDefaultResponse('Dữ liệu tư thế không hợp lệ');
+    }
+
+    if (
+      !coachTimestamps ||
+      !learnerTimestamps ||
+      coachTimestamps.length === 0 ||
+      learnerTimestamps.length === 0
+    ) {
+      this.logger.warn('⚠️ Invalid timestamp data received');
+      return this.getDefaultResponse('Dữ liệu thời gian không hợp lệ');
+    }
+
     const prompt = `
 Bạn là một huấn luyện viên pickleball AI, chuyên đưa ra phản hồi so sánh nhanh chóng, súc tích cho người dùng di động.
 
@@ -75,6 +95,11 @@ Hãy trả lời CHỈ bằng một đối tượng JSON bằng tiếng Việt t
     `;
 
     try {
+      if (!this.apiKey) {
+        this.logger.error('❌ Gemini API key not configured');
+        return this.getDefaultResponse('Dịch vụ AI chưa được cấu hình');
+      }
+
       const response = await this.callGeminiWithRetry({
         contents: [
           {
@@ -88,19 +113,65 @@ Hãy trả lời CHỈ bằng một đối tượng JSON bằng tiếng Việt t
         },
       });
 
+      if (!response) {
+        this.logger.error('❌ Empty response from Gemini API');
+        return this.getDefaultResponse('Không nhận được phản hồi từ AI');
+      }
+
       const jsonRes = this.parseJsonResponse<GeminiApiResponse>(response);
 
+      // Validate response structure
+      if (!jsonRes || typeof jsonRes !== 'object') {
+        this.logger.error('❌ Invalid response structure');
+        return this.getDefaultResponse('Phản hồi AI không hợp lệ');
+      }
+
       return {
-        details: jsonRes.details,
-        keyDifferents: jsonRes.keyDifferents,
-        summary: jsonRes.summary,
-        recommendationDrills: jsonRes.recommendationDrills,
-        learnerScore: jsonRes.learnerScore,
+        details: jsonRes.details || [],
+        keyDifferents: jsonRes.keyDifferents || [],
+        summary: jsonRes.summary || 'Không thể tạo tóm tắt',
+        recommendationDrills: jsonRes.recommendationDrills || [],
+        learnerScore: jsonRes.learnerScore || 50,
       };
     } catch (error) {
-      this.logger.error('❌ Gemini API call failed:', error);
-      throw new Error('AI không thể xử lý dữ liệu. Vui lòng thử lại sau.');
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      this.logger.error('❌ Gemini API call failed:', errorMessage);
+      return this.getDefaultResponse(
+        'AI không thể xử lý dữ liệu. Vui lòng thử lại sau.',
+      );
     }
+  }
+
+  private getDefaultResponse(errorMessage: string): GeminiApiResponse {
+    return {
+      details: [
+        {
+          type: 'error',
+          advanced: errorMessage,
+          strengths: ['Không thể phân tích'],
+          weaknesses: ['Lỗi hệ thống'],
+          learnerTimestamp: 0,
+          coachTimestamp: 0,
+        },
+      ],
+      keyDifferents: [
+        {
+          aspect: 'Lỗi',
+          learnerTechnique: 'Không khả dụng',
+          impact: errorMessage,
+        },
+      ],
+      summary: errorMessage,
+      recommendationDrills: [
+        {
+          name: 'Thử lại sau',
+          description: 'Vui lòng kiểm tra kết nối và thử lại',
+          practiceSets: '0',
+        },
+      ],
+      learnerScore: 0,
+    };
   }
 
   private async callGeminiWithRetry(body: any, retries = 5): Promise<string> {

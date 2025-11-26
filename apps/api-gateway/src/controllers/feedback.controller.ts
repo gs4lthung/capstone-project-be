@@ -79,7 +79,7 @@ export class FeedbackController {
     return this.feedbackService.update(feedbackId, data);
   }
 
-  @Get('coaches')
+  @Get('coaches/:id')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     tags: ['Feedbacks'],
@@ -90,9 +90,8 @@ export class FeedbackController {
     status: HttpStatus.OK,
     description: 'Overall rating retrieved successfully',
   })
-  @CheckRoles(UserRole.COACH)
-  @UseGuards(AuthGuard, RoleGuard)
-  async findUserFeedback() {
-    return this.feedbackService.findForCoach();
+  @UseGuards(AuthGuard)
+  async findUserFeedback(@Param('id') coachId: number) {
+    return this.feedbackService.findForCoach(coachId);
   }
 }
