@@ -31,6 +31,8 @@ import { FindOptions } from '@app/shared/interfaces/find-options.interface';
 import { PaginateObject } from '@app/shared/dtos/paginate.dto';
 import { ConfigurationService } from './configuration.service';
 import { DateTimeUtils } from '@app/shared/utils/datetime.util';
+import { NotificationService } from './notification.service';
+import { NotificationType } from '@app/shared/enums/notification.enum';
 
 @Injectable({ scope: Scope.REQUEST })
 export class PaymentService extends BaseTypeOrmService<Payment> {
@@ -41,6 +43,7 @@ export class PaymentService extends BaseTypeOrmService<Payment> {
     private readonly configurationService: ConfigurationService,
     private readonly payosService: PayosService,
     private readonly datasource: DataSource,
+    private readonly notificationService: NotificationService,
   ) {
     super(paymentRepository);
   }
@@ -240,6 +243,22 @@ export class PaymentService extends BaseTypeOrmService<Payment> {
       await manager.getRepository(Payment).save(payment);
 
       await manager.getRepository(Course).save(course);
+
+      await this.notificationService.sendNotification({
+        userId: course.createdBy.id,
+        title: 'Học viên đăng ký khóa học',
+        body: `Một học viên đã đăng ký khóa học của bạn.`,
+        navigateTo: `/coach/courses/${course.id}`,
+        type: NotificationType.INFO,
+      });
+
+      await this.notificationService.sendNotification({
+        userId: payment.enrollment.user.id,
+        title: 'Đăng ký khóa học thành công',
+        body: `Bạn đã đăng ký thành công khóa học ${course.name}.`,
+        navigateTo: `/learner/courses/${course.id}`,
+        type: NotificationType.INFO,
+      });
     });
   }
 
@@ -260,6 +279,14 @@ export class PaymentService extends BaseTypeOrmService<Payment> {
       }
       payment.status = PaymentStatus.CANCELLED;
       await manager.getRepository(Payment).save(payment);
+
+      await this.notificationService.sendNotification({
+        userId: payment.enrollment.user.id,
+        title: 'Thanh toán bị hủy',
+        body: `Bạn đã hủy thanh toán cho đăng ký khóa học.`,
+        navigateTo: `/learner/courses/${payment.enrollment.course.id}`,
+        type: NotificationType.INFO,
+      });
     });
   }
 

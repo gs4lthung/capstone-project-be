@@ -57,7 +57,11 @@ export class CoachService extends BaseTypeOrmService<Coach> {
 
   async findOne(id: number): Promise<Coach> {
     const coach = await this.coachRepository.findOne({
-      where: { id: id },
+      where: {
+        user: {
+          id: id,
+        },
+      },
       withDeleted: false,
       relations: ['user', 'credentials'],
     });

@@ -125,10 +125,10 @@ export class FeedbackService {
     });
   }
 
-  async findForCoach(): Promise<CustomApiResponse<Feedback[]>> {
+  async findForCoach(id: number): Promise<CustomApiResponse<Feedback[]>> {
     return await this.datasource.transaction(async (manager) => {
       const feedbacks = await manager.getRepository(Feedback).find({
-        where: { receivedBy: { id: this.request.user.id as User['id'] } },
+        where: { receivedBy: { id: id } },
         relations: ['createdBy', 'receivedBy'],
         order: {
           createdAt: 'DESC',

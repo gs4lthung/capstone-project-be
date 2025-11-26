@@ -16,10 +16,7 @@ import { AuthGuard } from '../guards/auth.guard';
 import { RoleGuard } from '../guards/role.guard';
 import { CheckRoles } from '@app/shared/decorators/check-roles.decorator';
 import { UserRole } from '@app/shared/enums/user.enum';
-import {
-  ChangeScheduleDto,
-  SessionNewScheduleDto,
-} from '@app/shared/dtos/schedules/schedule.dto';
+import { SessionNewScheduleDto } from '@app/shared/dtos/schedules/schedule.dto';
 
 @Controller('schedules')
 export class ScheduleController {
@@ -54,25 +51,6 @@ export class ScheduleController {
   @UseGuards(AuthGuard, RoleGuard)
   async getAvailableSchedulesByCoach(): Promise<CustomApiResponse<Schedule[]>> {
     return this.scheduleService.getAvailableSchedulesByCoach();
-  }
-
-  @Put('change')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({
-    tags: ['Schedules'],
-    summary: 'Change schedule for a course',
-    description: 'Change the schedule of a specific course',
-  })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Schedule changed successfully',
-  })
-  @CheckRoles(UserRole.COACH)
-  @UseGuards(AuthGuard, RoleGuard)
-  async changeSchedule(
-    @Body() data: ChangeScheduleDto,
-  ): Promise<CustomApiResponse<void>> {
-    return this.scheduleService.changeSchedule(data);
   }
 
   @Put('sessions/:id/new-schedule')

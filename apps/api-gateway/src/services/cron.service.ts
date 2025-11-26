@@ -295,6 +295,7 @@ export class CronService {
         }
 
         await manager.getRepository(Payment).save(payment);
+        await manager.getRepository(Enrollment).save(payment.enrollment);
         await manager.getRepository(Course).save(payment.enrollment.course);
 
         await this.notificationService.sendNotification({
