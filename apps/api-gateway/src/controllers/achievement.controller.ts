@@ -289,8 +289,14 @@ export class AchievementController {
           type: 'string',
           description: 'Tên sự kiện (VD: DAILY_LOGIN)',
         },
-        targetStreakLength: { type: 'number', description: 'Độ dài streak cần đạt (VD: 7)' },
-        streakUnit: { type: 'string', description: 'Đơn vị thời gian (days, weeks, months)' },
+        targetStreakLength: {
+          type: 'number',
+          description: 'Độ dài streak cần đạt (VD: 7)',
+        },
+        streakUnit: {
+          type: 'string',
+          description: 'Đơn vị thời gian (days, weeks, months)',
+        },
         isActive: { type: 'boolean', description: 'Trạng thái active' },
         icon: {
           type: 'string',
@@ -344,7 +350,8 @@ export class AchievementController {
         },
         entityName: {
           type: 'string',
-          description: 'Tên entity cần check (VD: LearnerProgress, Coach, User)',
+          description:
+            'Tên entity cần check (VD: LearnerProgress, Coach, User)',
         },
         propertyName: {
           type: 'string',
@@ -354,7 +361,10 @@ export class AchievementController {
           type: 'string',
           description: 'Toán tử so sánh (VD: >=, <=, ==, !=, >, <)',
         },
-        targetValue: { type: 'string', description: 'Giá trị mục tiêu (VD: 80)' },
+        targetValue: {
+          type: 'string',
+          description: 'Giá trị mục tiêu (VD: 80)',
+        },
         isActive: { type: 'boolean', description: 'Trạng thái active' },
         icon: {
           type: 'string',
@@ -362,7 +372,14 @@ export class AchievementController {
           description: 'File icon (upload ảnh từ device)',
         },
       },
-      required: ['name', 'eventName', 'entityName', 'propertyName', 'comparisonOperator', 'targetValue'],
+      required: [
+        'name',
+        'eventName',
+        'entityName',
+        'propertyName',
+        'comparisonOperator',
+        'targetValue',
+      ],
     },
   })
   @ApiOperation({
@@ -844,8 +861,14 @@ export class AchievementController {
         name: { type: 'string', description: 'Tên achievement' },
         description: { type: 'string', description: 'Mô tả achievement' },
         eventName: { type: 'string', description: 'Tên sự kiện' },
-        targetStreakLength: { type: 'number', description: 'Độ dài streak cần đạt' },
-        streakUnit: { type: 'string', description: 'Đơn vị thời gian (days, weeks, months)' },
+        targetStreakLength: {
+          type: 'number',
+          description: 'Độ dài streak cần đạt',
+        },
+        streakUnit: {
+          type: 'string',
+          description: 'Đơn vị thời gian (days, weeks, months)',
+        },
         isActive: { type: 'boolean', description: 'Trạng thái active' },
         icon: {
           type: 'string',
@@ -890,7 +913,10 @@ export class AchievementController {
       properties: {
         name: { type: 'string', description: 'Tên achievement' },
         description: { type: 'string', description: 'Mô tả achievement' },
-        eventName: { type: 'string', description: 'Tên sự kiện trigger việc check' },
+        eventName: {
+          type: 'string',
+          description: 'Tên sự kiện trigger việc check',
+        },
         entityName: { type: 'string', description: 'Tên entity cần check' },
         propertyName: { type: 'string', description: 'Tên property cần check' },
         comparisonOperator: { type: 'string', description: 'Toán tử so sánh' },

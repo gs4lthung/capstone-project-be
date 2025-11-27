@@ -15,12 +15,12 @@ import { Achievement } from './achievement.entity';
  * ACHIEVEMENT TRACKING ENTITY
  * ═══════════════════════════════════════════════════════════════
  * Entity này dùng để track progress của user với từng achievement
- * 
+ *
  * Chức năng:
  * - EVENT_COUNT: Đếm số lần event xảy ra (eventCount)
  * - STREAK: Lưu thông tin streak trong metadata
  * - PROPERTY_CHECK: Không cần track (chỉ check điều kiện)
- * 
+ *
  * Example data:
  * {
  *   userId: 123,
@@ -58,7 +58,7 @@ export class AchievementTracking {
 
   /**
    * Metadata lưu thêm thông tin (dạng JSON)
-   * 
+   *
    * Cho STREAK achievements:
    * {
    *   currentStreak: 5,           // Streak hiện tại
@@ -66,7 +66,7 @@ export class AchievementTracking {
    *   startDate: '2025-11-13',    // Ngày bắt đầu streak
    *   lastEventDate: '2025-11-17' // Ngày event cuối cùng
    * }
-   * 
+   *
    * Cho EVENT_COUNT (optional):
    * {
    *   firstEventAt: '2025-01-01',
