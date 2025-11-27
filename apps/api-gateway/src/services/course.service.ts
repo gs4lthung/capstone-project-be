@@ -536,7 +536,7 @@ export class CourseService extends BaseTypeOrmService<Course> {
       await this.notificationService.sendNotificationToAdmins({
         title: 'Yêu cầu tạo khóa học mới',
         body: `Một HLV đã gửi yêu cầu tạo khóa học mới.`,
-        navigateTo: `/admin/requests/${newCourseCreationRequest.id}`,
+        navigateTo: `/curriculum?request=${newCourseCreationRequest.id}`,
         type: NotificationType.INFO,
       });
 
