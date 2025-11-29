@@ -1,0 +1,12 @@
+@startuml Request State Machine
+left to right direction
+
+[*] --> PENDING : Submit request
+
+PENDING --> APPROVED : Admin approves
+PENDING --> REJECTED : Admin rejects
+
+APPROVED --> [*]
+REJECTED --> [*]
+
+@enduml

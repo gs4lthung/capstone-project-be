@@ -1,0 +1,15 @@
+@startuml Session State Machine
+left to right direction
+
+[*] --> PENDING : Create session
+
+PENDING --> SCHEDULED : Assign schedule date & time
+PENDING --> CANCELLED : Cancel session
+
+SCHEDULED --> COMPLETED : Session ends
+SCHEDULED --> CANCELLED : Cancel after schedule
+
+COMPLETED --> [*]
+CANCELLED --> [*]
+
+@enduml

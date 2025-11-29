@@ -1,0 +1,13 @@
+@startuml User State Machine
+left to right direction
+
+[*] --> INACTIVE : Register
+
+INACTIVE --> ACTIVE : Email & Phone\nVerified
+
+ACTIVE --> INACTIVE : Logout/Deactivate
+
+INACTIVE --> [*]
+ACTIVE --> [*]
+
+@enduml

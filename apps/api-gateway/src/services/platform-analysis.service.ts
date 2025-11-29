@@ -15,7 +15,7 @@ import {
 import { DashboardOverviewDto } from '@app/shared/dtos/platform-analysis/dashboard-overview.dto';
 import { CourseStatus } from '@app/shared/enums/course.enum';
 import { PaymentStatus } from '@app/shared/enums/payment.enum';
-import { SessionEarningStatus, SessionStatus } from '@app/shared/enums/session.enum';
+
 import { UserRole } from '@app/shared/enums/user.enum';
 import { CoachVerificationStatus } from '@app/shared/enums/coach.enum';
 import { RequestStatus } from '@app/shared/enums/request.enum';
@@ -244,7 +244,6 @@ export class PlatformAnalysisService {
       const sessionEarnings = await this.sessionEarningRepository.find({
         where: {
           createdAt: Between(startDate, endDate),
-          status: SessionEarningStatus.PAID,
         },
       });
       let sessionEarningAmount = 0;
@@ -266,7 +265,6 @@ export class PlatformAnalysisService {
         {
           where: {
             createdAt: Between(lastMonthStartDate, lastMonthEndDate),
-            status: SessionEarningStatus.PAID,
           },
         },
       );
@@ -313,7 +311,6 @@ export class PlatformAnalysisService {
         const sessionEarnings = await this.sessionEarningRepository.find({
           where: {
             createdAt: Between(startDate, endDate),
-            status: SessionEarningStatus.PAID,
           },
         });
         let sessionEarningAmount = 0;
@@ -481,7 +478,10 @@ export class PlatformAnalysisService {
           ? 0
           : 100
         : parseFloat(
-            (((currentMonthUsers - lastMonthUsers) / lastMonthUsers) * 100).toFixed(2),
+            (
+              ((currentMonthUsers - lastMonthUsers) / lastMonthUsers) *
+              100
+            ).toFixed(2),
           );
 
     // 2. Coaches
@@ -515,7 +515,10 @@ export class PlatformAnalysisService {
           ? 0
           : 100
         : parseFloat(
-            (((currentMonthCoaches - lastMonthCoaches) / lastMonthCoaches) * 100).toFixed(2),
+            (
+              ((currentMonthCoaches - lastMonthCoaches) / lastMonthCoaches) *
+              100
+            ).toFixed(2),
           );
 
     // 3. Learners
@@ -546,7 +549,10 @@ export class PlatformAnalysisService {
           ? 0
           : 100
         : parseFloat(
-            (((currentMonthLearners - lastMonthLearners) / lastMonthLearners) * 100).toFixed(2),
+            (
+              ((currentMonthLearners - lastMonthLearners) / lastMonthLearners) *
+              100
+            ).toFixed(2),
           );
 
     // 4. Courses
@@ -578,7 +584,9 @@ export class PlatformAnalysisService {
         (sum, feedback) => sum + feedback.rating,
         0,
       );
-      averageRating = parseFloat((totalRating / allFeedbacks.length).toFixed(2));
+      averageRating = parseFloat(
+        (totalRating / allFeedbacks.length).toFixed(2),
+      );
     }
 
     // Calculate percentage change for feedback (compare last month vs current month)

@@ -1,0 +1,59 @@
+﻿@startuml admin-platform-analytics
+title Coach Performance Analytics
+
+actor Coach
+participant "Coach\nApp" as CoachApp
+participant "API\nGateway" as API
+participant "StudentAnalysis\nController" as AnalysisCtrl
+participant "StudentAnalysis\nService" as AnalysisSvc
+participant "Database" as DB
+
+== View Monthly Revenue ==
+Coach -> CoachApp: Click "Performance Dashboard"
+CoachApp -> API: GET /student-analysis/{userId}/revenue/monthly?month=11&year=2025
+API -> AnalysisCtrl: getMonthlyRevenue(userId, month, year)
+AnalysisCtrl -> AnalysisSvc: getMonthlyRevenue(userId, {month, year})
+AnalysisSvc -> DB: Query payment data for period
+DB --> AnalysisSvc: Monthly revenue data
+AnalysisSvc --> AnalysisCtrl: MonthlyResponseDto
+AnalysisCtrl --> API: Response
+API --> CoachApp: Monthly revenue
+CoachApp --> Coach: Display revenue metrics
+
+== View Monthly Learners ==
+Coach -> CoachApp: Click "Learner Count"
+CoachApp -> API: GET /student-analysis/{userId}/learners/monthly?month=11&year=2025
+API -> AnalysisCtrl: getMonthlyLearners(userId, month, year)
+AnalysisCtrl -> AnalysisSvc: getMonthlyLearnerCount(userId, {month, year})
+AnalysisSvc -> DB: Query enrollment data for period
+DB --> AnalysisSvc: Monthly learner count
+AnalysisSvc --> AnalysisCtrl: MonthlyResponseDto
+AnalysisCtrl --> API: Response
+API --> CoachApp: Monthly learner count
+CoachApp --> Coach: Display learner metrics
+
+== View Monthly Courses ==
+Coach -> CoachApp: Click "Course Count"
+CoachApp -> API: GET /student-analysis/{userId}/courses/monthly?month=11&year=2025
+API -> AnalysisCtrl: getMonthlyCourses(userId, month, year)
+AnalysisCtrl -> AnalysisSvc: getMonthlyCourseCount(userId, {month, year})
+AnalysisSvc -> DB: Query course data for period
+DB --> AnalysisSvc: Monthly course count
+AnalysisSvc --> AnalysisCtrl: MonthlyResponseDto
+AnalysisCtrl --> API: Response
+API --> CoachApp: Monthly course count
+CoachApp --> Coach: Display course metrics
+
+== View Monthly Sessions ==
+Coach -> CoachApp: Click "Session Count"
+CoachApp -> API: GET /student-analysis/{userId}/sessions/monthly?month=11&year=2025
+API -> AnalysisCtrl: getMonthlySessions(userId, month, year)
+AnalysisCtrl -> AnalysisSvc: getMonthlySessionCount(userId, {month, year})
+AnalysisSvc -> DB: Query session data for period
+DB --> AnalysisSvc: Monthly session count
+AnalysisSvc --> AnalysisCtrl: MonthlyResponseDto
+AnalysisCtrl --> API: Response
+API --> CoachApp: Monthly session count
+CoachApp --> Coach: Display session metrics
+
+@enduml

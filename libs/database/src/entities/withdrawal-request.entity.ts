@@ -1,4 +1,3 @@
-import { WithdrawalRequestStatus } from '@app/shared/enums/payment.enum';
 import {
   Column,
   CreateDateColumn,
@@ -21,13 +20,6 @@ export class WithdrawalRequest {
 
   @Column({ type: 'numeric', precision: 15, scale: 3 })
   amount: number;
-
-  @Column({
-    type: 'enum',
-    enum: WithdrawalRequestStatus,
-    default: WithdrawalRequestStatus.PENDING,
-  })
-  status: WithdrawalRequestStatus;
 
   @Column({ name: 'payout_details', type: 'text', nullable: true })
   payoutDetails?: string;

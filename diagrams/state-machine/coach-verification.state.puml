@@ -1,0 +1,14 @@
+@startuml Coach Verification State Machine
+left to right direction
+
+[*] --> UNVERIFIED : Create coach profile
+
+UNVERIFIED --> PENDING : Submit verification request
+
+PENDING --> VERIFIED : Admin approves
+PENDING --> REJECTED : Admin rejects
+
+VERIFIED --> [*]
+REJECTED --> [*]
+
+@enduml

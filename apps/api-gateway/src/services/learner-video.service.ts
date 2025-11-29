@@ -11,11 +11,7 @@ import { LearnerProgress } from '@app/database/entities/learner-progress.entity'
 import { LearnerVideoStatus } from '@app/shared/enums/learner.enum';
 import { BunnyService } from '@app/bunny';
 import { FileUtils } from '@app/shared/utils/file.util';
-import { buildDetailsArrayFromComparison } from '@app/shared/helpers/buildDetailArray.helper';
-import {
-  GeminiApiResponse,
-  SaveAiFeedbackDto,
-} from '@app/shared/dtos/ai-feedback/ai-feedback.dto';
+import { GeminiApiResponse } from '@app/shared/dtos/ai-feedback/ai-feedback.dto';
 import { Video } from '@app/database/entities/video.entity';
 
 @Injectable()
@@ -94,7 +90,13 @@ export class LearnerVideoService {
     }
     return this.learnerVideoRepo.find({
       where,
-      relations: ['user', 'session', 'session.lesson'],
+      relations: [
+        'user',
+        'session',
+        'session.lesson',
+        'aiVideoComparisonResults',
+        'video',
+      ],
       order: { createdAt: 'DESC' },
     });
   }

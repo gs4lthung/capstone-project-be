@@ -1,0 +1,76 @@
+@startuml Learner Quiz Attempt & Progress Workflow
+
+title Learner Quiz Attempt & Progress Workflow
+
+start
+
+:Learner completes lesson content;
+
+if (Lesson has quiz?) then (yes)
+  :View quiz in lesson;
+  :Click "Start Quiz";
+  :Quiz status = IN_PROGRESS;
+  
+  :System loads questions;
+  :Display quiz questions;
+  loop For each question
+    :Read question;
+    :Select/provide answer;
+    :Confirm answer;
+  end loop
+  
+  :Review all answers;
+  if (Confirm submission?) then (yes)
+    :Submit quiz;
+    :Quiz status = COMPLETED;
+    
+  else (no)
+    :Continue editing;
+    repeat
+      :Modify answer;
+    repeat while (More changes?)
+    :Submit quiz;
+    :Quiz status = COMPLETED;
+  endif
+  
+  :System calculates score;
+  :Calculate percentage;
+  if (Score >= Passing score?) then (yes)
+    :Quiz status = PASSED;
+    :Notify learner - "Passed!";
+    :Award pass points;
+    :Update lesson progress;
+    
+  else (no)
+    :Quiz status = FAILED;
+    :Notify learner - "Failed. Try again.";
+    :Allow retry;
+  endif
+  
+else (no)
+  :Lesson complete without quiz;
+endif
+
+:Update learner progress;
+:Mark lesson activity as done;
+
+if (All lesson activities complete?) then (yes)
+  :Lesson status = COMPLETED;
+  :Check achievement criteria;
+  
+  if (Achievement unlocked?) then (yes)
+    :Award achievement;
+    :Notify learner;
+  else (no)
+    :No new achievements;
+  endif
+  
+else (no)
+  :More content to complete;
+endif
+
+:View updated progress;
+:See completion percentage;
+:Check earned achievements;
+
+stop

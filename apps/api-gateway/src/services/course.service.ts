@@ -940,6 +940,14 @@ export class CourseService extends BaseTypeOrmService<Course> {
 
       course.currentParticipants -= 1;
 
+      const platformFeeConfig = await this.configurationService.findByKey(
+        'platform_fee_per_percentage',
+      );
+      course.totalEarnings -=
+        (Number(course.pricePerParticipant) *
+          (100 - Number(platformFeeConfig.metadata.value))) /
+        100;
+
       switch (course.learningFormat) {
         case CourseLearningFormat.INDIVIDUAL:
           course.status = CourseStatus.APPROVED;

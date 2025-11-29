@@ -1,0 +1,16 @@
+@startuml Payment State Machine
+left to right direction
+
+[*] --> PENDING : Create payment link
+
+PENDING --> PAID : User completes payment
+PENDING --> FAILED : Payment declined
+PENDING --> CANCELLED : User cancels
+PENDING --> EXPIRED : Link expires
+
+PAID --> [*]
+FAILED --> [*]
+CANCELLED --> [*]
+EXPIRED --> [*]
+
+@enduml

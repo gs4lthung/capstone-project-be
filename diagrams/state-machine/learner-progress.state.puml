@@ -1,0 +1,12 @@
+@startuml LearnerProgress State Machine
+left to right direction
+
+[*] --> IN_PROGRESS : Start course
+
+IN_PROGRESS --> COMPLETED : All sessions completed
+IN_PROGRESS --> DROPPED_OUT : Learner drops course
+
+COMPLETED --> [*]
+DROPPED_OUT --> [*]
+
+@enduml

@@ -1,0 +1,77 @@
+@startuml Learner Course Enrollment & Payment Workflow
+
+title Learner Course Enrollment & Payment Workflow
+
+start
+
+:Learner searches/browses courses;
+:View course details;
+
+if (Interested in course?) then (yes)
+  :Click "Enroll Now";
+  
+  if (Learner already enrolled?) then (yes)
+    :Show message "Already enrolled";
+    stop
+  else (no)
+    :Display enrollment & payment form;
+  endif
+  
+  :Review course info;
+  :Review price;
+  
+  if (Agree to terms?) then (yes)
+    :Click "Proceed to Payment";
+    
+    if (Learner has wallet?) then (yes)
+      :Display payment methods;
+      :Select payment method;
+    else (no)
+      :Create wallet;
+    endif
+    
+    if (Sufficient balance/funds?) then (yes)
+      :System initiates payment;
+      
+      if (Payment method = Wallet?) then (yes)
+        :Deduct from wallet;
+        :Create wallet transaction;
+      else (Online payment)
+        :Generate PayOS payment link;
+        :Redirect to PayOS;
+        :Learner completes payment;
+        :Receive payment confirmation;
+      endif
+      
+      if (Payment successful?) then (yes)
+        :Enrollment status = ACTIVE;
+        :Create enrollment record;
+        :Send confirmation email;
+        :Learner can access course;
+        :View enrolled courses;
+        :Access course materials;
+        :Schedule sessions;
+        
+      else (failed)
+        :Show error message;
+        :Payment cancelled;
+        stop
+      endif
+      
+    else (no)
+      :Show insufficient balance;
+      :Suggest wallet top-up;
+      stop
+    endif
+    
+  else (no)
+    :Cancel enrollment;
+    stop
+  endif
+  
+else (no)
+  :Continue browsing;
+  stop
+endif
+
+stop

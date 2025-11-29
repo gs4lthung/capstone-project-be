@@ -1,0 +1,16 @@
+@startuml Video State Machine
+left to right direction
+
+[*] --> UPLOADING : Upload video
+
+UPLOADING --> READY : Upload success
+UPLOADING --> ERROR : Upload failed
+
+ERROR --> UPLOADING : Retry upload
+
+READY --> ANALYZING : Video analysis started
+ANALYZING --> READY : Analysis complete
+
+READY --> [*]
+
+@enduml

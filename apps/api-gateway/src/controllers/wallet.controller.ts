@@ -108,4 +108,17 @@ export class WalletController {
   async update(@Param('id') id: number, @Body() data: UpdateWalletDto) {
     return this.walletService.update(id, data);
   }
+
+  @Post('withdrawal')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiOperation({
+    tags: ['Wallets'],
+    summary: 'Request a withdrawal from the wallet',
+    description: "Create a withdrawal request from the user's wallet",
+  })
+  @UseGuards(AuthGuard)
+  async requestWithdrawal(@Body('amount') amount: number) {
+    return this.walletService.handleWithdrawalRequest(amount);
+  }
 }

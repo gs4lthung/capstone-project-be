@@ -1,0 +1,80 @@
+﻿@startuml learner-feedback
+
+title Learner Feedback on Course
+
+actor Learner
+actor Coach
+participant "Learner\nApp" as LearnerApp
+participant "Coach\nApp" as CoachApp
+participant "API\nGateway" as API
+participant "Feedback\nController" as FeedbackCtrl
+participant "Feedback\nService" as FeedbackSvc
+participant "Course\nService" as CourseSvc
+participant "Notification\nService" as NotifSvc
+participant "Database" as DB
+
+== Course Completion Check ==
+Learner -> LearnerApp: View completed course
+LearnerApp -> API: GET /courses/:id
+API -> CourseSvc: findOne(courseId)
+CourseSvc -> DB: Query course details
+DB --> CourseSvc: Course data
+CourseSvc --> API: Course data
+API --> LearnerApp: Course details
+LearnerApp --> Learner: Display "Rate this course" button
+
+== Feedback Submission ==
+Learner -> LearnerApp: Click "Leave Feedback"
+LearnerApp -> LearnerApp: Display feedback form
+
+Learner -> LearnerApp: Rate course (1-5 stars) & write comment
+LearnerApp -> API: POST /feedbacks/courses/:id\n(rating, comment, anonymous)
+API -> FeedbackCtrl: create(courseId, data)
+FeedbackCtrl -> FeedbackSvc: create(courseId, data)
+FeedbackSvc -> DB: Create/Update Feedback record\n(learnerId, courseId, rating, comment)
+DB --> FeedbackSvc: Feedback created/updated
+
+== Update Course Rating ==
+FeedbackSvc -> CourseSvc: UpdateCourseRating(courseId)
+CourseSvc -> DB: Get all feedbacks for course\nCount and sum ratings
+DB --> CourseSvc: Feedback statistics
+
+CourseSvc -> CourseSvc: Calculate aggregate\naverageRating = sum(ratings) / count\ntotalReviews = count
+CourseSvc -> DB: Update Course\n(averageRating, totalReviews, updatedAt=now)
+DB --> CourseSvc: Course rating updated
+
+CourseSvc --> FeedbackSvc: Rating updated
+FeedbackSvc --> FeedbackCtrl: Feedback submitted
+FeedbackCtrl --> API: Success response
+API --> LearnerApp: Feedback received
+LearnerApp --> Learner: Display "Thank you for your feedback!"
+LearnerApp -> LearnerApp: Clear form\nShow course rating updated
+
+== Notify Coach ==
+FeedbackSvc -> NotifSvc: SendNotification\n(coachId, "New feedback received")
+NotifSvc -> DB: Log notification\n(type=FEEDBACK_RECEIVED,\ncourseId, learnerId, rating)
+DB --> NotifSvc: Notification logged
+
+NotifSvc --> NotifSvc: Notify coach\n(email + in-app)
+
+Coach -> CoachApp: Check course feedback
+CoachApp -> API: GET /feedbacks/courses/:id
+API -> FeedbackCtrl: getByCourseId(courseId)
+FeedbackCtrl -> FeedbackSvc: findByCourseId(courseId)
+FeedbackSvc -> DB: Query feedbacks\n(courseId, sorted by date desc)
+DB --> FeedbackSvc: Feedback list
+
+FeedbackSvc --> API: Feedbacks
+API --> CoachApp: Feedback list
+CoachApp --> Coach: Display all feedbacks:\n- Ratings\n- Comments\n- Dates
+
+== Learner View Their Feedback ==
+Learner -> LearnerApp: View my submitted feedbacks
+LearnerApp -> LearnerApp: Note: Use GET /feedbacks/courses/:id\nto view feedback for specific course
+LearnerApp --> Learner: Display feedback submitted
+
+
+== Feedback Visibility Example ==
+
+@enduml
+

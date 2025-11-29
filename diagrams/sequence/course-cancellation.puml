@@ -1,0 +1,76 @@
+﻿@startuml course-cancellation
+title Course Creation Request Approval Workflow
+
+actor Coach
+actor Admin
+participant "Coach\nApp" as CoachApp
+participant "Admin\nApp" as AdminApp
+participant "API\nGateway" as API
+participant "Course\nController" as CourseCtrl
+participant "Course\nService" as CourseSvc
+participant "Database" as DB
+
+== Select Subject & Create Course ==
+Coach -> CoachApp: Click "Create Course"
+CoachApp -> API: GET /subjects (get list)
+API -> CoachApp: Subject list
+Coach -> CoachApp: Select subject & enter course details
+CoachApp -> API: POST /courses/subjects/{subjectId}\n(CreateCourseRequestDto)
+API -> CourseCtrl: createCourse(subjectId, data)
+CourseCtrl -> CourseSvc: createCourseCreationRequest(subjectId, data)
+CourseSvc -> DB: Insert course creation request\n(status=PENDING)
+DB --> CourseSvc: Request created
+CourseSvc --> CourseCtrl: Course request
+CourseCtrl --> API: Response
+API --> CoachApp: Request submitted
+CoachApp --> Coach: "Waiting for admin review"
+
+== Coach Updates Request ==
+Coach -> CoachApp: Edit course request
+CoachApp -> API: PUT /courses/{courseId}\n(UpdateCourseDto, file?)
+API -> CourseCtrl: updateCourseCreationRequest(courseId, data)
+CourseCtrl -> CourseSvc: updateCourseCreationRequest(courseId, data, file)
+CourseSvc -> DB: Update course request
+DB --> CourseSvc: Request updated
+CourseSvc --> CourseCtrl: Updated request
+CourseCtrl --> API: Response
+API --> CoachApp: Request updated
+CoachApp --> Coach: "Changes saved"
+
+== Admin Reviews Request ==
+Admin -> AdminApp: View pending course requests
+AdminApp -> API: GET /courses (get all courses)
+API -> CourseCtrl: Get courses with status filters
+CourseCtrl -> CourseSvc: Get pending courses
+CourseSvc -> DB: Query courses with PENDING status
+DB --> CourseSvc: List of courses
+CourseSvc --> CourseCtrl: Courses list
+CourseCtrl --> API: Response
+API --> AdminApp: Display requests
+AdminApp --> Admin: Show pending requests
+
+== Admin Approves Request ==
+Admin -> AdminApp: Click "Approve"
+AdminApp -> API: PATCH /courses/requests/:id/approve
+API -> CourseCtrl: approveCourseCreationRequest(courseId)
+CourseCtrl -> CourseSvc: approveCourseCreationRequest(courseId)
+CourseSvc -> DB: Update course\n(status=APPROVED)
+DB --> CourseSvc: Course approved
+CourseSvc --> CourseCtrl: Success
+CourseCtrl --> API: Response
+API --> AdminApp: Request approved
+AdminApp --> Admin: "Course is now active"
+
+== Admin Rejects Request ==
+Admin -> AdminApp: Click "Reject"
+AdminApp -> API: PATCH /courses/requests/:id/reject\n(reason)
+API -> CourseCtrl: rejectCourseCreationRequest(courseId, reason)
+CourseCtrl -> CourseSvc: rejectCourseCreationRequest(courseId, reason)
+CourseSvc -> DB: Update course\n(status=REJECTED, reason)
+DB --> CourseSvc: Course rejected
+CourseSvc --> CourseCtrl: Success
+CourseCtrl --> API: Response
+API --> AdminApp: Request rejected
+AdminApp --> Admin: "Request rejected"
+
+@enduml
