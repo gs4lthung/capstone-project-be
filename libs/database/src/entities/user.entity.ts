@@ -27,7 +27,6 @@ import {
   Max,
   Min,
 } from 'class-validator';
-import { VideoConferencePresenceLog } from './video-conference-presence-log.entity';
 import { Wallet } from './wallet.entity';
 import { Learner } from './learner.entity';
 import { Course } from './course.entity';
@@ -152,9 +151,6 @@ export class User {
 
   @OneToMany(() => Notification, (notification) => notification.user)
   notifications: Notification[];
-
-  @OneToMany(() => VideoConferencePresenceLog, (log) => log.user)
-  videoConferencePresenceLogs: VideoConferencePresenceLog[];
 
   @OneToOne(() => Wallet, (wallet) => wallet.user, {
     eager: true,

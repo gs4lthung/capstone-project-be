@@ -1,0 +1,55 @@
+@startuml Admin Coach Verification Workflow
+
+title Admin Coach Verification Workflow
+
+start
+
+:New coach registers;
+:Submits verification documents;
+:Coach status = PENDING_VERIFICATION;
+
+:Admin receives notification;
+:Admin logs in;
+:Views pending coaches list;
+
+loop For each pending coach
+  :Click on coach profile;
+  :Review submitted documents;
+  :Check coach information;
+  
+  if (Documents complete?) then (yes)
+    :Review document authenticity;
+    
+    if (Credentials valid?) then (yes)
+      :Approve coach;
+      :Coach status = VERIFIED;
+      :Send approval email;
+      :Coach can create courses;
+      
+    else (no)
+      :Request more information;
+      :Coach status = REVISION_NEEDED;
+      :Send request to coach;
+    endif
+    
+  else (no)
+    :Request missing documents;
+    :Coach status = INCOMPLETE;
+    :Send email to coach;
+  endif
+  
+end loop
+
+  :Admin monitors coach activity;
+if (Coach violates policies?) then (yes)
+  :Investigate violation;
+  :Take appropriate action;
+else (no)
+  :Coach continues normally;
+endif
+
+:Review coach statistics;
+:Check course quality;
+:Monitor learner feedback;
+
+stop

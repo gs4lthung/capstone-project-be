@@ -129,7 +129,7 @@ export class FeedbackService {
     return await this.datasource.transaction(async (manager) => {
       const feedbacks = await manager.getRepository(Feedback).find({
         where: { receivedBy: { id: id } },
-        relations: ['createdBy', 'receivedBy'],
+        relations: ['createdBy', 'receivedBy', 'course'],
         order: {
           createdAt: 'DESC',
         },

@@ -1,0 +1,13 @@
+@startuml Subject State Machine
+left to right direction
+
+[*] --> DRAFT : Create subject
+
+DRAFT --> PUBLISHED : All lessons have quiz & video
+
+PUBLISHED --> DRAFT : Unpublish
+
+DRAFT --> [*]
+PUBLISHED --> [*]
+
+@enduml

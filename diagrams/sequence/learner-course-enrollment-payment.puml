@@ -1,0 +1,48 @@
+﻿@startuml learner-course-enrollment-payment
+
+title Learner Course Enrollment & Payment Workflow
+
+actor Learner
+participant "Frontend\nApp" as Frontend
+participant "API\nGateway" as API
+participant "Payment\nController" as PaymentCtrl
+participant "Payment\nService" as PaymentSvc
+participant "Course\nService" as CourseSvc
+participant "Enrollment\nService" as EnrollmentSvc
+participant "Wallet\nService" as WalletSvc
+participant "PayOS\nGateway" as PayOS
+participant "Database" as DB
+
+== Course Discovery ==
+Learner -> Frontend: View available courses
+Frontend -> API: GET /courses
+API -> CourseSvc: List available courses
+CourseSvc -> DB: Query courses (status=READY_OPENED)
+DB --> CourseSvc: Course list
+CourseSvc --> API: Course list
+API --> Frontend: Course list
+Frontend --> Learner: Display courses
+
+== Payment Initiation ==
+Learner -> Frontend: Select course & initiate payment
+Frontend -> API: POST /payments/courses/{courseId}
+API -> PaymentCtrl: createCoursePaymentLink()
+PaymentCtrl -> PaymentSvc: CreatePaymentLink(courseId, learnerId)
+PaymentSvc -> CourseSvc: Get course details
+CourseSvc -> DB: Query course
+DB --> CourseSvc: Course details (price)
+PaymentSvc -> PayOS: Create payment link\n(amount, description)
+PayOS --> PaymentSvc: Payment link + transactionId
+PaymentSvc -> DB: Save payment transaction\n(status=PENDING)
+DB --> PaymentSvc: Transaction saved
+PaymentSvc --> PaymentCtrl: Payment link URL
+PaymentCtrl --> API: Payment link
+API --> Frontend: Payment link
+Frontend --> Learner: Redirect to PayOS
+
+== Payment Processing ==
+Learner -> PayOS: Complete payment
+
+
+@enduml
+

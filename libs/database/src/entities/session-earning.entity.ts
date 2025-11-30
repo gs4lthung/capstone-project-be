@@ -1,4 +1,3 @@
-import { SessionEarningStatus } from '@app/shared/enums/session.enum';
 import {
   Column,
   CreateDateColumn,
@@ -30,13 +29,6 @@ export class SessionEarning {
     scale: 3,
   })
   coachEarningTotal: number;
-
-  @Column({
-    type: 'enum',
-    enum: SessionEarningStatus,
-    default: SessionEarningStatus.PENDING,
-  })
-  status: SessionEarningStatus;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;

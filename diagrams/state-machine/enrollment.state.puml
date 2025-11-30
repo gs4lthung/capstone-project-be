@@ -1,0 +1,20 @@
+@startuml Enrollment State Machine
+left to right direction
+
+[*] --> UNPAID : Select course
+
+UNPAID --> PENDING_GROUP : Payment successful (group course)
+UNPAID --> CONFIRMED : Payment successful (individual course)
+
+PENDING_GROUP --> CONFIRMED : Enough learners reached
+PENDING_GROUP --> CANCELLED : Not enough learners or learner cancels
+
+CONFIRMED --> LEARNING : Course starts
+CONFIRMED --> CANCELLED : Learner cancels
+
+LEARNING --> DONE : All sessions completed
+
+CANCELLED --> [*]
+DONE --> [*]
+
+@enduml

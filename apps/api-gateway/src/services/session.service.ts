@@ -10,10 +10,7 @@ import {
   CompleteSessionDto,
   GetSessionForWeeklyCalendarRequestDto,
 } from '@app/shared/dtos/sessions/session.dto';
-import {
-  SessionEarningStatus,
-  SessionStatus,
-} from '@app/shared/enums/session.enum';
+import { SessionStatus } from '@app/shared/enums/session.enum';
 import { BaseTypeOrmService } from '@app/shared/helpers/typeorm.helper';
 import { FindOptions } from '@app/shared/interfaces/find-options.interface';
 import {
@@ -300,7 +297,6 @@ export class SessionService extends BaseTypeOrmService<Session> {
         .create({
           sessionPrice: Number(sessionEarning),
           coachEarningTotal: Number(sessionEarning),
-          status: SessionEarningStatus.PAID,
           paidAt: new Date(),
           session: session,
         });

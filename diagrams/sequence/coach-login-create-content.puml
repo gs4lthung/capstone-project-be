@@ -1,0 +1,113 @@
+﻿@startuml Coach Login and Create Course Content
+!theme plain
+title Coach Login and Create Course Content
+
+actor Coach
+participant "Client App" as Client
+participant "API\nGateway" as API
+participant "Auth\nService" as Auth
+participant "Subject\nService" as SubjectService
+participant "Lesson\nService" as LessonService
+participant "Quiz\nService" as QuizService
+participant "Video\nService" as VideoService
+participant "Database" as DB
+
+== Coach Login ==
+Coach -> Client: Click "Coach Login"
+Client -> Client: Open Login Form
+Client --> Coach: Display Login Form
+
+Coach -> Client: Enter Phone Number & Password
+Coach -> Client: Click "Login" Button
+Client -> API: POST /auth/login\n(phoneNumber, password)
+activate API
+
+API -> Auth: login(phoneNumber, password)
+Auth -> DB: Verify credentials
+DB --> Auth: Success
+Auth --> API: accessToken, user info
+deactivate API
+
+Client --> Coach: Redirect to Dashboard
+
+== Create Subject ==
+Coach -> Client: Click "Create Subject" Button
+Client -> Client: Open Subject Form
+Client --> Coach: Display Subject Form
+
+Coach -> Client: Enter Subject Details\n(name, description, category)
+Coach -> Client: Click "Create" Button
+Client -> API: POST /subjects\n(name, description, category)\n[with JWT token]
+activate API
+
+API -> SubjectService: createSubject(data)
+SubjectService -> DB: Insert Subject\n(name, description, category, coachId)
+DB --> SubjectService: Subject created (subjectId)
+SubjectService --> API: Subject object
+deactivate API
+
+API --> Client: Success response
+Client --> Coach: "Subject created successfully"
+
+== Create Lesson ==
+Coach -> Client: Click "Add Lesson" Button
+Client -> Client: Open Lesson Form
+Client --> Coach: Display Lesson Form
+
+Coach -> Client: Enter Lesson Details\n(title, description, order)
+Coach -> Client: Click "Create" Button
+Client -> API: POST /lessons/subjects/{subjectId}\n(CreateLessonRequestDto)\n[with JWT token]
+activate API
+
+API -> LessonService: createLesson(subjectId, data)
+LessonService -> DB: Insert Lesson\n(subjectId, title, description, order, coachId)
+DB --> LessonService: Lesson created (lessonId)
+LessonService --> API: Lesson object
+deactivate API
+
+API --> Client: Success response
+Client --> Coach: "Lesson created successfully"
+
+== Add Quiz to Lesson ==
+Coach -> Client: Click "Create Quiz" Button
+Client -> Client: Open Quiz Form
+Client --> Coach: Display Quiz Form
+
+Coach -> Client: Enter Quiz Details\n(title, description, passingScore)
+Coach -> Client: Click "Create" Button
+Client -> API: POST /quizzes/lessons/{lessonId}\n(CreateQuizDto)\n[with JWT token]
+activate API
+
+API -> QuizService: createLessonQuiz(lessonId, data)
+QuizService -> DB: Insert Quiz\n(lessonId, title, description, passingScore, coachId)
+DB --> QuizService: Quiz created (quizId)
+QuizService --> API: Quiz object
+deactivate API
+
+API --> Client: Success response
+Client --> Coach: "Quiz created successfully"
+
+== Add Video to Lesson ==
+Coach -> Client: Click "Upload Video" Button
+Client -> Client: Open Video Upload Form
+Client --> Coach: Display Upload Form
+
+Coach -> Client: Select Video File\nEnter Video Details\n(title, description)
+Coach -> Client: Click "Upload" Button
+Client -> API: POST /videos/lessons/{lessonId}\n[multipart/form-data]\n(file, title, description)\n[with JWT token]
+activate API
+
+API -> VideoService: createLessonVideo(lessonId, file, data)
+VideoService -> DB: Insert Video\n(lessonId, title, description, fileUrl)
+DB --> VideoService: Video created
+VideoService --> API: Video object
+deactivate API
+
+API --> Client: Success response
+Client --> Coach: "Video uploaded successfully"
+
+== Content Complete ==
+Coach -> Client: Subject with lessons (each lesson has quiz + video)
+Client --> Coach: Display complete course structure
+
+@enduml

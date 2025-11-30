@@ -21,10 +21,7 @@ import { CheckRoles } from '@app/shared/decorators/check-roles.decorator';
 import { RoleGuard } from '../guards/role.guard';
 import { UserRole } from '@app/shared/enums/user.enum';
 import { ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import {
-  GeminiApiResponse,
-  SaveAiFeedbackDto,
-} from '@app/shared/dtos/ai-feedback/ai-feedback.dto';
+import { GeminiApiResponse } from '@app/shared/dtos/ai-feedback/ai-feedback.dto';
 
 @Controller('learner-videos')
 export class LearnerVideoController {

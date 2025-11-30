@@ -1,0 +1,10 @@
+@startuml Attendance State Machine
+left to right direction
+
+[*] --> PRESENT : Mark present
+[*] --> ABSENT : Mark absent
+
+PRESENT --> [*]
+ABSENT --> [*]
+
+@enduml

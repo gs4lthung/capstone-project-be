@@ -1,0 +1,42 @@
+﻿@startuml Admin Verify Coach Profile
+!theme plain
+title Admin Verify Coach Profile - Sequence Diagram
+
+actor Admin
+participant "Admin Portal" as Portal
+participant "Backend" as API
+participant "Coach Service" as CoachService
+participant "Database" as DB
+participant "Notification Service" as Notify
+
+== Admin View Pending Coaches ==
+Admin -> Portal: Navigate to Coach Management
+activate Portal
+Portal -> API: GET /coaches?filter=verificationStatus=PENDING
+activate API
+API -> DB: Query Coaches WHERE verificationStatus = UNVERIFIED/PENDING
+activate DB
+DB --> API: Return List of Coaches
+deactivate DB
+API --> Portal: Return Coaches List
+deactivate API
+Portal --> Admin: Display Pending Coach Profiles
+
+== Admin Review Coach Profile ==
+Admin -> Portal: Click on Coach Profile to Review
+activate Admin
+Portal -> API: GET /coaches/:coachId
+activate API
+API -> DB: Query Coach with Relations\n(user, credentials, created courses)
+activate DB
+DB --> API: Return Coach Details\n(bio, yearOfExperience, specialties,\ncredentials[], courses[])
+deactivate DB
+API --> Portal: Coach Full Profile
+deactivate API
+Portal --> Admin: Display Coach Details\n- Profile Info\n- Uploaded Credentials\n- Years of Experience\n- Specialties
+
+== Admin Verification Decision ==
+
+deactivate Admin
+
+== Admin Verification Complete ==

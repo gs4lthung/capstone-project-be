@@ -1,0 +1,106 @@
+﻿@startuml Coach Login and Wallet Withdrawal
+!theme plain
+title Coach Login and Wallet Withdrawal - Sequence Diagram
+
+actor Coach
+participant "Client App" as Client
+participant "Backend" as API
+participant "Auth Service" as Auth
+participant "Wallet Service" as WalletService
+participant "Payment Service" as PaymentService
+participant "Database" as DB
+
+== Coach Login ==
+Coach -> Client: Click "Coach Login"
+activate Client
+Client -> Client: Open Login Form
+Client --> Coach: Display Login Form
+
+Coach -> Client: Enter Phone Number & Password
+activate Coach
+Coach -> Client: Click "Login" Button
+Client -> API: POST /auth/login\n(phoneNumber, password)
+deactivate Coach
+activate API
+
+API -> Auth: login(phoneNumber, password)
+activate Auth
+Auth -> DB: Verify Credentials
+activate DB
+DB --> Auth: Success (Coach User)
+deactivate DB
+
+alt Invalid Credentials
+  Auth --> API: Error
+  API --> Client: Error Response (401)
+  Client --> Coach: Show Error\n"Invalid Credentials"
+else Valid Coach
+  Auth --> API: Login Success\n(accessToken)
+  API --> Client: Success
+  deactivate Auth
+  deactivate API
+  Client --> Coach: Redirect to Dashboard
+end
+
+== View Wallet ==
+Coach -> Client: Click "My Wallet" Section
+Client -> API: GET /wallet\n[with JWT token]
+activate API
+
+API -> WalletService: getWalletBalance(coachId)
+activate WalletService
+
+WalletService -> DB: Query Wallet\n(balance, currency, totalEarnings, totalWithdrawals)
+activate DB
+DB --> WalletService: Wallet Details
+deactivate DB
+
+deactivate WalletService
+
+API --> Client: Success\n(balance, currency, totalEarnings, totalWithdrawals)
+deactivate API
+
+Client --> Coach: Display Wallet Dashboard\n(Current Balance, Total Earnings,\nTotal Withdrawals, Transaction History)
+
+== Initiate Withdrawal ==
+Coach -> Client: Click "Withdraw Money" Button
+activate Coach
+Client -> Client: Open Withdrawal Form
+Client --> Coach: Display Withdrawal Form
+
+Coach -> Client: Enter Withdrawal Amount\nEnter Bank Account Details\n(accountNumber, accountHolder, bankName)
+Coach -> Client: Click "Request Withdrawal" Button
+Client -> API: POST /wallets/withdrawal\n(amount, bankAccount)\n[with JWT token]
+deactivate Coach
+activate API
+
+API -> WalletService: requestWithdrawal(coachId, amount, bankAccount)
+activate WalletService
+
+WalletService -> DB: Check Wallet Balance\nQuery: currentBalance >= amount
+activate DB
+DB --> WalletService: Balance Status
+deactivate DB
+
+alt Insufficient Balance
+  WalletService --> API: Error (400)\n"Insufficient Balance"
+  API --> Client: Error Response
+  Client --> Coach: Show Error\n"Your balance is insufficient"
+else Sufficient Balance
+  WalletService -> DB: Begin Transaction\nUpdate Wallet Balance\n(currentBalance - amount)
+  activate DB
+  
+  WalletService -> DB: Create Withdrawal Request\n(wallet, amount, referenceId, payoutDetails, completedAt = NOW())
+  DB --> WalletService: Withdrawal Created\n(withdrawalId)
+  
+  WalletService -> DB: Create Wallet Transaction\n(type: DEBIT, amount)
+  DB --> WalletService: Transaction Recorded
+  deactivate DB
+  
+  deactivate WalletService
+  
+  API --> Client: Success\n(withdrawalId, amount, completedAt)
+  deactivate API
+  
+  Client --> Coach: Show Success Message\n"Withdrawal completed!\nAmount transferred to your bank account"
+end

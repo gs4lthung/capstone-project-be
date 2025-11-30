@@ -1,0 +1,24 @@
+@startuml Course State Machine
+left to right direction
+
+[*] --> PENDING_APPROVAL : Create course
+
+PENDING_APPROVAL --> APPROVED : Admin approves
+PENDING_APPROVAL --> REJECTED : Admin rejects
+
+APPROVED --> READY_OPENED : Prepare course
+
+READY_OPENED --> ON_GOING : Enrollment starts
+READY_OPENED --> CANCELLED : Cancel before start
+
+ON_GOING --> FULL : Max participants reached
+ON_GOING --> COMPLETED : All sessions done
+ON_GOING --> CANCELLED : Cancel after start
+
+FULL --> ON_GOING : Participant dropped
+
+REJECTED --> [*]
+CANCELLED --> [*]
+COMPLETED --> [*]
+
+@enduml

@@ -42,7 +42,6 @@ import {
   UpdateCourseDto,
 } from '@app/shared/dtos/course/course.dto';
 import { CustomApiRequest } from '@app/shared/customs/custom-api-request';
-import { VideoConference } from '@app/database/entities/video-conference.entity';
 import { NotificationService } from './notification.service';
 import { NotificationType } from '@app/shared/enums/notification.enum';
 import { ScheduleService } from './schedule.service';
@@ -51,6 +50,7 @@ import { DateTimeUtils } from '@app/shared/utils/datetime.util';
 import { Court } from '@app/database/entities/court.entity';
 import { CoachVideoStatus } from '@app/shared/enums/coach.enum';
 import { CryptoUtils } from '@app/shared/utils/crypto.util';
+import { PickleballLevel } from '@app/shared/enums/pickleball.enum';
 
 @Injectable({ scope: Scope.REQUEST })
 export class CourseService extends BaseTypeOrmService<Course> {
@@ -173,6 +173,8 @@ export class CourseService extends BaseTypeOrmService<Course> {
   async findAvailableCourses(
     page: number = 1,
     size: number = 10,
+    name?: string,
+    level?: PickleballLevel,
     province?: number,
     district?: number,
   ): Promise<PaginateObject<Course>> {
@@ -184,6 +186,7 @@ export class CourseService extends BaseTypeOrmService<Course> {
         .createQueryBuilder('course');
 
       queryBuilder
+        .leftJoinAndSelect('course.sessions', 'sessions')
         .leftJoinAndSelect('course.court', 'court')
         .leftJoinAndSelect('court.province', 'province')
         .leftJoinAndSelect('course.schedules', 'schedules')
@@ -199,6 +202,14 @@ export class CourseService extends BaseTypeOrmService<Course> {
           CourseStatus.FULL,
         ],
       });
+
+      if (name) {
+        queryBuilder.andWhere('course.name LIKE :name', { name: `%${name}%` });
+      }
+
+      if (level) {
+        queryBuilder.andWhere('course.level = :level', { level });
+      }
 
       if (province) {
         queryBuilder.andWhere('province.id = :provinceId', {
@@ -248,6 +259,13 @@ export class CourseService extends BaseTypeOrmService<Course> {
         'court.address',
         'createdBy.id',
         'createdBy.fullName',
+        'sessions.id',
+        'sessions.name',
+        'sessions.description',
+        'sessions.sessionNumber',
+        'sessions.scheduleDate',
+        'sessions.startTime',
+        'sessions.endTime',
       ]);
 
       const [courses, total] = await queryBuilder.getManyAndCount();
@@ -771,14 +789,7 @@ export class CourseService extends BaseTypeOrmService<Course> {
         await manager.getRepository(Session).save(sessions);
       }
 
-      const videoConference = manager.getRepository(VideoConference).create({
-        course: course,
-        channelName: `course-${course.id}-vc`,
-      });
-      await manager.getRepository(VideoConference).save(videoConference);
-
       course.status = CourseStatus.APPROVED;
-      course.videoConference = videoConference;
       await manager.getRepository(Course).save(course);
 
       request.status = RequestStatus.APPROVED;
@@ -939,6 +950,14 @@ export class CourseService extends BaseTypeOrmService<Course> {
       await this.enrollmentRepository.save(enrollment);
 
       course.currentParticipants -= 1;
+
+      const platformFeeConfig = await this.configurationService.findByKey(
+        'platform_fee_per_percentage',
+      );
+      course.totalEarnings -=
+        (Number(course.pricePerParticipant) *
+          (100 - Number(platformFeeConfig.metadata.value))) /
+        100;
 
       switch (course.learningFormat) {
         case CourseLearningFormat.INDIVIDUAL:

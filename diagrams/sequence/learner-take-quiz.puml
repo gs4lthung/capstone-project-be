@@ -1,0 +1,118 @@
+﻿@startuml learner-take-quiz
+title Learner Take Quiz
+
+actor Learner
+participant "Frontend\nApp" as Frontend
+participant "API\nGateway" as API
+participant "Quiz\nController" as QuizCtrl
+participant "Quiz\nService" as QuizSvc
+participant "LearnerProgress\nService" as ProgressSvc
+participant "Database" as DB
+
+== Quiz Discovery ==
+Learner -> Frontend: View lesson with quiz
+Frontend -> API: GET /lessons/{lessonId}/quiz
+API -> QuizSvc: GetQuizByLesson(lessonId)
+QuizSvc -> DB: Query quiz + questions + options
+DB --> QuizSvc: Quiz data with questions
+QuizSvc --> API: Quiz structure
+API --> Frontend: Display quiz info
+Frontend --> Learner: Show quiz overview & start button
+
+== Quiz Start ==
+Learner -> Frontend: Click "Start Quiz"
+Frontend -> API: POST /quizzes/:id/attempts\n(learnerId, answers)
+API -> QuizCtrl: learnerAttemptQuiz(quizId, data)
+QuizCtrl -> QuizSvc: learnerAttemptQuiz(quizId, data)
+QuizSvc -> DB: Create QuizAttempt\n(status=IN_PROGRESS/COMPLETED, startTime=now)
+DB --> QuizSvc: QuizAttempt created
+QuizSvc -> QuizSvc: Load quiz questions
+QuizSvc -> DB: Query all questions for quiz
+DB --> QuizSvc: Questions list
+QuizSvc --> QuizCtrl: Quiz attempt initialized
+QuizCtrl --> API: Quiz questions
+API --> Frontend: Quiz questions (without answers)
+Frontend --> Learner: Display questions & answer interface
+
+== Answer Questions ==
+loop For each question
+    Learner -> Frontend: Select answer option
+    Frontend -> Frontend: Store answer (client-side)\nQuestion {index} â†’ Option {id}
+end
+
+
+Learner -> Frontend: Click "Submit Quiz"
+Frontend -> API: POST /quizzes/:id/attempts\n(with all answers in request body)
+
+== Answer Validation & Scoring ==
+API -> QuizCtrl: learnerAttemptQuiz(quizId, data)
+QuizCtrl -> QuizSvc: learnerAttemptQuiz(quizId, data)
+QuizSvc -> DB: Get QuizAttempt + questions
+DB --> QuizSvc: Attempt + questions
+
+QuizSvc -> QuizSvc: Validate & Score answers
+loop For each learner answer
+    QuizSvc -> DB: Get correct answer\n(QuestionOption.isCorrect)
+    DB --> QuizSvc: Correct option
+    alt Answer is correct
+        QuizSvc -> QuizSvc: points += question.points
+    else Answer is incorrect
+        QuizSvc -> QuizSvc: No points
+    end
+end
+
+QuizSvc -> QuizSvc: Calculate score\nscore = (points / totalPoints) * 100
+
+== Pass/Fail Check ==
+QuizSvc -> DB: Get quiz passingScore
+DB --> QuizSvc: Passing threshold
+
+alt score >= passingScore
+    QuizSvc -> QuizSvc: Status = PASSED
+else
+    QuizSvc -> QuizSvc: Status = FAILED
+end
+
+QuizSvc -> DB: Update QuizAttempt\n(status, score, endTime, answers)
+DB --> QuizSvc: Attempt updated
+
+== Update Learner Progress ==
+QuizSvc -> ProgressSvc: UpdateLearnerProgress\n(learnerId, lessonId, quizPassed)
+ProgressSvc -> DB: Get LearnerProgress
+DB --> ProgressSvc: Progress record
+
+alt Quiz Passed
+    ProgressSvc -> DB: Update progress\n(lesson.quiz_completed=true)
+    ProgressSvc -> ProgressSvc: Check if all lesson activities done\n(quiz + video submission)
+    alt All activities completed
+        ProgressSvc -> DB: Update lesson status=COMPLETED
+    end
+else Quiz Failed
+    ProgressSvc -> DB: Mark quiz attempt recorded\nAllow retry
+end
+DB --> ProgressSvc: Progress updated
+
+== Achievement Evaluation ==
+ProgressSvc -> AchievementSvc: EvaluateAchievements\n(learnerId, courseId)
+AchievementSvc -> DB: Get learner progress + achievements
+DB --> AchievementSvc: Progress data
+
+AchievementSvc -> AchievementSvc: Check achievement criteria
+
+alt Achievement Unlocked
+    AchievementSvc -> DB: Create LearnerAchievement\n(achievementId, learnerId, unlockedAt)
+    DB --> AchievementSvc: Achievement recorded
+    AchievementSvc --> ProgressSvc: Achievements list
+else No Achievement
+    AchievementSvc --> ProgressSvc: No new achievements
+end
+
+== Return Results ==
+ProgressSvc --> QuizSvc: Results with achievements
+QuizSvc --> QuizCtrl: Quiz result summary
+QuizCtrl --> API: Result response:
+API --> Frontend: Quiz results
+Frontend --> Learner: Display results:\n- Score & pass/fail\n- Correct/incorrect count\n- Answer review\n- New achievements (if any)\n- Next steps
+
+
+@enduml

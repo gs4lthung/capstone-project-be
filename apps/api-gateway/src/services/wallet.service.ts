@@ -106,6 +106,35 @@ export class WalletService extends BaseTypeOrmService<Wallet> {
     });
   }
 
+  async handleWithdrawalRequest(
+    amount: number,
+  ): Promise<CustomApiResponse<void>> {
+    return await this.datasource.transaction(async (manager) => {
+      const wallet = await manager.getRepository(Wallet).findOne({
+        where: { user: { id: this.request.user.id as User['id'] } },
+        withDeleted: false,
+      });
+      if (!wallet) throw new InternalServerErrorException('Ví không tồn tại');
+
+      const currentBalance = Number(wallet.currentBalance ?? 0);
+      if (amount > currentBalance)
+        throw new InternalServerErrorException('Không đủ số dư');
+      const newCurrent = currentBalance - amount;
+
+      wallet.currentBalance = newCurrent;
+      await manager.getRepository(Wallet).save(wallet);
+
+      const newTransaction = manager.getRepository(WalletTransaction).create({
+        wallet: wallet,
+        type: WalletTransactionType.DEBIT,
+        amount: amount,
+      });
+      await manager.getRepository(WalletTransaction).save(newTransaction);
+
+      return new CustomApiResponse<void>(HttpStatus.OK, 'Rút tiền thành công');
+    });
+  }
+
   async handleWalletTopUp(userId: User['id'], amount: number): Promise<void> {
     return await this.datasource.transaction(async (manager) => {
       const wallet = await manager.getRepository(Wallet).findOne({
