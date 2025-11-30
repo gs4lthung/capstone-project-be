@@ -36,6 +36,7 @@ import { FindOptions } from '@app/shared/interfaces/find-options.interface';
 import { PaginateObject } from '@app/shared/dtos/paginate.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { FileSizeLimitEnum } from '@app/shared/enums/file.enum';
+import { PickleballLevel } from '@app/shared/enums/pickleball.enum';
 
 @Controller('courses')
 export class CourseController {
@@ -52,12 +53,16 @@ export class CourseController {
   async getAvailableCourses(
     @Query('page') page: number,
     @Query('size') size: number,
+    @Query('name') name: string,
+    @Query('level') level: PickleballLevel,
     @Query('province') province: number,
     @Query('district') district: number,
   ): Promise<PaginateObject<Course>> {
     const courses = await this.courseService.findAvailableCourses(
       page,
       size,
+      name,
+      level,
       province,
       district,
     );

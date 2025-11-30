@@ -8,6 +8,7 @@ import {
   ArrayNotEmpty,
   ValidateNested,
   IsNotEmpty,
+  IsString,
 } from 'class-validator';
 import { Type, Transform } from 'class-transformer';
 import { PartialType } from '@nestjs/mapped-types';
@@ -91,6 +92,14 @@ export class CreateCourseRequestDto {
   @IsDate()
   @Type(() => Date)
   startDate: Date;
+
+  @ApiProperty({
+    description: 'The Google Meet link for online courses',
+    example: 'abc-defg-hij',
+  })
+  @IsOptional()
+  @IsString()
+  googleMeetLink?: string;
 
   @ApiProperty({
     description: 'The ID of the court where the course will take place',

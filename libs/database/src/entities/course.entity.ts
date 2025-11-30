@@ -22,7 +22,6 @@ import {
   JoinColumn,
   ManyToOne,
   OneToMany,
-  OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
@@ -34,7 +33,6 @@ import { LearnerProgress } from './learner-progress.entity';
 import { User } from './user.entity';
 import { Subject } from './subject.entity';
 import { PickleballLevel } from '@app/shared/enums/pickleball.enum';
-import { VideoConference } from './video-conference.entity';
 import { Index } from 'typeorm';
 import { Court } from './court.entity';
 
@@ -144,6 +142,11 @@ export class Course {
   @IsDate()
   endDate?: Date;
 
+  @Column({ name: 'google_meet_link', type: 'text', nullable: true })
+  @IsOptional()
+  @IsString()
+  googleMeetLink?: string;
+
   @Column({ name: 'progress_pct', type: 'int', default: 0 })
   @IsInt()
   @Min(0)
@@ -195,10 +198,6 @@ export class Course {
 
   @OneToMany(() => LearnerProgress, (learnerProgress) => learnerProgress.course)
   learnerProgresses: LearnerProgress[];
-
-  @OneToOne(() => VideoConference, (vc) => vc.course)
-  @JoinColumn({ name: 'video_conference_id' })
-  videoConference: VideoConference;
 
   @ManyToOne(() => Court, (court) => court.courses)
   @JoinColumn({ name: 'court_id' })

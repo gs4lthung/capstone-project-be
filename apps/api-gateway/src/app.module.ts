@@ -94,10 +94,6 @@ import { FeedbackService } from './services/feedback.service';
 import { LearnerProgress } from '@app/database/entities/learner-progress.entity';
 import { LearnerProgressController } from './controllers/learner-progress.controller';
 import { LearnerProgressService } from './services/learner-progress.service';
-import { VideoConference } from '@app/database/entities/video-conference.entity';
-import { AgoraModule } from '@app/agora';
-import { VideoConferenceController } from './controllers/video-conference.controller';
-import { VideoConferenceService } from './services/video-conference.service';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { NotificationService } from './services/notification.service';
 import { Province } from '@app/database/entities/province.entity';
@@ -147,7 +143,6 @@ import { LearnerService } from './services/learner.service';
     FfmpegModule,
     PayosModule,
     TwilioModule,
-    AgoraModule,
     AiVideoCompareResultModule,
     MailerModule.forRootAsync({
       imports: [ConfigModule],
@@ -214,7 +209,6 @@ import { LearnerService } from './services/learner.service';
       WalletTransaction,
       Feedback,
       LearnerProgress,
-      VideoConference,
       Province,
       District,
       LearnerVideo,
@@ -252,7 +246,6 @@ import { LearnerService } from './services/learner.service';
     VideoController,
     LearnerProgressController,
     FeedbackController,
-    VideoConferenceController,
     ProvinceController,
     StudentAnalysisController,
     AttendanceController,
@@ -292,7 +285,6 @@ import { LearnerService } from './services/learner.service';
     FeedbackService,
     CourtService,
     NotificationService,
-    VideoConferenceService,
     ProvinceService,
     StudentAnalysisService,
     ScheduleService,
