@@ -1,68 +1,27 @@
 @startuml Pickleball Platform - Package Diagram
-title Pickleball Learning Platform - Architecture
+title Package Diagram - Backend
 
-package "app" {
-  [controller]
-  [service]
-  [filter]
-  [guard]
-}
+left to right direction
 
-package "shared" {
-  [dto]
-  [enum]
-  [decorator]
-  [exception]
-  [helper]
-}
+[middleware] as middleware
+[guard] as guard
+[dto] as dto
+[controller] as controller
+[socket] as socket
+[service] as service
+[entity] as entity
+[filter] as filter
+[util] as util
 
-package "database" {
-  [entity]
-  [migration]
-  [seed]
-}
+middleware --> guard
+guard --> dto
+dto --> controller
+controller --> service
+socket --> service
+service --> util
+service --> entity
+util --> filter
+entity --> filter
 
-package "config" {
-  [config-service]
-}
-
-package "payos" {
-  [payos-service]
-}
-
-package "ffmpeg" {
-  [ffmpeg-service]
-}
-
-package "ai-video-compare-result" {
-  [gemini-service]
-}
-
-package "twilio" {
-  [twilio-service]
-}
-
-package "agora" {
-  [agora-service]
-}
-
-package "bunny" {
-  [bunny-service]
-}
-
-[controller] --> [service]
-[controller] --> [guard]
-[controller] --> [filter]
-[service] --> [dto]
-[service] --> [entity]
-[service] --> [config-service]
-[service] --> [payos-service]
-[service] --> [ffmpeg-service]
-[service] --> [gemini-service]
-[service] --> [twilio-service]
-[service] --> [agora-service]
-[service] --> [bunny-service]
-[filter] --> [helper]
-[entity] --> [migration]
 
 @enduml

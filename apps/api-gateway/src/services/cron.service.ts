@@ -238,7 +238,8 @@ export class CronService {
         );
 
         payment.status = PaymentStatus.PAID;
-        payment.enrollment.paymentAmount = Number(payment.amount) * 1000; ////
+        payment.enrollment.paymentAmount = Number(payment.amount);
+
         payment.enrollment.course.currentParticipants += 1;
         const platformFeeConfig = await manager
           .getRepository(Configuration)
@@ -248,9 +249,7 @@ export class CronService {
 
         payment.enrollment.course.totalEarnings =
           Number(payment.enrollment.course.totalEarnings) +
-          (Number(payment.amount) *
-            1000 *
-            (100 - Number(platformFeeConfig.value))) /
+          (Number(payment.amount) * (100 - Number(platformFeeConfig.value))) /
             100; /////////
 
         switch (payment.enrollment.course.learningFormat) {
@@ -295,8 +294,10 @@ export class CronService {
         }
 
         await manager.getRepository(Payment).save(payment);
-        await manager.getRepository(Enrollment).save(payment.enrollment);
         await manager.getRepository(Course).save(payment.enrollment.course);
+        await manager.getRepository(Enrollment).update(payment.enrollment.id, {
+          paymentAmount: Number(payment.amount),
+        });
 
         await this.notificationService.sendNotification({
           userId: payment.enrollment.user.id,
