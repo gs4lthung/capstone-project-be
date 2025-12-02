@@ -58,15 +58,15 @@ export class CoachService extends BaseTypeOrmService<Coach> {
   async findOne(id: number): Promise<Coach> {
     const coach = await this.coachRepository.findOne({
       where: {
-        user: {
-          id: id,
-        },
+        id,
       },
       withDeleted: false,
       relations: ['user', 'credentials'],
     });
 
-    if (!coach) throw new Error('Coach not found');
+    if (!coach) {
+      throw new NotFoundException('Coach not found');
+    }
 
     return coach;
   }
