@@ -69,26 +69,34 @@ export class AiVideoCompareResultService {
     aiFeedback: SaveAiFeedbackDto,
   ) {
     return await this.datasource.transaction(async (manager) => {
-      const learnerVideo = await manager.getRepository(LearnerVideo).findOne({
-        where: { id: learnerVideoId },
-        relations: ['session', 'session.lesson', 'session.lesson.video'],
-      });
+      const learnerVideo = await manager
+        .getRepository(LearnerVideo)
+        .createQueryBuilder('learnerVideo')
+        .leftJoinAndSelect('learnerVideo.user', 'user')
+        .where('learnerVideo.id = :learnerVideoId', { learnerVideoId })
+        .getOne();
       if (!learnerVideo) {
         throw new BadRequestException('LearnerVideo not found');
       }
 
-      const aiResultRecord: any = {
-        learnerVideo,
-      };
-
-      // Get video from videoId if provided, otherwise from learnerVideo session
+      console.log('TEST', learnerVideo);
       const video = await manager
         .getRepository(Video)
-        .findOne({ where: { id: videoId } });
+        .createQueryBuilder('video')
+        .where('video.id = :videoId', {
+          videoId: videoId,
+        })
+        .getOne();
       if (!video) {
         throw new BadRequestException('Video not found');
       }
+
+      const aiResultRecord: any = {};
+
+      // Get video from videoId if provided, otherwise from learnerVideo session
+
       aiResultRecord.video = video;
+      aiResultRecord.learnerVideo = learnerVideo;
 
       // Only set fields that have values
       if (aiFeedback.summary) {

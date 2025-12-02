@@ -123,23 +123,9 @@ export class LearnerVideoController {
   @UseGuards(AuthGuard, RoleGuard)
   @CheckRoles(UserRole.COACH)
   async saveAiFeedback(
-    @Param('learnerVideoId') learnerVideoId: number,
+    @Param('id') id: number,
     @Body() aiFeedback: GeminiApiResponse,
   ) {
-    return this.learnerVideoService.saveAiFeedback(learnerVideoId, aiFeedback);
-  }
-
-  @Post(':learnerVideoId/overlay-video/:coachVideoId')
-  @UseGuards(AuthGuard, RoleGuard)
-  @CheckRoles(UserRole.LEARNER)
-  @UseInterceptors(FileInterceptor('overlayVideo'))
-  async uploadOverlayVideo(
-    @Param('learnerVideoId') learnerVideoId: number,
-    @Param('coachVideoId') coachVideoId: number,
-  ) {
-    return this.learnerVideoService.generateOverlayVideo(
-      learnerVideoId,
-      coachVideoId,
-    );
+    return this.learnerVideoService.saveAiFeedback(id, aiFeedback);
   }
 }

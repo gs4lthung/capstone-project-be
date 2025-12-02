@@ -82,7 +82,7 @@ export class AiVideoCompareResultController {
     @Body('videoId') videoId: number | undefined,
     @Body() aiFeedback: SaveAiFeedbackDto,
   ) {
-    return this.aiService.save(learnerVideoId, videoId, aiFeedback);
+    return await this.aiService.save(learnerVideoId, videoId, aiFeedback);
   }
 
   @Post('compare-videos')
