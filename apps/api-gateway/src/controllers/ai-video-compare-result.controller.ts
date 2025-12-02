@@ -9,8 +9,6 @@ import {
   Req,
   BadRequestException,
   Post,
-  UseInterceptors,
-  UploadedFiles,
   Body,
 } from '@nestjs/common';
 import {
@@ -22,13 +20,7 @@ import { AuthGuard } from '../guards/auth.guard';
 import { RoleGuard } from '../guards/role.guard';
 import { CheckRoles } from '@app/shared/decorators/check-roles.decorator';
 import { UserRole } from '@app/shared/enums/user.enum';
-import {
-  ApiBearerAuth,
-  ApiBody,
-  ApiConsumes,
-  ApiOperation,
-  ApiResponse,
-} from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CustomApiRequest } from '@app/shared/customs/custom-api-request';
 import * as https from 'https';
 import * as http from 'http';
@@ -136,7 +128,9 @@ export class AiVideoCompareResultController {
       });
     };
 
+    // eslint-disable-next-line prefer-const
     coachBuffer = await downloadFromUrl(coachVideoUrl);
+    // eslint-disable-next-line prefer-const
     learnerBuffer = await downloadFromUrl(learnerVideoUrl);
 
     const [coachResult, learnerResult] = await Promise.all([

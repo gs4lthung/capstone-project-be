@@ -54,6 +54,7 @@ export class SocketGateway {
         await this.notificationService.getUserUnreadNotifications(payload.id);
       for (const notification of unreadNotifications) {
         client.emit('notification.send', notification);
+        await this.notificationService.markNotificationAsRead(notification.id);
       }
 
       client.on('notification.read', async (notificationId: number) => {
