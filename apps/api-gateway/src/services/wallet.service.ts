@@ -145,8 +145,8 @@ export class WalletService extends BaseTypeOrmService<Wallet> {
 
       const currentBalance = Number(wallet.currentBalance ?? 0);
       const totalIncome = Number(wallet.totalIncome ?? 0);
-      const newCurrent = currentBalance + amount;
-      const newTotal = totalIncome + amount;
+      const newCurrent = currentBalance + Number(amount);
+      const newTotal = totalIncome + Number(amount);
 
       wallet.currentBalance = newCurrent;
       wallet.totalIncome = newTotal;

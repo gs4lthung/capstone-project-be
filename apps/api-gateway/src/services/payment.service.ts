@@ -93,7 +93,8 @@ export class PaymentService extends BaseTypeOrmService<Payment> {
         enrollment = await manager
           .getRepository(Enrollment)
           .createQueryBuilder('enrollment')
-          .where('enrollment.userId = :userId', {
+          .leftJoinAndSelect('enrollment.user', 'user')
+          .where('user.id = :userId', {
             userId: this.request.user.id,
           })
           .andWhere('enrollment.courseId = :courseId', { courseId: course.id })
@@ -116,7 +117,7 @@ export class PaymentService extends BaseTypeOrmService<Payment> {
 
       const payosResponse = await this.payosService.createPaymentLink({
         orderCode: CryptoUtils.generateRandomNumber(10_000, 99_999),
-        amount: parseInt((course.pricePerParticipant / 1000).toString()), /////////
+        amount: parseInt(course.pricePerParticipant.toString()),
         description: 'Thanh toán khóa học',
         expiredAt: new Date(Date.now() + 1000 * 60 * 60 * 24),
       });
@@ -155,9 +156,10 @@ export class PaymentService extends BaseTypeOrmService<Payment> {
       const payment = await manager
         .getRepository(Payment)
         .createQueryBuilder('payment')
-        .where('payment.orderCode = :orderCode', { orderCode: data.orderCode })
         .leftJoinAndSelect('payment.enrollment', 'enrollment')
         .leftJoinAndSelect('enrollment.course', 'course')
+        .leftJoinAndSelect('enrollment.user', 'user')
+        .where('payment.orderCode = :orderCode', { orderCode: data.orderCode })
         .getOne();
       if (!payment) {
         return;
@@ -167,6 +169,7 @@ export class PaymentService extends BaseTypeOrmService<Payment> {
         .getRepository(Payment)
         .createQueryBuilder('payment')
         .leftJoinAndSelect('payment.enrollment', 'enrollment')
+        .leftJoinAndSelect('enrollment.course', 'course')
         .where('enrollment.id = :enrollmentId', {
           enrollmentId: payment.enrollment.id,
         })
@@ -181,6 +184,7 @@ export class PaymentService extends BaseTypeOrmService<Payment> {
         .getRepository(Course)
         .createQueryBuilder('course')
         .leftJoinAndSelect('course.enrollments', 'enrollments')
+        .leftJoinAndSelect('course.createdBy', 'createdBy')
         .where('course.id = :courseId', {
           courseId: payment.enrollment.course.id,
         })
@@ -188,7 +192,7 @@ export class PaymentService extends BaseTypeOrmService<Payment> {
 
       course.enrollments.map((enr) => {
         if (enr.id === payment.enrollment.id) {
-          enr.paymentAmount = payment.amount * 1000; /////////
+          enr.paymentAmount = Number(payment.amount);
         }
         return enr;
       });
@@ -200,9 +204,8 @@ export class PaymentService extends BaseTypeOrmService<Payment> {
       course.totalEarnings =
         Number(course.totalEarnings) +
         (Number(payment.amount) *
-          1000 *
           (100 - Number(platformFeeConfig.metadata.value))) /
-          100; /////////
+          100;
 
       switch (course.learningFormat) {
         case CourseLearningFormat.INDIVIDUAL:

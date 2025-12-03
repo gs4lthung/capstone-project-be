@@ -360,6 +360,15 @@ export class CourseService extends BaseTypeOrmService<Course> {
         .where('enrollments.user.id = :userId', {
           userId: this.request.user.id as User['id'],
         })
+        .andWhere('enrollments.status IN (:...statuses)', {
+          statuses: [
+            EnrollmentStatus.CONFIRMED,
+            EnrollmentStatus.LEARNING,
+            EnrollmentStatus.PENDING_GROUP,
+            EnrollmentStatus.DONE,
+            EnrollmentStatus.UNPAID,
+          ],
+        })
         .andWhere('course.status != :status', {
           status: CourseStatus.CANCELLED,
         })
@@ -946,8 +955,6 @@ export class CourseService extends BaseTypeOrmService<Course> {
           enrollment.paymentAmount,
         );
       }
-      enrollment.status = EnrollmentStatus.CANCELLED;
-      await this.enrollmentRepository.save(enrollment);
 
       course.currentParticipants -= 1;
 
@@ -970,7 +977,10 @@ export class CourseService extends BaseTypeOrmService<Course> {
           ) {
             course.status = CourseStatus.READY_OPENED;
             for (const enr of course.enrollments) {
-              if (enr.status === EnrollmentStatus.PENDING_GROUP) {
+              if (
+                enr.status === EnrollmentStatus.PENDING_GROUP &&
+                enr.id !== enrollment.id
+              ) {
                 enr.status = EnrollmentStatus.CONFIRMED;
                 await this.enrollmentRepository.save(enr);
               }
@@ -978,7 +988,10 @@ export class CourseService extends BaseTypeOrmService<Course> {
           } else if (course.currentParticipants >= course.maxParticipants) {
             course.status = CourseStatus.FULL;
             for (const enr of course.enrollments) {
-              if (enr.status === EnrollmentStatus.PENDING_GROUP) {
+              if (
+                enr.status === EnrollmentStatus.PENDING_GROUP &&
+                enr.id !== enrollment.id
+              ) {
                 enr.status = EnrollmentStatus.CONFIRMED;
                 await this.enrollmentRepository.save(enr);
               }
@@ -986,7 +999,10 @@ export class CourseService extends BaseTypeOrmService<Course> {
           } else if (course.currentParticipants < course.minParticipants) {
             course.status = CourseStatus.APPROVED;
             for (const enr of course.enrollments) {
-              if (enr.status === EnrollmentStatus.CONFIRMED) {
+              if (
+                enr.status === EnrollmentStatus.CONFIRMED &&
+                enr.id !== enrollment.id
+              ) {
                 enr.status = EnrollmentStatus.PENDING_GROUP;
                 await this.enrollmentRepository.save(enr);
               }
@@ -996,6 +1012,9 @@ export class CourseService extends BaseTypeOrmService<Course> {
       }
 
       await manager.getRepository(Course).save(course);
+
+      enrollment.status = EnrollmentStatus.CANCELLED;
+      await this.enrollmentRepository.save(enrollment);
 
       await this.notificationService.sendNotification({
         userId: course.createdBy.id,

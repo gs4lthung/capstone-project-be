@@ -1,0 +1,65 @@
+@startuml
+
+actor "Guest" as guest
+participant "Client" as client
+participant "Auth\nController" as controller
+participant "Auth\nService" as service
+participant "Mail\nService" as mail
+participant "Twilio\nService" as twilio
+database "Database" as db
+
+guest -> client: 1. Enter registration data
+client -> controller: 2. POST /auth/register\n{fullName, email, phoneNumber,\npassword, province, district,\nskillLevel, learningGoal}
+activate controller
+
+controller -> service: 3. register({fullName, email,\nphoneNumber, password,\nprovince, district,\nskillLevel, learningGoal})
+activate service
+
+service -> db: 4. Check if email exists
+activate db
+db --> service: Email exists or null
+deactivate db
+
+alt Email already exists
+  service --> controller: ConflictException\n"Email already exists"
+else Email available
+  service -> db: 5. Check if phone exists
+  activate db
+  db --> service: Phone exists or null
+  deactivate db
+  
+  alt Phone already exists
+    service --> controller: ConflictException\n"Phone already exists"
+  else Phone available
+    service -> service: 6. Hash password\nwith bcrypt
+    service -> service: 7. Get learner role ID
+    service -> service: 8. Create user entity\n(with learner profile)
+    
+    alt Email provided
+      service -> service: 9a. Generate email\nverification token
+      service -> mail: 10a. Send verification email
+      mail --> service: Email sent
+    end
+    
+    alt Phone provided
+      service -> twilio: 10b. Send SMS code
+      twilio --> service: SMS sent
+    end
+    
+    service -> db: 11. Save user to database
+    activate db
+    db --> service: User created
+    deactivate db
+    
+    service --> controller: Register success
+  end
+end
+
+deactivate service
+
+controller --> client: 12. HTTP 201\nResponse
+deactivate controller
+
+client --> guest: 13. Show result\n(verify email/phone prompt)
+
+@enduml

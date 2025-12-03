@@ -12,7 +12,6 @@ import { LearnerVideoStatus } from '@app/shared/enums/learner.enum';
 import { BunnyService } from '@app/bunny';
 import { FileUtils } from '@app/shared/utils/file.util';
 import { GeminiApiResponse } from '@app/shared/dtos/ai-feedback/ai-feedback.dto';
-import { Video } from '@app/database/entities/video.entity';
 
 @Injectable()
 export class LearnerVideoService {
@@ -47,15 +46,10 @@ export class LearnerVideoService {
         filePath: thumbnailPath,
       });
 
-      const encodeH264FilePath = await this.ffmpegService.transcodeToH264Aac(
-        videoFile.path,
-        FileUtils.excludeFileFromPath(videoFile.path),
-      );
-
       const videoPublicUrl = await this.bunnyService.uploadToStorage({
         id: Date.now(),
         type: 'video',
-        filePath: encodeH264FilePath,
+        filePath: videoFile.path,
       });
 
       const learnerVideo = manager.getRepository(LearnerVideo).create({
@@ -124,98 +118,61 @@ export class LearnerVideoService {
   }
 
   async saveAiFeedback(learnerVideoId: number, aiFeedback: GeminiApiResponse) {
-    const learnerVideo = await this.learnerVideoRepo.findOne({
-      where: { id: learnerVideoId },
-      relations: ['video', 'user', 'session', 'session.course'],
-    });
-    if (!learnerVideo) throw new BadRequestException('LearnerVideo not found');
-
-    if (!learnerVideo.session?.course) {
-      throw new BadRequestException('LearnerVideo session or course not found');
-    }
-
-    const learnerProgress = await this.learnerProgressRepo.findOne({
-      where: {
-        user: { id: learnerVideo.user.id },
-        course: { id: learnerVideo.session.course.id },
-      },
-      relations: ['course'],
-    });
-
-    if (learnerProgress) {
-      // Get the count of previous AI comparison results for this user and course
-      const previousAiResultsCount =
-        await this.aiVideoComparisonResultRepo.count({
-          where: {
-            learnerVideo: {
-              user: { id: learnerVideo.user.id },
-              session: { course: { id: learnerProgress.course.id } },
-            },
-          },
-        });
-
-      // Calculate the new average:
-      // newAvg = ((previousAvg * previousCount) + newScore) / (previousCount + 1)
-      const previousAvg = learnerProgress.avgAiAnalysisScore || 0;
-      const newAvg =
-        (previousAvg * previousAiResultsCount + aiFeedback.learnerScore) /
-        (previousAiResultsCount + 1);
-
-      learnerProgress.avgAiAnalysisScore = Math.round(newAvg);
-      await this.learnerProgressRepo.save(learnerProgress);
-    }
-
-    return this.aiVideoComparisonResultRepo.save({
-      ...aiFeedback,
-      learnerVideo,
-      video: learnerVideo.video,
-    });
-  }
-
-  async generateOverlayVideo(
-    learnerVideoId: number,
-    coachVideoId: number,
-  ): Promise<string> {
-    return this.datasource.transaction(async (manager) => {
+    return await this.datasource.transaction(async (manager) => {
       const learnerVideo = await manager.getRepository(LearnerVideo).findOne({
         where: { id: learnerVideoId },
-        relations: ['session', 'session.lesson', 'session.lesson.video'],
+        relations: ['video', 'user', 'session', 'session.course'],
       });
       if (!learnerVideo)
         throw new BadRequestException('LearnerVideo not found');
 
-      const coachVideo = await manager.getRepository(Video).findOne({
-        where: { id: coachVideoId },
+      console.log('TEST', learnerVideo);
+
+      if (!learnerVideo.session?.course) {
+        throw new BadRequestException(
+          'LearnerVideo session or course not found',
+        );
+      }
+
+      const learnerProgress = await manager
+        .getRepository(LearnerProgress)
+        .findOne({
+          where: {
+            user: { id: learnerVideo.user.id },
+            course: { id: learnerVideo.session.course.id },
+          },
+          relations: ['course'],
+        });
+
+      if (learnerProgress) {
+        // Get the count of previous AI comparison results for this user and course
+        const previousAiResultsCount = await manager
+          .getRepository(AiVideoComparisonResult)
+          .count({
+            where: {
+              learnerVideo: {
+                user: { id: learnerVideo.user.id },
+                session: { course: { id: learnerProgress.course.id } },
+              },
+            },
+          });
+
+        // Calculate the new average:
+        // newAvg = ((previousAvg * previousCount) + newScore) / (previousCount + 1)
+        const previousAvg = learnerProgress.avgAiAnalysisScore || 0;
+        const newAvg =
+          (previousAvg * previousAiResultsCount + aiFeedback.learnerScore) /
+          (previousAiResultsCount + 1);
+
+        learnerProgress.avgAiAnalysisScore = Math.floor(newAvg);
+        await manager.getRepository(LearnerProgress).save(learnerProgress);
+      }
+
+      return manager.getRepository(AiVideoComparisonResult).save({
+        ...aiFeedback,
+        learnerVideo,
+        video: learnerVideo.video,
       });
-      if (!coachVideo) throw new BadRequestException('Coach Video not found');
-
-      const overlayFilePath = await this.ffmpegService.overlayVideoOnVideo(
-        learnerVideo.publicUrl,
-        coachVideo.publicUrl,
-      );
-
-      const thumbnail = await this.ffmpegService.createVideoThumbnailVer2(
-        overlayFilePath,
-        FileUtils.excludeFileFromPath(overlayFilePath),
-      );
-
-      const uploadedResult = await this.bunnyService.uploadToStorage({
-        id: learnerVideo.id,
-        type: 'video',
-        filePath: overlayFilePath,
-      });
-
-      const uploadedThumbnail = await this.bunnyService.uploadToStorage({
-        id: learnerVideo.id,
-        type: 'video_thumbnail',
-        filePath: thumbnail,
-      });
-
-      learnerVideo.overlayVideoUrl = uploadedResult;
-      learnerVideo.overlayThumbnailUrl = uploadedThumbnail;
-      await manager.getRepository(LearnerVideo).save(learnerVideo);
-
-      return uploadedResult;
     });
   }
 }

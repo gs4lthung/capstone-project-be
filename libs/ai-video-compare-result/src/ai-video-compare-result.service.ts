@@ -1,6 +1,6 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { AiVideoComparisonResult } from '@app/database/entities/ai-video-comparison-result.entity';
 import { LearnerVideo } from '@app/database/entities/learner-video.entity';
 import { Video } from '@app/database/entities/video.entity';
@@ -14,6 +14,7 @@ export class AiVideoCompareResultService {
     private readonly aiRepo: Repository<AiVideoComparisonResult>,
     @InjectRepository(LearnerVideo)
     private readonly learnerVideoRepo: Repository<LearnerVideo>,
+    private readonly datasource: DataSource,
   ) {}
 
   async findAllByLearnerVideoId(learnerVideoId: number) {
@@ -67,97 +68,103 @@ export class AiVideoCompareResultService {
     videoId: number | undefined,
     aiFeedback: SaveAiFeedbackDto,
   ) {
-    const learnerVideo = await this.learnerVideoRepo.findOne({
-      where: { id: learnerVideoId },
-      relations: ['session', 'session.lesson', 'session.lesson.video'],
-    });
-    if (!learnerVideo) {
-      throw new BadRequestException('LearnerVideo not found');
-    }
+    return await this.datasource.transaction(async (manager) => {
+      const learnerVideo = await manager
+        .getRepository(LearnerVideo)
+        .createQueryBuilder('learnerVideo')
+        .leftJoinAndSelect('learnerVideo.user', 'user')
+        .where('learnerVideo.id = :learnerVideoId', { learnerVideoId })
+        .getOne();
+      if (!learnerVideo) {
+        throw new BadRequestException('LearnerVideo not found');
+      }
 
-    const aiResultRecord: any = {
-      learnerVideo,
-    };
-
-    // Get video from videoId if provided, otherwise from learnerVideo session
-    if (videoId) {
-      const video = await this.learnerVideoRepo.manager
+      console.log('TEST', learnerVideo);
+      const video = await manager
         .getRepository(Video)
-        .findOne({ where: { id: videoId } });
+        .createQueryBuilder('video')
+        .where('video.id = :videoId', {
+          videoId: videoId,
+        })
+        .getOne();
       if (!video) {
         throw new BadRequestException('Video not found');
       }
+
+      const aiResultRecord: any = {};
+
+      // Get video from videoId if provided, otherwise from learnerVideo session
+
       aiResultRecord.video = video;
-    } else {
-      // Try to get video from learnerVideo session
-      const coachVideo = learnerVideo.session?.lesson?.video as Video;
-      if (coachVideo) {
-        aiResultRecord.video = coachVideo;
-      }
-    }
+      aiResultRecord.learnerVideo = learnerVideo;
 
-    // Only set fields that have values
-    if (aiFeedback.summary) {
-      aiResultRecord.summary = aiFeedback.summary;
-    }
-    if (aiFeedback.coachNote !== undefined && aiFeedback.coachNote !== null) {
-      aiResultRecord.coachNote = aiFeedback.coachNote;
-    }
-    if (
-      aiFeedback.overallScoreForPlayer2 !== undefined &&
-      aiFeedback.overallScoreForPlayer2 !== null
-    ) {
-      aiResultRecord.learnerScore = aiFeedback.overallScoreForPlayer2;
-    }
-    if (
-      aiFeedback.keyDifferences &&
-      Array.isArray(aiFeedback.keyDifferences) &&
-      aiFeedback.keyDifferences.length > 0
-    ) {
-      aiResultRecord.keyDifferents = aiFeedback.keyDifferences.map((kd) => ({
-        aspect: kd.aspect,
-        impact: kd.impact,
-        coachTechnique: kd.coachTechnique,
-        learnerTechnique: kd.learnerTechnique,
-      }));
-    }
-    if (
-      aiFeedback.recommendationsForPlayer2 &&
-      Array.isArray(aiFeedback.recommendationsForPlayer2) &&
-      aiFeedback.recommendationsForPlayer2.length > 0
-    ) {
-      aiResultRecord.recommendationDrills =
-        aiFeedback.recommendationsForPlayer2.map((r) => {
-          const drill: any = {};
-          if (r.drill?.title) {
-            drill.name = r.drill.title;
-          }
-          if (r.drill?.description) {
-            drill.description = r.drill.description;
-          }
-          if (r.drill?.practice_sets) {
-            const practiceSets = r.drill.practice_sets as
-              | string
-              | string[]
-              | number;
-            drill.practiceSets =
-              typeof practiceSets === 'string'
-                ? practiceSets
-                : Array.isArray(practiceSets)
-                  ? practiceSets.join(', ')
-                  : String(practiceSets || '');
-          }
-          return drill;
-        });
-    }
-    if (aiFeedback.comparison) {
-      const details = buildDetailsArrayFromComparison(aiFeedback.comparison);
-      if (details && details.length > 0) {
-        aiResultRecord.details = details;
+      // Only set fields that have values
+      if (aiFeedback.summary) {
+        aiResultRecord.summary = aiFeedback.summary;
       }
-    }
+      if (aiFeedback.coachNote !== undefined && aiFeedback.coachNote !== null) {
+        aiResultRecord.coachNote = aiFeedback.coachNote;
+      }
+      if (
+        aiFeedback.overallScoreForPlayer2 !== undefined &&
+        aiFeedback.overallScoreForPlayer2 !== null
+      ) {
+        aiResultRecord.learnerScore = aiFeedback.overallScoreForPlayer2;
+      }
+      if (
+        aiFeedback.keyDifferences &&
+        Array.isArray(aiFeedback.keyDifferences) &&
+        aiFeedback.keyDifferences.length > 0
+      ) {
+        aiResultRecord.keyDifferents = aiFeedback.keyDifferences.map((kd) => ({
+          aspect: kd.aspect,
+          impact: kd.impact,
+          coachTechnique: kd.coachTechnique,
+          learnerTechnique: kd.learnerTechnique,
+        }));
+      }
+      if (
+        aiFeedback.recommendationsForPlayer2 &&
+        Array.isArray(aiFeedback.recommendationsForPlayer2) &&
+        aiFeedback.recommendationsForPlayer2.length > 0
+      ) {
+        aiResultRecord.recommendationDrills =
+          aiFeedback.recommendationsForPlayer2.map((r) => {
+            const drill: any = {};
+            if (r.drill?.title) {
+              drill.name = r.drill.title;
+            }
+            if (r.drill?.description) {
+              drill.description = r.drill.description;
+            }
+            if (r.drill?.practice_sets) {
+              const practiceSets = r.drill.practice_sets as
+                | string
+                | string[]
+                | number;
+              drill.practiceSets =
+                typeof practiceSets === 'string'
+                  ? practiceSets
+                  : Array.isArray(practiceSets)
+                    ? practiceSets.join(', ')
+                    : String(practiceSets || '');
+            }
+            return drill;
+          });
+      }
+      if (aiFeedback.comparison) {
+        const details = buildDetailsArrayFromComparison(aiFeedback.comparison);
+        if (details && details.length > 0) {
+          aiResultRecord.details = details;
+        }
+      }
 
-    const createdRecord = this.aiRepo.create(aiResultRecord);
-    return await this.aiRepo.save(createdRecord);
+      const createdRecord = manager
+        .getRepository(AiVideoComparisonResult)
+        .create(aiResultRecord);
+      return await manager
+        .getRepository(AiVideoComparisonResult)
+        .save(createdRecord);
+    });
   }
 }
