@@ -1,0 +1,240 @@
+@startuml ApproveCourseClassDiagram
+!theme plain
+skinparam classBackgroundColor #f0f0f0
+skinparam classBorderColor #333
+skinparam arrowColor #333
+
+' ════════════════════════════════════════════════════════════════════════════════════
+' PRESENTATION LAYER
+' ════════════════════════════════════════════════════════════════════════════════════
+
+class CourseApprovalPanel {
+  -pendingCourses: Course[]
+  -selectedCourse: Course
+  -rejectionReason: string
+  --
+  +loadPendingCourses(): void
+  +viewCourseDetails(): void
+  +approveCourse(): void
+  +rejectCourse(reason: string): void
+  +displayStatus(): void
+}
+
+' ════════════════════════════════════════════════════════════════════════════════════
+' CONTROLLER LAYER
+' ════════════════════════════════════════════════════════════════════════════════════
+
+class CourseController {
+  -courseService: CourseService
+  --
+  +findCourseRequests(filter): Promise<Response>
+  +getCourseDetails(id): Promise<Response>
+  +approveCourseCreationRequest(id): Promise<Response>
+  +rejectCourseCreationRequest(id, reason): Promise<Response>
+}
+
+' ════════════════════════════════════════════════════════════════════════════════════
+' SERVICE LAYER
+' ════════════════════════════════════════════════════════════════════════════════════
+
+class CourseService {
+  -courseRepository: Repository
+  -requestRepository: Repository
+  -sessionService: SessionService
+  -notificationService: NotificationService
+  -datasource: DataSource
+  --
+  +findCourseRequests(filter): Promise<Response>
+  +getCourseDetails(id): Promise<Course>
+  +approveCourseCreationRequest(id): Promise<void>
+  +rejectCourseCreationRequest(id, reason): Promise<void>
+  ...
+}
+
+' ════════════════════════════════════════════════════════════════════════════════════
+' ENTITY LAYER
+' ════════════════════════════════════════════════════════════════════════════════════
+
+class Course {
+  -id: number
+  -name: string
+  -description?: string
+  -level: PickleballLevel
+  -learningFormat: CourseLearningFormat
+  -status: CourseStatus
+  -minParticipants: number
+  -maxParticipants: number
+  -startDate: Date
+  -endDate: Date
+  -createdBy: User (Coach)
+  -subject: Subject
+  -sessions: Session[]
+  -enrollments: Enrollment[]
+}
+
+class Request {
+  -id: number
+  -type: RequestType
+  -status: RequestStatus
+  -metadata: CourseMetadata
+  -createdBy: User (Coach)
+  -actions: RequestAction[]
+}
+
+class RequestAction {
+  -id: number
+  -type: RequestActionType
+  -comment: string
+  -request: Request
+  -handledBy: User (Admin)
+  -createdAt: Date
+}
+
+class Session {
+  -id: number
+  -course: Course
+  -lesson: Lesson
+  -video: Video
+  -quiz: Quiz
+  -schedule: Date
+}
+
+class Subject {
+  -id: number
+  -name: string
+  -lessons: Lesson[]
+}
+
+class Lesson {
+  -id: number
+  -name: string
+  -subject: Subject
+  -video?: Video
+  -quiz?: Quiz
+}
+
+class Video {
+  -id: number
+  -url: string
+  -status: CoachVideoStatus
+  -lesson?: Lesson
+  -session?: Session
+}
+
+class Quiz {
+  -id: number
+  -name: string
+  -lesson?: Lesson
+  -session?: Session
+  -questions: Question[]
+}
+
+class User {
+  -id: number
+  -email: string
+  -fullName: string
+  -role: Role
+}
+
+class Role {
+  -id: number
+  -name: string (ADMIN)
+}
+
+' ════════════════════════════════════════════════════════════════════════════════════
+' ENUMS
+' ════════════════════════════════════════════════════════════════════════════════════
+
+enum CourseStatus {
+  PENDING_APPROVAL
+  APPROVED
+  REJECTED
+  READY_OPENED
+  FULL
+  CANCELLED
+}
+
+enum RequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum RequestActionType {
+  APPROVED
+  REJECTED
+  COMMENTED
+}
+
+' ════════════════════════════════════════════════════════════════════════════════════
+' UTILITY SERVICES
+' ════════════════════════════════════════════════════════════════════════════════════
+
+class SessionService {
+  --
+  +generateSessionsFromSchedules(course, schedules): Promise<Session[]>
+}
+
+class NotificationService {
+  --
+  +sendNotification(data): Promise<void>
+}
+
+' ════════════════════════════════════════════════════════════════════════════════════
+' SECURITY LAYER
+' ════════════════════════════════════════════════════════════════════════════════════
+
+class AuthGuard {
+  --
+  +canActivate(context): boolean
+}
+
+class RoleGuard {
+  --
+  +canActivate(context): boolean
+  -checkAdminRole(user): boolean
+}
+
+' ════════════════════════════════════════════════════════════════════════════════════
+' INFRASTRUCTURE
+' ════════════════════════════════════════════════════════════════════════════════════
+
+class DataSource {
+  --
+  +transaction(callback): Promise<Result>
+}
+
+' ════════════════════════════════════════════════════════════════════════════════════
+' RELATIONSHIPS
+' ════════════════════════════════════════════════════════════════════════════════════
+
+CourseApprovalPanel --> CourseController: calls
+
+CourseController --> CourseService: delegates
+CourseController --> AuthGuard: validates
+CourseController --> RoleGuard: checks admin
+
+CourseService --> Course: reads/updates
+CourseService --> Request: reads/updates
+CourseService --> RequestAction: creates
+CourseService --> Session: generates
+CourseService --> User: tracks
+CourseService --> SessionService: generates sessions
+CourseService --> NotificationService: sends notifications
+CourseService --> DataSource: transactions
+
+Course --> Subject: has
+Course --> Session: has_many
+Course --> User: createdBy
+Request --> RequestAction: has_many
+RequestAction --> User: handledBy
+Session --> Lesson: references
+Session --> Video: references
+Session --> Quiz: references
+Subject --> Lesson: has_many
+Lesson --> Video: has_one
+Lesson --> Quiz: has_one
+Course --> CourseStatus: has status
+Request --> RequestStatus: has status
+
+@enduml

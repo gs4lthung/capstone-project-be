@@ -187,6 +187,16 @@ export class BaseTypeOrmService<T> {
 
     const qb: SelectQueryBuilder<T> = this.repository.createQueryBuilder(alias);
 
+    switch (alias) {
+      case 'coach':
+        qb.leftJoinAndSelect(`${alias}.user`, 'user');
+        qb.leftJoinAndSelect(`user.province`, 'province');
+        qb.leftJoinAndSelect(`user.district`, 'district');
+        qb.leftJoinAndSelect(`${alias}.credentials`, 'credentials');
+        qb.leftJoinAndSelect(`credentials.baseCredential`, 'baseCredential');
+        break;
+    }
+
     const joinedAliases = new Set<string>();
     const { relations } = this.repository.metadata;
     relations

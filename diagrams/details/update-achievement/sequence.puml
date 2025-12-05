@@ -1,0 +1,86 @@
+@startuml UpdateAchievementDiagram
+
+actor "Admin" as admin
+participant "Client" as client
+participant "Controller" as controller
+participant "Service" as service
+participant "Bunny CDN" as bunny
+database "Database" as db
+
+admin -> client: 1. View achievement list
+client -> controller: 2. GET /achievements
+activate controller
+
+controller -> service: 3. listAchievements()
+activate service
+
+service -> db: 4. Query all achievements
+activate db
+db --> service: Achievements list
+deactivate db
+
+service --> controller: Response
+deactivate service
+
+controller --> client: 5. HTTP 200
+deactivate controller
+
+client --> admin: 6. Display achievements
+
+admin -> client: 7. Click edit achievement
+client --> admin: 8. Show edit form with fields
+
+admin -> client: 9. Update achievement fields
+note right of client
+  Can update:
+  - name, description
+  - event/trigger info
+  - target values
+  - status (active/inactive)
+  - icon image (optional)
+end note
+
+admin -> client: 10. Submit form
+client -> controller: 11. PUT /achievements/[type]/:id
+note right of client
+  Type can be:
+  - event-count/:id
+  - streak/:id
+  - property-check/:id
+end note
+activate controller
+
+controller -> service: 12. update[Type](id, data, icon?)
+activate service
+
+service -> db: 13. Find achievement
+activate db
+db --> service: Achievement found
+deactivate db
+
+alt icon file provided
+  service -> bunny: 14. uploadToStorage(icon)
+  activate bunny
+  bunny --> service: 15. New iconUrl
+  deactivate bunny
+  
+  service -> service: 16. data.iconUrl = newUrl
+else no icon
+  service -> service: 16. Keep existing icon
+end
+
+service -> service: 17. Object.assign(achievement, data)
+service -> db: 18. Save updated achievement
+activate db
+db --> service: Saved
+deactivate db
+
+service --> controller: 19. Success response
+deactivate service
+
+controller --> client: 20. HTTP 200
+deactivate controller
+
+client --> admin: 21. Achievement updated
+
+@enduml

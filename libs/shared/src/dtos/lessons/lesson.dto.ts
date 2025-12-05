@@ -1,10 +1,4 @@
-import {
-  IsInt,
-  IsNotEmpty,
-  IsOptional,
-  IsString,
-  MaxLength,
-} from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { PartialType } from '@nestjs/mapped-types';
 
@@ -27,15 +21,6 @@ export class CreateLessonRequestDto {
   @IsString()
   @IsNotEmpty()
   description?: string;
-
-  @ApiProperty({
-    description: 'The duration of the lesson in minutes',
-    example: 60,
-    required: false,
-  })
-  @IsOptional()
-  @IsInt()
-  duration?: number;
 }
 
 export class UpdateLessonDto extends PartialType(CreateLessonRequestDto) {}

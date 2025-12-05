@@ -1,0 +1,59 @@
+@startuml UpdateConfigurationSequenceDiagram
+
+actor "Admin" as admin
+participant "Client" as client
+participant "Controller" as controller
+participant "Service" as service
+database "Database" as db
+
+admin -> client: 1. Open configuration panel
+client -> controller: 2. GET /configurations
+activate controller
+
+controller -> service: 3. findAll()
+activate service
+
+service -> db: 4. Query all configurations
+activate db
+db --> service: Configurations list
+deactivate db
+
+service --> controller: Response
+deactivate service
+
+controller --> client: 5. HTTP 200
+deactivate controller
+
+client --> admin: 6. Display configurations
+
+admin -> client: 7. Update configuration value
+client -> controller: 8. PUT /configurations/:id
+activate controller
+
+controller -> service: 9. update(id, data)
+activate service
+
+alt Configuration not found
+    service --> controller: Not Found error
+else Valid
+    service -> db: 10. Find configuration
+    activate db
+    db --> service: Configuration
+    deactivate db
+
+    service -> db: 11. Update configuration + updatedBy
+    activate db
+    db --> service: Updated
+    deactivate db
+
+    service --> controller: Success
+end
+
+deactivate service
+
+controller --> client: 12. HTTP 200
+deactivate controller
+
+client --> admin: 13. Configuration updated
+
+@enduml

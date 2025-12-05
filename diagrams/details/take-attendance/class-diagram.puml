@@ -1,0 +1,149 @@
+@startuml take_attendance_class_diagram
+top to bottom direction
+
+class Coach {
+  -id: number
+  -fullName: string
+  -email: string
+  -phoneNumber: string
+  -role: Role
+  +completeSession(): void
+}
+
+class Session {
+  -id: number
+  -name: string
+  -description: string
+  -sessionNumber: number
+  -scheduleDate: Date
+  -startTime: string
+  -endTime: string
+  -durationInMinutes: number
+  -status: SessionStatus
+  -completedAt: Date
+  -createdAt: Date
+  -updatedAt: Date
+  +getSessionTimeStatus(): 'upcoming'|'ongoing'|'finished'|'invalid'
+  +isSessionActive(): boolean
+}
+
+class Attendance {
+  -id: number
+  -status: AttendanceStatus
+  -createdAt: Date
+  -user: User
+  -session: Session
+}
+
+class Learner {
+  -id: number
+  -fullName: string
+  -email: string
+  -phoneNumber: string
+  -role: Role
+  -enrollments: Enrollment[]
+}
+
+class Course {
+  -id: number
+  -name: string
+  -status: CourseStatus
+  -totalEarnings: number
+  -totalSessions: number
+  -progressPct: number
+  -createdBy: Coach
+  -enrollments: Enrollment[]
+  -sessions: Session[]
+  -totalParticipants: number
+  +updateProgress(): void
+}
+
+class Enrollment {
+  -id: number
+  -status: EnrollmentStatus
+  -user: Learner
+  -course: Course
+}
+
+class LearnerProgress {
+  -id: number
+  -course: Course
+  -user: Learner
+  -sessionsCompleted: number
+  -progressPct: number
+  -updatedAt: Date
+}
+
+class SessionEarning {
+  -id: number
+  -sessionPrice: number
+  -coachEarningTotal: number
+  -paidAt: Date
+  -session: Session
+}
+
+enum SessionStatus {
+  PENDING
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+}
+
+enum EnrollmentStatus {
+  PENDING_GROUP
+  CONFIRMED
+  LEARNING
+  UNPAID
+  CANCELLED
+  DONE
+}
+
+enum CourseStatus {
+  PENDING_APPROVAL
+  APPROVED
+  REJECTED
+  CANCELLED
+  COMPLETED
+  FULL
+  READY_OPENED
+  ON_GOING
+}
+
+class CompleteSessionDto {
+  +attendances: CreateAttendanceDto[]
+}
+
+class CreateAttendanceDto {
+  +userId: number
+  +status: AttendanceStatus
+}
+
+class CustomApiResponse {
+  -statusCode: number
+  -message: string
+  -data: T
+}
+
+Coach "1" -- "many" Session: creates
+Session "1" -- "many" Attendance: has
+Learner "1" -- "many" Attendance: has
+Session "many" -- "1" Course: belongs to
+Course "1" -- "many" Enrollment: has
+Learner "1" -- "many" Enrollment: has
+Learner "1" -- "many" LearnerProgress: has
+Course "1" -- "many" LearnerProgress: has
+Session "1" -- "many" SessionEarning: generates
+Session --> SessionStatus: uses
+Attendance --> AttendanceStatus: uses
+Enrollment --> EnrollmentStatus: uses
+Course --> CourseStatus: uses
+CompleteSessionDto --> CreateAttendanceDto: contains
+CreateAttendanceDto --> AttendanceStatus: uses
+
+@enduml

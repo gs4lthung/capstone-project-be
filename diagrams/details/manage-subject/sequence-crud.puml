@@ -1,0 +1,141 @@
+@startuml ManageSubjectCRUDDiagram
+
+actor "Coach" as coach
+participant "Client" as client
+participant "Controller" as controller
+participant "Service" as service
+participant "Bunny CDN" as bunny
+database "Database" as db
+
+== Create Subject ==
+
+coach -> client: 1. Navigate to create subject
+client --> coach: 2. Display create subject form
+
+coach -> client: 3. Fill in subject details
+note right of client
+  - Name (required)
+  - Description (optional)
+  - Level (BEGINNER, INTERMEDIATE, ADVANCED)
+  - Subject icon/image file (optional)
+end note
+
+coach -> client: 4. Submit form
+client -> controller: 5. POST /subjects
+activate controller
+
+controller -> service: 6. create(data, file)
+activate service
+
+alt File provided
+  service -> bunny: 7. uploadToStorage(file)
+  activate bunny
+  bunny --> service: 8. publicUrl
+  deactivate bunny
+end
+
+service -> db: 9. Create subject record with status=DRAFT
+activate db
+db --> service: Created
+deactivate db
+
+service --> controller: Success response
+deactivate service
+
+controller --> client: 10. HTTP 201
+deactivate controller
+
+client --> coach: 11. Subject created successfully (Draft status)
+
+== View All Subjects ==
+
+coach -> client: 12. View subjects list
+client -> controller: 13. GET /subjects?page=1&limit=10
+activate controller
+
+controller -> service: 14. findAll(options)
+activate service
+
+service -> db: 15. Query subjects with pagination
+activate db
+db --> service: Subjects list with count
+deactivate db
+
+service --> controller: Response
+deactivate service
+
+controller --> client: 16. HTTP 200
+deactivate controller
+
+client --> coach: 17. Display subjects list
+
+== View Subject Details ==
+
+coach -> client: 18. Click on subject to view
+client -> controller: 19. GET /subjects/:id
+activate controller
+
+controller -> service: 20. findOne(id)
+activate service
+
+service -> db: 21. Query subject with relations
+activate db
+db --> service: Subject data
+deactivate db
+
+service --> controller: Response
+deactivate service
+
+controller --> client: 22. HTTP 200
+deactivate controller
+
+client --> coach: 23. Display subject details
+
+== Update Subject ==
+
+coach -> client: 24. Click "Edit Subject"
+client --> coach: 25. Show editable form with current data
+
+coach -> client: 26. Modify subject fields
+note right of client
+  Can update:
+  - Name
+  - Description
+  - Level
+  - Status (DRAFT → PUBLISHED)
+end note
+
+coach -> client: 27. Submit updated subject
+client -> controller: 28. PUT /subjects/:id
+activate controller
+
+controller -> service: 29. update(id, data)
+activate service
+
+service -> db: 30. Find subject by id with lessons
+activate db
+db --> service: Subject found
+deactivate db
+
+alt Status change to PUBLISHED
+  service -> service: 31. Validate all lessons have video & quiz
+  note right of service
+    If any lesson missing video or quiz,
+    throw error - cannot publish
+  end note
+end
+
+service -> db: 32. Update subject record
+activate db
+db --> service: Updated
+deactivate db
+
+service --> controller: Success response
+deactivate service
+
+controller --> client: 33. HTTP 200
+deactivate controller
+
+client --> coach: 34. Subject updated successfully
+
+@enduml

@@ -1,0 +1,37 @@
+@startuml LoginSequenceDiagram
+
+actor "User" as user
+participant "Client" as client
+participant "Controller" as controller
+participant "Service" as service
+database "Database" as db
+
+user -> client: 1. Submit credentials
+client -> controller: 2. POST /auth/login
+activate controller
+
+controller -> service: 3. login(email, password)
+activate service
+
+service -> db: 4. Find user
+activate db
+db --> service: User
+deactivate db
+
+alt Invalid password
+    service --> controller: Error
+else Valid
+    service -> service: 5. Generate tokens
+    service -> db: 6. Update lastLoginAt
+    deactivate db
+    service --> controller: LoginResponse
+end
+
+deactivate service
+
+controller --> client: 7. HTTP Response
+deactivate controller
+
+client --> user: 8. Show result
+
+@enduml

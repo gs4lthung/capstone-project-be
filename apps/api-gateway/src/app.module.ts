@@ -122,6 +122,9 @@ import { NotificationController } from './controllers/notification.controller';
 import { AiVideoCompareResultController } from './controllers/ai-video-compare-result.controller';
 import { LearnerController } from './controllers/learner.controller';
 import { LearnerService } from './services/learner.service';
+import { BaseCredential } from '@app/database/entities/base-credential.entity';
+import { BaseCredentialController } from './controllers/base-credential.controller';
+import { BaseCredentialService } from './services/base-credential.service';
 @Module({
   imports: [
     ConfigModule,
@@ -212,6 +215,7 @@ import { LearnerService } from './services/learner.service';
       Province,
       District,
       LearnerVideo,
+      BaseCredential,
     ]),
     ErrorModule,
     ThrottlerModule.forRootAsync({
@@ -236,6 +240,7 @@ import { LearnerService } from './services/learner.service';
     LessonController,
     SubjectController,
     PaymentController,
+    BaseCredentialController,
     QuizController,
     CoachController,
     WalletController,
@@ -276,6 +281,7 @@ import { LearnerService } from './services/learner.service';
     WalletService,
     PaymentService,
     AchievementService,
+    BaseCredentialService,
     AchievementTrackingService,
     EnrollmentService,
     ConfigurationService,

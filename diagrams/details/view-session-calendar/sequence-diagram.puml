@@ -1,0 +1,73 @@
+@startuml ViewSessionCalendarSequenceDiagram
+
+actor "User" as user
+participant "Client" as client
+participant "Controller" as controller
+participant "Service" as service
+database "Database" as db
+
+== View Course Calendar ==
+
+user -> client: 1. Navigate to course details
+client -> controller: 2. GET /courses/:id
+activate controller
+
+controller -> service: 3. findOne(id)
+activate service
+
+service -> db: 4. Query course with sessions
+activate db
+db --> service: Course with sessions[]
+deactivate db
+
+service --> controller: Response with sessions
+deactivate service
+
+controller --> client: 5. HTTP 200
+deactivate controller
+
+client --> user: 6. Display course calendar view
+note right of client
+  Calendar grid showing all sessions
+  with their dates and times
+end note
+
+== Filter Sessions by Date ==
+
+user -> client: 7. Select date range or month
+client --> client: 8. Filter/group sessions locally
+note right of client
+  Group sessions by week or month
+  Apply date range filter
+end note
+
+client --> user: 9. Update calendar display
+note right of user
+  Calendar updates to show
+  filtered sessions
+end note
+
+== View Session Details ==
+
+user -> client: 10. Click on session in calendar
+client --> user: 11. Show session details popup
+note right of client
+  Display:
+  - Session date & time
+  - Duration
+  - Location/Court
+  - Enrolled participants count
+  - Status
+end note
+
+== View Availability ==
+
+user -> client: 12. Check session availability
+client --> user: 13. Show availability info
+note right of client
+  Display available/full status
+  Show spaces remaining
+  Display enrollment button if available
+end note
+
+@enduml

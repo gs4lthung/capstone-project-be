@@ -68,9 +68,6 @@ export class Session {
   @Column({ name: 'end_time', type: 'time' })
   endTime: string;
 
-  @Column({ name: 'duration_in_minutes', type: 'int', nullable: true })
-  durationInMinutes?: number;
-
   @Column({
     type: 'enum',
     enum: SessionStatus,

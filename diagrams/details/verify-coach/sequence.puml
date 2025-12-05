@@ -1,0 +1,74 @@
+@startuml VerifyCoachSequenceDiagram
+
+actor "Admin" as admin
+participant "Client" as client
+participant "Controller" as controller
+participant "Service" as service
+database "Database" as db
+
+admin -> client: 1. View pending coach profiles
+client -> controller: 2. GET /coaches?filter=UNVERIFIED
+activate controller
+
+controller -> service: 3. findAll(filter, pagination)
+activate service
+
+service -> db: 4. Query coaches by status
+activate db
+db --> service: Pending coaches list
+deactivate db
+
+service --> controller: Response
+deactivate service
+
+controller --> client: 5. HTTP 200
+deactivate controller
+
+client --> admin: 6. Display coaches list
+
+admin -> client: 7. Click coach to view details
+client -> controller: 8. GET /coaches/:id
+activate controller
+
+controller -> service: 9. findOne(coachId)
+activate service
+
+service -> db: 10. Get coach profile + credentials
+activate db
+db --> service: Coach data
+deactivate db
+
+service --> controller: Response
+deactivate service
+
+controller --> client: 11. HTTP 200
+deactivate controller
+
+client --> admin: 12. Show coach profile + credentials
+
+admin -> client: 13. Approve coach
+client -> controller: 14. PUT /coaches/:id/verify
+activate controller
+
+controller -> service: 15. verifyCoach(coachId)
+activate service
+
+service -> db: 16. Update verification status = VERIFIED
+activate db
+db --> service: Updated
+deactivate db
+
+service -> db: 17. Activate user account
+activate db
+db --> service: Updated
+deactivate db
+
+service --> controller: Success
+deactivate service
+
+controller --> client: 18. HTTP 200
+deactivate controller
+
+client --> admin: 19. Coach approved
+
+@enduml

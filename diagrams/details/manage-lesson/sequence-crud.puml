@@ -1,0 +1,141 @@
+@startuml ManageLessonCRUDDiagram
+
+actor "Coach" as coach
+participant "Client" as client
+participant "Controller" as controller
+participant "Service" as service
+database "Database" as db
+
+== Create Lesson ==
+
+coach -> client: 1. Navigate to subject
+client -> controller: 2. GET /lessons/subjects/:id
+activate controller
+
+controller -> service: 3. findAllBySubjectId(id)
+activate service
+
+service -> db: 4. Query lessons by subject
+activate db
+db --> service: Lessons list
+deactivate db
+
+service --> controller: Response
+deactivate service
+
+controller --> client: 5. HTTP 200
+deactivate controller
+
+client --> coach: 6. Display subject with lessons list
+
+coach -> client: 7. Click "Add Lesson"
+client --> coach: 8. Show create lesson form
+
+coach -> client: 9. Fill in lesson details
+note right of client
+  - Name (required)
+  - Description (optional)
+  - Duration (optional)
+end note
+
+coach -> client: 10. Submit form
+client -> controller: 11. POST /lessons/subjects/:id
+activate controller
+
+controller -> service: 12. create(subjectId, data)
+activate service
+
+service -> db: 13. Find subject by id
+activate db
+db --> service: Subject found
+deactivate db
+
+service -> service: 14. Verify ownership (subject.createdBy == currentUser)
+note right of service
+  If not owner, throw ForbiddenException
+end note
+
+service -> service: 15. Calculate lessonNumber = existing lessons count + 1
+note right of service
+  Auto-increment lesson numbering
+end note
+
+service -> db: 16. Create new lesson record
+activate db
+db --> service: Created
+deactivate db
+
+service --> controller: Success response
+deactivate service
+
+controller --> client: 17. HTTP 201
+deactivate controller
+
+client --> coach: 18. Lesson created successfully
+
+== View All Lessons by Subject ==
+
+coach -> client: 19. Filter/sort lessons
+client -> controller: 20. GET /lessons/subjects/:id?page=1&sort=name
+activate controller
+
+controller -> service: 21. findAllBySubjectId(id, options)
+activate service
+
+service -> db: 22. Query lessons with pagination/filter
+activate db
+db --> service: Paginated lessons
+deactivate db
+
+service --> controller: Response
+deactivate service
+
+controller --> client: 23. HTTP 200
+deactivate controller
+
+client --> coach: 24. Display lessons list
+
+== Update Lesson ==
+
+coach -> client: 25. Click on lesson to edit
+client --> coach: 26. Show editable form
+
+coach -> client: 27. Modify lesson details
+note right of client
+  - Name
+  - Description
+  - Duration
+  (lessonNumber is auto-assigned, not editable)
+end note
+
+coach -> client: 28. Submit updated lesson
+client -> controller: 29. PUT /lessons/:id
+activate controller
+
+controller -> service: 30. update(id, data)
+activate service
+
+service -> db: 31. Find lesson with subject relations
+activate db
+db --> service: Lesson found
+deactivate db
+
+service -> service: 32. Verify ownership (subject.createdBy == currentUser)
+note right of service
+  Check subject creator matches current user
+end note
+
+service -> db: 33. Update lesson record
+activate db
+db --> service: Updated
+deactivate db
+
+service --> controller: Success response
+deactivate service
+
+controller --> client: 34. HTTP 200
+deactivate controller
+
+client --> coach: 35. Lesson updated successfully
+
+@enduml

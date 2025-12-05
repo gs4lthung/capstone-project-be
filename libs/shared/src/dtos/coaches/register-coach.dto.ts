@@ -4,6 +4,7 @@ import {
   IsEmail,
   IsInt,
   IsNotEmpty,
+  IsNumber,
   IsOptional,
   IsPhoneNumber,
   IsString,
@@ -13,34 +14,16 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { CourseCredentialType } from '@app/shared/enums/course.enum';
 import { PartialType } from '@nestjs/mapped-types';
 
 export class RegisterCoachCredentialDto {
-  @ApiProperty({ example: 'USPTA Certified Professional' })
-  @IsString()
-  @IsNotEmpty()
-  name: string;
-
-  @ApiProperty({
-    example: 'Certification for tennis coaching',
-    required: false,
-  })
   @IsOptional()
-  @IsString()
-  description?: string;
+  @IsNumber()
+  id?: number;
 
-  @ApiProperty({ enum: CourseCredentialType })
-  @IsNotEmpty()
-  type: CourseCredentialType;
-
-  @ApiProperty({
-    example: 'https://example.com/certificate.pdf',
-    required: false,
-  })
-  @IsOptional()
-  @IsString()
-  publicUrl?: string;
+  @IsNumber()
+  @ApiProperty({ example: 1 })
+  baseCredential: number;
 
   @ApiProperty({ example: '2023-01-01T00:00:00Z', required: false })
   @IsOptional()

@@ -130,7 +130,6 @@ export class CourseService extends BaseTypeOrmService<Course> {
           'sessions.scheduleDate',
           'sessions.startTime',
           'sessions.endTime',
-          'sessions.durationInMinutes',
           'sessions.status',
           'sessions.completedAt',
           'quiz.id',

@@ -70,6 +70,9 @@ export class FileUtils {
         case 'course_image':
           destination = `uploads/courses/images`;
           break;
+        case 'base_credential_image':
+          destination = `uploads/base_credentials/images`;
+          break;
       }
 
       // Use synchronous mkdir with recursive option to ensure directory exists
@@ -111,6 +114,9 @@ export class FileUtils {
           break;
         case 'course_image':
           fileName = `course_image_${baseName}${extension}`;
+          break;
+        case 'base_credential_image':
+          fileName = `base_credential_image_${baseName}${extension}`;
           break;
       }
 

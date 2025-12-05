@@ -33,9 +33,6 @@ export class Coach {
   @Column({ name: 'year_of_experience', type: 'int' })
   yearOfExperience: number;
 
-  @Column({ name: 'reason', type: 'text', nullable: true })
-  verificationReason?: string;
-
   @Column({
     name: 'verification_status',
     type: 'enum',
@@ -54,7 +51,6 @@ export class Coach {
   deletedAt?: Date;
 
   @ManyToOne(() => User, (user) => user.coach, {
-    eager: true,
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'user_id' })
@@ -62,7 +58,6 @@ export class Coach {
   user: User;
 
   @OneToMany(() => Credential, (credential) => credential.coach, {
-    eager: true,
     cascade: ['insert'],
   })
   credentials: Credential[];

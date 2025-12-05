@@ -1,0 +1,81 @@
+@startuml RegisterCoachSequenceDiagram
+
+actor "Coach" as coach
+participant "Client" as client
+participant "Controller" as controller
+participant "Service" as service
+participant "Mail" as mail
+database "Database" as db
+
+coach -> client: 1. Submit coach registration
+client -> controller: 2. POST /coaches/register
+activate controller
+
+controller -> service: 3. registerCoach(data)
+activate service
+
+alt Email/Phone exists
+    service --> controller: Conflict error
+else Valid
+    service -> service: 4. Hash password
+    service -> db: 5. Create user + coach profile
+    activate db
+    db --> service: Created
+    deactivate db
+
+    service -> mail: 6. Send verification email
+    activate mail
+    mail --> service: Sent
+    deactivate mail
+
+    service --> controller: Success
+end
+
+deactivate service
+
+controller --> client: 7. HTTP 201
+deactivate controller
+
+client --> coach: 8. Confirmation message
+
+coach -> client: 9. Upload credentials (certificate image, dates)
+client -> controller: 10. POST /coaches/credentials
+activate controller
+
+controller -> service: 11. uploadCredential(data, file)
+activate service
+
+service -> db: 12. Create credential record
+activate db
+db --> service: Saved
+deactivate db
+
+service --> controller: Success
+deactivate service
+
+controller --> client: 13. HTTP 200
+deactivate controller
+
+client --> coach: 14. Credential uploaded
+
+coach -> client: 15. Click email verification link
+client -> controller: 16. GET /auth/verify-email?token=...
+activate controller
+
+controller -> service: 17. verifyEmail(token)
+activate service
+
+service -> db: 18. Mark email verified + activate
+activate db
+db --> service: Updated
+deactivate db
+
+service --> controller: Success
+deactivate service
+
+controller --> client: 19. Redirect
+deactivate controller
+
+client --> coach: 20. Ready for admin review
+
+@enduml

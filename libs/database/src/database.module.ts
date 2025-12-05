@@ -44,6 +44,7 @@ import { Subject } from './entities/subject.entity';
 import { Lesson } from './entities/lesson.entity';
 import { Bank } from './entities/bank.entity';
 import { Court } from './entities/court.entity';
+import { BaseCredential } from './entities/base-credential.entity';
 
 @Module({
   imports: [
@@ -63,6 +64,7 @@ import { Court } from './entities/court.entity';
           AchievementTracking,
           AiVideoComparisonResult,
           Attendance,
+          BaseCredential,
           Coach,
           Configuration,
           Course,
@@ -103,7 +105,7 @@ import { Court } from './entities/court.entity';
           Court,
         ],
         logging: false,
-        synchronize: configService.get('node_env') === 'dev',
+        synchronize: configService.get('node_env') !== 'dev',
         ssl:
           configService.get('node_env') !== 'dev'
             ? { rejectUnauthorized: false }
