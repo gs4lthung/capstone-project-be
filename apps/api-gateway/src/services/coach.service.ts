@@ -33,11 +33,7 @@ import { MailSendDto } from '@app/shared/dtos/mails/mail-send.dto';
 import { MailService } from './mail.service';
 import { TwilioService } from '@app/twilio';
 import { Request } from '@app/database/entities/request.entity';
-import {
-  RequestActionType,
-  RequestStatus,
-  RequestType,
-} from '@app/shared/enums/request.enum';
+import { RequestActionType } from '@app/shared/enums/request.enum';
 import { RequestAction } from '@app/database/entities/request-action.entity';
 import { NotificationService } from './notification.service';
 import { NotificationType } from '@app/shared/enums/notification.enum';
@@ -207,29 +203,6 @@ export class CoachService extends BaseTypeOrmService<Coach> {
 
       await manager.getRepository(User).save(newUser);
 
-      const newCoachVerificationRequest = manager
-        .getRepository(Request)
-        .create({
-          description: `Yêu cầu xác minh huấn luyện viên cho người dùng ${newUser.fullName}`,
-          type: RequestType.COACH_VERIFICATION,
-          metadata: {
-            type: 'coach',
-            id: newUser.coach[0].id,
-            details: newUser.coach[0],
-          },
-          createdBy: newUser,
-          status: RequestStatus.PENDING,
-        });
-
-      await manager.getRepository(Request).save(newCoachVerificationRequest);
-
-      await this.notificationService.sendNotificationToAdmins({
-        title: 'Yêu cầu xác minh huấn luyện viên mới',
-        body: `Người dùng ${newUser.fullName} đã gửi yêu cầu xác minh huấn luyện viên.`,
-        type: NotificationType.INFO,
-        navigateTo: `/requests/${newCoachVerificationRequest.id}`,
-      });
-
       return new CustomApiResponse<void>(
         HttpStatus.CREATED,
         'Đăng ký thành công',
@@ -274,28 +247,7 @@ export class CoachService extends BaseTypeOrmService<Coach> {
         }
       }
 
-      const newCoachProfileUpdateRequest = manager
-        .getRepository(Request)
-        .create({
-          description: `Yêu cầu cập nhật hồ sơ huấn luyện viên cho người dùng ${coach.user.fullName}`,
-          type: RequestType.COACH_UPDATE_VERIFICATION,
-          metadata: {
-            type: 'coach-update',
-            id: coach.id,
-            details: updateData,
-          },
-          createdBy: coach.user,
-          status: RequestStatus.PENDING,
-        });
-
-      await manager.getRepository(Request).save(newCoachProfileUpdateRequest);
-
-      await this.notificationService.sendNotificationToAdmins({
-        title: 'Yêu cầu cập nhật hồ sơ huấn luyện viên mới',
-        body: `Người dùng ${coach.user.fullName} đã gửi yêu cầu cập nhật hồ sơ huấn luyện viên.`,
-        type: NotificationType.INFO,
-        navigateTo: `/requests/${newCoachProfileUpdateRequest.id}`,
-      });
+      await manager.getRepository(Coach).update(coach.id, updateData);
 
       return new CustomApiResponse<void>(
         HttpStatus.OK,

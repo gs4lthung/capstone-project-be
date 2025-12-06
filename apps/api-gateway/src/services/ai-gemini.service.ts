@@ -1,8 +1,8 @@
 // src/services/ai-gemini.service.ts
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@app/config';
-import { PoseLandmark } from './ai-pose.service';
 import { AiVideoComparisonResultSchema } from '@app/shared/dtos/ai-feedback/gemini-call.dto';
+import { PoseLandmark } from './ai-pose.service';
 
 // Interface matching the Gemini API response schema
 interface GeminiApiResponse {
