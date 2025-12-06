@@ -90,7 +90,7 @@ export class CronService {
               userId: enrollment.user.id,
               title: 'Khởi động khóa học',
               body: `Khóa học ${course.name} đã bắt đầu.`,
-              navigateTo: `/coach/courses/${course.id}`,
+              navigateTo: `/(learner)/my-courses`,
               type: NotificationType.INFO,
             });
           }
@@ -105,7 +105,7 @@ export class CronService {
             userId: course.createdBy.id,
             title: 'Khóa học đã bắt đầu',
             body: `Khóa học ${course.name} của bạn đã chính thức bắt đầu.`,
-            navigateTo: `/coach/courses/${course.id}`,
+            navigateTo: `/(coach)/course`,
             type: NotificationType.INFO,
           });
         }
@@ -303,7 +303,7 @@ export class CronService {
           userId: payment.enrollment.user.id,
           title: 'Xác nhận thanh toán thành công',
           body: `Thanh toán cho khóa học ${payment.enrollment.course.name} đã được xác nhận thành công.`,
-          navigateTo: `/learner/courses/${payment.enrollment.course.id}`,
+          navigateTo: `/(learner)/my-courses`,
           type: NotificationType.SUCCESS,
         });
       }

@@ -80,7 +80,7 @@ export class FeedbackService {
         userId: course.createdBy.id,
         title: 'Feedback mới nhận được',
         body: `Khóa học ${course.name} vừa nhận được một phản hồi mới.`,
-        navigateTo: `/coach/courses/${course.id}/feedbacks`,
+        navigateTo: `/(coach)/course`,
         type: NotificationType.INFO,
       });
 

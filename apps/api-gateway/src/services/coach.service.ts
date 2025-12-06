@@ -61,11 +61,13 @@ export class CoachService extends BaseTypeOrmService<Coach> {
     return super.find(findOptions, 'coach', PaginateObject<Coach>);
   }
 
-  async findOne(id: number): Promise<Coach> {
+  async findOne(id: number, isUser: boolean): Promise<Coach> {
     const coach = await this.coachRepository.findOne({
-      where: {
-        id,
-      },
+      where: isUser
+        ? { user: { id: id } }
+        : {
+            id: id,
+          },
       withDeleted: false,
       relations: [
         'user',

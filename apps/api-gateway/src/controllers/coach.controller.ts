@@ -7,6 +7,7 @@ import {
   Param,
   Post,
   Put,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -86,8 +87,11 @@ export class CoachController {
     description: 'Get a coach by id',
   })
   @ApiResponse({ status: HttpStatus.OK, description: 'Coach' })
-  async findOne(@Param('id') id: number): Promise<Coach> {
-    return this.coachService.findOne(Number(id));
+  async findOne(
+    @Param('id') id: number,
+    @Query('isUser') isUser: boolean,
+  ): Promise<Coach> {
+    return this.coachService.findOne(Number(id), isUser);
   }
 
   @Put(':id')

@@ -251,7 +251,7 @@ export class PaymentService extends BaseTypeOrmService<Payment> {
         userId: course.createdBy.id,
         title: 'Học viên đăng ký khóa học',
         body: `Một học viên đã đăng ký khóa học của bạn.`,
-        navigateTo: `/coach/courses/${course.id}`,
+        navigateTo: `/(coach)/course`,
         type: NotificationType.INFO,
       });
 
@@ -259,7 +259,7 @@ export class PaymentService extends BaseTypeOrmService<Payment> {
         userId: payment.enrollment.user.id,
         title: 'Đăng ký khóa học thành công',
         body: `Bạn đã đăng ký thành công khóa học ${course.name}.`,
-        navigateTo: `/learner/courses/${course.id}`,
+        navigateTo: `/(learner)/my-courses`,
         type: NotificationType.INFO,
       });
     });
@@ -287,7 +287,7 @@ export class PaymentService extends BaseTypeOrmService<Payment> {
         userId: payment.enrollment.user.id,
         title: 'Thanh toán bị hủy',
         body: `Bạn đã hủy thanh toán cho đăng ký khóa học.`,
-        navigateTo: `/learner/courses/${payment.enrollment.course.id}`,
+        navigateTo: `/(learner)/my-courses`,
         type: NotificationType.INFO,
       });
     });

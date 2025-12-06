@@ -767,30 +767,40 @@ export class CourseService extends BaseTypeOrmService<Course> {
             request.metadata.details.schedules,
           );
         for (const lesson of course.subject.lessons) {
-          const session = sessions.find((ses) => ses.lesson.id === lesson.id);
+          const session = sessions.find(
+            (ses) => ses.lesson && ses.lesson.id === lesson.id,
+          );
           if (session) {
-            delete lesson.video.id;
-            session.video = {
-              ...lesson.video,
-              status: CoachVideoStatus.READY,
-              lesson: null,
-              session: session,
-              uploadedBy: course.createdBy,
-            };
-
-            delete lesson.quiz.id;
-            for (const question of lesson.quiz.questions) {
-              delete question.id;
-              for (const option of question.options) {
-                delete option.id;
-              }
+            if (lesson.video) {
+              delete lesson.video.id;
+              session.video = {
+                ...lesson.video,
+                status: CoachVideoStatus.READY,
+                lesson: null,
+                session: session,
+                uploadedBy: course.createdBy,
+              };
             }
-            session.quiz = {
-              ...lesson.quiz,
-              lesson: null,
-              session: session,
-              createdBy: course.createdBy,
-            };
+
+            if (lesson.quiz) {
+              delete lesson.quiz.id;
+              if (lesson.quiz.questions) {
+                for (const question of lesson.quiz.questions) {
+                  delete question.id;
+                  if (question.options) {
+                    for (const option of question.options) {
+                      delete option.id;
+                    }
+                  }
+                }
+              }
+              session.quiz = {
+                ...lesson.quiz,
+                lesson: null,
+                session: session,
+                createdBy: course.createdBy,
+              };
+            }
           }
         }
 
@@ -815,7 +825,7 @@ export class CourseService extends BaseTypeOrmService<Course> {
         userId: request.createdBy.id,
         title: 'Yêu cầu tạo khóa học được duyệt',
         body: `Yêu cầu tạo khóa học của bạn đã được duyệt.`,
-        navigateTo: `/coach/courses/${course.id}`,
+        navigateTo: `/(coach)/course`,
         type: NotificationType.SUCCESS,
       });
 
@@ -866,7 +876,7 @@ export class CourseService extends BaseTypeOrmService<Course> {
         userId: request.createdBy.id,
         title: 'Yêu cầu tạo khóa học bị từ chối',
         body: `Yêu cầu tạo khóa học của bạn đã bị từ chối.`,
-        navigateTo: `/coach/courses/${course.id}`,
+        navigateTo: `/(coach)/course`,
         type: NotificationType.ERROR,
       });
 
@@ -1019,7 +1029,7 @@ export class CourseService extends BaseTypeOrmService<Course> {
         userId: course.createdBy.id,
         title: 'Học viên hủy đăng ký khóa học',
         body: `Một học viên đã hủy đăng ký khóa học của bạn.`,
-        navigateTo: `/coach/courses/${course.id}`,
+        navigateTo: `/(coach)/course`,
         type: NotificationType.INFO,
       });
 
