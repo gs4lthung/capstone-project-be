@@ -35,6 +35,8 @@ import { MailSendDto } from '@app/shared/dtos/mails/mail-send.dto';
 import { MailService } from './mail.service';
 import { TwilioService } from '@app/twilio';
 import { BunnyService } from '@app/bunny';
+import { NotificationService } from './notification.service';
+import { NotificationType } from '@app/shared/enums/notification.enum';
 @Injectable({ scope: Scope.REQUEST })
 export class CoachService extends BaseTypeOrmService<Coach> {
   constructor(
@@ -47,6 +49,7 @@ export class CoachService extends BaseTypeOrmService<Coach> {
     private readonly mailService: MailService,
     private readonly twilioService: TwilioService,
     private readonly bunnyService: BunnyService,
+    private readonly notificationService: NotificationService,
   ) {
     super(coachRepository);
   }
@@ -180,7 +183,21 @@ export class CoachService extends BaseTypeOrmService<Coach> {
         await this.twilioService.sendSMS(data.phoneNumber);
       }
 
-      await manager.getRepository(User).save(newUser);
+      const savedUser = await manager.getRepository(User).save(newUser);
+
+      const savedCoach = await manager.getRepository(Coach).findOne({
+        where: { user: { id: savedUser.id } },
+        relations: ['user'],
+      });
+
+      if (savedCoach) {
+        await this.notificationService.sendNotificationToAdmins({
+          title: 'Yêu cầu xác minh huấn luyện viên mới',
+          body: `HLV ${savedUser.fullName} đã đăng ký và đang chờ xác minh hồ sơ.`,
+          navigateTo: `/coaches?coachId=${savedCoach.id}`,
+          type: NotificationType.INFO,
+        });
+      }
 
       return new CustomApiResponse<void>(
         HttpStatus.CREATED,
