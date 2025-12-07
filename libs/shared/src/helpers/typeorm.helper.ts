@@ -213,7 +213,10 @@ export class BaseTypeOrmService<T> {
     }
 
     if (findOptions.sort) {
-      qb.orderBy(getOrder(findOptions.sort));
+      const sortProperty = findOptions.sort.property.includes('.')
+        ? findOptions.sort.property
+        : `${alias}.${findOptions.sort.property}`;
+      qb.orderBy(sortProperty, findOptions.sort.direction);
     }
 
     qb.skip(findOptions.pagination.offset);
