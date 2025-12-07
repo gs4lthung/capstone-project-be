@@ -32,9 +32,6 @@ import { JwtPayloadDto } from '@app/shared/dtos/auth/jwt.payload.dto';
 import { MailSendDto } from '@app/shared/dtos/mails/mail-send.dto';
 import { MailService } from './mail.service';
 import { TwilioService } from '@app/twilio';
-import { Request } from '@app/database/entities/request.entity';
-import { RequestActionType } from '@app/shared/enums/request.enum';
-import { RequestAction } from '@app/database/entities/request-action.entity';
 import { NotificationService } from './notification.service';
 import { NotificationType } from '@app/shared/enums/notification.enum';
 @Injectable({ scope: Scope.REQUEST })
@@ -203,6 +200,13 @@ export class CoachService extends BaseTypeOrmService<Coach> {
 
       await manager.getRepository(User).save(newUser);
 
+      await this.notificationService.sendNotificationToAdmins({
+        title: 'Huấn luyện viên mới đăng ký',
+        body: `Huấn luyện viên ${newUser.fullName} đã đăng ký và đang chờ xác minh.`,
+        navigateTo: `/coaches?coachId=${newUser.coach[0].id}`,
+        type: NotificationType.INFO,
+      });
+
       return new CustomApiResponse<void>(
         HttpStatus.CREATED,
         'Đăng ký thành công',
@@ -269,10 +273,10 @@ export class CoachService extends BaseTypeOrmService<Coach> {
     });
   }
 
-  async verifyCoach(requestId: number): Promise<CustomApiResponse<void>> {
+  async verifyCoach(coachId: number): Promise<CustomApiResponse<void>> {
     return await this.datasource.transaction(async (manager) => {
       const coach = await this.coachRepository.findOne({
-        where: { id: requestId },
+        where: { id: coachId },
         relations: ['user', 'credentials', 'credentials.baseCredential'],
       });
       if (!coach) throw new NotFoundException('Coach not found');
@@ -287,14 +291,13 @@ export class CoachService extends BaseTypeOrmService<Coach> {
           .update(coach.user.id, { isActive: true });
       }
 
-      const newRequestAction = manager.getRepository(RequestAction).create({
-        request: { id: requestId },
-        type: RequestActionType.APPROVED,
-        comment: 'Xác minh huấn luyện viên thành công',
-        handledBy: this.request.user as User,
+      await this.notificationService.sendNotification({
+        userId: coach.user.id,
+        title: 'Xác minh huấn luyện viên thành công',
+        body: 'Hồ sơ huấn luyện viên của bạn đã được xác minh thành công.',
+        navigateTo: `/(coach)/menu/profile`,
+        type: NotificationType.SUCCESS,
       });
-
-      await manager.getRepository(RequestAction).save(newRequestAction);
 
       return new CustomApiResponse<void>(
         HttpStatus.OK,
@@ -304,39 +307,19 @@ export class CoachService extends BaseTypeOrmService<Coach> {
   }
 
   async rejectCoach(
-    requestId: number,
+    coachId: number,
     reason?: string,
   ): Promise<CustomApiResponse<void>> {
     return await this.datasource.transaction(async (manager) => {
-      const request = await manager.getRepository(Request).findOne({
-        where: { id: requestId },
-        relations: [
-          'createdBy',
-          'createdBy.coach',
-          'createdBy.coach.credentials',
-          'createdBy.coach.credentials.baseCredential',
-        ],
-      });
-      if (!request) throw new NotFoundException('Request not found');
-
-      await this.coachRepository.update(request.metadata.id, {
+      await manager.getTreeRepository(Coach).update(coachId, {
         verificationStatus: CoachVerificationStatus.REJECTED,
       });
 
-      const newRequestAction = manager.getRepository(RequestAction).create({
-        request: { id: requestId },
-        type: RequestActionType.REJECTED,
-        comment: reason ? reason : 'Từ chối xác minh huấn luyện viên',
-        handledBy: this.request.user as User,
-      });
-
-      await manager.getRepository(RequestAction).save(newRequestAction);
-
       await this.notificationService.sendNotification({
-        userId: request.createdBy.id,
+        userId: coachId,
         title: 'Yêu cầu xác minh huấn luyện viên bị từ chối',
         body: reason ? reason : 'Từ chối xác minh huấn luyện viên',
-        navigateTo: `/requests/${requestId}`,
+        navigateTo: `/(coach)/menu/profile`,
         type: NotificationType.INFO,
       });
 
