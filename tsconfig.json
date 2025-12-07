@@ -18,84 +18,30 @@
     "forceConsistentCasingInFileNames": false,
     "noFallthroughCasesInSwitch": false,
     "paths": {
-      "@app/config": [
-        "libs/config/src"
-      ],
-      "@app/config/*": [
-        "libs/config/src/*"
-      ],
-      "@app/database": [
-        "libs/database/src"
-      ],
-      "@app/database/*": [
-        "libs/database/src/*"
-      ],
-      "@app/shared": [
-        "libs/shared/src"
-      ],
-      "@app/shared/*": [
-        "libs/shared/src/*"
-      ],
-      "@app/websocket": [
-        "libs/websocket/src"
-      ],
-      "@app/websocket/*": [
-        "libs/websocket/src/*"
-      ],
-      "@app/firebase": [
-        "libs/firebase/src"
-      ],
-      "@app/firebase/*": [
-        "libs/firebase/src/*"
-      ],
-      "@app/redis": [
-        "libs/redis/src"
-      ],
-      "@app/redis/*": [
-        "libs/redis/src/*"
-      ],
-      "@app/payos": [
-        "libs/payos/src"
-      ],
-      "@app/payos/*": [
-        "libs/payos/src/*"
-      ],
-      "@app/ffmpeg": [
-        "libs/ffmpeg/src"
-      ],
-      "@app/ffmpeg/*": [
-        "libs/ffmpeg/src/*"
-      ],
-      "@app/twilio": [
-        "libs/twilio/src"
-      ],
-      "@app/twilio/*": [
-        "libs/twilio/src/*"
-      ],
-      "@app/paypal": [
-        "libs/paypal/src"
-      ],
-      "@app/paypal/*": [
-        "libs/paypal/src/*"
-      ],
-      "@app/agora": [
-        "libs/agora/src"
-      ],
-      "@app/agora/*": [
-        "libs/agora/src/*"
-      ],
-      "@app/bunny": [
-        "libs/bunny/src"
-      ],
-      "@app/bunny/*": [
-        "libs/bunny/src/*"
-      ],
-      "@app/ai-video-compare-result": [
-        "libs/ai-video-compare-result/src"
-      ],
-      "@app/ai-video-compare-result/*": [
-        "libs/ai-video-compare-result/src/*"
-      ],
+      "@app/config": ["libs/config/src"],
+      "@app/config/*": ["libs/config/src/*"],
+      "@app/database": ["libs/database/src"],
+      "@app/database/*": ["libs/database/src/*"],
+      "@app/shared": ["libs/shared/src"],
+      "@app/shared/*": ["libs/shared/src/*"],
+      "@app/websocket": ["libs/websocket/src"],
+      "@app/websocket/*": ["libs/websocket/src/*"],
+      "@app/firebase": ["libs/firebase/src"],
+      "@app/firebase/*": ["libs/firebase/src/*"],
+      "@app/redis": ["libs/redis/src"],
+      "@app/redis/*": ["libs/redis/src/*"],
+      "@app/payos": ["libs/payos/src"],
+      "@app/payos/*": ["libs/payos/src/*"],
+      "@app/ffmpeg": ["libs/ffmpeg/src"],
+      "@app/ffmpeg/*": ["libs/ffmpeg/src/*"],
+      "@app/twilio": ["libs/twilio/src"],
+      "@app/twilio/*": ["libs/twilio/src/*"],
+      "@app/paypal": ["libs/paypal/src"],
+      "@app/paypal/*": ["libs/paypal/src/*"],
+      "@app/agora": ["libs/agora/src"],
+      "@app/agora/*": ["libs/agora/src/*"],
+      "@app/bunny": ["libs/bunny/src"],
+      "@app/bunny/*": ["libs/bunny/src/*"]
     }
   }
 }

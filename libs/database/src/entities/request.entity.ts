@@ -14,7 +14,7 @@ import { User } from './user.entity';
 import { IsEnum, IsString } from 'class-validator';
 
 export interface RequestMetadata {
-  type: 'course' | 'quiz' | 'coach' | 'video';
+  type: 'course' | 'coach' | 'coach-update' | 'course-update';
   id: number;
   details: any;
 }

@@ -1,0 +1,214 @@
+@startuml ManageCourseClassDiagram
+
+top to bottom direction
+
+package "Entities" <<entity>> {
+    class Course <<Entity>> {
+        -id: number
+        -name: string
+        -description: string
+        -status: CourseStatus
+        -level: PickleballLevel
+        -learningFormat: CourseLearningFormat
+        -startDate: Date
+        -endDate: Date
+        -minParticipants: number
+        -maxParticipants: number
+        -currentParticipants: number
+        -pricePerParticipant: number
+        -totalSessions: number
+        -progressPct: number
+        -publicUrl: string
+        -googleMeetLink: string
+        -createdAt: Date
+        -updatedAt: Date
+        --
+        # Relationships
+        -createdBy: User
+        -subject: Subject
+        -sessions: Session[]
+        -schedules: Schedule[]
+        -enrollments: Enrollment[]
+        -feedbacks: Feedback[]
+        -court: Court
+    }
+
+    class Schedule <<Entity>> {
+        -id: number
+        -dayOfWeek: number
+        -startTime: string
+        -endTime: string
+        -totalSessions: number
+        -createdAt: Date
+        -updatedAt: Date
+        --
+        # Relationships
+        -course: Course
+    }
+
+    class Session <<Entity>>{
+        -id: number
+        -sessionNumber: number
+        -scheduleDate: Date
+        -startTime: string
+        -endTime: string
+        -durationInMinutes: number
+        -status: SessionStatus
+        -completedAt: Date
+        -createdAt: Date
+        -updatedAt: Date
+        --
+        # Relationships
+        -course: Course
+        -quiz: Quiz
+        -video: Video
+    }
+
+    class User <<Entity>> {
+        -id: number
+        -name: string
+        -email: string
+        -role: UserRole
+        --
+        # Relationships
+        -courses: Course[]
+    }
+
+    class Subject <<Entity>> {
+        -id: number
+        -name: string
+        -status: SubjectStatus
+        --
+        # Relationships
+        -courses: Course[]
+    }
+
+    class Court <<Entity>> {
+        -id: number
+        -name: string
+        -address: string
+        -pricePerHour: number
+        --
+        # Relationships
+        -courses: Course[]
+    }
+
+    class Request <<Entity>> {
+        -id: number
+        -metadata: RequestMetadata
+        -status: RequestStatus
+        -type: RequestType
+        -createdAt: Date
+    }
+}
+
+package "DTOs" <<dto>> {
+    class UpdateCourseDto  {
+        -name?: string
+        -description?: string
+        -level?: PickleballLevel
+        -learningFormat?: CourseLearningFormat
+        -startDate?: Date
+        -endDate?: Date
+        -minParticipants?: number
+        -maxParticipants?: number
+        -pricePerParticipant?: number
+        -publicUrl?: string
+        -googleMeetLink?: string
+        -subjectId?: number
+        -courtId?: number
+        -schedules?: ScheduleInput[]
+    }
+
+    class CreateCourseRequestDto  {
+        -name: string
+        -description: string
+        -level: PickleballLevel
+        -learningFormat: CourseLearningFormat
+        -startDate: Date
+        -endDate: Date
+        -minParticipants: number
+        -maxParticipants: number
+        -pricePerParticipant: number
+        -publicUrl?: string
+        -googleMeetLink?: string
+        -schedules: ScheduleInput[]
+    }
+}
+
+package "Controllers" <<controller>> {
+    class CourseController  {
+        -courseService: CourseService
+        --
+        +getCoursesForCoach(page, size): Promise<PaginateObject<Course>>
+        +findOne(id): Promise<Course>
+        +createCourse(subjectId, data, file): Promise
+        +updateCourseCreationRequest(id, data, file): Promise
+        ...
+    }
+}
+
+package "Services" <<service>> {
+    class CourseService  {
+        -courseRepository: Repository<Course>
+        -requestRepository: Repository<Request>
+        -requestActionRepository: Repository<RequestAction>
+        -enrollmentRepository: Repository<Enrollment>
+        -sessionService: SessionService
+        -notificationService: NotificationService
+        -scheduleService: ScheduleService
+        --
+        +findCoachCourses(page, size): Promise<PaginateObject<Course>>
+        +findOne(id): Promise<Course>
+        +updateCourseCreationRequest(id, data, file): Promise<CustomApiResponse>
+        +createCourseCreationRequest(subjectId, data, file): Promise<CustomApiResponse>
+        +approveCourseCreationRequest(id): Promise<CustomApiResponse>
+        ...
+    }
+
+    class ScheduleService  {
+        -scheduleRepository: Repository<Schedule>
+        --
+        +createSchedules(course, schedules): Promise<Schedule[]>
+        +updateSchedules(course, schedules): Promise<Schedule[]>
+        +deleteSchedules(courseId): Promise<void>
+        ...
+    }
+
+    class SessionService  {
+        -sessionRepository: Repository<Session>
+        --
+        +createSessions(course): Promise<Session[]>
+        +generateSessionsFromSchedule(course): Promise<Session[]>
+        ...
+    }
+
+    class NotificationService  {
+        -emailService: EmailService
+        --
+        +send(data): Promise<void>
+        ...
+    }
+}
+
+' Relationships
+CourseController --> CourseService : uses
+CourseService --> Course : manages
+CourseService --> Schedule : manages via ScheduleService
+CourseService --> Session : manages via SessionService
+CourseService --> Request : reads
+CourseService --> NotificationService : uses
+CourseService --> ScheduleService : uses
+CourseService --> SessionService : uses
+
+UpdateCourseDto --> Course : updates
+CreateCourseRequestDto --> Request : creates
+Course --> User : created by
+Course --> Subject : belongs to
+Course --> Court : uses
+Course --> Schedule : has many
+Course --> Session : has many
+Schedule --> Course : belongs to
+Session --> Course : belongs to
+
+@enduml

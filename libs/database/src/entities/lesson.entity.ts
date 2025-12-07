@@ -44,11 +44,6 @@ export class Lesson {
   @IsInt()
   lessonNumber: number;
 
-  @Column({ name: 'duration', type: 'int' })
-  @IsOptional()
-  @IsInt()
-  duration?: number;
-
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 

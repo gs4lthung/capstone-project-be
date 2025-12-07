@@ -1,0 +1,105 @@
+@startuml ManageLessonDeleteRestoreDiagram
+
+actor "Coach" as coach
+participant "Client" as client
+participant "Controller" as controller
+participant "Service" as service
+database "Database" as db
+
+== Delete Lesson ==
+
+coach -> client: 1. View lesson details
+client --> coach: 2. Display lesson with "Delete" button
+
+coach -> client: 3. Click "Delete Lesson"
+client --> coach: 4. Show confirmation dialog
+
+coach -> client: 5. Confirm deletion
+client -> controller: 6. DELETE /lessons/:id
+activate controller
+
+controller -> service: 7. delete(id)
+activate service
+
+service -> db: 8. Find lesson with subject relations
+activate db
+db --> service: Lesson found
+deactivate db
+
+service -> service: 9. Verify ownership (subject.createdBy == currentUser)
+note right of service
+  If not owner, throw ForbiddenException
+end note
+
+service -> db: 10. Soft delete lesson (set deletedAt)
+activate db
+db --> service: Deleted
+deactivate db
+
+service --> controller: Success response
+deactivate service
+
+controller --> client: 11. HTTP 200
+deactivate controller
+
+client --> coach: 12. Lesson deleted successfully
+
+coach -> client: 13. Navigate to view deleted lessons
+client -> controller: 14. GET /lessons/subjects/:id?withDeleted=true
+activate controller
+
+controller -> service: 15. findAllBySubjectId(id, options)
+activate service
+
+service -> db: 16. Query lessons including soft-deleted
+activate db
+db --> service: Deleted lessons list
+deactivate db
+
+service --> controller: Response
+deactivate service
+
+controller --> client: 17. HTTP 200
+deactivate controller
+
+client --> coach: 18. Display deleted lessons
+
+== Restore Lesson ==
+
+coach -> client: 19. Click "Restore" on deleted lesson
+client --> coach: 20. Show restore confirmation
+
+coach -> client: 21. Confirm restore
+client -> controller: 22. PATCH /lessons/:id/restore
+activate controller
+
+controller -> service: 23. restore(id)
+activate service
+
+service -> db: 24. Find deleted lesson (withDeleted=true)
+activate db
+db --> service: Deleted lesson found
+deactivate db
+
+service -> service: 25. Verify ownership (subject.createdBy == currentUser)
+note right of service
+  If not owner, throw ForbiddenException
+end note
+
+service -> db: 26. Restore lesson (clear deletedAt)
+activate db
+db --> service: Restored
+deactivate db
+
+service --> controller: Success response
+deactivate service
+
+controller --> client: 27. HTTP 200
+deactivate controller
+
+client --> coach: 28. Lesson restored successfully
+
+coach -> client: 29. Navigate back to lessons list
+client --> coach: 30. Lesson now appears in active list
+
+@enduml

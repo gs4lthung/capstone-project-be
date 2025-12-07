@@ -218,7 +218,7 @@ export class ScheduleService {
           userId: enrollment.user.id,
           title: 'Thay đổi lịch buổi học',
           body: `Lịch buổi học ${session.name} đã được thay đổi. Vui lòng kiểm tra lại lịch học của bạn.`,
-          navigateTo: `/learner/courses/${session.course.id}/sessions`,
+          navigateTo: `/(learner)/my-courses`,
           type: NotificationType.INFO,
         });
       }
@@ -276,11 +276,9 @@ export class ScheduleService {
       );
 
       if (isStartAndEndDateConflict) {
-        console.log('Date range conflict detected');
         const isDayOfWeekConflict =
           existingSchedule.dayOfWeek === schedule.dayOfWeek;
         if (isDayOfWeekConflict) {
-          console.log('Day of week conflict detected');
           const existStartMinutes = DateTimeUtils.toMinutes(
             existingSchedule.startTime,
           );
@@ -296,7 +294,6 @@ export class ScheduleService {
           );
 
           if (isTimeConflict) {
-            console.log('Time conflict detected');
             return false;
           }
         }

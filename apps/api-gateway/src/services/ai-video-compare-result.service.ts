@@ -6,15 +6,16 @@ import { LearnerVideo } from '@app/database/entities/learner-video.entity';
 import { Video } from '@app/database/entities/video.entity';
 import { SaveAiFeedbackDto } from '@app/shared/dtos/ai-feedback/ai-feedback.dto';
 import { buildDetailsArrayFromComparison } from '@app/shared/helpers/buildDetailArray.helper';
+import { NotificationType } from '@app/shared/enums/notification.enum';
+import { NotificationService } from './notification.service';
 
 @Injectable()
 export class AiVideoCompareResultService {
   constructor(
     @InjectRepository(AiVideoComparisonResult)
     private readonly aiRepo: Repository<AiVideoComparisonResult>,
-    @InjectRepository(LearnerVideo)
-    private readonly learnerVideoRepo: Repository<LearnerVideo>,
     private readonly datasource: DataSource,
+    private readonly notificationService: NotificationService,
   ) {}
 
   async findAllByLearnerVideoId(learnerVideoId: number) {
@@ -158,6 +159,14 @@ export class AiVideoCompareResultService {
           aiResultRecord.details = details;
         }
       }
+
+      await this.notificationService.sendNotification({
+        userId: learnerVideo.user.id,
+        title: 'Video của bạn đã được phân tích bởi AI và HLV',
+        body: `Video học viên của bạn đã được phân tích. Hãy xem phản hồi chi tiết để cải thiện kỹ năng của bạn!`,
+        navigateTo: `/(learner)/ai`,
+        type: NotificationType.INFO,
+      });
 
       const createdRecord = manager
         .getRepository(AiVideoComparisonResult)

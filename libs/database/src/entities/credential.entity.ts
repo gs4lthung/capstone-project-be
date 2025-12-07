@@ -1,4 +1,3 @@
-import { CourseCredentialType } from '@app/shared/enums/course.enum';
 import {
   Column,
   CreateDateColumn,
@@ -11,40 +10,12 @@ import {
 } from 'typeorm';
 
 import { Coach } from './coach.entity';
-import {
-  IsEnum,
-  IsOptional,
-  IsString,
-  IsUrl,
-  MaxLength,
-  MinLength,
-} from 'class-validator';
+import { BaseCredential } from './base-credential.entity';
 
 @Entity('credentials')
 export class Credential {
   @PrimaryGeneratedColumn()
   id: number;
-
-  @Column({ type: 'varchar', length: 255 })
-  @IsString()
-  @MinLength(2)
-  @MaxLength(255)
-  name: string;
-
-  @Column({ type: 'text', nullable: true })
-  @IsOptional()
-  @IsString()
-  @MinLength(2)
-  description?: string;
-
-  @Column({ type: 'enum', enum: CourseCredentialType })
-  @IsEnum(CourseCredentialType)
-  type: CourseCredentialType;
-
-  @Column({ name: 'public_url', type: 'text', nullable: true })
-  @IsOptional()
-  @IsUrl()
-  publicUrl?: string;
 
   @Column({ name: 'issued_at', type: 'date', nullable: true })
   issuedAt?: Date;
@@ -64,4 +35,12 @@ export class Credential {
   @ManyToOne(() => Coach, (coach) => coach.credentials, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'coach_id' })
   coach: Coach;
+
+  @ManyToOne(
+    () => BaseCredential,
+    (baseCredential) => baseCredential.credentials,
+    { onDelete: 'SET NULL' },
+  )
+  @JoinColumn({ name: 'base_credential_id' })
+  baseCredential: BaseCredential;
 }

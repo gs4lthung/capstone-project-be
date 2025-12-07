@@ -46,7 +46,6 @@ export const subjectAndLessonSeed = async (datasource: DataSource) => {
           description:
             'TÌm hiểu về các động tác cơ bản và cách chơi Pickleball.',
           lessonNumber: 1,
-          duration: 120,
           quiz: quizRepository.create({
             title: 'Câu hỏi về giới thiệu Pickleball',
             description: 'Đánh giá kiến thức cơ bản về Pickleball.',
@@ -187,7 +186,6 @@ export const subjectAndLessonSeed = async (datasource: DataSource) => {
           name: 'Forehand trong Pickleball',
           description: 'Tìm hiểu về động tác Forehand trong Pickleball.',
           lessonNumber: 2,
-          duration: 150,
           video: videoRepository.create({
             title: 'Kỹ thuật đánh forehand',
             description:
@@ -238,7 +236,6 @@ export const subjectAndLessonSeed = async (datasource: DataSource) => {
           name: 'Backhand trong Pickleball',
           description: 'Tìm hiểu về động tác Backhand trong Pickleball.',
           lessonNumber: 3,
-          duration: 150,
           video: videoRepository.create({
             title: 'Kỹ thuật đánh backhand',
             description:
@@ -336,7 +333,6 @@ export const subjectAndLessonSeed = async (datasource: DataSource) => {
           name: 'Giao bóng trong Pickleball',
           description: 'Tìm hiểu về kỹ thuật giao bóng trong Pickleball.',
           lessonNumber: 4,
-          duration: 150,
           video: videoRepository.create({
             title: 'Kỹ thuật giao bóng',
             description:

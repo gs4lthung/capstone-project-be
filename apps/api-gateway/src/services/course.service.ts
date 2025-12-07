@@ -130,7 +130,6 @@ export class CourseService extends BaseTypeOrmService<Course> {
           'sessions.scheduleDate',
           'sessions.startTime',
           'sessions.endTime',
-          'sessions.durationInMinutes',
           'sessions.status',
           'sessions.completedAt',
           'quiz.id',
@@ -721,6 +720,26 @@ export class CourseService extends BaseTypeOrmService<Course> {
       // Optionally update related request or notification for course update approval
       // (Feel free to customize this part based on your business logic)
 
+      const newRequest = this.requestRepository.create({
+        description: `Cập nhật khóa học: ${existingCourse.name}`,
+        type: RequestType.COACH_UPDATE_VERIFICATION,
+        metadata: {
+          type: 'course-update',
+          id: existingCourse.id,
+          details: existingCourse,
+        },
+        createdBy: this.request.user as User,
+        status: RequestStatus.PENDING,
+      });
+      await manager.getRepository(Request).save(newRequest);
+
+      await this.notificationService.sendNotificationToAdmins({
+        title: 'Yêu cầu cập nhật khóa học',
+        body: `Một HLV đã gửi yêu cầu cập nhật khóa học.`,
+        navigateTo: `/curriculum?request=${newRequest.id}`,
+        type: NotificationType.INFO,
+      });
+
       return new CustomApiResponse<void>(
         HttpStatus.OK,
         'Chỉnh sửa khóa học thành công',
@@ -758,44 +777,56 @@ export class CourseService extends BaseTypeOrmService<Course> {
       if (course.totalSessions <= 0)
         throw new BadRequestException('Khóa học chưa có buổi học nào');
 
-      if (
-        request.metadata.details.schedules &&
-        request.metadata.details.schedules.length > 0
-      ) {
-        const sessions =
-          await this.sessionService.generateSessionsFromSchedules(
-            course,
-            request.metadata.details.schedules,
-          );
-        for (const lesson of course.subject.lessons) {
-          const session = sessions.find((ses) => ses.lesson.id === lesson.id);
-          if (session) {
-            delete lesson.video.id;
-            session.video = {
-              ...lesson.video,
-              status: CoachVideoStatus.READY,
-              lesson: null,
-              session: session,
-              uploadedBy: course.createdBy,
-            };
+      if (request.type === RequestType.COURSE_APPROVAL) {
+        if (
+          request.metadata.details.schedules &&
+          request.metadata.details.schedules.length > 0
+        ) {
+          const sessions =
+            await this.sessionService.generateSessionsFromSchedules(
+              course,
+              request.metadata.details.schedules,
+            );
+          for (const lesson of course.subject.lessons) {
+            const session = sessions.find(
+              (ses) => ses.lesson && ses.lesson.id === lesson.id,
+            );
+            if (session) {
+              if (lesson.video) {
+                delete lesson.video.id;
+                session.video = {
+                  ...lesson.video,
+                  status: CoachVideoStatus.READY,
+                  lesson: null,
+                  session: session,
+                  uploadedBy: course.createdBy,
+                };
+              }
 
-            delete lesson.quiz.id;
-            for (const question of lesson.quiz.questions) {
-              delete question.id;
-              for (const option of question.options) {
-                delete option.id;
+              if (lesson.quiz) {
+                delete lesson.quiz.id;
+                if (lesson.quiz.questions) {
+                  for (const question of lesson.quiz.questions) {
+                    delete question.id;
+                    if (question.options) {
+                      for (const option of question.options) {
+                        delete option.id;
+                      }
+                    }
+                  }
+                }
+                session.quiz = {
+                  ...lesson.quiz,
+                  lesson: null,
+                  session: session,
+                  createdBy: course.createdBy,
+                };
               }
             }
-            session.quiz = {
-              ...lesson.quiz,
-              lesson: null,
-              session: session,
-              createdBy: course.createdBy,
-            };
           }
-        }
 
-        await manager.getRepository(Session).save(sessions);
+          await manager.getRepository(Session).save(sessions);
+        }
       }
 
       course.status = CourseStatus.APPROVED;
@@ -816,7 +847,7 @@ export class CourseService extends BaseTypeOrmService<Course> {
         userId: request.createdBy.id,
         title: 'Yêu cầu tạo khóa học được duyệt',
         body: `Yêu cầu tạo khóa học của bạn đã được duyệt.`,
-        navigateTo: `/coach/courses/${course.id}`,
+        navigateTo: `/(coach)/course`,
         type: NotificationType.SUCCESS,
       });
 
@@ -867,13 +898,13 @@ export class CourseService extends BaseTypeOrmService<Course> {
         userId: request.createdBy.id,
         title: 'Yêu cầu tạo khóa học bị từ chối',
         body: `Yêu cầu tạo khóa học của bạn đã bị từ chối.`,
-        navigateTo: `/coach/courses/${course.id}`,
+        navigateTo: `/(coach)/course`,
         type: NotificationType.ERROR,
       });
 
       return new CustomApiResponse<void>(
         HttpStatus.OK,
-        'COURSE.REJECT_SUCCESS',
+        'Từ chối yêu cầu tạo khóa học thành công',
       );
     });
   }
@@ -1020,7 +1051,7 @@ export class CourseService extends BaseTypeOrmService<Course> {
         userId: course.createdBy.id,
         title: 'Học viên hủy đăng ký khóa học',
         body: `Một học viên đã hủy đăng ký khóa học của bạn.`,
-        navigateTo: `/coach/courses/${course.id}`,
+        navigateTo: `/(coach)/course`,
         type: NotificationType.INFO,
       });
 

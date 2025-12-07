@@ -1,0 +1,87 @@
+@startuml RejectCourseDiagram
+
+actor "Admin" as admin
+participant "Client" as client
+participant "Controller" as controller
+participant "Service" as service
+database "Database" as db
+
+admin -> client: 1. View pending course requests
+client -> controller: 2. GET /courses/requests?filter=PENDING
+activate controller
+
+controller -> service: 3. findCourseRequests(filter)
+activate service
+
+service -> db: 4. Query pending requests
+activate db
+db --> service: Pending courses list
+deactivate db
+
+service --> controller: Response
+deactivate service
+
+controller --> client: 5. HTTP 200
+deactivate controller
+
+client --> admin: 6. Display pending courses
+
+admin -> client: 7. Click course to view details
+client -> controller: 8. GET /courses/requests/:id
+activate controller
+
+controller -> service: 9. getCourseRequestDetails(id)
+activate service
+
+service -> db: 10. Get course + lessons + sessions
+activate db
+db --> service: Course data
+deactivate db
+
+service --> controller: Response
+deactivate service
+
+controller --> client: 11. HTTP 200
+deactivate controller
+
+client --> admin: 12. Show course details
+
+admin -> client: 13. Reject with reason
+client -> controller: 14. PATCH /courses/requests/:id/reject
+activate controller
+
+controller -> service: 15. rejectCourseCreationRequest(id, reason)
+activate service
+
+service -> db: 16. Find request + validate
+activate db
+db --> service: Request data
+deactivate db
+
+service -> db: 17. Update course status = REJECTED
+activate db
+db --> service: Updated
+deactivate db
+
+service -> db: 18. Update request status = REJECTED
+activate db
+db --> service: Updated
+deactivate db
+
+service -> db: 19. Record rejection action
+activate db
+db --> service: Action saved
+deactivate db
+
+service -> db: 20. Send notification to coach
+deactivate db
+
+service --> controller: Success
+deactivate service
+
+controller --> client: 21. HTTP 200
+deactivate controller
+
+client --> admin: 22. Course rejected
+
+@enduml

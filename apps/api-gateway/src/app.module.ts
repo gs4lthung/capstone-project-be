@@ -114,7 +114,6 @@ import { LearnerVideoController } from './controllers/learner-video.controller';
 import { LearnerVideoService } from './services/learner-video.service';
 import { LearnerVideo } from '@app/database/entities/learner-video.entity';
 import { CourtService } from './services/court.service';
-import { AiVideoCompareResultModule } from '@app/ai-video-compare-result';
 import { CourtController } from './controllers/court.controller';
 import { Court } from '@app/database/entities/court.entity';
 import { BunnyModule } from '@app/bunny';
@@ -122,6 +121,13 @@ import { NotificationController } from './controllers/notification.controller';
 import { AiVideoCompareResultController } from './controllers/ai-video-compare-result.controller';
 import { LearnerController } from './controllers/learner.controller';
 import { LearnerService } from './services/learner.service';
+import { BaseCredential } from '@app/database/entities/base-credential.entity';
+import { BaseCredentialController } from './controllers/base-credential.controller';
+import { BaseCredentialService } from './services/base-credential.service';
+import { AiGeminiService } from './services/ai-gemini.service';
+import { AiPoseService } from './services/ai-pose.service';
+import { AiVideoCompareResultService } from './services/ai-video-compare-result.service';
+import { AiVideoComparisonResult } from '@app/database/entities/ai-video-comparison-result.entity';
 @Module({
   imports: [
     ConfigModule,
@@ -143,7 +149,6 @@ import { LearnerService } from './services/learner.service';
     FfmpegModule,
     PayosModule,
     TwilioModule,
-    AiVideoCompareResultModule,
     MailerModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -212,6 +217,8 @@ import { LearnerService } from './services/learner.service';
       Province,
       District,
       LearnerVideo,
+      BaseCredential,
+      AiVideoComparisonResult,
     ]),
     ErrorModule,
     ThrottlerModule.forRootAsync({
@@ -236,6 +243,7 @@ import { LearnerService } from './services/learner.service';
     LessonController,
     SubjectController,
     PaymentController,
+    BaseCredentialController,
     QuizController,
     CoachController,
     WalletController,
@@ -258,6 +266,9 @@ import { LearnerService } from './services/learner.service';
     LearnerController,
   ],
   providers: [
+    AiGeminiService,
+    AiPoseService,
+    AiVideoCompareResultService,
     AppService,
     UserService,
     CourseService,
@@ -276,6 +287,7 @@ import { LearnerService } from './services/learner.service';
     WalletService,
     PaymentService,
     AchievementService,
+    BaseCredentialService,
     AchievementTrackingService,
     EnrollmentService,
     ConfigurationService,

@@ -11,11 +11,6 @@ import {
   Post,
   Body,
 } from '@nestjs/common';
-import {
-  AiVideoCompareResultService,
-  AiPoseService,
-  AiGeminiService,
-} from '@app/ai-video-compare-result';
 import { AuthGuard } from '../guards/auth.guard';
 import { RoleGuard } from '../guards/role.guard';
 import { CheckRoles } from '@app/shared/decorators/check-roles.decorator';
@@ -25,6 +20,9 @@ import { CustomApiRequest } from '@app/shared/customs/custom-api-request';
 import * as https from 'https';
 import * as http from 'http';
 import { SaveAiFeedbackDto } from '@app/shared/dtos/ai-feedback/ai-feedback.dto';
+import { AiVideoCompareResultService } from '../services/ai-video-compare-result.service';
+import { AiPoseService } from '../services/ai-pose.service';
+import { AiGeminiService } from '../services/ai-gemini.service';
 
 @Controller('ai-video-compare-results')
 export class AiVideoCompareResultController {
@@ -82,7 +80,8 @@ export class AiVideoCompareResultController {
     @Body('videoId') videoId: number | undefined,
     @Body() aiFeedback: SaveAiFeedbackDto,
   ) {
-    return await this.aiService.save(learnerVideoId, videoId, aiFeedback);
+    const res = await this.aiService.save(learnerVideoId, videoId, aiFeedback);
+    return res;
   }
 
   @Post('compare-videos')

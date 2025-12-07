@@ -12,10 +12,8 @@ import { User } from '@app/database/entities/user.entity';
 import { Credential } from '@app/database/entities/credential.entity';
 import { CoachVerificationStatus } from '@app/shared/enums/coach.enum';
 import {
-  RegisterCoachCredentialDto,
   RegisterCoachDto,
   UpdateCoachProfileDto,
-  UpdateCredentialDto,
 } from '@app/shared/dtos/coaches/register-coach.dto';
 import { Role } from '@app/database/entities/role.entity';
 import { UserRole } from '@app/shared/enums/user.enum';
@@ -34,7 +32,8 @@ import { JwtPayloadDto } from '@app/shared/dtos/auth/jwt.payload.dto';
 import { MailSendDto } from '@app/shared/dtos/mails/mail-send.dto';
 import { MailService } from './mail.service';
 import { TwilioService } from '@app/twilio';
-import { BunnyService } from '@app/bunny';
+import { NotificationService } from './notification.service';
+import { NotificationType } from '@app/shared/enums/notification.enum';
 @Injectable({ scope: Scope.REQUEST })
 export class CoachService extends BaseTypeOrmService<Coach> {
   constructor(
@@ -46,7 +45,7 @@ export class CoachService extends BaseTypeOrmService<Coach> {
     private readonly datasource: DataSource,
     private readonly mailService: MailService,
     private readonly twilioService: TwilioService,
-    private readonly bunnyService: BunnyService,
+    private readonly notificationService: NotificationService,
   ) {
     super(coachRepository);
   }
@@ -55,13 +54,21 @@ export class CoachService extends BaseTypeOrmService<Coach> {
     return super.find(findOptions, 'coach', PaginateObject<Coach>);
   }
 
-  async findOne(id: number): Promise<Coach> {
+  async findOne(id: number, isUser: boolean): Promise<Coach> {
     const coach = await this.coachRepository.findOne({
-      where: {
-        id,
-      },
+      where: isUser
+        ? { user: { id: id } }
+        : {
+            id: id,
+          },
       withDeleted: false,
-      relations: ['user', 'credentials'],
+      relations: [
+        'user',
+        'user.province',
+        'user.district',
+        'credentials',
+        'credentials.baseCredential',
+      ],
     });
 
     if (!coach) {
@@ -83,7 +90,7 @@ export class CoachService extends BaseTypeOrmService<Coach> {
       if (feedbacks.length === 0)
         return new CustomApiResponse<{ overall: number; total: number }>(
           HttpStatus.OK,
-          'No feedbacks found',
+          'Không có đánh giá',
           {
             overall: 0,
             total: 0,
@@ -150,7 +157,18 @@ export class CoachService extends BaseTypeOrmService<Coach> {
         role: coachRole,
         coach: [
           {
-            ...(data.coach as Coach),
+            bio: data.coach.bio,
+            specialties: data.coach.specialties,
+            teachingMethods: data.coach.teachingMethods,
+            yearOfExperience: data.coach.yearOfExperience,
+            verificationStatus: CoachVerificationStatus.UNVERIFIED,
+            credentials: data.coach.credentials
+              ? data.coach.credentials.map((credential) => ({
+                  baseCredential: { id: credential.baseCredential },
+                  issuedAt: credential.issuedAt,
+                  expiresAt: credential.expiresAt,
+                }))
+              : [],
           },
         ],
         wallet: {
@@ -182,6 +200,13 @@ export class CoachService extends BaseTypeOrmService<Coach> {
 
       await manager.getRepository(User).save(newUser);
 
+      await this.notificationService.sendNotificationToAdmins({
+        title: 'Huấn luyện viên mới đăng ký',
+        body: `Huấn luyện viên ${newUser.fullName} đã đăng ký và đang chờ xác minh.`,
+        navigateTo: `/coaches?coachId=${newUser.coach[0].id}`,
+        type: NotificationType.INFO,
+      });
+
       return new CustomApiResponse<void>(
         HttpStatus.CREATED,
         'Đăng ký thành công',
@@ -195,10 +220,39 @@ export class CoachService extends BaseTypeOrmService<Coach> {
         where: {
           user: { id: this.request.user.id as User['id'] },
         },
-        relations: ['user'],
+        relations: ['user', 'credentials', 'credentials.baseCredential'],
       });
-      if (!coach) throw new NotFoundException('Coach not found');
-      await manager.getRepository(Coach).update(coach.id, data);
+      if (!coach)
+        throw new NotFoundException('Không tìm thấy hồ sơ huấn luyện viên');
+      if (coach.verificationStatus === CoachVerificationStatus.VERIFIED) {
+        throw new BadRequestException(
+          'Không thể cập nhật hồ sơ huấn luyện viên đã được xác minh',
+        );
+      }
+
+      const updateData = data as any;
+
+      const credentialsToUpdate = data.credentials;
+      if (credentialsToUpdate && credentialsToUpdate.length > 0) {
+        for (const credentialData of credentialsToUpdate) {
+          updateData.credentials = coach.credentials.map((credential) => {
+            if (credential.id === credentialData.id) {
+              return {
+                ...credential,
+                issuedAt: credentialData.issuedAt ?? credential.issuedAt,
+                expiresAt: credentialData.expiresAt ?? credential.expiresAt,
+                baseCredential: credentialData.baseCredential
+                  ? { id: credentialData.baseCredential }
+                  : credential.baseCredential,
+              };
+            }
+            return credential;
+          });
+        }
+      }
+
+      await manager.getRepository(Coach).update(coach.id, updateData);
+
       return new CustomApiResponse<void>(
         HttpStatus.OK,
         'Cập nhật hồ sơ huấn luyện viên thành công',
@@ -212,121 +266,22 @@ export class CoachService extends BaseTypeOrmService<Coach> {
         where: {
           user: { id: this.request.user.id as User['id'] },
         },
-        relations: ['credentials'],
+        relations: ['credentials', 'credentials.baseCredential'],
       });
       if (!coach) throw new NotFoundException('Coach not found');
       return coach.credentials;
     });
   }
 
-  async uploadCredential(
-    data: RegisterCoachCredentialDto,
-    file: Express.Multer.File,
-  ): Promise<CustomApiResponse<void>> {
-    return await this.datasource.transaction(async (manager) => {
-      const coach = await this.coachRepository.findOne({
-        where: {
-          user: { id: this.request.user.id as User['id'] },
-        },
-        relations: ['user', 'credentials'],
-      });
-      if (!coach) throw new NotFoundException('Coach not found');
-      if (file) {
-        const credentialFilePath = await this.bunnyService.uploadToStorage({
-          id: Date.now(),
-          type: 'credential_image',
-          filePath: file.path,
-        });
-        data.publicUrl = credentialFilePath;
-      }
-      const newCredential = manager.getRepository(Credential).create({
-        ...data,
-        coach: coach,
-      });
-      await manager.getRepository(Credential).save(newCredential);
-      return new CustomApiResponse<void>(
-        HttpStatus.OK,
-        'Cập nhật giấy tờ thành công',
-      );
-    });
-  }
-
-  async updateCredential(
-    id: number,
-    data: UpdateCredentialDto,
-    file?: Express.Multer.File,
-  ): Promise<CustomApiResponse<void>> {
-    return await this.datasource.transaction(async (manager) => {
-      const credential = await manager.getRepository(Credential).findOne({
-        where: { id: id },
-        relations: ['coach', 'coach.user'],
-      });
-      if (!credential) throw new NotFoundException('Credential not found');
-      if (credential.coach.user.id !== this.request.user.id) {
-        throw new BadRequestException('You are not authorized to update this');
-      }
-      if (file) {
-        const credentialFilePath = await this.bunnyService.uploadToStorage({
-          id: Date.now(),
-          type: 'credential_image',
-          filePath: file.path,
-        });
-        data.publicUrl = credentialFilePath;
-      }
-      await manager.getRepository(Credential).update(credential.id, data);
-      return new CustomApiResponse<void>(
-        HttpStatus.OK,
-        'Cập nhật giấy tờ thành công',
-      );
-    });
-  }
-
-  async deleteCredential(id: number): Promise<CustomApiResponse<void>> {
-    return await this.datasource.transaction(async (manager) => {
-      const credential = await manager.getRepository(Credential).findOne({
-        where: { id: id },
-        relations: ['coach', 'coach.user'],
-      });
-      if (!credential) throw new NotFoundException('Credential not found');
-      if (credential.coach.user.id !== this.request.user.id) {
-        throw new BadRequestException('You are not authorized to delete this');
-      }
-      await manager.getRepository(Credential).softDelete(credential.id);
-      return new CustomApiResponse<void>(
-        HttpStatus.OK,
-        'Xóa giấy tờ thành công',
-      );
-    });
-  }
-
-  async restoreCredential(id: number): Promise<CustomApiResponse<void>> {
-    return await this.datasource.transaction(async (manager) => {
-      const credential = await manager.getRepository(Credential).findOne({
-        where: { id: id },
-        withDeleted: true,
-        relations: ['coach', 'coach.user'],
-      });
-      if (!credential) throw new NotFoundException('Credential not found');
-      if (credential.coach.user.id !== this.request.user.id) {
-        throw new BadRequestException('You are not authorized to restore this');
-      }
-      await manager.getRepository(Credential).restore(credential.id);
-      return new CustomApiResponse<void>(
-        HttpStatus.OK,
-        'Khôi phục giấy tờ thành công',
-      );
-    });
-  }
-
-  async verifyCoach(coachId: number): Promise<void> {
+  async verifyCoach(coachId: number): Promise<CustomApiResponse<void>> {
     return await this.datasource.transaction(async (manager) => {
       const coach = await this.coachRepository.findOne({
         where: { id: coachId },
-        relations: ['user'],
+        relations: ['user', 'credentials', 'credentials.baseCredential'],
       });
       if (!coach) throw new NotFoundException('Coach not found');
 
-      await this.coachRepository.update(coachId, {
+      await this.coachRepository.update(coach.id, {
         verificationStatus: CoachVerificationStatus.VERIFIED,
       });
 
@@ -335,22 +290,43 @@ export class CoachService extends BaseTypeOrmService<Coach> {
           .getRepository(User)
           .update(coach.user.id, { isActive: true });
       }
+
+      await this.notificationService.sendNotification({
+        userId: coach.user.id,
+        title: 'Xác minh huấn luyện viên thành công',
+        body: 'Hồ sơ huấn luyện viên của bạn đã được xác minh thành công.',
+        navigateTo: `/(coach)/menu/profile`,
+        type: NotificationType.SUCCESS,
+      });
+
+      return new CustomApiResponse<void>(
+        HttpStatus.OK,
+        'Xác minh huấn luyện viên thành công',
+      );
     });
   }
 
-  async rejectCoach(coachId: number, reason?: string): Promise<void> {
+  async rejectCoach(
+    coachId: number,
+    reason?: string,
+  ): Promise<CustomApiResponse<void>> {
     return await this.datasource.transaction(async (manager) => {
-      const coach = await manager.getRepository(Coach).findOne({
-        where: { id: coachId },
-      });
-      if (!coach) throw new NotFoundException('Coach not found');
-
-      await manager.getRepository(Coach).update(coachId, {
+      await manager.getTreeRepository(Coach).update(coachId, {
         verificationStatus: CoachVerificationStatus.REJECTED,
-        verificationReason: reason,
       });
 
-      return;
+      await this.notificationService.sendNotification({
+        userId: coachId,
+        title: 'Yêu cầu xác minh huấn luyện viên bị từ chối',
+        body: reason ? reason : 'Từ chối xác minh huấn luyện viên',
+        navigateTo: `/(coach)/menu/profile`,
+        type: NotificationType.INFO,
+      });
+
+      return new CustomApiResponse<void>(
+        HttpStatus.OK,
+        'Từ chối xác minh huấn luyện viên thành công',
+      );
     });
   }
 

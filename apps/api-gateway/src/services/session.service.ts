@@ -415,7 +415,7 @@ export class SessionService extends BaseTypeOrmService<Session> {
           userId: enrollment.user.id,
           title: 'Buổi học đã hoàn thành',
           body: `Buổi học ${session.name} của khóa học ${course.name} đã được hoàn thành. Bạn có thể bắt đầu làm các bài tập liên quan.`,
-          navigateTo: `/learner/courses/${course.id}/sessions/${session.id}`,
+          navigateTo: `/(learner)/my-courses`,
           type: NotificationType.SUCCESS,
         });
       }

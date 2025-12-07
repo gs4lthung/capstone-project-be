@@ -555,7 +555,7 @@ export class QuizService extends BaseTypeOrmService<Quiz> {
         userId: session.course.createdBy.id,
         title: 'Học viên hoàn thành bài quiz',
         body: `Một học viên đã hoàn thành bài quiz`,
-        navigateTo: `/coach/courses/${session.course.id}/quizzes/${quiz.id}/results`,
+        navigateTo: `/(coach)/course`,
         type: NotificationType.INFO,
       });
 

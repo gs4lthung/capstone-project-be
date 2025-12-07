@@ -1,0 +1,151 @@
+@startuml ManageCourseCRUDDiagram
+
+actor "Coach" as coach
+participant "Client" as client
+participant "Controller" as controller
+participant "Service" as service
+participant "Bunny CDN" as bunny
+database "Database" as db
+
+== Create Course (Request) ==
+
+coach -> client: 1. Navigate to create course
+client --> coach: 2. Show course creation form
+
+coach -> client: 3. Select subject (must be PUBLISHED)
+note right of client
+  Subject must be PUBLISHED and have lessons
+end note
+
+coach -> client: 4. Fill in course details
+note right of client
+  - Name (required)
+  - Description (optional)
+  - Level (BEGINNER, INTERMEDIATE, ADVANCED)
+  - Learning format (GROUP, INDIVIDUAL)
+  - Min/Max participants
+  - Price per participant
+  - Start date (must be >= config days from now)
+  - Court selection
+  - Schedule(s) - day, start time, end time
+  - Course image (optional)
+  - Google Meet link (optional)
+end note
+
+coach -> client: 5. Submit form
+client -> controller: 6. POST /courses/subjects/:id
+activate controller
+
+controller -> service: 7. createCourseCreationRequest(subjectId, data, file)
+activate service
+
+service -> db: 8. Find court
+activate db
+db --> service: Court found
+deactivate db
+
+service -> service: 9. Validate schedule times (no overlaps on same day)
+note right of service
+  Check all schedule combinations for conflicts
+end note
+
+service -> service: 10. Validate start date >= config minimum days
+note right of service
+  Get config value from ConfigurationService
+end note
+
+service -> db: 11. Find subject (must be PUBLISHED)
+activate db
+db --> service: Subject found with lessons
+deactivate db
+
+service -> service: 12. Validate subject has all lessons with video & quiz
+note right of service
+  Each lesson must have video and quiz before course can be created
+end note
+
+service -> service: 13. Validate schedule count <= lesson count
+note right of service
+  Number of schedules must not exceed lesson count
+end note
+
+service -> service: 14. Validate lesson count divisible by schedule count
+note right of service
+  Example: 10 lessons can have 2, 5, or 10 schedules
+end note
+
+service -> service: 15. Calculate course end date from schedules
+note right of service
+  Based on start date, schedule frequency, and lesson count
+end note
+
+service -> service: 16. Validate schedule doesn't conflict with coach's existing schedules
+note right of service
+  Check ScheduleService for conflicts with existing bookings
+end note
+
+alt File provided
+  service -> bunny: 17. uploadToStorage(file)
+  activate bunny
+  bunny --> service: 18. publicUrl
+  deactivate bunny
+end
+
+service -> db: 19. Create Request with course metadata
+activate db
+db --> service: Created
+deactivate db
+
+service --> controller: Success response
+deactivate service
+
+controller --> client: 20. HTTP 201
+deactivate controller
+
+client --> coach: 21. Course creation request submitted (PENDING_APPROVAL)
+
+== View All Courses ==
+
+coach -> client: 22. View courses
+client -> controller: 23. GET /courses or GET /courses/coach
+activate controller
+
+controller -> service: 24. findAll(options) or findCoachCourses()
+activate service
+
+service -> db: 25. Query courses with relations
+activate db
+db --> service: Courses list with sessions, enrollments
+deactivate db
+
+service --> controller: Response
+deactivate service
+
+controller --> client: 26. HTTP 200
+deactivate controller
+
+client --> coach: 27. Display courses list
+
+== View Course Details ==
+
+coach -> client: 28. Click on course to view
+client -> controller: 29. GET /courses/:id
+activate controller
+
+controller -> service: 30. findOne(id)
+activate service
+
+service -> db: 31. Query course with full relations
+activate db
+db --> service: Course with sessions, enrollments, schedules, court
+deactivate db
+
+service --> controller: Response
+deactivate service
+
+controller --> client: 32. HTTP 200
+deactivate controller
+
+client --> coach: 33. Display course details with sessions and enrollments
+
+@enduml

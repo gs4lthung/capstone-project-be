@@ -23,6 +23,7 @@ export class BunnyService {
     id: number;
     filePath: string;
     type:
+      | 'base_credential_image'
       | 'credential_image'
       | 'avatar'
       | 'video'

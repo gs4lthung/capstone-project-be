@@ -52,4 +52,22 @@ This repository is a NestJS monorepo (apps + libs). The goal of these notes is t
 - When adding new Nest modules, register them in `AppModule` inside `apps/api-gateway/src/app.module.ts` and ensure any provider tokens follow the shared pattern.
 - For changes touching runtime config, read/modify `libs/config` and adjust `nest-cli.json` if adding new projects.
 
+8) CRITICAL: Always verify against actual codebase before creating diagrams, documentation, or code
+- **NEVER** add properties, methods, or enums that don't exist in the actual codebase.
+- **BEFORE creating any diagram or documentation**, read the actual source files:
+  - For entities: check `libs/database/src/entities/` for actual properties and relationships
+  - For enums: check `libs/shared/src/enums/` for exact enum values
+  - For services: check `apps/api-gateway/src/services/` for actual methods
+  - For DTOs: check `libs/shared/src/dtos/` for actual fields
+- **Example of mistakes to avoid**:
+  - ❌ Adding `CourseLearningFormat.HYBRID` when only INDIVIDUAL and GROUP exist
+  - ❌ Adding fields like `maxCapacity` or `availableSpots` to Session when they don't exist
+  - ❌ Using `EnrollmentStatus.ACTIVE` when actual values are PENDING_GROUP, CONFIRMED, LEARNING, UNPAID, CANCELLED, DONE
+  - ❌ Creating methods that don't exist in the actual service implementation
+- **Always follow these steps**:
+  1. Read the actual entity/enum/service files from the codebase
+  2. Use ONLY properties/methods/values that actually exist
+  3. If a feature requires new fields, propose them but clearly mark as "NEW - not yet in codebase"
+  4. Cross-reference with actual usage in services and controllers
+
 If anything in these notes is unclear or you'd like more detail (for example — wiring a new RabbitMQ consumer, or how database seeds are organized), tell me which area to expand and I'll iterate.

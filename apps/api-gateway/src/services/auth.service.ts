@@ -34,7 +34,6 @@ import { UserRole } from '@app/shared/enums/user.enum';
 import { MailService } from './mail.service';
 import { Learner } from '@app/database/entities/learner.entity';
 import { TwilioService } from '@app/twilio/twilio.service';
-import { Wallet } from '@app/database/entities/wallet.entity';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { REQUEST } from '@nestjs/core';
 import { CustomApiRequest } from '@app/shared/customs/custom-api-request';
@@ -51,8 +50,6 @@ export class AuthService {
     private readonly configService: ConfigService,
     private readonly twilioService: TwilioService,
     private readonly jwtService: JwtService,
-    @InjectRepository(Wallet)
-    private readonly walletRepository: Repository<Wallet>,
     private readonly dataSource: DataSource,
     private readonly eventEmitter: EventEmitter2,
   ) {}
@@ -63,24 +60,126 @@ export class AuthService {
   ): Promise<CustomApiResponse<LoginResponseDto>> {
     let user: User;
     if (data.email) {
-      user = await this.userRepository.findOne({
-        where: { email: data.email, isActive: true, isEmailVerified: true },
-        withDeleted: false,
-        select: ['id', 'fullName', 'email', 'phoneNumber', 'password'],
-        relations: ['role', 'learner', 'coach', 'province', 'district'],
-      });
+      user = await this.userRepository
+        .createQueryBuilder('user')
+        .where('user.email = :email', { email: data.email })
+        .andWhere('user.isActive = :isActive', { isActive: true })
+        .andWhere('user.isEmailVerified = :isEmailVerified', {
+          isEmailVerified: true,
+        })
+        .andWhere('user.deletedAt IS NULL')
+        .leftJoinAndSelect('user.role', 'role')
+        .leftJoinAndSelect('user.wallet', 'wallet')
+        .leftJoinAndSelect('wallet.bank', 'bank')
+        .leftJoinAndSelect('user.learner', 'learner')
+        .leftJoinAndSelect('user.coach', 'coach')
+        .leftJoinAndSelect('coach.credentials', 'credentials')
+        .leftJoinAndSelect('credentials.baseCredential', 'baseCredential')
+        .leftJoinAndSelect('user.province', 'province')
+        .leftJoinAndSelect('user.district', 'district')
+        .select([
+          'user.id',
+          'user.fullName',
+          'user.email',
+          'user.phoneNumber',
+          'user.password',
+          'user.profilePicture',
+          'role.id',
+          'role.name',
+          'learner.id',
+          'learner.skillLevel',
+          'learner.learningGoal',
+          'coach.id',
+          'coach.bio',
+          'coach.yearOfExperience',
+          'coach.specialties',
+          'coach.teachingMethods',
+          'coach.verificationStatus',
+          'credentials.id',
+          'credentials.issuedAt',
+          'credentials.expiresAt',
+          'credentials.createdAt',
+          'credentials.updatedAt',
+          'baseCredential.id',
+          'baseCredential.name',
+          'baseCredential.description',
+          'baseCredential.type',
+          'baseCredential.publicUrl',
+          'province.id',
+          'province.name',
+          'district.id',
+          'district.name',
+          'wallet.id',
+          'wallet.currentBalance',
+          'wallet.totalIncome',
+          'wallet.bankAccountNumber',
+          'bank.id',
+          'bank.name',
+          'bank.bin',
+        ])
+        .getOne();
     }
     if (data.phoneNumber) {
-      user = await this.userRepository.findOne({
-        where: {
+      user = await this.userRepository
+        .createQueryBuilder('user')
+        .where('user.phoneNumber = :phoneNumber', {
           phoneNumber: data.phoneNumber,
-          isActive: true,
+        })
+        .andWhere('user.isActive = :isActive', { isActive: true })
+        .andWhere('user.isPhoneVerified = :isPhoneVerified', {
           isPhoneVerified: true,
-        },
-        withDeleted: false,
-        select: ['id', 'fullName', 'email', 'phoneNumber', 'password'],
-        relations: ['role', 'learner', 'coach', 'province', 'district'],
-      });
+        })
+        .andWhere('user.deletedAt IS NULL')
+        .leftJoinAndSelect('user.role', 'role')
+        .leftJoinAndSelect('user.wallet', 'wallet')
+        .leftJoinAndSelect('wallet.bank', 'bank')
+        .leftJoinAndSelect('user.learner', 'learner')
+        .leftJoinAndSelect('user.coach', 'coach')
+        .leftJoinAndSelect('coach.credentials', 'credentials')
+        .leftJoinAndSelect('credentials.baseCredential', 'baseCredential')
+        .leftJoinAndSelect('user.province', 'province')
+        .leftJoinAndSelect('user.district', 'district')
+        .select([
+          'user.id',
+          'user.fullName',
+          'user.email',
+          'user.phoneNumber',
+          'user.password',
+          'user.profilePicture',
+          'role.id',
+          'role.name',
+          'learner.id',
+          'learner.skillLevel',
+          'learner.learningGoal',
+          'coach.id',
+          'coach.bio',
+          'coach.yearOfExperience',
+          'coach.specialties',
+          'coach.teachingMethods',
+          'coach.verificationStatus',
+          'credentials.id',
+          'credentials.issuedAt',
+          'credentials.expiresAt',
+          'credentials.createdAt',
+          'credentials.updatedAt',
+          'baseCredential.id',
+          'baseCredential.name',
+          'baseCredential.description',
+          'baseCredential.type',
+          'baseCredential.publicUrl',
+          'province.id',
+          'province.name',
+          'district.id',
+          'district.name',
+          'wallet.id',
+          'wallet.currentBalance',
+          'wallet.totalIncome',
+          'wallet.bankAccountNumber',
+          'bank.id',
+          'bank.name',
+          'bank.bin',
+        ])
+        .getOne();
     }
     if (!user) throw new UnauthorizedException('Không tìm thấy tài khoản');
 
@@ -344,7 +443,7 @@ export class AuthService {
 
       return new CustomApiResponse<void>(
         HttpStatus.CREATED,
-        'AUTH.REGISTER_SUCCESS',
+        'Đăng ký thành công',
       );
     });
   }
