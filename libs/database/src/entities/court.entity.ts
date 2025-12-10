@@ -1,6 +1,7 @@
 import {
   IsInt,
   IsNotEmpty,
+  IsNumber,
   IsOptional,
   IsPhoneNumber,
   IsString,
@@ -62,6 +63,28 @@ export class Court {
   @IsNotEmpty()
   @IsString()
   address: string;
+
+  @Column({
+    name: 'latitude',
+    type: 'numeric',
+    precision: 10,
+    scale: 6,
+    nullable: true,
+  })
+  @IsOptional()
+  @IsNumber({}, { message: 'Latitude must be a number' })
+  latitude?: number;
+
+  @Column({
+    name: 'longitude',
+    type: 'numeric',
+    precision: 10,
+    scale: 6,
+    nullable: true,
+  })
+  @IsOptional()
+  @IsNumber({}, { message: 'Longitude must be a number' })
+  longitude?: number;
 
   @Index()
   @ManyToOne(() => Province, (province) => province.courts, {

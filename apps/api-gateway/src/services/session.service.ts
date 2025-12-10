@@ -199,6 +199,8 @@ export class SessionService extends BaseTypeOrmService<Session> {
               'court.name',
               'court.phoneNumber',
               'court.address',
+              'court.latitude',
+              'court.longitude',
               'province.id',
               'province.name',
               'district.id',

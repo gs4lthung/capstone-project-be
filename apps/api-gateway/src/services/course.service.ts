@@ -147,6 +147,8 @@ export class CourseService extends BaseTypeOrmService<Course> {
           'court.pricePerHour',
           'court.publicUrl',
           'court.address',
+          'court.latitude',
+          'court.longitude',
           'province.id',
           'province.name',
           'district.id',
