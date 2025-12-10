@@ -1,4 +1,3 @@
-import { BunnyService } from '@app/bunny';
 import { Subject } from '@app/database/entities/subject.entity';
 import { User } from '@app/database/entities/user.entity';
 import { CustomApiRequest } from '@app/shared/customs/custom-api-request';
@@ -29,7 +28,6 @@ export class SubjectService extends BaseTypeOrmService<Subject> {
     @Inject(REQUEST) private readonly request: CustomApiRequest,
     @InjectRepository(Subject)
     private readonly subjectRepository: Repository<Subject>,
-    private readonly bunnyService: BunnyService,
     private readonly datasource: DataSource,
   ) {
     super(subjectRepository);
@@ -51,25 +49,12 @@ export class SubjectService extends BaseTypeOrmService<Subject> {
     return subject;
   }
 
-  async create(
-    data: CreateSubjectDto,
-    file: Express.Multer.File,
-  ): Promise<CustomApiResponse<void>> {
+  async create(data: CreateSubjectDto): Promise<CustomApiResponse<void>> {
     return await this.datasource.transaction(async (manager) => {
-      let publicUrl: string | undefined = undefined;
-      if (file) {
-        publicUrl = await this.bunnyService.uploadToStorage({
-          filePath: file.path,
-          type: 'icon',
-          id: Date.now(),
-        });
-      }
-
       const newSubject = manager.getRepository(Subject).create({
         ...data,
         createdBy: this.request.user as User,
         status: SubjectStatus.DRAFT,
-        publicUrl: publicUrl,
       } as Subject);
 
       await manager.getRepository(Subject).save(newSubject);
@@ -103,7 +88,7 @@ export class SubjectService extends BaseTypeOrmService<Subject> {
 
       if (data.status === SubjectStatus.PUBLISHED) {
         for (const lesson of subject.lessons) {
-          if (!lesson.video || !lesson.quiz) {
+          if (!lesson.video || !lesson.video.publicUrl || !lesson.quiz) {
             throw new BadRequestException(
               'Không thể xuất bản chủ đề khi còn bài học chưa có video hoặc quiz',
             );

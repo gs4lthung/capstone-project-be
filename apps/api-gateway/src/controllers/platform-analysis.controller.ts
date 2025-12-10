@@ -1,7 +1,17 @@
-import { Controller, Get, HttpCode, HttpStatus, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Query,
+} from '@nestjs/common';
 import { PlatformAnalysisService } from '../services/platform-analysis.service';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { MonthlyResponseDto } from '@app/shared/dtos/coaches/coach.dto';
+import {
+  AnalysisResponseDto,
+  AnalysisType,
+} from '@app/shared/dtos/coaches/coach.dto';
 import { DashboardOverviewDto } from '@app/shared/dtos/platform-analysis/dashboard-overview.dto';
 import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
 
@@ -11,7 +21,7 @@ export class PlatformAnalysisController {
     private readonly platformAnalysisService: PlatformAnalysisService,
   ) {}
 
-  @Get('new-users/monthly')
+  @Get('new-users/:type')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     tags: ['Platform Analysis'],
@@ -23,16 +33,17 @@ export class PlatformAnalysisController {
     description: 'Monthly new user registrations',
   })
   async getMonthlyNewUsers(
+    @Param('type') type: AnalysisType,
     @Query('month') month: number,
     @Query('year') year: number,
-  ): Promise<CustomApiResponse<MonthlyResponseDto>> {
-    return this.platformAnalysisService.getMonthlyNewUsers({
+  ): Promise<CustomApiResponse<AnalysisResponseDto>> {
+    return this.platformAnalysisService.getNewUsers(type, {
       month,
       year,
     });
   }
 
-  @Get('learner-payments/monthly')
+  @Get('learner-payments/:type')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     tags: ['Platform Analysis'],
@@ -46,14 +57,15 @@ export class PlatformAnalysisController {
   async getMonthlyLearnerPayments(
     @Query('month') month: number,
     @Query('year') year: number,
-  ): Promise<CustomApiResponse<MonthlyResponseDto>> {
-    return this.platformAnalysisService.getMonthlyLearnerPayment({
+    @Param('type') type: AnalysisType,
+  ): Promise<CustomApiResponse<AnalysisResponseDto>> {
+    return this.platformAnalysisService.getLearnerPayment(type, {
       month,
       year,
     });
   }
 
-  @Get('coach-earnings/monthly')
+  @Get('coach-earnings/:type')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     tags: ['Platform Analysis'],
@@ -65,16 +77,17 @@ export class PlatformAnalysisController {
     description: 'Monthly coach earnings',
   })
   async getMonthlyCoachEarnings(
+    @Param('type') type: AnalysisType,
     @Query('month') month: number,
     @Query('year') year: number,
-  ): Promise<CustomApiResponse<MonthlyResponseDto>> {
-    return this.platformAnalysisService.getMonthlyCoachSessionEarning({
+  ): Promise<CustomApiResponse<AnalysisResponseDto>> {
+    return this.platformAnalysisService.getCoachSessionEarning(type, {
       month,
       year,
     });
   }
 
-  @Get('revenue/monthly')
+  @Get('revenue/:type')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     tags: ['Platform Analysis'],
@@ -86,10 +99,11 @@ export class PlatformAnalysisController {
     description: 'Monthly platform revenue',
   })
   async getMonthlyPlatformRevenue(
+    @Param('type') type: AnalysisType,
     @Query('month') month: number,
     @Query('year') year: number,
-  ): Promise<CustomApiResponse<MonthlyResponseDto>> {
-    return this.platformAnalysisService.getMonthlyPlatformRevenue({
+  ): Promise<CustomApiResponse<AnalysisResponseDto>> {
+    return this.platformAnalysisService.getPlatformRevenue(type, {
       month,
       year,
     });

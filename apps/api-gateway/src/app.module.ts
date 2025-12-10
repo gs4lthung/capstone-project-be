@@ -128,6 +128,9 @@ import { AiGeminiService } from './services/ai-gemini.service';
 import { AiPoseService } from './services/ai-pose.service';
 import { AiVideoCompareResultService } from './services/ai-video-compare-result.service';
 import { AiVideoComparisonResult } from '@app/database/entities/ai-video-comparison-result.entity';
+import { AiSubjectGenerationController } from './controllers/ai-subject-generation.controller';
+import { AiSubjectGenerationService } from './services/ai-subject-generation.service';
+import { AiSubjectGeneration } from '@app/database/entities/ai-subject-generation.entity';
 @Module({
   imports: [
     ConfigModule,
@@ -219,6 +222,7 @@ import { AiVideoComparisonResult } from '@app/database/entities/ai-video-compari
       LearnerVideo,
       BaseCredential,
       AiVideoComparisonResult,
+      AiSubjectGeneration,
     ]),
     ErrorModule,
     ThrottlerModule.forRootAsync({
@@ -264,6 +268,7 @@ import { AiVideoComparisonResult } from '@app/database/entities/ai-video-compari
     AiVideoCompareResultController,
     NotificationController,
     LearnerController,
+    AiSubjectGenerationController,
   ],
   providers: [
     AiGeminiService,
@@ -303,6 +308,7 @@ import { AiVideoComparisonResult } from '@app/database/entities/ai-video-compari
     AttendanceService,
     PlatformAnalysisService,
     LearnerVideoService,
+    AiSubjectGenerationService,
     LearnerService,
   ],
 })

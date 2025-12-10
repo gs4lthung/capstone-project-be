@@ -34,6 +34,9 @@ import { MailService } from './mail.service';
 import { TwilioService } from '@app/twilio';
 import { NotificationService } from './notification.service';
 import { NotificationType } from '@app/shared/enums/notification.enum';
+import { BunnyService } from '@app/bunny';
+import { BaseCredential } from '@app/database/entities/base-credential.entity';
+import { CryptoUtils } from '@app/shared/utils/crypto.util';
 @Injectable({ scope: Scope.REQUEST })
 export class CoachService extends BaseTypeOrmService<Coach> {
   constructor(
@@ -46,6 +49,7 @@ export class CoachService extends BaseTypeOrmService<Coach> {
     private readonly mailService: MailService,
     private readonly twilioService: TwilioService,
     private readonly notificationService: NotificationService,
+    private readonly bunnyService: BunnyService,
   ) {
     super(coachRepository);
   }
@@ -114,6 +118,7 @@ export class CoachService extends BaseTypeOrmService<Coach> {
 
   async registerCoach(
     data: RegisterCoachDto,
+    files: Express.Multer.File[],
   ): Promise<CustomApiResponse<void>> {
     return await this.datasource.transaction(async (manager) => {
       let existingUser: User;
@@ -147,6 +152,35 @@ export class CoachService extends BaseTypeOrmService<Coach> {
         throw new BadRequestException('Coach role not found');
       }
 
+      const coachCredentials: Credential[] = [];
+      if (data.coach.credentials && data.coach.credentials.length > 0) {
+        for (let i = 0; i < data.coach.credentials.length; i++) {
+          const baseCredential = await manager
+            .getRepository(BaseCredential)
+            .findOne({
+              where: { id: data.coach.credentials[i].baseCredential },
+            });
+          if (!baseCredential) {
+            throw new BadRequestException(
+              `Base credential with id ${data.coach.credentials[i].baseCredential} not found`,
+            );
+          }
+
+          const publicUrl = await this.bunnyService.uploadToStorage({
+            id: CryptoUtils.generateRandomNumber(100_000, 999_999),
+            filePath: files[i].path,
+            type: 'credential_image',
+          });
+          const credential = manager.getRepository(Credential).create({
+            baseCredential: baseCredential,
+            publicUrl: publicUrl,
+            issuedAt: data.coach.credentials[i].issuedAt,
+            expiresAt: data.coach.credentials[i].expiresAt,
+          });
+          coachCredentials.push(credential);
+        }
+      }
+
       const newUser = manager.getRepository(User).create({
         fullName: data.fullName,
         email: data.email ? data.email : null,
@@ -162,13 +196,7 @@ export class CoachService extends BaseTypeOrmService<Coach> {
             teachingMethods: data.coach.teachingMethods,
             yearOfExperience: data.coach.yearOfExperience,
             verificationStatus: CoachVerificationStatus.UNVERIFIED,
-            credentials: data.coach.credentials
-              ? data.coach.credentials.map((credential) => ({
-                  baseCredential: { id: credential.baseCredential },
-                  issuedAt: credential.issuedAt,
-                  expiresAt: credential.expiresAt,
-                }))
-              : [],
+            credentials: coachCredentials,
           },
         ],
         wallet: {

@@ -69,3 +69,71 @@ export const AiVideoComparisonResultSchema = {
     'recommendationDrills',
   ],
 };
+
+// Schema for AI Subject Generation
+export const AiSubjectGenerationSchema = {
+  type: 'object',
+  properties: {
+    name: { type: 'string' },
+    description: { type: 'string' },
+    level: {
+      type: 'string',
+      enum: ['BEGINNER', 'INTERMEDIATE', 'ADVANCED'],
+    },
+    lessons: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          name: { type: 'string' },
+          description: { type: 'string' },
+          lessonNumber: { type: 'number' },
+          video: {
+            type: 'object',
+            properties: {
+              title: { type: 'string' },
+              description: { type: 'string' },
+              tags: { type: 'array', items: { type: 'string' } },
+              drillName: { type: 'string' },
+              drillDescription: { type: 'string' },
+              drillPracticeSets: { type: 'string' },
+            },
+            required: ['title', 'description'],
+          },
+          quiz: {
+            type: 'object',
+            properties: {
+              title: { type: 'string' },
+              description: { type: 'string' },
+              questions: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    title: { type: 'string' },
+                    explanation: { type: 'string' },
+                    options: {
+                      type: 'array',
+                      items: {
+                        type: 'object',
+                        properties: {
+                          content: { type: 'string' },
+                          isCorrect: { type: 'boolean' },
+                        },
+                        required: ['content', 'isCorrect'],
+                      },
+                    },
+                  },
+                  required: ['title', 'explanation', 'options'],
+                },
+              },
+            },
+            required: ['title', 'description', 'questions'],
+          },
+        },
+        required: ['name', 'description', 'lessonNumber', 'video', 'quiz'],
+      },
+    },
+  },
+  required: ['name', 'description', 'level', 'lessons'],
+};

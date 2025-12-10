@@ -1,8 +1,16 @@
 // src/services/ai-gemini.service.ts
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@app/config';
-import { AiVideoComparisonResultSchema } from '@app/shared/dtos/ai-feedback/gemini-call.dto';
+import {
+  AiVideoComparisonResultSchema,
+  AiSubjectGenerationSchema,
+} from '@app/shared/dtos/ai-feedback/gemini-call.dto';
 import { PoseLandmark } from './ai-pose.service';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { AiSubjectGeneration } from '@app/database/entities/ai-subject-generation.entity';
+import { AiSubjectGenerationResponse } from '@app/shared/interfaces/ai-subject-generation.interface';
+import { PickleballLevel } from '@app/shared/enums/pickleball.enum';
 
 // Interface matching the Gemini API response schema
 interface GeminiApiResponse {
@@ -35,7 +43,11 @@ export class AiGeminiService {
   private readonly model = 'gemini-2.5-flash';
   private readonly endpoint: string;
 
-  constructor(private configService: ConfigService) {
+  constructor(
+    private configService: ConfigService,
+    @InjectRepository(AiSubjectGeneration)
+    private readonly aiSubjectGenerationRepository: Repository<AiSubjectGeneration>,
+  ) {
     this.apiKey = this.configService.get('gemini').api_key as string;
     this.endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${this.model}:generateContent`;
 
@@ -261,5 +273,173 @@ Hãy trả lời CHỈ bằng một đối tượng JSON bằng tiếng Việt t
 
   private sleep(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  /**
+   * Generate a complete subject structure with lessons and quizzes based on a user prompt
+   * Example: "I want a subject for advanced backhand technique"
+   */
+  async generateSubjectFromPrompt(
+    prompt: string,
+  ): Promise<AiSubjectGenerationResponse> {
+    this.logger.log(`🎯 Generating subject from prompt: "${prompt}"`);
+
+    const systemPrompt = `
+Bạn là một chuyên gia thiết kế khóa học pickleball. Nhiệm vụ của bạn là tạo ra một chủ đề (subject) hoàn chỉnh dựa trên yêu cầu của người dùng.
+
+YÊU CẦU:
+1. **Subject (Chủ đề):**
+   - Tên ngắn gọn, súc tích (tối đa 100 ký tự)
+   - Mô tả chi tiết về nội dung (200-500 từ)
+   - Xác định level phù hợp: BEGINNER, INTERMEDIATE, hoặc ADVANCED
+
+2. **Lessons (Bài học):**
+   - Nếu người dùng CHỈ ĐỊNH số lượng bài học (ví dụ: "5 bài học", "8 lessons", "10 bài"), hãy TẠO ĐÚNG số lượng đó
+   - Nếu người dùng KHÔNG chỉ định, mặc định tạo 4-6 bài học tuần tự, logic
+   - Số lượng bài học tối thiểu: 3, tối đa: 10
+   - Mỗi bài học có:
+     + Tên rõ ràng, hấp dẫn
+     + Mô tả chi tiết (100-200 từ)
+     + Số thứ tự (lessonNumber) từ 1 trở đi
+
+3. **Video (Video hướng dẫn):**
+   - MỖI bài học có ĐÚNG 1 video
+   - Mỗi video có:
+     + title: Tiêu đề video (ngắn gọn, hấp dẫn)
+     + description: Mô tả chi tiết nội dung video (100-200 từ)
+     + tags: Mảng các từ khóa liên quan (3-5 tags)
+     + drillName: Tên bài tập drill (nếu có)
+     + drillDescription: Mô tả bài tập drill chi tiết (nếu có)
+     + drillPracticeSets: Hướng dẫn số lượng luyện tập (ví dụ: "3 sets x 10 reps")
+   - Lưu ý: File video thực tế sẽ được upload sau, chỉ cần tạo metadata
+
+4. **Quiz (Trắc nghiệm):**
+   - MỖI bài học có ĐÚNG 1 quiz
+   - Mỗi quiz có 5 câu hỏi
+   - Mỗi câu hỏi có:
+     + Tiêu đề câu hỏi rõ ràng
+     + Giải thích chi tiết (explanation) cho câu trả lời
+     + 4 lựa chọn, trong đó có ĐÚNG 1 đáp án đúng (isCorrect: true)
+   - Quiz title: "Kiểm tra [Tên bài học]"
+   - Quiz description: Mô tả ngắn gọn về nội dung quiz
+
+QUAN TRỌNG:
+- Nội dung phải bằng tiếng Việt
+- Phù hợp với bối cảnh pickleball
+- Câu hỏi phải kiểm tra được kiến thức trong bài học
+- Đáp án phải chính xác và có giải thích rõ ràng
+- CHÚ Ý: Nếu người dùng yêu cầu số lượng bài học cụ thể, PHẢI tạo đúng số lượng đó (trong khoảng 3-10)
+
+YÊU CẦU CỦA NGƯỜI DÙNG: ${prompt}
+
+Trả về JSON theo đúng schema đã định nghĩa.
+    `;
+
+    try {
+      if (!this.apiKey) {
+        throw new Error('Gemini API key not configured');
+      }
+
+      // Call Gemini API
+      const rawResponse = await this.callGeminiWithRetry({
+        contents: [
+          {
+            role: 'user',
+            parts: [{ text: systemPrompt }],
+          },
+        ],
+        generationConfig: {
+          response_mime_type: 'application/json',
+          response_schema: AiSubjectGenerationSchema,
+        },
+      });
+
+      if (!rawResponse) {
+        throw new Error('Empty response from Gemini API');
+      }
+
+      const generatedData =
+        this.parseJsonResponse<AiSubjectGenerationResponse>(rawResponse);
+
+      // Validate generated data
+      this.validateSubjectGeneration(generatedData);
+
+      return generatedData;
+    } catch (error) {
+      this.logger.error('❌ Subject generation failed:', error);
+      throw new Error(
+        `Failed to generate subject: ${error.message || 'Unknown error'}`,
+      );
+    }
+  }
+
+  /**
+   * Validate the generated subject structure
+   */
+  private validateSubjectGeneration(data: AiSubjectGenerationResponse): void {
+    if (!data.name || data.name.length > 100) {
+      throw new Error('Invalid subject name');
+    }
+
+    if (!data.description || data.description.length < 50) {
+      throw new Error('Subject description too short');
+    }
+
+    if (!Object.values(PickleballLevel).includes(data.level)) {
+      throw new Error('Invalid level');
+    }
+
+    if (!data.lessons || data.lessons.length < 1) {
+      throw new Error('Subject must have at least 1 lesson');
+    }
+
+    data.lessons.forEach((lesson, index) => {
+      if (!lesson.name || !lesson.description) {
+        throw new Error(`Lesson ${index + 1} missing name or description`);
+      }
+
+      if (lesson.lessonNumber !== index + 1) {
+        throw new Error(`Lesson ${index + 1} has incorrect lesson number`);
+      }
+
+      if (!lesson.video || !lesson.video.title || !lesson.video.description) {
+        throw new Error(`Lesson ${index + 1} missing video metadata`);
+      }
+
+      if (!lesson.quiz) {
+        throw new Error(`Lesson ${index + 1} missing quiz`);
+      }
+
+      if (
+        !lesson.quiz.questions ||
+        lesson.quiz.questions.length < 3 ||
+        lesson.quiz.questions.length > 10
+      ) {
+        throw new Error(`Lesson ${index + 1} quiz must have 3-10 questions`);
+      }
+
+      lesson.quiz.questions.forEach((question, qIndex) => {
+        if (!question.title || !question.explanation) {
+          throw new Error(
+            `Lesson ${index + 1}, Question ${qIndex + 1} missing title or explanation`,
+          );
+        }
+
+        if (!question.options || question.options.length !== 4) {
+          throw new Error(
+            `Lesson ${index + 1}, Question ${qIndex + 1} must have exactly 4 options`,
+          );
+        }
+
+        const correctCount = question.options.filter(
+          (opt) => opt.isCorrect,
+        ).length;
+        if (correctCount !== 1) {
+          throw new Error(
+            `Lesson ${index + 1}, Question ${qIndex + 1} must have exactly 1 correct answer`,
+          );
+        }
+      });
+    });
   }
 }

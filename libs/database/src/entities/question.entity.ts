@@ -12,15 +12,20 @@ import { QuestionOption } from './question-option.entity';
 import { LearnerAnswer } from './learner-answer.entity';
 import { IsString, MaxLength, MinLength } from 'class-validator';
 
+export class QuestionConstraints {
+  static readonly TITLE_MIN_LENGTH = 2;
+  static readonly TITLE_MAX_LENGTH = 200;
+}
+
 @Entity('questions')
 export class Question {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'varchar', length: 100 })
+  @Column({ type: 'varchar', length: 200 })
   @IsString()
   @MinLength(2)
-  @MaxLength(100)
+  @MaxLength(200)
   title: string;
 
   @Column({ type: 'text', nullable: true })

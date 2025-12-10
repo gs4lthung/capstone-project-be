@@ -55,6 +55,7 @@ export class BaseCredentialService extends BaseTypeOrmService<BaseCredential> {
   async update(
     id: number,
     data: UpdateBaseCredentialDto,
+    file?: Express.Multer.File,
   ): Promise<CustomApiResponse<void>> {
     return await this.datasource.transaction(async (manager) => {
       const baseCredential = await manager
@@ -62,6 +63,14 @@ export class BaseCredentialService extends BaseTypeOrmService<BaseCredential> {
         .findOneBy({ id });
       if (!baseCredential) {
         throw new BadRequestException('Chứng chỉ không tồn tại');
+      }
+      if (file) {
+        const publicUrl = await this.bunnyService.uploadToStorage({
+          id: CryptoUtils.generateRandomNumber(100_000, 999_999),
+          filePath: file.path,
+          type: 'base_credential_image',
+        });
+        data['publicUrl'] = publicUrl;
       }
       manager.getRepository(BaseCredential).merge(baseCredential, data);
       await manager.getRepository(BaseCredential).save(baseCredential);

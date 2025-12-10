@@ -94,14 +94,18 @@ export class PaymentService extends BaseTypeOrmService<Payment> {
           .getRepository(Enrollment)
           .createQueryBuilder('enrollment')
           .leftJoinAndSelect('enrollment.user', 'user')
+          .leftJoinAndSelect('enrollment.course', 'course')
           .where('user.id = :userId', {
             userId: this.request.user.id,
           })
-          .andWhere('enrollment.courseId = :courseId', { courseId: course.id })
+          .andWhere('course.id = :courseId', { courseId: course.id })
           .getOne();
         if (!enrollment) throw new BadRequestException('Lỗi đăng ký khóa học');
 
-        if (enrollment.status !== EnrollmentStatus.UNPAID) {
+        if (
+          enrollment.status !== EnrollmentStatus.UNPAID &&
+          enrollment.status !== EnrollmentStatus.CANCELLED
+        ) {
           throw new BadRequestException('Bạn đã đăng ký khóa học này rồi');
         }
         enrollment.status = EnrollmentStatus.UNPAID;

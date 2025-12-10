@@ -5,8 +5,8 @@ import { User } from '@app/database/entities/user.entity';
 import { WalletTransaction } from '@app/database/entities/wallet-transaction.entity';
 import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
 import {
+  AnalysisResponseDto,
   MonthlyRequestDto,
-  MonthlyResponseDto,
 } from '@app/shared/dtos/coaches/coach.dto';
 import { CourseStatus } from '@app/shared/enums/course.enum';
 import { EnrollmentStatus } from '@app/shared/enums/enrollment.enum';
@@ -38,7 +38,7 @@ export class StudentAnalysisService {
   async getMonthlyRevenue(
     userId: number,
     data: MonthlyRequestDto,
-  ): Promise<CustomApiResponse<MonthlyResponseDto>> {
+  ): Promise<CustomApiResponse<AnalysisResponseDto>> {
     const user = await this.userRepository.findOne({
       where: { id: userId },
     });
@@ -91,15 +91,15 @@ export class StudentAnalysisService {
               ).toFixed(2),
             );
 
-      return new CustomApiResponse<MonthlyResponseDto>(
+      return new CustomApiResponse<AnalysisResponseDto>(
         HttpStatus.OK,
         'Success',
         {
           data: [
             {
-              month: `${month}/${year}`,
+              type: `${month}/${year}`,
               data: totalRevenue,
-              increaseFromLastMonth,
+              increaseFromLast: increaseFromLastMonth,
             },
           ],
         },
@@ -118,12 +118,12 @@ export class StudentAnalysisService {
           .reduce((acc, transaction) => acc + Number(transaction.amount), 0);
 
         return {
-          month: `${month}/${currentYear}`,
+          type: `${month}/${currentYear}`,
           data: revenue,
         };
       });
 
-      return new CustomApiResponse<MonthlyResponseDto>(
+      return new CustomApiResponse<AnalysisResponseDto>(
         HttpStatus.OK,
         'Success',
         { data: monthlyData },
@@ -134,7 +134,7 @@ export class StudentAnalysisService {
   async getMonthlyLearnerCount(
     userId: number,
     data: MonthlyRequestDto,
-  ): Promise<CustomApiResponse<MonthlyResponseDto>> {
+  ): Promise<CustomApiResponse<AnalysisResponseDto>> {
     const user = await this.userRepository.findOne({
       where: { id: userId },
     });
@@ -194,15 +194,15 @@ export class StudentAnalysisService {
               ).toFixed(2),
             );
 
-      return new CustomApiResponse<MonthlyResponseDto>(
+      return new CustomApiResponse<AnalysisResponseDto>(
         HttpStatus.OK,
         'Success',
         {
           data: [
             {
-              month: `${month}/${year}`,
+              type: `${month}/${year}`,
               data: learnerCount,
-              increaseFromLastMonth,
+              increaseFromLast: increaseFromLastMonth,
             },
           ],
         },
@@ -227,12 +227,12 @@ export class StudentAnalysisService {
           },
         });
         monthlyData.push({
-          month: `${month}/${currentYear}`,
+          type: `${month}/${currentYear}`,
           data: learnerCount,
         });
       }
 
-      return new CustomApiResponse<MonthlyResponseDto>(
+      return new CustomApiResponse<AnalysisResponseDto>(
         HttpStatus.OK,
         'Success',
         { data: monthlyData },
@@ -243,7 +243,7 @@ export class StudentAnalysisService {
   async getMonthlyCourseCount(
     id: number,
     data: MonthlyRequestDto,
-  ): Promise<CustomApiResponse<MonthlyResponseDto>> {
+  ): Promise<CustomApiResponse<AnalysisResponseDto>> {
     const user = await this.userRepository.findOne({
       where: { id: id },
     });
@@ -300,15 +300,15 @@ export class StudentAnalysisService {
               ).toFixed(2),
             );
 
-      return new CustomApiResponse<MonthlyResponseDto>(
+      return new CustomApiResponse<AnalysisResponseDto>(
         HttpStatus.OK,
         'Success',
         {
           data: [
             {
-              month: `${month}/${year}`,
+              type: `${month}/${year}`,
               data: courseCount,
-              increaseFromLastMonth,
+              increaseFromLast: increaseFromLastMonth,
             },
           ],
         },
@@ -334,11 +334,11 @@ export class StudentAnalysisService {
           },
         });
         monthlyData.push({
-          month: `${month}/${currentYear}`,
+          type: `${month}/${currentYear}`,
           data: courseCount,
         });
       }
-      return new CustomApiResponse<MonthlyResponseDto>(
+      return new CustomApiResponse<AnalysisResponseDto>(
         HttpStatus.OK,
         'Success',
         { data: monthlyData },
@@ -349,7 +349,7 @@ export class StudentAnalysisService {
   async getMonthlySessionCount(
     userId: number,
     data: MonthlyRequestDto,
-  ): Promise<CustomApiResponse<MonthlyResponseDto>> {
+  ): Promise<CustomApiResponse<AnalysisResponseDto>> {
     const user = await this.userRepository.findOne({
       where: { id: userId },
     });
@@ -399,15 +399,15 @@ export class StudentAnalysisService {
                 100
               ).toFixed(2),
             );
-      return new CustomApiResponse<MonthlyResponseDto>(
+      return new CustomApiResponse<AnalysisResponseDto>(
         HttpStatus.OK,
         'Success',
         {
           data: [
             {
-              month: `${month}/${year}`,
+              type: `${month}/${year}`,
               data: sessionCount,
-              increaseFromLastMonth,
+              increaseFromLast: increaseFromLastMonth,
             },
           ],
         },
@@ -427,11 +427,11 @@ export class StudentAnalysisService {
           },
         });
         monthlyData.push({
-          month: `${month}/${currentYear}`,
+          type: `${month}/${currentYear}`,
           data: sessionCount,
         });
       }
-      return new CustomApiResponse<MonthlyResponseDto>(
+      return new CustomApiResponse<AnalysisResponseDto>(
         HttpStatus.OK,
         'Success',
         { data: monthlyData },

@@ -1,0 +1,38 @@
+@startuml ManageLessonVideoCreateSequenceDiagram
+
+actor "Coach" as coach
+participant "Controller" as controller
+participant "Service" as service
+participant "BunnyService" as bunny
+database "Database" as db
+
+coach -> controller: POST /lessons/:id/videos
+activate controller
+
+controller -> service: uploadVideoForLesson(id, file, data)
+activate service
+
+service -> db: Get lesson
+activate db
+db --> service: Lesson data
+deactivate db
+
+service -> service: Validate lesson exists\nValidate file type and size
+
+service -> bunny: Upload video file to storage
+activate bunny
+bunny --> service: Video public URL
+deactivate bunny
+
+service -> db: Create CoachVideo record
+activate db
+db --> service: Video saved
+deactivate db
+
+service --> controller: Success response with video details
+deactivate service
+
+controller --> coach: 201 Created
+deactivate controller
+
+@enduml

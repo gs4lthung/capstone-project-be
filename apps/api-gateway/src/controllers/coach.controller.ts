@@ -8,7 +8,9 @@ import {
   Post,
   Put,
   Query,
+  UploadedFiles,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -37,6 +39,8 @@ import { SortingParams } from '@app/shared/decorators/sorting-params.decorator';
 import { FindOptions } from '@app/shared/interfaces/find-options.interface';
 import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
 import { Credential } from '@app/database/entities/credential.entity';
+import { FilesInterceptor } from '@nestjs/platform-express';
+import { FileSizeLimitEnum } from '@app/shared/enums/file.enum';
 
 @ApiTags('Coaches')
 @Controller('coaches')
@@ -129,10 +133,18 @@ export class CoachController {
     status: HttpStatus.CREATED,
     description: 'Coach profile created',
   })
+  @UseInterceptors(
+    FilesInterceptor('credential_image', 10, {
+      limits: {
+        fileSize: FileSizeLimitEnum.IMAGE * 10,
+      },
+    }),
+  )
   async register(
     @Body() data: RegisterCoachDto,
+    @UploadedFiles() files: Express.Multer.File[],
   ): Promise<CustomApiResponse<void>> {
-    return this.coachService.registerCoach(data);
+    return this.coachService.registerCoach(data, files);
   }
 
   @Put(':id/verify')

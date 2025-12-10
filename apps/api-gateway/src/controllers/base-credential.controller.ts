@@ -60,8 +60,17 @@ export class BaseCredentialController {
   }
 
   @Put(':id')
-  async update(@Param('id') id: number, @Body() data: UpdateBaseCredentialDto) {
-    return this.baseCredentialService.update(id, data);
+  @UseInterceptors(
+    FileInterceptor('base_credential_image', {
+      limits: { fileSize: FileSizeLimitEnum.IMAGE },
+    }),
+  )
+  async update(
+    @Param('id') id: number,
+    @Body() data: UpdateBaseCredentialDto,
+    @UploadedFile() file?: Express.Multer.File,
+  ) {
+    return this.baseCredentialService.update(id, data, file);
   }
 
   @Delete(':id')

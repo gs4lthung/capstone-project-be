@@ -10,9 +10,7 @@ import {
   Patch,
   Post,
   Put,
-  UploadedFile,
   UseGuards,
-  UseInterceptors,
 } from '@nestjs/common';
 import { SubjectService } from '../services/subject.service';
 import { ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
@@ -31,7 +29,6 @@ import { SortingParams } from '@app/shared/decorators/sorting-params.decorator';
 import { Sorting } from '@app/shared/interfaces/sorting.interface';
 import { FilteringParams } from '@app/shared/decorators/filtering-params.decorator';
 import { Filtering } from '@app/shared/interfaces/filtering.interface';
-import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('subjects')
 export class SubjectController {
@@ -94,12 +91,8 @@ export class SubjectController {
   })
   @CheckRoles(UserRole.COACH)
   @UseGuards(AuthGuard, RoleGuard)
-  @UseInterceptors(FileInterceptor('subject_image'))
-  async create(
-    @Body() data: CreateSubjectDto,
-    @UploadedFile() file: Express.Multer.File,
-  ) {
-    return this.subjectService.create(data, file);
+  async create(@Body() data: CreateSubjectDto) {
+    return this.subjectService.create(data);
   }
 
   @Put(':id')
