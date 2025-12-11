@@ -35,6 +35,9 @@ export class LearnerProgress {
   @Column({ name: 'avg_quiz_score', type: 'int', default: 0 })
   avgQuizScore: number;
 
+  @Column({ name: 'can_generate_ai_analysis', type: 'boolean', default: false })
+  canGenerateAIAnalysis: boolean;
+
   @Column({
     type: 'enum',
     enum: LearnerProgressStatus,

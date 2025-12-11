@@ -499,6 +499,11 @@ ${JSON.stringify(learnerProgressData.completedSessionDetails, null, 2)}
 
 YÊU CẦU PHÂN TÍCH:
 
+0. **Tiêu đề phân tích (title):**
+   - Một tiêu đề ngắn gọn, súc tích (max 100 ký tự) tóm tắt nội dung phân tích
+   - Ví dụ: "Phân tích tiến độ buổi 2/4 - Khóa học Pickleball Cơ bản"
+   - Ví dụ: "Đánh giá kỹ năng sau 3/10 buổi - Lớp Advanced Techniques"
+
 1. **Tổng quan (overallSummary):**
    - Đánh giá tổng quát về tiến độ học tập của học viên
    - Nhận xét về sự tiến bộ qua các buổi học

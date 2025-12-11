@@ -142,6 +142,7 @@ export const AiSubjectGenerationSchema = {
 export const AiLearnerProgressAnalysisSchema = {
   type: 'object',
   properties: {
+    title: { type: 'string' },
     overallSummary: { type: 'string' },
     progressPercentage: { type: 'number' },
     strengthsIdentified: {
@@ -226,6 +227,7 @@ export const AiLearnerProgressAnalysisSchema = {
     motivationalMessage: { type: 'string' },
   },
   required: [
+    'title',
     'overallSummary',
     'progressPercentage',
     'strengthsIdentified',

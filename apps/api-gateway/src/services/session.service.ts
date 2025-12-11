@@ -338,6 +338,7 @@ export class SessionService extends BaseTypeOrmService<Session> {
 
           if (learnerProgress) {
             learnerProgress.sessionsCompleted += 1;
+            learnerProgress.canGenerateAIAnalysis = true;
             console.log(
               '[CompleteSession] Updating sessionsCompleted to:',
               learnerProgress.sessionsCompleted,

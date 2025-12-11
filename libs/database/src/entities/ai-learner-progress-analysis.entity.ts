@@ -101,6 +101,11 @@ export class AiLearnerProgressAnalysis {
   @PrimaryGeneratedColumn()
   id: number;
 
+  @Column({ type: 'varchar', length: 255 })
+  @IsString()
+  @IsNotEmpty()
+  title: string;
+
   @Column({ type: 'text' })
   @IsString()
   @IsNotEmpty()

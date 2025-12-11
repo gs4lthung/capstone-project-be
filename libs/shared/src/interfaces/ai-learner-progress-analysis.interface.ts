@@ -1,4 +1,5 @@
 export interface AiLearnerProgressAnalysisResponse {
+  title: string;
   overallSummary: string;
   progressPercentage: number;
   strengthsIdentified: string[];

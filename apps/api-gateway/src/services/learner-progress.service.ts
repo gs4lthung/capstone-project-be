@@ -95,9 +95,8 @@ export class LearnerProgressService extends BaseTypeOrmService<LearnerProgress> 
   /**
    * Get AI-powered analysis of learner's progress with recommendations
    */
-  async getAiProgressAnalysis(
-    userId: number,
-    courseId: number,
+  async generateAiProgressAnalysis(
+    learnerProgressId: number,
   ): Promise<CustomApiResponse<AiLearnerProgressAnalysisResponse>> {
     return await this.datasource.transaction(async (manager) => {
       // Get learner progress with all related data
@@ -106,8 +105,9 @@ export class LearnerProgressService extends BaseTypeOrmService<LearnerProgress> 
         .createQueryBuilder('learnerProgress')
         .leftJoinAndSelect('learnerProgress.user', 'user')
         .leftJoinAndSelect('learnerProgress.course', 'course')
-        .where('user.id = :userId', { userId })
-        .andWhere('course.id = :courseId', { courseId })
+        .where('learnerProgress.id = :learnerProgressId', {
+          learnerProgressId,
+        })
         .getOne();
 
       if (!progress) {
@@ -127,6 +127,7 @@ export class LearnerProgressService extends BaseTypeOrmService<LearnerProgress> 
         .leftJoinAndSelect('quizAttempts.attemptedBy', 'attemptedBy')
         .leftJoinAndSelect('quizAttempts.learnerAnswers', 'learnerAnswers')
         .leftJoinAndSelect('learnerAnswers.question', 'answerQuestion')
+        .leftJoinAndSelect('answerQuestion.options', 'questionOptions')
         .leftJoinAndSelect('learnerAnswers.questionOption', 'answerOption')
         .leftJoinAndSelect('session.learnerVideos', 'learnerVideos')
         .leftJoinAndSelect('learnerVideos.user', 'learnerVideoUser')
@@ -134,12 +135,14 @@ export class LearnerProgressService extends BaseTypeOrmService<LearnerProgress> 
           'learnerVideos.aiVideoComparisonResults',
           'comparisonResults',
         )
-        .where('session.course.id = :courseId', { courseId })
+        .where('session.course.id = :courseId', {
+          courseId: progress.course.id,
+        })
         .andWhere('session.status = :completedStatus', {
           completedStatus: SessionStatus.COMPLETED,
         })
-        .andWhere('attemptedBy.id = :userId', { userId })
-        .andWhere('learnerVideoUser.id = :userId', { userId })
+        .andWhere('attemptedBy.id = :userId', { userId: progress.user.id })
+        .andWhere('learnerVideoUser.id = :userId', { userId: progress.user.id })
         .orderBy('session.sessionNumber', 'ASC')
         .getMany();
 
@@ -213,6 +216,7 @@ export class LearnerProgressService extends BaseTypeOrmService<LearnerProgress> 
       const analysisEntity = manager
         .getRepository(AiLearnerProgressAnalysis)
         .create({
+          title: aiAnalysis.title,
           overallSummary: aiAnalysis.overallSummary,
           progressPercentage: aiAnalysis.progressPercentage,
           strengthsIdentified: aiAnalysis.strengthsIdentified,
@@ -232,6 +236,10 @@ export class LearnerProgressService extends BaseTypeOrmService<LearnerProgress> 
       await manager
         .getRepository(AiLearnerProgressAnalysis)
         .save(analysisEntity);
+
+      // Reset the flag after generating analysis
+      progress.canGenerateAIAnalysis = false;
+      await manager.getRepository(LearnerProgress).save(progress);
 
       return new CustomApiResponse<AiLearnerProgressAnalysisResponse>(
         HttpStatus.OK,
