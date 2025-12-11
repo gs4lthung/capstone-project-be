@@ -23,7 +23,7 @@ RUN npm ci --only=production
 
 COPY --from=builder --chown=node:node /usr/src/app/dist ./dist
 
-RUN mkdir -p uploads/users uploads/videos uploads/icons uploads/subjects/images uploads/courses/images && \
+RUN mkdir -p uploads/users uploads/videos uploads/icons uploads/subjects/images uploads/credentials/images uploads/base_credentials/images uploads/courses/images && \
     chown -R node:node uploads
     
 RUN mkdir -p /usr/src/app/temp && chown -R node:node /usr/src/app/temp

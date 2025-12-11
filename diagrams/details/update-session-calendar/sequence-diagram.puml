@@ -1,0 +1,39 @@
+@startuml UpdateSessionCalendarSequenceDiagram
+
+actor "Coach" as coach
+participant "Controller" as controller
+participant "Service" as service
+database "Database" as db
+
+coach -> controller: PATCH /sessions/:id
+activate controller
+
+controller -> service: Update session data
+activate service
+
+service -> db: Get session with course
+activate db
+db --> service: Session data
+deactivate db
+
+service -> service: Validate session status\n(must be SCHEDULED)
+
+service -> service: Validate date and time constraints
+
+service -> db: Update session properties
+activate db
+db --> service: Updated session
+deactivate db
+
+service -> db: Send notification to learners
+activate db
+db --> service: Sent
+deactivate db
+
+service --> controller: Success response
+deactivate service
+
+controller --> coach: 200 OK with updated session
+deactivate controller
+
+@enduml

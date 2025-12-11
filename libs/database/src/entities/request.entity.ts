@@ -56,6 +56,7 @@ export class Request {
   createdBy: User;
 
   @OneToMany(() => RequestAction, (action) => action.request, {
+    eager: true,
     nullable: true,
   })
   actions: RequestAction[];

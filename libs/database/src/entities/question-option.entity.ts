@@ -11,6 +11,11 @@ import { Question } from './question.entity';
 import { LearnerAnswer } from './learner-answer.entity';
 import { IsBoolean, IsString } from 'class-validator';
 
+export class QuestionOptionConstraints {
+  static readonly CONTENT_MIN_LENGTH = 1;
+  static readonly CONTENT_MAX_LENGTH = 1000;
+}
+
 @Entity('question_options')
 export class QuestionOption {
   @PrimaryGeneratedColumn()

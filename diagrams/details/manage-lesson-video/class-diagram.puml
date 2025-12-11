@@ -1,0 +1,107 @@
+@startuml ManageLessonVideoClassDiagram
+left to right direction
+
+class Coach {
+    -id: number
+    -fullName: string
+    -email: string
+    -phoneNumber: string
+    -role: Role
+    +uploadVideo(): void
+    +updateVideo(): void
+    +deleteVideo(): void
+}
+
+class Lesson {
+    -id: number
+    -name: string
+    -description: string
+    -lessonNumber: number
+    -videos: CoachVideo[]
+    -quiz: Quiz
+    -subject: Subject
+}
+
+class CoachVideo {
+    -id: number
+    -title: string
+    -description: string
+    -duration: number
+    -drillName: string
+    -drillDescription: string
+    -drillPracticeSets: number
+    -publicUrl: string
+    -thumbnailUrl: string
+    -status: CoachVideoStatus
+    -uploadedBy: Coach
+    -lesson: Lesson
+    -createdAt: Date
+    -updatedAt: Date
+}
+
+class Subject {
+    -id: number
+    -name: string
+    -description: string
+    -level: PickleballLevel
+    -status: SubjectStatus
+    -lessons: Lesson[]
+    -courses: Course[]
+}
+
+class Course {
+    -id: number
+    -name: string
+    -status: CourseStatus
+    -startDate: Date
+    -endDate: Date
+}
+
+enum CoachVideoStatus {
+    PENDING
+    READY
+    PUBLISHED
+    REJECTED
+}
+
+enum SubjectStatus {
+    DRAFT
+    PUBLISHED
+}
+
+enum CourseStatus {
+    PENDING_APPROVAL
+    APPROVED
+    REJECTED
+    CANCELLED
+    COMPLETED
+    FULL
+    READY_OPENED
+    ON_GOING
+}
+
+class UploadVideoDto {
+    +title: string
+    +description: string
+    +drillName: string
+    +drillDescription: string
+    +drillPracticeSets: number
+}
+
+class UpdateVideoDto {
+    +title?: string
+    +description?: string
+    +drillName?: string
+    +drillDescription?: string
+    +drillPracticeSets?: number
+}
+
+Coach "1" -- "many" CoachVideo: uploads
+Lesson "1" -- "many" CoachVideo: contains
+Lesson "many" -- "1" Subject: belongs to
+Subject "1" -- "many" Course: has
+CoachVideo --> CoachVideoStatus: uses
+Subject --> SubjectStatus: uses
+Course --> CourseStatus: uses
+
+@enduml

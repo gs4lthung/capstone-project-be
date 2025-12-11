@@ -1,0 +1,32 @@
+@startuml ManageLessonVideoUpdateSequenceDiagram
+
+actor "Coach" as coach
+participant "Controller" as controller
+participant "Service" as service
+database "Database" as db
+
+coach -> controller: PATCH /videos/:id
+activate controller
+
+controller -> service: updateVideo(id, data)
+activate service
+
+service -> db: Get video
+activate db
+db --> service: Video data
+deactivate db
+
+service -> service: Validate video exists\nValidate coach is owner
+
+service -> db: Update video properties
+activate db
+db --> service: Updated video
+deactivate db
+
+service --> controller: Success response
+deactivate service
+
+controller --> coach: 200 OK
+deactivate controller
+
+@enduml

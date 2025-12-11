@@ -1,0 +1,11 @@
+@startuml ManageLessonVideoSequenceDiagram
+
+note as N1
+  See separate diagrams:
+  - sequence-create.puml: Create/Upload video
+  - sequence-update.puml: Update video properties
+  - sequence-delete.puml: Delete video
+end note
+
+@enduml
+

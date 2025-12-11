@@ -45,6 +45,7 @@ import { Video } from './video.entity';
 import { Subject } from './subject.entity';
 import { Province } from './province.entity';
 import { District } from './district.entity';
+import { AiSubjectGeneration } from './ai-subject-generation.entity';
 
 @Entity('users')
 @Check(
@@ -216,4 +217,10 @@ export class User {
   @ManyToOne(() => District, (district) => district.users, { nullable: true })
   @JoinColumn({ name: 'district_id' })
   district: District;
+
+  @OneToMany(
+    () => AiSubjectGeneration,
+    (aiSubjectGeneration) => aiSubjectGeneration.requestedBy,
+  )
+  aiSubjectGenerations: AiSubjectGeneration[];
 }

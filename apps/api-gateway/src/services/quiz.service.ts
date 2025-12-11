@@ -97,7 +97,6 @@ export class QuizService extends BaseTypeOrmService<Quiz> {
 
       lesson.quiz = manager.getRepository(Quiz).create({
         ...data,
-        totalQuestions: data.questions.length,
         createdBy: this.request.user as User,
       } as Quiz);
       await manager.getRepository(Lesson).save(lesson);
@@ -136,7 +135,6 @@ export class QuizService extends BaseTypeOrmService<Quiz> {
 
       session.quiz = manager.getRepository(Quiz).create({
         ...data,
-        totalQuestions: data.questions.length,
         createdBy: this.request.user as User,
       } as Quiz);
       await manager.getRepository(Session).save(session);
@@ -172,7 +170,6 @@ export class QuizService extends BaseTypeOrmService<Quiz> {
       }
 
       quiz.questions.push(data as Question);
-      quiz.totalQuestions = quiz.questions.length;
       await manager.getRepository(Quiz).save(quiz);
     });
   }
@@ -282,15 +279,17 @@ export class QuizService extends BaseTypeOrmService<Quiz> {
     return await this.datasource.transaction(async (manager) => {
       const question = await manager.getRepository(Question).findOne({
         where: { id: questionId },
-        relations: ['quiz', 'quiz.session', 'quiz.session.course'],
+        relations: [
+          'quiz',
+          'quiz.questions',
+          'quiz.session',
+          'quiz.session.course',
+        ],
         withDeleted: false,
       });
       if (!question) throw new BadRequestException('Question not found');
 
-      const totalQuestions = await manager.getRepository(Question).count({
-        where: { quiz: { id: question.quiz.id } },
-      });
-      if (totalQuestions <= 1) {
+      if (question.quiz.questions.length <= 1) {
         throw new BadRequestException(
           'Không thể xóa câu hỏi. Một quiz phải có ít nhất một câu hỏi.',
         );
@@ -311,10 +310,16 @@ export class QuizService extends BaseTypeOrmService<Quiz> {
           throw new BadRequestException('Không thể cập nhật quiz');
       }
 
-      await manager.getRepository(Quiz).update(question.quiz.id, {
-        totalQuestions: totalQuestions - 1,
-      });
       await manager.getRepository(Question).delete(questionId);
+
+      // Refresh the quiz to get updated questions array after deletion
+      const updatedQuiz = await manager.getRepository(Quiz).findOne({
+        where: { id: question.quiz.id },
+        relations: ['questions'],
+      });
+      // Save to trigger @BeforeUpdate hook which will recalculate totalQuestions
+      await manager.getRepository(Quiz).save(updatedQuiz);
+
       return new CustomApiResponse<void>(
         HttpStatus.OK,
         'Xóa câu hỏi thành công',
@@ -336,7 +341,7 @@ export class QuizService extends BaseTypeOrmService<Quiz> {
       if (quiz.session) {
         throw new BadRequestException('Không thể xóa quiz của buổi học');
       }
-      await manager.getRepository(Quiz).softDelete(quiz);
+      await manager.getRepository(Quiz).softDelete(quiz.id);
 
       return new CustomApiResponse<void>(
         HttpStatus.OK,
@@ -356,7 +361,7 @@ export class QuizService extends BaseTypeOrmService<Quiz> {
       if (quiz.createdBy.id !== this.request.user.id)
         throw new ForbiddenException('Không có quyền truy cập quiz này');
 
-      await manager.getRepository(Quiz).restore(quiz);
+      await manager.getRepository(Quiz).restore(quiz.id);
 
       return new CustomApiResponse<void>(
         HttpStatus.OK,

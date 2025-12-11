@@ -1,0 +1,38 @@
+@startuml ManageLessonVideoDeleteSequenceDiagram
+
+actor "Coach" as coach
+participant "Controller" as controller
+participant "Service" as service
+participant "BunnyService" as bunny
+database "Database" as db
+
+coach -> controller: DELETE /videos/:id
+activate controller
+
+controller -> service: deleteVideo(id)
+activate service
+
+service -> db: Get video
+activate db
+db --> service: Video data
+deactivate db
+
+service -> service: Validate video exists\nValidate coach is owner
+
+service -> bunny: Delete video from storage
+activate bunny
+bunny --> service: Deleted
+deactivate bunny
+
+service -> db: Delete video record
+activate db
+db --> service: Deleted
+deactivate db
+
+service --> controller: Success response
+deactivate service
+
+controller --> coach: 200 OK
+deactivate controller
+
+@enduml

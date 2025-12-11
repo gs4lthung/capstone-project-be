@@ -1,0 +1,60 @@
+@startuml coach-verification-state
+
+title Coach Verification Status State Machine (Actual Implementation)
+
+[*] --> UNVERIFIED : Coach registers
+
+UNVERIFIED : Coach has registered
+UNVERIFIED : Can update profile freely
+UNVERIFIED : Waiting for admin verification
+
+VERIFIED : Admin approved
+VERIFIED : Account fully active
+VERIFIED : Cannot update profile at all
+
+REJECTED : Admin rejected with optional reason
+REJECTED : Can update profile
+REJECTED : Must wait for admin to re-verify
+
+UNVERIFIED --> VERIFIED : admin.verifyCoach(coachId)\n[Admin approves]
+UNVERIFIED --> REJECTED : admin.rejectCoach(coachId, reason?)\n[Admin rejects]
+UNVERIFIED --> UNVERIFIED : coach.update()\n[Coach updates profile]
+
+REJECTED --> VERIFIED : admin.verifyCoach(coachId)\n[Admin re-approves]
+REJECTED --> REJECTED : coach.update()\n[Coach fixes issues]
+
+VERIFIED --> [*] : Account active
+
+note right of UNVERIFIED
+  After registration:
+  - Admin notified immediately
+  - No submit-verification endpoint
+  - Coach cannot trigger verification
+  - Only admin can verify/reject
+end note
+
+note right of REJECTED
+  After REJECTION:
+  - View optional rejection reason
+  - Update profile to fix issues
+  - Cannot self-resubmit
+  - Wait for admin to re-verify
+end note
+
+note bottom of VERIFIED
+  Verified coaches CANNOT
+  update profile at all.
+  
+  Throws BadRequestException:
+  "Không thể cập nhật hồ sơ
+  huấn luyện viên đã được xác minh"
+end note
+
+note top
+  NO PENDING STATUS
+  NO REQUEST ENTITY
+  NO AUDIT TRAIL
+  DIRECT STATUS TRANSITIONS
+end note
+
+@enduml

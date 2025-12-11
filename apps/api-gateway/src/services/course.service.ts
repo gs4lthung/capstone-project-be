@@ -822,6 +822,9 @@ export class CourseService extends BaseTypeOrmService<Course> {
                   lesson: null,
                   session: session,
                   createdBy: course.createdBy,
+                  calculateTotalQuestions: function (): number {
+                    return this.questions ? this.questions.length : 0;
+                  },
                 };
               }
             }

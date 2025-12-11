@@ -14,7 +14,7 @@ import { UserRole } from '@app/shared/enums/user.enum';
 import { AuthGuard } from '../guards/auth.guard';
 import { RoleGuard } from '../guards/role.guard';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { MonthlyResponseDto } from '@app/shared/dtos/coaches/coach.dto';
+import { AnalysisResponseDto } from '@app/shared/dtos/coaches/coach.dto';
 
 @Controller('student-analysis')
 export class StudentAnalysisController {
@@ -36,7 +36,7 @@ export class StudentAnalysisController {
     @Param('userId') userId: number,
     @Query('month') month: number,
     @Query('year') year: number,
-  ): Promise<CustomApiResponse<MonthlyResponseDto>> {
+  ): Promise<CustomApiResponse<AnalysisResponseDto>> {
     return this.studentAnalysisService.getMonthlyRevenue(userId, {
       month,
       year,
@@ -57,7 +57,7 @@ export class StudentAnalysisController {
     @Param('userId') userId: number,
     @Query('month') month: number,
     @Query('year') year: number,
-  ): Promise<CustomApiResponse<MonthlyResponseDto>> {
+  ): Promise<CustomApiResponse<AnalysisResponseDto>> {
     return this.studentAnalysisService.getMonthlyLearnerCount(userId, {
       month,
       year,
@@ -78,7 +78,7 @@ export class StudentAnalysisController {
     @Param('userId') userId: number,
     @Query('month') month: number,
     @Query('year') year: number,
-  ): Promise<CustomApiResponse<MonthlyResponseDto>> {
+  ): Promise<CustomApiResponse<AnalysisResponseDto>> {
     return this.studentAnalysisService.getMonthlyCourseCount(userId, {
       month,
       year,
@@ -99,7 +99,7 @@ export class StudentAnalysisController {
     @Param('userId') userId: number,
     @Query('month') month: number,
     @Query('year') year: number,
-  ): Promise<CustomApiResponse<MonthlyResponseDto>> {
+  ): Promise<CustomApiResponse<AnalysisResponseDto>> {
     return this.studentAnalysisService.getMonthlySessionCount(userId, {
       month,
       year,

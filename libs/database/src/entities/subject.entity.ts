@@ -12,6 +12,7 @@ import {
   Entity,
   ManyToOne,
   OneToMany,
+  OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
@@ -20,6 +21,7 @@ import { Course } from './course.entity';
 import { PickleballLevel } from '@app/shared/enums/pickleball.enum';
 import { SubjectStatus } from '@app/shared/enums/subject.enum';
 import { Lesson } from './lesson.entity';
+import { AiSubjectGeneration } from './ai-subject-generation.entity';
 
 @Entity('subjects')
 export class Subject {
@@ -54,10 +56,8 @@ export class Subject {
   @IsEnum(SubjectStatus)
   status: SubjectStatus;
 
-  @Column({ name: 'public_url', type: 'text', nullable: true })
-  @IsOptional()
-  @IsString()
-  publicUrl?: string;
+  @Column({ name: 'is_ai_generated', type: 'boolean', default: false })
+  isAIGenerated: boolean;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
@@ -81,4 +81,10 @@ export class Subject {
     cascade: ['insert', 'update'],
   })
   lessons: Lesson[];
+
+  @OneToOne(
+    () => AiSubjectGeneration,
+    (aiSubjectGeneration) => aiSubjectGeneration.createdSubject,
+  )
+  aiSubjectGeneration: AiSubjectGeneration;
 }

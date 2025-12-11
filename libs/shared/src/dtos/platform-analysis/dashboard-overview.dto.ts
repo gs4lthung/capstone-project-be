@@ -6,7 +6,11 @@ export class SummaryCardDto {
   @ApiProperty({ example: 1000, description: 'Total count' })
   total: number;
 
-  @ApiProperty({ example: 5.5, description: 'Percentage change from last period', required: false })
+  @ApiProperty({
+    example: 5.5,
+    description: 'Percentage change from last period',
+    required: false,
+  })
   @IsOptional()
   @IsNumber()
   percentageChange?: number;
@@ -58,7 +62,10 @@ export class FeedbackDistributionDataDto {
   @ApiProperty({ example: 5, description: 'Rating (1-5)' })
   rating: number;
 
-  @ApiProperty({ example: 100, description: 'Number of feedbacks with this rating' })
+  @ApiProperty({
+    example: 100,
+    description: 'Number of feedbacks with this rating',
+  })
   count: number;
 
   @ApiProperty({ example: 25.5, description: 'Percentage of total feedbacks' })
@@ -85,10 +92,15 @@ export class DashboardOverviewDto {
   @ApiProperty({ description: 'System reports summary' })
   systemReports: SystemReportDto;
 
-  @ApiProperty({ description: 'Course status chart data', type: [CourseStatusDataDto] })
+  @ApiProperty({
+    description: 'Course status chart data',
+    type: [CourseStatusDataDto],
+  })
   courseStatusChart: CourseStatusDataDto[];
 
-  @ApiProperty({ description: 'Feedback distribution chart data', type: [FeedbackDistributionDataDto] })
+  @ApiProperty({
+    description: 'Feedback distribution chart data',
+    type: [FeedbackDistributionDataDto],
+  })
   feedbackDistributionChart: FeedbackDistributionDataDto[];
 }
-

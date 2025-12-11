@@ -23,6 +23,9 @@ export class Credential {
   @Column({ name: 'expires_at', type: 'date', nullable: true })
   expiresAt?: Date;
 
+  @Column({ name: 'public_url', type: 'text', nullable: true })
+  publicUrl?: string;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 

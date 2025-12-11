@@ -32,8 +32,8 @@ export class Video {
   @Column({ type: 'text', nullable: true })
   tags?: string[];
 
-  @Column({ type: 'int' })
-  duration: number;
+  @Column({ type: 'int', nullable: true })
+  duration?: number;
 
   @Column({ name: 'drill_name', type: 'varchar', length: 50, nullable: true })
   drillName: string;
