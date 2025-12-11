@@ -15,7 +15,7 @@ import { subjectAndLessonSeed } from './subject-lesson.seed';
  * MAIN SEED FILE
  * ============================================
  * File này chạy tất cả các seed theo thứ tự
- * 
+ *
  * Thứ tự quan trọng (dependencies):
  * 1. role.seed - Tạo roles (ADMIN, COACH, LEARNER, CUSTOMER)
  * 2. bank.seed - Tạo danh sách ngân hàng
@@ -46,7 +46,7 @@ async function runSeed() {
     // ============================================
     // Run seeds in order
     // ============================================
-    
+
     // 1. Role seed (MUST run first)
     console.log('👑 Running ROLE seed...');
     try {
@@ -80,7 +80,9 @@ async function runSeed() {
       await configurationSeed(dataSource);
       console.log('✅ Configuration seed completed!\n');
     } catch (error) {
-      console.log('⚠️  Configuration seed skipped (configurations already exist)\n');
+      console.log(
+        '⚠️  Configuration seed skipped (configurations already exist)\n',
+      );
     }
 
     // 5. Court seed
@@ -122,7 +124,9 @@ async function runSeed() {
       await learnerAchievementSeed(dataSource);
       console.log('✅ Learner Achievement seed completed!\n');
     } catch (error) {
-      console.log('⚠️  Learner Achievement seed skipped (data already exists)\n');
+      console.log(
+        '⚠️  Learner Achievement seed skipped (data already exists)\n',
+      );
     }
 
     // ============================================
@@ -131,7 +135,6 @@ async function runSeed() {
     console.log('='.repeat(60));
     console.log('🎉 ALL SEEDS COMPLETED SUCCESSFULLY!');
     console.log('='.repeat(60) + '\n');
-
   } catch (error) {
     // ============================================
     // Error handling
@@ -143,7 +146,6 @@ async function runSeed() {
     console.error(error);
     console.error('\n' + '='.repeat(60) + '\n');
     process.exit(1);
-
   } finally {
     // ============================================
     // Cleanup: Close database connection
@@ -160,4 +162,3 @@ async function runSeed() {
 // Execute seed
 // ============================================
 runSeed();
-

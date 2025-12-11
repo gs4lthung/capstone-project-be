@@ -46,6 +46,7 @@ import { Subject } from './subject.entity';
 import { Province } from './province.entity';
 import { District } from './district.entity';
 import { AiSubjectGeneration } from './ai-subject-generation.entity';
+import { AiLearnerProgressAnalysis } from './ai-learner-progress-analysis.entity';
 
 @Entity('users')
 @Check(
@@ -223,4 +224,10 @@ export class User {
     (aiSubjectGeneration) => aiSubjectGeneration.requestedBy,
   )
   aiSubjectGenerations: AiSubjectGeneration[];
+
+  @OneToMany(
+    () => AiLearnerProgressAnalysis,
+    (aiLearnerProgressAnalysis) => aiLearnerProgressAnalysis.user,
+  )
+  aiLearnerProgressAnalyses: AiLearnerProgressAnalysis[];
 }

@@ -63,6 +63,10 @@ export class LearnerService {
         .createQueryBuilder('learnerProgress')
         .leftJoinAndSelect('learnerProgress.user', 'user')
         .leftJoinAndSelect('learnerProgress.course', 'course')
+        .leftJoinAndSelect(
+          'learnerProgress.aiLearnerProgressAnalyses',
+          'aiLearnerProgressAnalyses',
+        )
         .where('user.id = :learnerId', {
           learnerId: this.request.user.id,
         })

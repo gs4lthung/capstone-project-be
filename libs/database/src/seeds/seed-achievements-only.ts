@@ -29,7 +29,6 @@ async function runAchievementSeedOnly() {
     console.log('='.repeat(60));
     console.log('🎉 ACHIEVEMENT SEED COMPLETED!');
     console.log('='.repeat(60) + '\n');
-
   } catch (error) {
     console.error('\n' + '='.repeat(60));
     console.error('❌ ACHIEVEMENT SEEDING FAILED!');
@@ -38,7 +37,6 @@ async function runAchievementSeedOnly() {
     console.error(error);
     console.error('\n' + '='.repeat(60) + '\n');
     process.exit(1);
-
   } finally {
     if (dataSource && dataSource.isInitialized) {
       console.log('🔌 Closing database connection...');
@@ -49,4 +47,3 @@ async function runAchievementSeedOnly() {
 }
 
 runAchievementSeedOnly();
-

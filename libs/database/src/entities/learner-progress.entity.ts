@@ -6,12 +6,14 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { Course } from './course.entity';
 import { IsEnum, IsInt } from 'class-validator';
 import { User } from './user.entity';
+import { AiLearnerProgressAnalysis } from './ai-learner-progress-analysis.entity';
 
 @Entity('learner_progresses')
 @Check(`sessions_completed <= total_sessions`)
@@ -58,4 +60,10 @@ export class LearnerProgress {
   })
   @JoinColumn({ name: 'course_id' })
   course: Course;
+
+  @OneToMany(
+    () => AiLearnerProgressAnalysis,
+    (aiLearnerProgressAnalysis) => aiLearnerProgressAnalysis.learnerProgress,
+  )
+  aiLearnerProgressAnalyses: AiLearnerProgressAnalysis[];
 }

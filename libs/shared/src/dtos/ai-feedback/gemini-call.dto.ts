@@ -137,3 +137,103 @@ export const AiSubjectGenerationSchema = {
   },
   required: ['name', 'description', 'level', 'lessons'],
 };
+
+// Schema for AI Learner Progress Analysis
+export const AiLearnerProgressAnalysisSchema = {
+  type: 'object',
+  properties: {
+    overallSummary: { type: 'string' },
+    progressPercentage: { type: 'number' },
+    strengthsIdentified: {
+      type: 'array',
+      items: { type: 'string' },
+    },
+    areasForImprovement: {
+      type: 'array',
+      items: { type: 'string' },
+    },
+    quizPerformanceAnalysis: {
+      type: 'object',
+      properties: {
+        averageScore: { type: 'number' },
+        summary: { type: 'string' },
+        topicsMastered: {
+          type: 'array',
+          items: { type: 'string' },
+        },
+        topicsNeedingReview: {
+          type: 'array',
+          items: { type: 'string' },
+        },
+      },
+      required: [
+        'averageScore',
+        'summary',
+        'topicsMastered',
+        'topicsNeedingReview',
+      ],
+    },
+    videoPerformanceAnalysis: {
+      type: 'object',
+      properties: {
+        averageScore: { type: 'number' },
+        summary: { type: 'string' },
+        techniqueStrengths: {
+          type: 'array',
+          items: { type: 'string' },
+        },
+        techniqueWeaknesses: {
+          type: 'array',
+          items: { type: 'string' },
+        },
+      },
+      required: [
+        'averageScore',
+        'summary',
+        'techniqueStrengths',
+        'techniqueWeaknesses',
+      ],
+    },
+    recommendationsForNextSession: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          priority: { type: 'string', enum: ['HIGH', 'MEDIUM', 'LOW'] },
+          title: { type: 'string' },
+          description: { type: 'string' },
+          focusAreas: {
+            type: 'array',
+            items: { type: 'string' },
+          },
+        },
+        required: ['priority', 'title', 'description', 'focusAreas'],
+      },
+    },
+    practiceDrills: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          name: { type: 'string' },
+          description: { type: 'string' },
+          targetArea: { type: 'string' },
+          sets: { type: 'string' },
+        },
+        required: ['name', 'description', 'targetArea', 'sets'],
+      },
+    },
+    motivationalMessage: { type: 'string' },
+  },
+  required: [
+    'overallSummary',
+    'progressPercentage',
+    'strengthsIdentified',
+    'areasForImprovement',
+    'quizPerformanceAnalysis',
+    'videoPerformanceAnalysis',
+    'recommendationsForNextSession',
+    'practiceDrills',
+    'motivationalMessage',
+  ],
+};

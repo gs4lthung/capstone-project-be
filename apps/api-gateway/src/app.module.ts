@@ -131,6 +131,7 @@ import { AiVideoComparisonResult } from '@app/database/entities/ai-video-compari
 import { AiSubjectGenerationController } from './controllers/ai-subject-generation.controller';
 import { AiSubjectGenerationService } from './services/ai-subject-generation.service';
 import { AiSubjectGeneration } from '@app/database/entities/ai-subject-generation.entity';
+import { AiLearnerProgressAnalysis } from '@app/database/entities/ai-learner-progress-analysis.entity';
 @Module({
   imports: [
     ConfigModule,
@@ -223,6 +224,7 @@ import { AiSubjectGeneration } from '@app/database/entities/ai-subject-generatio
       BaseCredential,
       AiVideoComparisonResult,
       AiSubjectGeneration,
+      AiLearnerProgressAnalysis,
     ]),
     ErrorModule,
     ThrottlerModule.forRootAsync({
