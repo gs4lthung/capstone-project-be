@@ -1,0 +1,43 @@
+@startuml UpdateWallet
+
+actor User
+participant WalletController
+participant AuthGuard
+participant WalletService
+participant DataSource
+
+User -> WalletController: PUT /wallets/:id
+activate WalletController
+
+WalletController -> AuthGuard: validate JWT
+activate AuthGuard
+AuthGuard --> WalletController: valid
+deactivate AuthGuard
+
+WalletController -> WalletService: update(id, UpdateWalletDto)
+activate WalletService
+
+WalletService -> DataSource: BEGIN TRANSACTION
+activate DataSource
+
+DataSource -> DataSource: find wallet by id
+DataSource -> DataSource: verify wallet exists
+DataSource -> DataSource: update wallet with DTO data
+DataSource -> DataSource: COMMIT
+
+note right of DataSource
+  Update allowed fields:
+  - bankId
+  - bankAccountNumber
+end note
+
+DataSource --> WalletService: success
+deactivate DataSource
+
+WalletService --> WalletController: CustomApiResponse (200)
+deactivate WalletService
+
+WalletController --> User: HTTP 200 OK
+deactivate WalletController
+
+@enduml

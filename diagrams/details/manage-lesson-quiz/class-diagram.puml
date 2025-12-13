@@ -1,52 +1,27 @@
 @startuml ManageLessonQuizClassDiagram
-!theme plain
-skinparam classBackgroundColor #f0f0f0
-skinparam classBorderColor #333
-skinparam arrowColor #333
 
+!theme plain
+skinparam linetype ortho
+skinparam nodesep 80
+skinparam ranksep 80
+
+left to right direction
 
 ' ════════════════════════════════════════════════════════════════════════════════════
 ' CONTROLLER LAYER
 ' ════════════════════════════════════════════════════════════════════════════════════
 
 class QuizController {
-  --
 }
 
 ' ════════════════════════════════════════════════════════════════════════════════════
-' SERVICE LAYER
+' GUARD LAYER
 ' ════════════════════════════════════════════════════════════════════════════════════
 
-class QuizService {
-  --
+class AuthGuard {
 }
 
-' ════════════════════════════════════════════════════════════════════════════════════
-' ENTITY LAYER
-' ════════════════════════════════════════════════════════════════════════════════════
-
-class Quiz {
-  --
-}
-
-class Question {
-  --
-}
-
-class QuestionOption {
-  --
-}
-
-class Lesson {
-  --
-}
-
-class Subject {
-  --
-}
-
-class User {
-  --
+class RoleGuard {
 }
 
 ' ════════════════════════════════════════════════════════════════════════════════════
@@ -54,84 +29,77 @@ class User {
 ' ════════════════════════════════════════════════════════════════════════════════════
 
 class CreateQuizDto {
-  --
 }
 
 class CreateQuestionDto {
-  --
-}
-
-class CreateQuestionOptionDto {
-  --
 }
 
 class UpdateQuizDto {
-  --
 }
 
-class UpdateQuestionDto {
-  --
-}
-
-class UpdateQuestionOptionDto {
-  --
+class LearnerAttemptQuizDto {
 }
 
 ' ════════════════════════════════════════════════════════════════════════════════════
-' ENUMS
+' SERVICE LAYER
 ' ════════════════════════════════════════════════════════════════════════════════════
 
-enum Role {
-    LEARNER
-    COACH
-    ADMIN
-    STAFF
+class QuizService {
 }
 
-enum PickleballLevel {
-    BEGINNER
-    INTERMEDIATE
-    ADVANCED
-}
-
-enum SubjectStatus {
-    DRAFT
-    PUBLISHED
+class DataSource {
 }
 
 ' ════════════════════════════════════════════════════════════════════════════════════
-' INFRASTRUCTURE
+' ENTITY LAYER
 ' ════════════════════════════════════════════════════════════════════════════════════
 
+class Quiz {
+}
+
+class Question {
+}
+
+class QuestionOption {
+}
+
+class QuizAttempt {
+}
+
+class Lesson {
+}
+
+class Session {
+}
+
+class User {
+}
 
 ' ════════════════════════════════════════════════════════════════════════════════════
 ' RELATIONSHIPS
 ' ════════════════════════════════════════════════════════════════════════════════════
 
-' Presentation to Controller
+QuizController --> AuthGuard
+QuizController --> RoleGuard
+QuizController --> QuizService
+QuizController ..> CreateQuizDto
+QuizController ..> CreateQuestionDto
+QuizController ..> UpdateQuizDto
+QuizController ..> LearnerAttemptQuizDto
 
+QuizService --> DataSource
+QuizService --> Quiz
+QuizService --> Question
+QuizService --> Lesson
+QuizService --> Session
 
-' Controller to Service
-QuizController --> QuizService: uses
+Quiz --> Question
+Question --> QuestionOption
+Quiz --> QuizAttempt
+Quiz --> Lesson
+Quiz --> Session
+Quiz --> User
 
-' Service to Repository & Entity
-QuizService --> Quiz: manages
-QuizService --> Lesson: validates
-
-' Entity Relationships
-Quiz "1" --> "many" Question: contains
-Question "1" --> "many" QuestionOption: has
-Quiz "many" --> "1" User: createdBy
-Lesson "1" --> "1" Quiz: has
-Subject "1" --> "many" Lesson: contains
-Subject "many" --> "1" User: createdBy
-
-' DTO usage
-QuizController ..> CreateQuizDto: uses
-QuizController ..> UpdateQuizDto: uses
-CreateQuizDto "1" --> "many" CreateQuestionDto: contains
-CreateQuestionDto "1" --> "many" CreateQuestionOptionDto: has
-UpdateQuizDto "1" --> "many" UpdateQuestionDto: contains
-UpdateQuestionDto "1" --> "many" UpdateQuestionOptionDto: has
+QuizAttempt --> User
 
 @enduml

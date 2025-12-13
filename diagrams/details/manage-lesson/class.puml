@@ -1,54 +1,37 @@
 @startuml ManageLessonClassDiagram
+
 !theme plain
-skinparam classBackgroundColor #f0f0f0
-skinparam classBorderColor #333
-skinparam arrowColor #333
+skinparam linetype ortho
+skinparam nodesep 80
+skinparam ranksep 80
 
-' ════════════════════════════════════════════════════════════════════════════════════
-' PRESENTATION LAYER
-' ════════════════════════════════════════════════════════════════════════════════════
-
-class LessonListPanel {
-  -lessons: Lesson[]
-  -subjectId: number
-  -filters: FilterCriteria
-  -pagination: Pagination
-  --
-  +loadLessons(subjectId): void
-  +applyFilters(criteria): void
-  +searchLessons(query): void
-  +sortLessons(field): void
-  +selectLesson(id): void
-  +displayList(): void
-}
-
-class LessonFormPanel {
-  -lesson: Lesson
-  -subjectId: number
-  -formData: CreateLessonRequestDto|UpdateLessonDto
-  --
-  +loadLesson(): void
-  +populateForm(): void
-  +updateFields(data): void
-  +submitCreate(): void
-  +submitUpdate(): void
-  +displayMessage(status): void
-}
+left to right direction
 
 ' ════════════════════════════════════════════════════════════════════════════════════
 ' CONTROLLER LAYER
 ' ════════════════════════════════════════════════════════════════════════════════════
 
 class LessonController {
-  -lessonService: LessonService
-  --
-  +findAllBySubjectId(subjectId, pagination, sort, filter): Promise<Response>
-  +findAllByCourseId(courseId, pagination, sort, filter): Promise<Response>
-  +create(subjectId, data): Promise<Response>
-  +update(id, data): Promise<Response>
-  +delete(id): Promise<Response>
-  +restore(id): Promise<Response>
-  ...
+}
+
+' ════════════════════════════════════════════════════════════════════════════════════
+' GUARD LAYER
+' ════════════════════════════════════════════════════════════════════════════════════
+
+class AuthGuard {
+}
+
+class RoleGuard {
+}
+
+' ════════════════════════════════════════════════════════════════════════════════════
+' DTO LAYER
+' ════════════════════════════════════════════════════════════════════════════════════
+
+class CreateLessonRequestDto {
+}
+
+class UpdateLessonDto {
 }
 
 ' ════════════════════════════════════════════════════════════════════════════════════
@@ -56,17 +39,9 @@ class LessonController {
 ' ════════════════════════════════════════════════════════════════════════════════════
 
 class LessonService {
-  -lessonRepository: Repository
-  -subjectRepository: Repository
-  -datasource: DataSource
-  --
-  +findAll(findOptions): Promise<PaginateObject<Lesson>>
-  +findAllBySubjectId(findOptions, subjectId): Promise<PaginateObject<Lesson>>
-  +create(subjectId, data): Promise<Response>
-  +update(id, data): Promise<Response>
-  +delete(id): Promise<Response>
-  +restore(id): Promise<Response>
-  ...
+}
+
+class DataSource {
 }
 
 ' ════════════════════════════════════════════════════════════════════════════════════
@@ -74,120 +49,38 @@ class LessonService {
 ' ════════════════════════════════════════════════════════════════════════════════════
 
 class Lesson {
-  -id: number
-  -name: string
-  -description?: string
-  -lessonNumber: number
-  -duration?: number
-  -createdAt: Date
-  -updatedAt: Date
-  -deletedAt?: Date
-  -subject: Subject
 }
 
 class Subject {
-  -id: number
-  -name: string
-  -level: PickleballLevel
-  -status: SubjectStatus
-  -createdBy: User
-  -lessons: Lesson[]
 }
 
 class User {
-  -id: number
-  -email: string
-  -fullName: string
-  -role: Role
-  -subjects: Subject[]
 }
 
-class Role {
-  -id: number
-  -name: string (COACH)
+class Video {
 }
 
-' ════════════════════════════════════════════════════════════════════════════════════
-' DTOs (INPUT/OUTPUT)
-' ════════════════════════════════════════════════════════════════════════════════════
-
-class CreateLessonRequestDto {
-  +name: string
-  +description?: string
-  +duration?: number
-}
-
-class UpdateLessonDto {
-  +name?: string
-  +description?: string
-  +duration?: number
-}
-
-' ════════════════════════════════════════════════════════════════════════════════════
-' ENUMS
-' ════════════════════════════════════════════════════════════════════════════════════
-
-enum PickleballLevel {
-  BEGINNER
-  INTERMEDIATE
-  ADVANCED
-}
-
-enum SubjectStatus {
-  DRAFT
-  PUBLISHED
-}
-
-' ════════════════════════════════════════════════════════════════════════════════════
-' INFRASTRUCTURE
-' ════════════════════════════════════════════════════════════════════════════════════
-
-class DataSource {
-  --
-  +transaction(callback): Promise<Result>
-}
-
-' ════════════════════════════════════════════════════════════════════════════════════
-' SECURITY LAYER
-' ════════════════════════════════════════════════════════════════════════════════════
-
-class AuthGuard {
-  --
-  +canActivate(context): boolean
-}
-
-class RoleGuard {
-  --
-  +canActivate(context): boolean
-  -checkCoachRole(user): boolean
+class Quiz {
 }
 
 ' ════════════════════════════════════════════════════════════════════════════════════
 ' RELATIONSHIPS
 ' ════════════════════════════════════════════════════════════════════════════════════
 
-LessonListPanel --> LessonController: calls findAllBySubjectId
-LessonListPanel --> LessonFormPanel: navigates to edit
+LessonController --> AuthGuard
+LessonController --> RoleGuard
+LessonController --> LessonService
+LessonController ..> CreateLessonRequestDto
+LessonController ..> UpdateLessonDto
 
-LessonFormPanel --> LessonController: calls create/update
-LessonFormPanel --> LessonListPanel: navigates back
+LessonService --> DataSource
+LessonService --> Lesson
+LessonService --> Subject
 
-LessonController --> LessonService: delegates
-LessonController --> AuthGuard: validates
-LessonController --> RoleGuard: checks coach role
+Lesson --> Subject
+Lesson --> Video
+Lesson --> Quiz
 
-LessonService --> Lesson: creates/reads/updates/deletes
-LessonService --> Subject: reads/verifies
-LessonService --> User: accesses via subject
-LessonService --> DataSource: manages transactions
-
-Lesson --> Subject: belongsTo
-Lesson --> PickleballLevel: references via subject
-Subject --> User: createdBy
-Subject --> Lesson: has_many
-User --> Role: has_one
-
-CreateLessonRequestDto --> Lesson: maps to
-UpdateLessonDto --> Lesson: maps to
+Subject --> User
 
 @enduml

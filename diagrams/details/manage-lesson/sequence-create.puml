@@ -1,0 +1,48 @@
+@startuml CreateLesson
+
+actor Coach
+participant LessonController
+participant AuthGuard
+participant RoleGuard
+participant LessonService
+participant DataSource
+
+Coach -> LessonController: POST /lessons/subjects/:id
+activate LessonController
+
+LessonController -> AuthGuard: validate JWT
+activate AuthGuard
+AuthGuard --> LessonController: valid
+deactivate AuthGuard
+
+LessonController -> RoleGuard: check COACH role
+activate RoleGuard
+RoleGuard --> LessonController: authorized
+deactivate RoleGuard
+
+LessonController -> LessonService: create(subjectId, data)
+activate LessonService
+
+LessonService -> DataSource: BEGIN TRANSACTION
+activate DataSource
+
+DataSource -> DataSource: find subject with lessons
+DataSource -> DataSource: verify ownership (subject.createdBy == currentUser)
+
+note right of DataSource
+  lessonNumber = subject.lessons.length + 1
+end note
+
+DataSource -> DataSource: create lesson with lessonNumber
+DataSource -> DataSource: COMMIT
+
+DataSource --> LessonService: success
+deactivate DataSource
+
+LessonService --> LessonController: CustomApiResponse (CREATED)
+deactivate LessonService
+
+LessonController --> Coach: HTTP 201 created
+deactivate LessonController
+
+@enduml

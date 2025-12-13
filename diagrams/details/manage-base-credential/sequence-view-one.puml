@@ -1,0 +1,25 @@
+@startuml ViewBaseCredentialById
+
+actor User
+participant BaseCredentialController
+participant BaseCredentialService
+participant DataSource
+
+User -> BaseCredentialController: GET /base-credentials/:id
+activate BaseCredentialController
+
+BaseCredentialController -> BaseCredentialService: findById(id)
+activate BaseCredentialService
+
+BaseCredentialService -> DataSource: find base credential by id
+activate DataSource
+DataSource --> BaseCredentialService: credential
+deactivate DataSource
+
+BaseCredentialService --> BaseCredentialController: BaseCredential
+deactivate BaseCredentialService
+
+BaseCredentialController --> User: HTTP 200 with credential
+deactivate BaseCredentialController
+
+@enduml

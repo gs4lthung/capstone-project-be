@@ -1,0 +1,68 @@
+@startuml ManageSubjectViewDiagram
+
+actor Coach
+participant AuthGuard
+participant RoleGuard
+participant SubjectController
+participant SubjectService
+database DataSource
+
+== View All Subjects ==
+
+Coach -> SubjectController: GET /subjects?page=1&limit=10
+activate SubjectController
+
+SubjectController -> AuthGuard: validate token
+activate AuthGuard
+AuthGuard --> SubjectController: valid
+deactivate AuthGuard
+
+SubjectController -> RoleGuard: check COACH role
+activate RoleGuard
+RoleGuard --> SubjectController: authorized
+deactivate RoleGuard
+
+SubjectController -> SubjectService: findAll(options)
+activate SubjectService
+
+SubjectService -> DataSource: SELECT subjects with pagination
+activate DataSource
+DataSource --> SubjectService: subjects list
+deactivate DataSource
+
+SubjectService --> SubjectController: paginated results
+deactivate SubjectService
+
+SubjectController --> Coach: 200 OK
+deactivate SubjectController
+
+== View Subject Details ==
+
+Coach -> SubjectController: GET /subjects/:id
+activate SubjectController
+
+SubjectController -> AuthGuard: validate token
+activate AuthGuard
+AuthGuard --> SubjectController: valid
+deactivate AuthGuard
+
+SubjectController -> RoleGuard: check COACH role
+activate RoleGuard
+RoleGuard --> SubjectController: authorized
+deactivate RoleGuard
+
+SubjectController -> SubjectService: findOne(id)
+activate SubjectService
+
+SubjectService -> DataSource: SELECT subject with relations
+activate DataSource
+DataSource --> SubjectService: subject data
+deactivate DataSource
+
+SubjectService --> SubjectController: subject
+deactivate SubjectService
+
+SubjectController --> Coach: 200 OK
+deactivate SubjectController
+
+@enduml

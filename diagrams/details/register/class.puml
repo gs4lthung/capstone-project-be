@@ -5,36 +5,11 @@ skinparam classBorderColor #333
 skinparam arrowColor #333
 
 ' ════════════════════════════════════════════════════════════════════════════════════
-' PRESENTATION LAYER
-' ════════════════════════════════════════════════════════════════════════════════════
-
-class RegisterScreen {
-  -fullName: string
-  -email: string
-  -phoneNumber: string
-  -password: string
-  -province: number
-  -district: number
-  -skillLevel: string
-  -learningGoal: string
-  --
-  +handleRegister(): void
-  +handleEmailVerification(): void
-  +handlePhoneVerification(): void
-  +validateForm(): boolean
-}
-
-' ════════════════════════════════════════════════════════════════════════════════════
 ' CONTROLLER LAYER
 ' ════════════════════════════════════════════════════════════════════════════════════
 
 class AuthController {
-  -authService: AuthService
-  --
-  +register(data: RegisterRequestDto): Promise<Response>
-  +verifyEmail(token: string): Promise<Response>
-  +verifyPhone(data: VerifyPhoneDto): Promise<Response>
-  ...
+
 }
 
 ' ════════════════════════════════════════════════════════════════════════════════════
@@ -42,18 +17,7 @@ class AuthController {
 ' ════════════════════════════════════════════════════════════════════════════════════
 
 class AuthService {
-  -userRepository: Repository
-  -jwtService: JwtService
-  -mailService: MailService
-  -twilioService: TwilioService
-  -configService: ConfigService
-  --
-  +register(data: RegisterRequestDto): Promise<Response>
-  +verifyEmail(token: string): Promise<string>
-  +verifyPhone(data: VerifyPhoneDto): Promise<Response>
-  -hashPassword(plain): Promise<string>
-  -generateVerificationToken(userId): Promise<string>
-  ...
+
 }
 
 ' ════════════════════════════════════════════════════════════════════════════════════
@@ -61,36 +25,19 @@ class AuthService {
 ' ════════════════════════════════════════════════════════════════════════════════════
 
 class User {
-  -id: number
-  -fullName: string
-  -email?: string
-  -phoneNumber?: string
-  -password: string
-  -isEmailVerified: boolean
-  -isPhoneVerified: boolean
-  -isActive: boolean
-  -emailVerificationToken?: string
-  -role: Role
-  -learner: Learner
-  -wallet: Wallet
+
 }
 
 class Learner {
-  -id: number
-  -user: User
-  -skillLevel: string
-  -learningGoal: string
+
 }
 
 class Wallet {
-  -id: number
-  -user: User
-  -currentBalance: number
+
 }
 
 class Role {
-  -id: number
-  -name: string
+
 }
 
 ' ════════════════════════════════════════════════════════════════════════════════════
@@ -98,32 +45,24 @@ class Role {
 ' ════════════════════════════════════════════════════════════════════════════════════
 
 class JwtService {
-  --
-  +signAsync(payload): Promise<Token>
-  +verifyAsync(token): Promise<Payload>
+
 }
 
 class MailService {
-  --
-  +sendMail(data): Promise<void>
+
 }
 
 class TwilioService {
-  --
-  +sendSMS(phoneNumber): Promise<void>
-  +verifyPhoneNumber(phone, code): Promise<boolean>
+
 }
 
 class ConfigService {
-  --
-  +get(key: string): any
+
 }
 
 ' ════════════════════════════════════════════════════════════════════════════════════
 ' RELATIONSHIPS
 ' ════════════════════════════════════════════════════════════════════════════════════
-
-RegisterScreen --> AuthController: calls register()
 
 AuthController --> AuthService: delegates
 

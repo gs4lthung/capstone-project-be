@@ -1,0 +1,31 @@
+@startuml ViewAllLearnerProgress
+
+actor User
+participant LearnerProgressController
+participant AuthGuard
+participant LearnerProgressService
+participant DataSource
+
+User -> LearnerProgressController: GET /learner-progresses
+activate LearnerProgressController
+
+LearnerProgressController -> AuthGuard: validate JWT
+activate AuthGuard
+AuthGuard --> LearnerProgressController: valid
+deactivate AuthGuard
+
+LearnerProgressController -> LearnerProgressService: findAll(pagination, sort, filter)
+activate LearnerProgressService
+
+LearnerProgressService -> DataSource: query learner progresses with pagination
+activate DataSource
+DataSource --> LearnerProgressService: paginated progresses
+deactivate DataSource
+
+LearnerProgressService --> LearnerProgressController: PaginateObject<LearnerProgress>
+deactivate LearnerProgressService
+
+LearnerProgressController --> User: HTTP 200 with progresses
+deactivate LearnerProgressController
+
+@enduml

@@ -1,0 +1,80 @@
+@startuml UpdateCourt
+
+actor Admin
+participant CourtController
+participant AuthGuard
+participant RoleGuard
+participant CourtService
+participant BunnyService
+participant DataSource
+
+Admin -> CourtController: PUT /courts/:id (multipart/form-data)
+activate CourtController
+
+note right of CourtController
+  DTO: name, phoneNumber, pricePerHour,
+  address, latitude, longitude,
+  provinceId, districtId (all optional)
+  File: court_image (optional)
+end note
+
+CourtController -> AuthGuard: validate JWT
+activate AuthGuard
+AuthGuard --> CourtController: valid
+deactivate AuthGuard
+
+CourtController -> RoleGuard: verify ADMIN role
+activate RoleGuard
+RoleGuard --> CourtController: authorized
+deactivate RoleGuard
+
+CourtController -> CourtService: update(id, UpdateCourtDto, file)
+activate CourtService
+
+CourtService -> DataSource: BEGIN TRANSACTION
+activate DataSource
+
+DataSource -> DataSource: find court by id
+DataSource -> DataSource: verify court exists (not deleted)
+
+alt provinceId provided
+  DataSource -> DataSource: find province by provinceId
+  DataSource -> DataSource: verify province exists
+  DataSource -> DataSource: update court.province
+end
+
+alt districtId provided
+  DataSource -> DataSource: find district by districtId
+  DataSource -> DataSource: verify district exists
+  DataSource -> DataSource: update court.district
+end
+
+alt file provided
+  CourtService -> BunnyService: uploadToStorage(file)
+  activate BunnyService
+  
+  note right of BunnyService
+    Upload new court image
+    Replace existing image
+  end note
+  
+  BunnyService --> CourtService: publicUrl
+  deactivate BunnyService
+  
+  DataSource -> DataSource: update publicUrl in DTO
+end
+
+DataSource -> DataSource: merge DTO with court entity
+DataSource -> DataSource: save updated court
+DataSource -> DataSource: COMMIT
+
+DataSource --> CourtService: success
+deactivate DataSource
+
+CourtService --> CourtController: CustomApiResponse (200)
+deactivate CourtService
+
+CourtController --> Admin: HTTP 200 OK
+deactivate CourtController
+
+@enduml

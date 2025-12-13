@@ -1,0 +1,48 @@
+@startuml AiSubjectGenerationGenerateDiagram
+
+actor Coach
+participant AuthGuard
+participant AiSubjectGenerationController
+participant AiSubjectGenerationService
+participant AiGeminiService
+database DataSource
+
+== Generate Subject with AI ==
+
+Coach -> AiSubjectGenerationController: POST /ai-subject-generations (prompt)
+activate AiSubjectGenerationController
+
+AiSubjectGenerationController -> AuthGuard: validate token
+activate AuthGuard
+AuthGuard --> AiSubjectGenerationController: valid
+deactivate AuthGuard
+
+AiSubjectGenerationController -> AiSubjectGenerationService: create(prompt)
+activate AiSubjectGenerationService
+
+AiSubjectGenerationService -> AiGeminiService: generateSubjectFromPrompt(prompt)
+activate AiGeminiService
+note right of AiGeminiService
+  Calls Gemini API with:
+  - System prompt + user prompt
+  - AiSubjectGenerationSchema
+  Generates:
+  - Subject name, description, level
+  - Lessons with videos and quizzes
+end note
+
+AiGeminiService --> AiSubjectGenerationService: AiSubjectGenerationResponse
+deactivate AiGeminiService
+
+AiSubjectGenerationService -> DataSource: INSERT AiSubjectGeneration (prompt, generatedData, status=PENDING, requestedBy)
+activate DataSource
+DataSource --> AiSubjectGenerationService: created
+deactivate DataSource
+
+AiSubjectGenerationService --> AiSubjectGenerationController: AiSubjectGeneration
+deactivate AiSubjectGenerationService
+
+AiSubjectGenerationController --> Coach: 201 Created
+deactivate AiSubjectGenerationController
+
+@enduml

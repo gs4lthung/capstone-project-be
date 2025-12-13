@@ -1,0 +1,43 @@
+@startuml ViewSessionById
+
+actor User
+participant SessionController
+participant AuthGuard
+participant RoleGuard
+participant SessionService
+participant DataSource
+
+User -> SessionController: GET /sessions/:id
+activate SessionController
+
+SessionController -> AuthGuard: validate JWT
+activate AuthGuard
+AuthGuard --> SessionController: valid
+deactivate AuthGuard
+
+SessionController -> RoleGuard: check COACH/LEARNER role
+activate RoleGuard
+RoleGuard --> SessionController: authorized
+deactivate RoleGuard
+
+SessionController -> SessionService: findOne(id)
+activate SessionService
+
+SessionService -> DataSource: query session by id with relations
+activate DataSource
+
+note right of DataSource
+  Relations: schedule, course,
+  enrollments, attendances
+end note
+
+DataSource --> SessionService: session details
+deactivate DataSource
+
+SessionService --> SessionController: session data
+deactivate SessionService
+
+SessionController --> User: HTTP 200 with session
+deactivate SessionController
+
+@enduml

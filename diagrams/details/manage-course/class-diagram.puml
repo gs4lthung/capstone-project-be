@@ -1,214 +1,192 @@
 @startuml ManageCourseClassDiagram
+!theme plain
+skinparam classBackgroundColor #f0f0f0
+skinparam classBorderColor #333
+skinparam arrowColor #333
 
-top to bottom direction
+left to right direction
 
-package "Entities" <<entity>> {
-    class Course <<Entity>> {
-        -id: number
-        -name: string
-        -description: string
-        -status: CourseStatus
-        -level: PickleballLevel
-        -learningFormat: CourseLearningFormat
-        -startDate: Date
-        -endDate: Date
-        -minParticipants: number
-        -maxParticipants: number
-        -currentParticipants: number
-        -pricePerParticipant: number
-        -totalSessions: number
-        -progressPct: number
-        -publicUrl: string
-        -googleMeetLink: string
-        -createdAt: Date
-        -updatedAt: Date
-        --
-        # Relationships
-        -createdBy: User
-        -subject: Subject
-        -sessions: Session[]
-        -schedules: Schedule[]
-        -enrollments: Enrollment[]
-        -feedbacks: Feedback[]
-        -court: Court
-    }
+' ════════════════════════════════════════════════════════════════════════════════════
+' CONTROLLER LAYER
+' ════════════════════════════════════════════════════════════════════════════════════
 
-    class Schedule <<Entity>> {
-        -id: number
-        -dayOfWeek: number
-        -startTime: string
-        -endTime: string
-        -totalSessions: number
-        -createdAt: Date
-        -updatedAt: Date
-        --
-        # Relationships
-        -course: Course
-    }
+class CourseController {
 
-    class Session <<Entity>>{
-        -id: number
-        -sessionNumber: number
-        -scheduleDate: Date
-        -startTime: string
-        -endTime: string
-        -durationInMinutes: number
-        -status: SessionStatus
-        -completedAt: Date
-        -createdAt: Date
-        -updatedAt: Date
-        --
-        # Relationships
-        -course: Course
-        -quiz: Quiz
-        -video: Video
-    }
-
-    class User <<Entity>> {
-        -id: number
-        -name: string
-        -email: string
-        -role: UserRole
-        --
-        # Relationships
-        -courses: Course[]
-    }
-
-    class Subject <<Entity>> {
-        -id: number
-        -name: string
-        -status: SubjectStatus
-        --
-        # Relationships
-        -courses: Course[]
-    }
-
-    class Court <<Entity>> {
-        -id: number
-        -name: string
-        -address: string
-        -pricePerHour: number
-        --
-        # Relationships
-        -courses: Course[]
-    }
-
-    class Request <<Entity>> {
-        -id: number
-        -metadata: RequestMetadata
-        -status: RequestStatus
-        -type: RequestType
-        -createdAt: Date
-    }
 }
 
-package "DTOs" <<dto>> {
-    class UpdateCourseDto  {
-        -name?: string
-        -description?: string
-        -level?: PickleballLevel
-        -learningFormat?: CourseLearningFormat
-        -startDate?: Date
-        -endDate?: Date
-        -minParticipants?: number
-        -maxParticipants?: number
-        -pricePerParticipant?: number
-        -publicUrl?: string
-        -googleMeetLink?: string
-        -subjectId?: number
-        -courtId?: number
-        -schedules?: ScheduleInput[]
-    }
+class PaymentController {
 
-    class CreateCourseRequestDto  {
-        -name: string
-        -description: string
-        -level: PickleballLevel
-        -learningFormat: CourseLearningFormat
-        -startDate: Date
-        -endDate: Date
-        -minParticipants: number
-        -maxParticipants: number
-        -pricePerParticipant: number
-        -publicUrl?: string
-        -googleMeetLink?: string
-        -schedules: ScheduleInput[]
-    }
 }
 
-package "Controllers" <<controller>> {
-    class CourseController  {
-        -courseService: CourseService
-        --
-        +getCoursesForCoach(page, size): Promise<PaginateObject<Course>>
-        +findOne(id): Promise<Course>
-        +createCourse(subjectId, data, file): Promise
-        +updateCourseCreationRequest(id, data, file): Promise
-        ...
-    }
+' ════════════════════════════════════════════════════════════════════════════════════
+' GUARD LAYER
+' ════════════════════════════════════════════════════════════════════════════════════
+
+class AuthGuard {
+
 }
 
-package "Services" <<service>> {
-    class CourseService  {
-        -courseRepository: Repository<Course>
-        -requestRepository: Repository<Request>
-        -requestActionRepository: Repository<RequestAction>
-        -enrollmentRepository: Repository<Enrollment>
-        -sessionService: SessionService
-        -notificationService: NotificationService
-        -scheduleService: ScheduleService
-        --
-        +findCoachCourses(page, size): Promise<PaginateObject<Course>>
-        +findOne(id): Promise<Course>
-        +updateCourseCreationRequest(id, data, file): Promise<CustomApiResponse>
-        +createCourseCreationRequest(subjectId, data, file): Promise<CustomApiResponse>
-        +approveCourseCreationRequest(id): Promise<CustomApiResponse>
-        ...
-    }
+class RoleGuard {
 
-    class ScheduleService  {
-        -scheduleRepository: Repository<Schedule>
-        --
-        +createSchedules(course, schedules): Promise<Schedule[]>
-        +updateSchedules(course, schedules): Promise<Schedule[]>
-        +deleteSchedules(courseId): Promise<void>
-        ...
-    }
-
-    class SessionService  {
-        -sessionRepository: Repository<Session>
-        --
-        +createSessions(course): Promise<Session[]>
-        +generateSessionsFromSchedule(course): Promise<Session[]>
-        ...
-    }
-
-    class NotificationService  {
-        -emailService: EmailService
-        --
-        +send(data): Promise<void>
-        ...
-    }
 }
 
-' Relationships
-CourseController --> CourseService : uses
-CourseService --> Course : manages
-CourseService --> Schedule : manages via ScheduleService
-CourseService --> Session : manages via SessionService
-CourseService --> Request : reads
-CourseService --> NotificationService : uses
-CourseService --> ScheduleService : uses
-CourseService --> SessionService : uses
+' ════════════════════════════════════════════════════════════════════════════════════
+' DTO LAYER
+' ════════════════════════════════════════════════════════════════════════════════════
 
-UpdateCourseDto --> Course : updates
-CreateCourseRequestDto --> Request : creates
-Course --> User : created by
-Course --> Subject : belongs to
-Course --> Court : uses
-Course --> Schedule : has many
-Course --> Session : has many
-Schedule --> Course : belongs to
-Session --> Course : belongs to
+class CreateCourseRequestDto {
+
+}
+
+class UpdateCourseDto {
+
+}
+
+class RejectCourseDto {
+
+}
+
+' ════════════════════════════════════════════════════════════════════════════════════
+' SERVICE LAYER
+' ════════════════════════════════════════════════════════════════════════════════════
+
+class CourseService {
+
+}
+
+class PaymentService {
+
+}
+
+class ScheduleService {
+
+}
+
+class SessionService {
+
+}
+
+class NotificationService {
+
+}
+
+class ConfigurationService {
+
+}
+
+class BunnyService {
+
+}
+
+class PayosService {
+
+}
+
+class WalletService {
+
+}
+
+' ════════════════════════════════════════════════════════════════════════════════════
+' ENTITY LAYER
+' ════════════════════════════════════════════════════════════════════════════════════
+
+class Course {
+
+}
+
+class Schedule {
+
+}
+
+class Session {
+
+}
+
+class User {
+
+}
+
+class Subject {
+
+}
+
+class Court {
+
+}
+
+class Request {
+
+}
+
+class RequestAction {
+
+}
+
+class Enrollment {
+
+}
+
+class Payment {
+
+}
+
+' ════════════════════════════════════════════════════════════════════════════════════
+' RELATIONSHIPS
+' ════════════════════════════════════════════════════════════════════════════════════
+
+' Controller relationships
+CourseController --> AuthGuard: validates
+CourseController --> RoleGuard: checks role
+CourseController --> CourseService: uses
+CourseController --> CreateCourseRequestDto: receives
+CourseController --> UpdateCourseDto: receives
+CourseController --> RejectCourseDto: receives
+
+PaymentController --> AuthGuard: validates
+PaymentController --> RoleGuard: checks role
+PaymentController --> PaymentService: uses
+
+' Service to Service relationships
+CourseService --> ScheduleService: uses
+CourseService --> SessionService: uses
+CourseService --> NotificationService: uses
+CourseService --> ConfigurationService: uses
+CourseService --> BunnyService: uses
+CourseService --> WalletService: uses
+
+PaymentService --> PayosService: uses
+PaymentService --> NotificationService: uses
+PaymentService --> ConfigurationService: uses
+
+' Service to Entity relationships
+CourseService --> Course: manages
+CourseService --> Request: manages
+CourseService --> RequestAction: creates
+CourseService --> Subject: validates
+CourseService --> Court: validates
+CourseService --> User: notifies
+
+PaymentService --> Payment: manages
+PaymentService --> Enrollment: updates
+
+ScheduleService --> Schedule: generates
+
+SessionService --> Session: generates
+
+' Entity relationships
+Course --> Schedule: has many
+Course --> User: coached by
+Course --> Subject: belongs to
+Course --> Court: held at
+Course --> Request: created from
+
+Schedule --> Session: has many
+
+Enrollment --> Course: enrolls in
+Enrollment --> User: belongs to
+Enrollment --> Payment: has
+
+Request --> User: requested by
+Request --> RequestAction: has many
 
 @enduml

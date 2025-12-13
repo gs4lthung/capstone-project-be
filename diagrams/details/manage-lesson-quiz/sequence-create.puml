@@ -1,7 +1,7 @@
 @startuml ManageLessonQuizCreateSequence
 
 actor "Coach" as coach
-participant "Web Browser" as client
+participant "Client" as client
 participant "QuizController" as controller
 participant "QuizService" as service
 participant "LessonRepository" as lessonRepo

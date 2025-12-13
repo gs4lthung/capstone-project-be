@@ -1,0 +1,54 @@
+@startuml UpdateBaseCredential
+
+actor Admin
+participant BaseCredentialController
+participant BaseCredentialService
+participant BunnyService
+participant DataSource
+
+Admin -> BaseCredentialController: PUT /base-credentials/:id (multipart/form-data)
+activate BaseCredentialController
+
+note right of BaseCredentialController
+  DTO: name, description, type (optional)
+  File: base_credential_image (optional)
+end note
+
+BaseCredentialController -> BaseCredentialService: update(id, UpdateBaseCredentialDto, file)
+activate BaseCredentialService
+
+BaseCredentialService -> DataSource: BEGIN TRANSACTION
+activate DataSource
+
+DataSource -> DataSource: find base credential by id
+DataSource -> DataSource: verify credential exists
+
+alt file provided
+  BaseCredentialService -> BunnyService: uploadToStorage(file)
+  activate BunnyService
+  
+  note right of BunnyService
+    Upload new credential image
+    Replace existing image
+  end note
+  
+  BunnyService --> BaseCredentialService: publicUrl
+  deactivate BunnyService
+  
+  DataSource -> DataSource: update publicUrl in DTO
+end
+
+DataSource -> DataSource: merge DTO with entity
+DataSource -> DataSource: save updated credential
+DataSource -> DataSource: COMMIT
+
+DataSource --> BaseCredentialService: success
+deactivate DataSource
+
+BaseCredentialService --> BaseCredentialController: CustomApiResponse (200)
+deactivate BaseCredentialService
+
+BaseCredentialController --> Admin: HTTP 200 OK
+deactivate BaseCredentialController
+
+@enduml

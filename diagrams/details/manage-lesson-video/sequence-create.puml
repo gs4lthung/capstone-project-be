@@ -1,38 +1,108 @@
-@startuml ManageLessonVideoCreateSequenceDiagram
+@startuml CreateLessonVideo
 
-actor "Coach" as coach
-participant "Controller" as controller
-participant "Service" as service
-participant "BunnyService" as bunny
-database "Database" as db
+actor Coach
+participant VideoController
+participant AuthGuard
+participant RoleGuard
+participant VideoService
+participant BunnyService
+participant FFmpegService
+participant DataSource
 
-coach -> controller: POST /lessons/:id/videos
-activate controller
+== Create Lesson Video ==
 
-controller -> service: uploadVideoForLesson(id, file, data)
-activate service
+Coach -> VideoController: POST /videos/lessons/:id (multipart/form-data)
+activate VideoController
 
-service -> db: Get lesson
-activate db
-db --> service: Lesson data
-deactivate db
+VideoController -> AuthGuard: validate JWT
+activate AuthGuard
+AuthGuard --> VideoController: valid
+deactivate AuthGuard
 
-service -> service: Validate lesson exists\nValidate file type and size
+VideoController -> RoleGuard: check COACH role
+activate RoleGuard
+RoleGuard --> VideoController: authorized
+deactivate RoleGuard
 
-service -> bunny: Upload video file to storage
-activate bunny
-bunny --> service: Video public URL
-deactivate bunny
+VideoController -> VideoService: createLessonVideo(lessonId, data, videoFile)
+activate VideoService
 
-service -> db: Create CoachVideo record
-activate db
-db --> service: Video saved
-deactivate db
+VideoService -> DataSource: BEGIN TRANSACTION
+activate DataSource
 
-service --> controller: Success response with video details
-deactivate service
+DataSource -> DataSource: find lesson with subject relations
+DataSource -> DataSource: verify ownership (subject.createdBy == currentUser)
 
-controller --> coach: 201 Created
-deactivate controller
+note right of DataSource
+  Upload video file to CDN
+end note
+
+VideoService -> BunnyService: uploadVideo(videoFile)
+activate BunnyService
+BunnyService --> VideoService: publicUrl, thumbnailUrl
+deactivate BunnyService
+
+VideoService -> FFmpegService: extractMetadata(videoFile)
+activate FFmpegService
+FFmpegService --> VideoService: duration, resolution
+deactivate FFmpegService
+
+DataSource -> DataSource: create video with PENDING status
+DataSource -> DataSource: COMMIT
+
+DataSource --> VideoService: success
+deactivate DataSource
+
+VideoService --> VideoController: CustomApiResponse (CREATED)
+deactivate VideoService
+
+VideoController --> Coach: HTTP 201 created
+deactivate VideoController
+
+== Create Session Video ==
+
+Coach -> VideoController: POST /videos/sessions/:id (multipart/form-data)
+activate VideoController
+
+VideoController -> AuthGuard: validate JWT
+activate AuthGuard
+AuthGuard --> VideoController: valid
+deactivate AuthGuard
+
+VideoController -> RoleGuard: check COACH role
+activate RoleGuard
+RoleGuard --> VideoController: authorized
+deactivate RoleGuard
+
+VideoController -> VideoService: createSessionVideo(sessionId, data, videoFile)
+activate VideoService
+
+VideoService -> DataSource: BEGIN TRANSACTION
+activate DataSource
+
+DataSource -> DataSource: find session with course relations
+DataSource -> DataSource: verify ownership (course.createdBy == currentUser)
+
+VideoService -> BunnyService: uploadVideo(videoFile)
+activate BunnyService
+BunnyService --> VideoService: publicUrl, thumbnailUrl
+deactivate BunnyService
+
+VideoService -> FFmpegService: extractMetadata(videoFile)
+activate FFmpegService
+FFmpegService --> VideoService: duration, resolution
+deactivate FFmpegService
+
+DataSource -> DataSource: create video with PENDING status
+DataSource -> DataSource: COMMIT
+
+DataSource --> VideoService: success
+deactivate DataSource
+
+VideoService --> VideoController: CustomApiResponse (CREATED)
+deactivate VideoService
+
+VideoController --> Coach: HTTP 201 created
+deactivate VideoController
 
 @enduml

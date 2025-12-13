@@ -1,0 +1,102 @@
+@startuml CreateCourseSequence
+
+actor "Coach" as coach
+participant "CourseController" as controller
+participant "AuthGuard" as authGuard
+participant "RoleGuard" as roleGuard
+participant "CourseService" as service
+participant "ConfigurationService" as configService
+participant "SubjectRepository" as subjectRepo
+participant "CourtRepository" as courtRepo
+participant "ScheduleService" as scheduleService
+participant "RequestRepository" as requestRepo
+participant "BunnyService" as bunny
+participant "NotificationService" as notificationService
+database "DataSource" as db
+
+coach -> controller: POST /courses/subjects/:id\n(CreateCourseRequestDto, file)
+activate controller
+
+controller -> authGuard: canActivate(context)
+activate authGuard
+authGuard --> controller: true (authenticated)
+deactivate authGuard
+
+controller -> roleGuard: canActivate(context)
+activate roleGuard
+roleGuard --> controller: true (COACH role)
+deactivate roleGuard
+
+controller -> service: createCourseCreationRequest(subjectId, data, file)
+activate service
+
+service -> db: transaction start
+activate db
+
+service -> courtRepo: findOne(courtId)
+activate courtRepo
+courtRepo -> db: SELECT court
+db --> courtRepo: Court
+courtRepo --> service: Court
+deactivate courtRepo
+
+service -> service: validateScheduleTimes(schedules)\n(no overlaps on same day)
+
+service -> configService: getMinDaysBeforeCourseStart()
+activate configService
+configService --> service: minDays
+deactivate configService
+
+service -> service: validateStartDate >= minDays from now
+
+service -> subjectRepo: findOne(subjectId, {relations: [lessons]})
+activate subjectRepo
+subjectRepo -> db: SELECT subject with lessons
+db --> subjectRepo: Subject with lessons
+subjectRepo --> service: Subject (must be PUBLISHED)
+deactivate subjectRepo
+
+service -> service: validateSubjectHasLessonsWithVideoAndQuiz()\n(all lessons must have video & quiz)
+
+service -> service: validateScheduleCountLessOrEqualLessonCount()
+
+service -> service: validateLessonCountDivisibleByScheduleCount()
+
+service -> service: calculateCourseEndDate(startDate, schedules, lessonCount)
+
+service -> scheduleService: checkScheduleConflicts(coachId, schedules, startDate)
+activate scheduleService
+scheduleService --> service: no conflicts
+deactivate scheduleService
+
+alt file provided
+    service -> bunny: uploadToStorage(file)
+    activate bunny
+    bunny --> service: publicUrl
+    deactivate bunny
+end
+
+service -> service: buildRequestMetadata(courseData)
+
+service -> requestRepo: create(Request)\ntype=COURSE_CREATION\nstatus=PENDING_APPROVAL\nmetadata=courseData
+activate requestRepo
+requestRepo -> db: INSERT request
+db --> requestRepo: Request
+requestRepo --> service: Request
+deactivate requestRepo
+
+service -> notificationService: sendNotification(ADMIN, course_creation_request)
+activate notificationService
+notificationService --> service: sent
+deactivate notificationService
+
+db --> service: commit
+deactivate db
+
+service --> controller: CustomApiResponse(success)
+deactivate service
+
+controller --> coach: HTTP 201 {message, data}
+deactivate controller
+
+@enduml

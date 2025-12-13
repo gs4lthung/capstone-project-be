@@ -1,100 +1,75 @@
-@startuml ManageSubjectDeleteRestoreDiagram
+@startuml ManageSubjectRestoreDiagram
 
-actor "Coach" as coach
-participant "Client" as client
-participant "Controller" as controller
-participant "Service" as service
-database "Database" as db
+actor Coach
+participant AuthGuard
+participant RoleGuard
+participant SubjectController
+participant SubjectService
+database DataSource
 
-== Delete Subject ==
+== View Deleted Subjects ==
 
-coach -> client: 1. View subject details
-client --> coach: 2. Display subject with "Delete" button
+Coach -> SubjectController: GET /subjects?withDeleted=true
+activate SubjectController
 
-coach -> client: 3. Click "Delete Subject"
-client --> coach: 4. Show confirmation dialog
+SubjectController -> AuthGuard: validate token
+activate AuthGuard
+AuthGuard --> SubjectController: valid
+deactivate AuthGuard
 
-coach -> client: 5. Confirm deletion
-client -> controller: 6. DELETE /subjects/:id
-activate controller
+SubjectController -> RoleGuard: check COACH role
+activate RoleGuard
+RoleGuard --> SubjectController: authorized
+deactivate RoleGuard
 
-controller -> service: 7. delete(id)
-activate service
+SubjectController -> SubjectService: findAll(options)
+activate SubjectService
 
-service -> db: 8. Find subject by id
-activate db
-db --> service: Subject found
-deactivate db
+SubjectService -> DataSource: SELECT subjects including deleted
+activate DataSource
+DataSource --> SubjectService: deleted subjects
+deactivate DataSource
 
-service -> service: 9. Verify ownership (createdBy == currentUser)
-note right of service
-  If not owner, throw ForbiddenException
-end note
+SubjectService --> SubjectController: results
+deactivate SubjectService
 
-service -> db: 10. Soft delete subject (set deletedAt)
-activate db
-db --> service: Deleted
-deactivate db
-
-service --> controller: Success response
-deactivate service
-
-controller --> client: 11. HTTP 200
-deactivate controller
-
-client --> coach: 12. Subject deleted successfully
-
-coach -> client: 13. Navigate to deleted subjects
-client -> controller: 14. GET /subjects?withDeleted=true
-activate controller
-
-controller -> service: 15. findAll(options)
-activate service
-
-service -> db: 16. Query subjects including soft-deleted
-activate db
-db --> service: Deleted subjects list
-deactivate db
-
-service --> controller: Response
-deactivate service
-
-controller --> client: 17. HTTP 200
-deactivate controller
-
-client --> coach: 18. Display deleted subjects
+SubjectController --> Coach: 200 OK
+deactivate SubjectController
 
 == Restore Subject ==
 
-coach -> client: 19. Click "Restore" on deleted subject
-client --> coach: 20. Show restore confirmation
+Coach -> SubjectController: PATCH /subjects/:id/restore
+activate SubjectController
 
-coach -> client: 21. Confirm restore
-client -> controller: 22. PATCH /subjects/:id/restore
-activate controller
+SubjectController -> AuthGuard: validate token
+activate AuthGuard
+AuthGuard --> SubjectController: valid
+deactivate AuthGuard
 
-controller -> service: 23. restore(id)
-activate service
+SubjectController -> RoleGuard: check COACH role
+activate RoleGuard
+RoleGuard --> SubjectController: authorized
+deactivate RoleGuard
 
-service -> db: 24. Find deleted subject (withDeleted=true)
-activate db
-db --> service: Deleted subject found
-deactivate db
+SubjectController -> SubjectService: restore(id)
+activate SubjectService
 
-service -> db: 25. Restore subject (clear deletedAt)
-activate db
-db --> service: Restored
-deactivate db
+SubjectService -> DataSource: SELECT subject with deleted
+activate DataSource
+DataSource --> SubjectService: deleted subject found
+deactivate DataSource
 
-service --> controller: Success response
-deactivate service
+SubjectService -> SubjectService: verify ownership
 
-controller --> client: 26. HTTP 200
-deactivate controller
+SubjectService -> DataSource: UPDATE subject SET deletedAt = NULL
+activate DataSource
+DataSource --> SubjectService: restored
+deactivate DataSource
 
-client --> coach: 27. Subject restored successfully
+SubjectService --> SubjectController: success
+deactivate SubjectService
 
-coach -> client: 28. Navigate back to subjects list
-client --> coach: 29. Subject now appears in active list
+SubjectController --> Coach: 200 OK
+deactivate SubjectController
 
 @enduml

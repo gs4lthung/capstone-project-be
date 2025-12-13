@@ -1,0 +1,32 @@
+@startuml DeleteBaseCredential
+
+actor Admin
+participant BaseCredentialController
+participant BaseCredentialService
+participant DataSource
+
+Admin -> BaseCredentialController: DELETE /base-credentials/:id
+activate BaseCredentialController
+
+BaseCredentialController -> BaseCredentialService: delete(id)
+activate BaseCredentialService
+
+BaseCredentialService -> DataSource: BEGIN TRANSACTION
+activate DataSource
+
+DataSource -> DataSource: find base credential by id
+DataSource -> DataSource: verify credential exists
+DataSource -> DataSource: remove base credential (soft delete)
+DataSource -> DataSource: COMMIT
+
+
+DataSource --> BaseCredentialService: success
+deactivate DataSource
+
+BaseCredentialService --> BaseCredentialController: CustomApiResponse (200)
+deactivate BaseCredentialService
+
+BaseCredentialController --> Admin: HTTP 200 OK
+deactivate BaseCredentialController
+
+@enduml

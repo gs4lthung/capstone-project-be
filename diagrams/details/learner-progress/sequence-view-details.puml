@@ -1,0 +1,42 @@
+@startuml ViewProgressDetails
+
+actor Coach
+participant LearnerProgressController
+participant AuthGuard
+participant LearnerProgressService
+participant DataSource
+
+Coach -> LearnerProgressController: GET /learner-progresses/coaches/details?userId&courseId
+activate LearnerProgressController
+
+LearnerProgressController -> AuthGuard: validate JWT
+activate AuthGuard
+AuthGuard --> LearnerProgressController: valid
+deactivate AuthGuard
+
+LearnerProgressController -> LearnerProgressService: getLearnerProgressDetails(userId, courseId)
+activate LearnerProgressService
+
+LearnerProgressService -> DataSource: BEGIN TRANSACTION
+activate DataSource
+
+DataSource -> DataSource: query learner progress with full details
+
+note right of DataSource
+  Join: user, course, course.sessions,
+  sessions.video, sessions.quiz,
+  sessions.learnerVideos, quiz.questions,
+  questions.options, course.createdBy
+  Filter: userId, courseId
+end note
+
+DataSource --> LearnerProgressService: detailed progress
+deactivate DataSource
+
+LearnerProgressService --> LearnerProgressController: LearnerProgress with relations
+deactivate LearnerProgressService
+
+LearnerProgressController --> Coach: HTTP 200 with detailed progress
+deactivate LearnerProgressController
+
+@enduml

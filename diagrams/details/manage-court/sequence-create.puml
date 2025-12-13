@@ -1,0 +1,73 @@
+@startuml CreateCourt
+
+actor Admin
+participant CourtController
+participant AuthGuard
+participant RoleGuard
+participant CourtService
+participant BunnyService
+participant DataSource
+
+Admin -> CourtController: POST /courts (multipart/form-data)
+activate CourtController
+
+note right of CourtController
+  DTO: name, phoneNumber, pricePerHour,
+  address, latitude, longitude,
+  provinceId, districtId
+  File: court_image (optional)
+end note
+
+CourtController -> AuthGuard: validate JWT
+activate AuthGuard
+AuthGuard --> CourtController: valid
+deactivate AuthGuard
+
+CourtController -> RoleGuard: verify ADMIN role
+activate RoleGuard
+RoleGuard --> CourtController: authorized
+deactivate RoleGuard
+
+CourtController -> CourtService: create(CreateCourtDto, file)
+activate CourtService
+
+CourtService -> DataSource: BEGIN TRANSACTION
+activate DataSource
+
+DataSource -> DataSource: find province by provinceId
+DataSource -> DataSource: verify province exists
+
+DataSource -> DataSource: find district by districtId
+DataSource -> DataSource: verify district exists
+
+alt file provided
+  CourtService -> BunnyService: uploadToStorage(file)
+  activate BunnyService
+  
+  note right of BunnyService
+    Upload court image
+    Generate random ID
+    Type: court_image
+  end note
+  
+  BunnyService --> CourtService: publicUrl
+  deactivate BunnyService
+  
+  DataSource -> DataSource: assign publicUrl to DTO
+end
+
+DataSource -> DataSource: create court entity
+DataSource -> DataSource: assign province, district
+DataSource -> DataSource: save court
+DataSource -> DataSource: COMMIT
+
+DataSource --> CourtService: success
+deactivate DataSource
+
+CourtService --> CourtController: CustomApiResponse (201)
+deactivate CourtService
+
+CourtController --> Admin: HTTP 201 Created
+deactivate CourtController
+
+@enduml

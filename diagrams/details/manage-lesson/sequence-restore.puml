@@ -1,0 +1,43 @@
+@startuml RestoreLesson
+
+actor Coach
+participant LessonController
+participant AuthGuard
+participant RoleGuard
+participant LessonService
+participant DataSource
+
+Coach -> LessonController: PATCH /lessons/:id/restore
+activate LessonController
+
+LessonController -> AuthGuard: validate JWT
+activate AuthGuard
+AuthGuard --> LessonController: valid
+deactivate AuthGuard
+
+LessonController -> RoleGuard: check COACH role
+activate RoleGuard
+RoleGuard --> LessonController: authorized
+deactivate RoleGuard
+
+LessonController -> LessonService: restore(id)
+activate LessonService
+
+LessonService -> DataSource: BEGIN TRANSACTION
+activate DataSource
+
+DataSource -> DataSource: find lesson with withDeleted=true
+DataSource -> DataSource: verify ownership (subject.createdBy == currentUser)
+DataSource -> DataSource: restore lesson (clear deletedAt)
+DataSource -> DataSource: COMMIT
+
+DataSource --> LessonService: success
+deactivate DataSource
+
+LessonService --> LessonController: CustomApiResponse (OK)
+deactivate LessonService
+
+LessonController --> Coach: HTTP 200 restored
+deactivate LessonController
+
+@enduml

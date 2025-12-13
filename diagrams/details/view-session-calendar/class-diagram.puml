@@ -1,189 +1,111 @@
 @startuml ViewSessionCalendarClassDiagram
 
-top to bottom direction
+!theme plain
+skinparam linetype ortho
+skinparam nodesep 80
+skinparam ranksep 80
 
-package "Entities" <<entity>> {
-    class Course <<Entity>> {
-        -id: number
-        -name: string
-        -description: string
-        -startDate: Date
-        -endDate: Date
-        -level: PickleballLevel
-        -learningFormat: CourseLearningFormat
-        -status: CourseStatus
-        --
-        # Relationships
-        -sessions: Session[]
-        -schedules: Schedule[]
-        -createdBy: User
-        -court: Court
-    }
+left to right direction
 
-    class Session <<Entity>> {
-        -id: number
-        -name: string
-        -description: string
-        -sessionNumber: number
-        -scheduleDate: Date
-        -startTime: string
-        -endTime: string
-        -durationInMinutes: number
-        -status: SessionStatus
-        --
-        # Relationships
-        -course: Course
-        -attendances: Attendance[]
-    }
+' ════════════════════════════════════════════════════════════════════════════════════
+' CONTROLLER LAYER
+' ════════════════════════════════════════════════════════════════════════════════════
 
-    class Attendance <<Entity>> {
-        -id: number
-        -attendanceStatus: AttendanceStatus
-        --
-        # Relationships
-        -session: Session
-        -user: User
-    }
-
-    class User <<Entity>> {
-        -id: number
-        -fullName: string
-        -phoneNumber: string
-        -email: string
-        -role: UserRole
-        --
-        # Relationships
-        -attendances: Attendance[]
-    }
-
-    class Court <<Entity>> {
-        -id: number
-        -name: string
-        -address: string
-        -phoneNumber: string
-        -pricePerHour: number
-        --
-        # Relationships
-        -courses: Course[]
-    }
+class SessionController {
 }
 
-package "DTOs" <<dto>> {
-    class SessionCalendarDto {
-        -id: number
-        -sessionNumber: number
-        -scheduleDate: Date
-        -startTime: string
-        -endTime: string
-        -status: SessionStatus
-        -durationInMinutes: number
-    }
-
-    class CalendarFilterDto {
-        -dateFrom?: Date
-        -dateTo?: Date
-        -status?: SessionStatus
-        -sortBy?: string
-    }
+class AttendanceController {
 }
 
-package "Enums" <<enum>> {
-    enum SessionStatus {
-        PENDING
-        SCHEDULED
-        IN_PROGRESS
-        COMPLETED
-        CANCELLED
-    }
+' ════════════════════════════════════════════════════════════════════════════════════
+' GUARD LAYER
+' ════════════════════════════════════════════════════════════════════════════════════
 
-    enum AttendanceStatus {
-        ATTENDED
-        ABSENT
-        EXCUSED
-    }
-
-    enum PickleballLevel {
-        BEGINNER
-        INTERMEDIATE
-        ADVANCED
-        PROFESSIONAL
-    }
-
-    enum CourseLearningFormat {
-        INDIVIDUAL
-        GROUP
-    }
-
-    enum CourseStatus {
-        PENDING_APPROVAL
-        APPROVED
-        REJECTED
-        CANCELLED
-        COMPLETED
-        FULL
-        READY_OPENED
-        ON_GOING
-    }
-
-    enum UserRole {
-        COACH
-        LEARNER
-        ADMIN
-    }
+class AuthGuard {
 }
 
-package "Controllers" <<controller>> {
-    class CourseController {
-        -courseService: CourseService
-        --
-        +findOne(id): Promise<Course>
-        +getCourseSessions(id, filter): Promise<SessionCalendarDto[]>
-        ...
-    }
+class RoleGuard {
 }
 
-package "Services" <<service>> {
-    class CourseService {
-        -courseRepository: Repository<Course>
-        -sessionRepository: Repository<Session>
-        -enrollmentRepository: Repository<Enrollment>
-        --
-        +findOne(id): Promise<Course>
-        +getCalendarView(courseId, filter): Promise<SessionCalendarDto[]>
-        +getSessionDetails(sessionId): Promise<Session>
-        ...
-    }
+' ════════════════════════════════════════════════════════════════════════════════════
+' DTO LAYER
+' ════════════════════════════════════════════════════════════════════════════════════
 
-    class SessionService {
-        -sessionRepository: Repository<Session>
-        --
-        +findSessionsByDateRange(courseId, from, to): Promise<Session[]>
-        ...
-    }
-
-    class CalendarService {
-        -sessionService: SessionService
-        --
-        +buildCalendarGrid(sessions): Promise<CalendarGrid>
-        +filterSessions(sessions, filter): Promise<Session[]>
-        ...
-    }
+class CompleteSessionDto {
 }
 
-' Relationships
-CourseController --> CourseService : uses
-CourseService --> Course : manages
-CourseService --> Session : manages
-CourseService --> CalendarService : uses
-CourseService --> SessionService : uses
-SessionService --> Session : manages
-CalendarService --> Session : processes
+class GetSessionForWeeklyCalendarRequestDto {
+}
 
-SessionCalendarDto --> Session : represents
-CalendarFilterDto --> Session : filters
-Session --> Course : belongs to
-Session --> Attendance : has many
-Attendance --> User : created by
-Course --> Court : uses
+' ════════════════════════════════════════════════════════════════════════════════════
+' SERVICE LAYER
+' ════════════════════════════════════════════════════════════════════════════════════
+
+class SessionService {
+}
+
+class AttendanceService {
+}
+
+class DataSource {
+}
+
+' ════════════════════════════════════════════════════════════════════════════════════
+' ENTITY LAYER
+' ════════════════════════════════════════════════════════════════════════════════════
+
+class Session {
+}
+
+class Attendance {
+}
+
+class Course {
+}
+
+class Schedule {
+}
+
+class Enrollment {
+}
+
+class User {
+}
+
+class LearnerProgress {
+}
+
+class SessionEarning {
+}
+
+' ════════════════════════════════════════════════════════════════════════════════════
+' RELATIONSHIPS
+' ════════════════════════════════════════════════════════════════════════════════════
+
+SessionController --> AuthGuard
+SessionController --> RoleGuard
+SessionController --> SessionService
+SessionController ..> CompleteSessionDto
+SessionController ..> GetSessionForWeeklyCalendarRequestDto
+
+AttendanceController --> AuthGuard
+AttendanceController --> AttendanceService
+
+SessionService --> DataSource
+SessionService --> Session
+SessionService --> Attendance
+SessionService --> LearnerProgress
+SessionService --> SessionEarning
+
+AttendanceService --> DataSource
+AttendanceService --> Attendance
+
+Session --> Course
+Session --> Schedule
+Session --> Attendance
+Session --> Enrollment
+
+Attendance --> Session
+Attendance --> User
 
 @enduml

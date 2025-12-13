@@ -2,80 +2,88 @@
 
 actor "Coach" as coach
 participant "Client" as client
-participant "Controller" as controller
-participant "Service" as service
-participant "Mail" as mail
-database "Database" as db
+participant "CoachController" as controller
+participant "CoachService" as service
+participant "UserRepository" as userRepo
+participant "BaseCredentialRepository" as credRepo
+participant "BunnyService" as bunny
+participant "JwtService" as jwt
+participant "MailService" as mail
+participant "TwilioService" as twilio
+participant "NotificationService" as notification
 
-coach -> client: 1. Submit coach registration
-client -> controller: 2. POST /coaches/register
+coach -> client: 1. Submit coach registration\n(fullName, email, phoneNumber, password,\nprovince, district, bio, specialties,\nteachingMethods, yearOfExperience, credentials)
+client -> controller: 2. POST /coaches/register\n(data, files)
 activate controller
 
-controller -> service: 3. registerCoach(data)
+controller -> service: 3. registerCoach(data, files)
 activate service
 
-alt Email/Phone exists
-    service --> controller: Conflict error
+service -> userRepo: 4. Check email exists
+activate userRepo
+userRepo --> service: User | null
+deactivate userRepo
+
+service -> userRepo: 5. Check phone exists
+activate userRepo
+userRepo --> service: User | null
+deactivate userRepo
+
+alt Email or Phone exists
+    service --> controller: BadRequestException
+    controller --> client: HTTP 400
 else Valid
-    service -> service: 4. Hash password
-    service -> db: 5. Create user + coach profile
-    activate db
-    db --> service: Created
-    deactivate db
-
-    service -> mail: 6. Send verification email
-    activate mail
-    mail --> service: Sent
-    deactivate mail
-
-    service --> controller: Success
+    service -> service: 6. Hash password (bcrypt)
+    
+    loop For each credential
+        service -> credRepo: 7. Find BaseCredential by ID
+        activate credRepo
+        credRepo --> service: BaseCredential
+        deactivate credRepo
+        
+        service -> bunny: 8. uploadToStorage(file)
+        activate bunny
+        bunny --> service: publicUrl
+        deactivate bunny
+    end
+    
+    service -> userRepo: 9. Create User + Coach + Credentials
+    activate userRepo
+    userRepo --> service: User created
+    deactivate userRepo
+    
+    opt If email provided
+        service -> jwt: 10. signAsync(payload)
+        activate jwt
+        jwt --> service: emailVerificationToken
+        deactivate jwt
+        
+        service -> mail: 11. sendMail(verificationLink)
+        activate mail
+        mail --> service: Sent
+        deactivate mail
+    end
+    
+    opt If phone provided
+        service -> twilio: 12. sendSMS(phoneNumber)
+        activate twilio
+        twilio --> service: SMS sent
+        deactivate twilio
+    end
+    
+    service -> notification: 13. sendNotificationToAdmins\n("New coach registered")
+    activate notification
+    notification --> service: Notification sent
+    deactivate notification
+    
+    service --> controller: CustomApiResponse(201)
 end
 
 deactivate service
 
-controller --> client: 7. HTTP 201
+controller --> client: 14. HTTP 201 Created
 deactivate controller
 
-client --> coach: 8. Confirmation message
-
-coach -> client: 9. Upload credentials (certificate image, dates)
-client -> controller: 10. POST /coaches/credentials
-activate controller
-
-controller -> service: 11. uploadCredential(data, file)
-activate service
-
-service -> db: 12. Create credential record
-activate db
-db --> service: Saved
-deactivate db
-
-service --> controller: Success
-deactivate service
-
-controller --> client: 13. HTTP 200
-deactivate controller
-
-client --> coach: 14. Credential uploaded
-
-coach -> client: 15. Click email verification link
-client -> controller: 16. GET /auth/verify-email?token=...
-activate controller
-
-controller -> service: 17. verifyEmail(token)
-activate service
-
-service -> db: 18. Mark email verified + activate
-activate db
-db --> service: Updated
-deactivate db
-
-service --> controller: Success
-deactivate service
-
-controller --> client: 19. Redirect
-deactivate controller
-
-client --> coach: 20. Ready for admin review
+client --> coach: 15. Registration successful\n(Check email/phone for verification)
 
 @enduml

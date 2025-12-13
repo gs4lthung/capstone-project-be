@@ -1,0 +1,50 @@
+@startuml RestoreCourt
+
+actor Admin
+participant CourtController
+participant AuthGuard
+participant RoleGuard
+participant CourtService
+participant DataSource
+
+Admin -> CourtController: PATCH /courts/:id/restore
+activate CourtController
+
+CourtController -> AuthGuard: validate JWT
+activate AuthGuard
+AuthGuard --> CourtController: valid
+deactivate AuthGuard
+
+CourtController -> RoleGuard: verify ADMIN role
+activate RoleGuard
+RoleGuard --> CourtController: authorized
+deactivate RoleGuard
+
+CourtController -> CourtService: restore(id)
+activate CourtService
+
+CourtService -> DataSource: BEGIN TRANSACTION
+activate DataSource
+
+DataSource -> DataSource: find court by id (withDeleted: true)
+DataSource -> DataSource: verify court exists
+DataSource -> DataSource: verify court is deleted (has deletedAt)
+DataSource -> DataSource: restore court (clear deletedAt)
+DataSource -> DataSource: COMMIT
+
+note right of DataSource
+  Restore soft-deleted court
+  Clears deletedAt timestamp
+  Court becomes visible again
+end note
+
+DataSource --> CourtService: success
+deactivate DataSource
+
+CourtService --> CourtController: CustomApiResponse (200)
+deactivate CourtService
+
+CourtController --> Admin: HTTP 200 OK
+deactivate CourtController
+
+@enduml

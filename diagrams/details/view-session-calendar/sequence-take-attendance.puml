@@ -1,0 +1,62 @@
+@startuml TakeAttendance
+
+actor Coach
+participant SessionController
+participant AuthGuard
+participant RoleGuard
+participant SessionService
+participant DataSource
+
+Coach -> SessionController: PATCH /sessions/:id/complete
+activate SessionController
+
+SessionController -> AuthGuard: validate JWT
+activate AuthGuard
+AuthGuard --> SessionController: valid
+deactivate AuthGuard
+
+SessionController -> RoleGuard: check COACH role
+activate RoleGuard
+RoleGuard --> SessionController: authorized
+deactivate RoleGuard
+
+SessionController -> SessionService: completeSession(id, data)
+activate SessionService
+
+SessionService -> DataSource: BEGIN TRANSACTION
+activate DataSource
+
+DataSource -> DataSource: find session with course/enrollments
+DataSource -> DataSource: verify coach is course creator
+DataSource -> DataSource: validate session status (must be SCHEDULED)
+
+note right of DataSource
+  data.attendances: [{learnerId, status}]
+end note
+
+DataSource -> DataSource: validate attendance count matches enrollments
+
+loop for each attendance in data.attendances
+    DataSource -> DataSource: create Attendance record
+    
+    alt status = PRESENT
+        DataSource -> DataSource: increment LearnerProgress.sessionsCompleted
+        DataSource -> DataSource: check achievement progress
+    end
+end
+
+DataSource -> DataSource: create SessionEarning for coach
+DataSource -> DataSource: update session status to COMPLETED
+DataSource -> DataSource: update course overall progress
+DataSource -> DataSource: COMMIT
+
+DataSource --> SessionService: success
+deactivate DataSource
+
+SessionService --> SessionController: CustomApiResponse (OK)
+deactivate SessionService
+
+SessionController --> Coach: HTTP 200 completed
+deactivate SessionController
+
+@enduml

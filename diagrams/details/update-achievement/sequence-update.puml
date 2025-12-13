@@ -1,0 +1,122 @@
+@startuml UpdateAchievementSequence
+
+actor "Admin" as admin
+participant "AchievementController" as controller
+participant "AuthGuard" as authGuard
+participant "RoleGuard" as roleGuard
+participant "AchievementService" as service
+participant "BunnyService" as bunny
+database "DataSource" as db
+
+== Update Event Count Achievement ==
+
+admin -> controller: PUT /achievements/event-count/:id\n(UpdateEventCountAchievementDto, icon)
+activate controller
+
+controller -> authGuard: canActivate
+authGuard --> controller: authenticated
+
+controller -> roleGuard: canActivate
+roleGuard --> controller: ADMIN role
+
+controller -> service: updateEventCount(id, data, icon)
+activate service
+
+service -> db: find achievement by ID
+activate db
+db --> service: Achievement
+deactivate db
+
+alt icon file provided
+    service -> bunny: uploadToStorage(icon)
+    activate bunny
+    bunny --> service: new iconUrl
+    deactivate bunny
+end
+
+service -> db: UPDATE achievement\nwith new data
+activate db
+db --> service: updated
+deactivate db
+
+service --> controller: CustomApiResponse(success)
+deactivate service
+
+controller --> admin: HTTP 200 {message}
+deactivate controller
+
+== Update Streak Achievement ==
+
+admin -> controller: PUT /achievements/streak/:id\n(UpdateStreakAchievementDto, icon)
+activate controller
+
+controller -> authGuard: canActivate
+authGuard --> controller: authenticated
+
+controller -> roleGuard: canActivate
+roleGuard --> controller: ADMIN role
+
+controller -> service: updateStreak(id, data, icon)
+activate service
+
+service -> db: find achievement by ID
+activate db
+db --> service: Achievement
+deactivate db
+
+alt icon file provided
+    service -> bunny: uploadToStorage(icon)
+    activate bunny
+    bunny --> service: new iconUrl
+    deactivate bunny
+end
+
+service -> db: UPDATE achievement\nwith new data
+activate db
+db --> service: updated
+deactivate db
+
+service --> controller: CustomApiResponse(success)
+deactivate service
+
+controller --> admin: HTTP 200 {message}
+deactivate controller
+
+== Update Property Check Achievement ==
+
+admin -> controller: PUT /achievements/property-check/:id\n(UpdatePropertyCheckAchievementDto, icon)
+activate controller
+
+controller -> authGuard: canActivate
+authGuard --> controller: authenticated
+
+controller -> roleGuard: canActivate
+roleGuard --> controller: ADMIN role
+
+controller -> service: updatePropertyCheck(id, data, icon)
+activate service
+
+service -> db: find achievement by ID
+activate db
+db --> service: Achievement
+deactivate db
+
+alt icon file provided
+    service -> bunny: uploadToStorage(icon)
+    activate bunny
+    bunny --> service: new iconUrl
+    deactivate bunny
+end
+
+service -> db: UPDATE achievement\nwith new data
+activate db
+db --> service: updated
+deactivate db
+
+service --> controller: CustomApiResponse(success)
+deactivate service
+
+controller --> admin: HTTP 200 {message}
+deactivate controller
+
+@enduml

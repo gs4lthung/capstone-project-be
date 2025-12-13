@@ -2,58 +2,50 @@
 
 actor "Admin" as admin
 participant "Client" as client
-participant "Controller" as controller
-participant "Service" as service
-database "Database" as db
+participant "ConfigurationController" as controller
+participant "AuthGuard" as authGuard
+participant "RoleGuard" as roleGuard
+participant "ConfigurationService" as service
+participant "ConfigurationRepository" as repo
 
-admin -> client: 1. Open configuration panel
-client -> controller: 2. GET /configurations
+admin -> client: 1. Update configuration value
+client -> controller: 2. PUT /configurations/:id\n(data: UpdateConfigurationDto)
 activate controller
 
-controller -> service: 3. findAll()
+controller -> authGuard: 3. Validate token
+activate authGuard
+authGuard --> controller: User authenticated
+deactivate authGuard
+
+controller -> roleGuard: 4. Check ADMIN role
+activate roleGuard
+roleGuard --> controller: Role authorized
+deactivate roleGuard
+
+controller -> service: 5. update(id, data)
 activate service
 
-service -> db: 4. Query all configurations
-activate db
-db --> service: Configurations list
-deactivate db
-
-service --> controller: Response
-deactivate service
-
-controller --> client: 5. HTTP 200
-deactivate controller
-
-client --> admin: 6. Display configurations
-
-admin -> client: 7. Update configuration value
-client -> controller: 8. PUT /configurations/:id
-activate controller
-
-controller -> service: 9. update(id, data)
-activate service
+service -> repo: 6. Find configuration by id
+activate repo
+repo --> service: Configuration | null
+deactivate repo
 
 alt Configuration not found
-    service --> controller: Not Found error
+    service --> controller: HTTP 404 Not Found
 else Valid
-    service -> db: 10. Find configuration
-    activate db
-    db --> service: Configuration
-    deactivate db
+    service -> repo: 7. Update configuration\n(set updatedBy = current user)
+    activate repo
+    repo --> service: Updated
+    deactivate repo
 
-    service -> db: 11. Update configuration + updatedBy
-    activate db
-    db --> service: Updated
-    deactivate db
-
-    service --> controller: Success
+    service --> controller: CustomApiResponse(200)
 end
 
 deactivate service
 
-controller --> client: 12. HTTP 200
+controller --> client: 8. HTTP 200
 deactivate controller
 
-client --> admin: 13. Configuration updated
+client --> admin: 9. Configuration updated successfully
 
 @enduml

@@ -1,0 +1,25 @@
+@startuml ViewAllCourts
+
+actor User
+participant CourtController
+participant CourtService
+participant DataSource
+
+User -> CourtController: GET /courts
+activate CourtController
+
+CourtController -> CourtService: findAll(pagination, sort, filter)
+activate CourtService
+
+CourtService -> DataSource: query courts with pagination
+activate DataSource
+DataSource --> CourtService: paginated courts
+deactivate DataSource
+
+CourtService --> CourtController: PaginateObject<Court>
+deactivate CourtService
+
+CourtController --> User: HTTP 200 with courts
+deactivate CourtController
+
+@enduml

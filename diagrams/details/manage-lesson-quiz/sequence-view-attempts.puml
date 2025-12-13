@@ -1,0 +1,41 @@
+@startuml ViewQuizAttempts
+
+actor "Learner" as learner
+participant "Web Browser" as client
+participant "QuizController" as controller
+participant "QuizService" as service
+participant "QuizAttemptRepository" as attemptRepo
+database "PostgreSQL" as db
+
+== View Quiz Attempts ==
+
+learner -> client: 1. Click "View Quiz Attempts"
+client --> learner: 2. Show attempts list UI
+
+learner -> client: 3. Request attempts for quiz
+client -> controller: 4. GET /quizzes/:id/attempts
+activate controller
+
+controller -> controller: 5. Validate request (auth, role)
+
+controller -> service: 6. getQuizAttempts(quizId, userId)
+activate service
+
+service -> attemptRepo: 7. find({ quizId, userId })
+activate attemptRepo
+attemptRepo -> db: Query attempts
+activate db
+db --> attemptRepo: Attempts data
+deactivate db
+attemptRepo --> service: Attempts found
+deactivate attemptRepo
+
+service --> controller: Attempts list
+deactivate service
+
+controller --> client: 8. HTTP 200 OK (attempts)
+deactivate controller
+
+client --> learner: 9. Display attempts list
+
+@enduml

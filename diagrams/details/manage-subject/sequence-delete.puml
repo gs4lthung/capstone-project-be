@@ -1,0 +1,46 @@
+@startuml ManageSubjectDeleteDiagram
+
+actor Coach
+participant AuthGuard
+participant RoleGuard
+participant SubjectController
+participant SubjectService
+database DataSource
+
+== Delete Subject (Soft Delete) ==
+
+Coach -> SubjectController: DELETE /subjects/:id
+activate SubjectController
+
+SubjectController -> AuthGuard: validate token
+activate AuthGuard
+AuthGuard --> SubjectController: valid
+deactivate AuthGuard
+
+SubjectController -> RoleGuard: check COACH role
+activate RoleGuard
+RoleGuard --> SubjectController: authorized
+deactivate RoleGuard
+
+SubjectController -> SubjectService: delete(id)
+activate SubjectService
+
+SubjectService -> DataSource: SELECT subject
+activate DataSource
+DataSource --> SubjectService: subject found
+deactivate DataSource
+
+SubjectService -> SubjectService: verify ownership
+
+SubjectService -> DataSource: UPDATE subject SET deletedAt = NOW()
+activate DataSource
+DataSource --> SubjectService: soft deleted
+deactivate DataSource
+
+SubjectService --> SubjectController: success
+deactivate SubjectService
+
+SubjectController --> Coach: 200 OK
+deactivate SubjectController
+
+@enduml

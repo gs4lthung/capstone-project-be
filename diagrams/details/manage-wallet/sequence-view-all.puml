@@ -1,0 +1,31 @@
+@startuml ViewAllWallets
+
+actor User
+participant WalletController
+participant AuthGuard
+participant WalletService
+participant DataSource
+
+User -> WalletController: GET /wallets
+activate WalletController
+
+WalletController -> AuthGuard: validate JWT
+activate AuthGuard
+AuthGuard --> WalletController: valid
+deactivate AuthGuard
+
+WalletController -> WalletService: findAll(pagination, sort, filter)
+activate WalletService
+
+WalletService -> DataSource: query wallets with pagination
+activate DataSource
+DataSource --> WalletService: paginated wallets
+deactivate DataSource
+
+WalletService --> WalletController: PaginateObject<Wallet>
+deactivate WalletService
+
+WalletController --> User: HTTP 200 with wallets
+deactivate WalletController
+
+@enduml

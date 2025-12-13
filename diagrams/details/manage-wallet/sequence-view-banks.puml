@@ -1,0 +1,25 @@
+@startuml ViewBanks
+
+actor User
+participant WalletController
+participant WalletService
+participant DataSource
+
+User -> WalletController: GET /wallets/banks
+activate WalletController
+
+WalletController -> WalletService: findBanks()
+activate WalletService
+
+WalletService -> DataSource: find all banks
+activate DataSource
+DataSource --> WalletService: banks list
+deactivate DataSource
+
+WalletService --> WalletController: Bank[]
+deactivate WalletService
+
+WalletController --> User: HTTP 200 with banks
+deactivate WalletController
+
+@enduml

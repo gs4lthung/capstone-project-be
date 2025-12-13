@@ -59,7 +59,10 @@ export class FileUtils {
           destination = `uploads/users/${customReq.user.id}/videos/thumbnails`;
           break;
         case 'credential_image':
-          destination = `uploads/users/${customReq.user.id}/credentials`;
+          destination = `uploads/credentials/images`;
+          break;
+        case 'credential_images':
+          destination = `uploads/credentials/images`;
           break;
         case 'icon':
           destination = `uploads/icons`;
@@ -104,6 +107,9 @@ export class FileUtils {
           fileName = `video_thumbnail_${baseName}${extension}`;
           break;
         case 'credential_image':
+          fileName = `credential_image_${baseName}${extension}`;
+          break;
+        case 'credential_images':
           fileName = `credential_image_${baseName}${extension}`;
           break;
         case 'icon':

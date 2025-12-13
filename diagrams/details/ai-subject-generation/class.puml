@@ -1,0 +1,84 @@
+@startuml AiSubjectGenerationClassDiagram
+!theme plain
+skinparam classBackgroundColor #f0f0f0
+skinparam classBorderColor #333
+skinparam arrowColor #333
+
+left to right direction
+
+' ════════════════════════════════════════════════════════════════════════════════════
+' CONTROLLER LAYER
+' ════════════════════════════════════════════════════════════════════════════════════
+
+class AiSubjectGenerationController {
+
+}
+
+' ════════════════════════════════════════════════════════════════════════════════════
+' GUARD LAYER
+' ════════════════════════════════════════════════════════════════════════════════════
+
+class AuthGuard {
+
+}
+
+' ════════════════════════════════════════════════════════════════════════════════════
+' DTO LAYER
+' ════════════════════════════════════════════════════════════════════════════════════
+
+class UpdateAiGeneratedSubjectDto {
+
+}
+
+' ════════════════════════════════════════════════════════════════════════════════════
+' SERVICE LAYER
+' ════════════════════════════════════════════════════════════════════════════════════
+
+class AiSubjectGenerationService {
+
+}
+
+class AiGeminiService {
+
+}
+
+' ════════════════════════════════════════════════════════════════════════════════════
+' ENTITY LAYER
+' ════════════════════════════════════════════════════════════════════════════════════
+
+class AiSubjectGeneration {
+
+}
+
+class Subject {
+
+}
+
+class User {
+
+}
+
+class Lesson {
+
+}
+
+' ════════════════════════════════════════════════════════════════════════════════════
+' RELATIONSHIPS
+' ════════════════════════════════════════════════════════════════════════════════════
+
+' Controller relationships
+AiSubjectGenerationController --> AuthGuard: validates
+AiSubjectGenerationController --> AiSubjectGenerationService: uses
+AiSubjectGenerationController --> UpdateAiGeneratedSubjectDto: receives
+
+' Service relationships
+AiSubjectGenerationService --> AiGeminiService: uses
+AiSubjectGenerationService --> AiSubjectGeneration: manages
+AiSubjectGenerationService --> Subject: creates from AI
+
+' Entity relationships
+AiSubjectGeneration --> User: requestedBy
+AiSubjectGeneration --> Subject: createdSubject
+Subject --> Lesson: has many
+
+@enduml

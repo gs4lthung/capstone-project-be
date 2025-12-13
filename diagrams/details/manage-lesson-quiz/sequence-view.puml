@@ -1,36 +1,57 @@
 @startuml ManageLessonQuizViewSequence
 
-actor "Coach" as coach
-participant "Web Browser" as client
-participant "QuizController" as controller
-participant "QuizService" as service
-participant "QuizRepository" as quizRepo
-database "PostgreSQL" as db
+actor Coach
+participant QuizController
+participant AuthGuard
+participant QuizService
+participant DataSource
 
 == View Quiz by Lesson ==
 
-coach -> client: 1. View lesson
-client -> controller: 2. GET /lessons/:lessonId/quiz
-activate controller
+Coach -> QuizController: GET /quizzes/lessons/:id
+activate QuizController
 
-controller -> service: 3. findByLessonId(lessonId)
-activate service
+QuizController -> AuthGuard: validate JWT
+activate AuthGuard
+AuthGuard --> QuizController: valid
+deactivate AuthGuard
 
-service -> quizRepo: 4. findOne({ lesson: lessonId }, relations: ['questions.options'])
-activate quizRepo
-quizRepo -> db: Query quiz with questions & options
-activate db
-db --> quizRepo: Quiz data
-deactivate db
-quizRepo --> service: Quiz found
-deactivate quizRepo
+QuizController -> QuizService: getQuizByLesson(lessonId)
+activate QuizService
 
-service --> controller: Quiz data
-deactivate service
+QuizService -> DataSource: query quiz by lesson with questions/options
+activate DataSource
+DataSource --> QuizService: quiz data
+deactivate DataSource
 
-controller --> client: 5. HTTP 200 OK
-deactivate controller
+QuizService --> QuizController: quiz with questions
+deactivate QuizService
 
-client --> coach: 6. Display quiz with questions & options
+QuizController --> Coach: HTTP 200 with quiz
+deactivate QuizController
+
+== View Quiz by Session ==
+
+Coach -> QuizController: GET /quizzes/sessions/:id
+activate QuizController
+
+QuizController -> AuthGuard: validate JWT
+activate AuthGuard
+AuthGuard --> QuizController: valid
+deactivate AuthGuard
+
+QuizController -> QuizService: getQuizBySession(sessionId)
+activate QuizService
+
+QuizService -> DataSource: query quiz by session with questions/options
+activate DataSource
+DataSource --> QuizService: quiz data
+deactivate DataSource
+
+QuizService --> QuizController: quiz with questions
+deactivate QuizService
+
+QuizController --> Coach: HTTP 200 with quiz
+deactivate QuizController
 
 @enduml

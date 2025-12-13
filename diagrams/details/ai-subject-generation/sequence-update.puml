@@ -1,0 +1,48 @@
+@startuml AiSubjectGenerationUpdateDiagram
+
+actor Coach
+participant AuthGuard
+participant AiSubjectGenerationController
+participant AiSubjectGenerationService
+database DataSource
+
+== Update AI Generation ==
+
+Coach -> AiSubjectGenerationController: PUT /ai-subject-generations/:id (data)
+activate AiSubjectGenerationController
+
+AiSubjectGenerationController -> AuthGuard: validate token
+activate AuthGuard
+AuthGuard --> AiSubjectGenerationController: valid
+deactivate AuthGuard
+
+AiSubjectGenerationController -> AiSubjectGenerationService: update(id, data)
+activate AiSubjectGenerationService
+
+AiSubjectGenerationService -> DataSource: SELECT ai_subject_generation with requestedBy and createdSubject
+activate DataSource
+DataSource --> AiSubjectGenerationService: AI generation found
+deactivate DataSource
+
+AiSubjectGenerationService -> AiSubjectGenerationService: verify ownership (requestedBy == currentUser)
+
+alt Status is USED
+  AiSubjectGenerationService --> AiSubjectGenerationController: error "Already used, cannot edit"
+  AiSubjectGenerationController --> Coach: 400 Bad Request
+else Status is PENDING
+  AiSubjectGenerationService -> AiSubjectGenerationService: validate quiz questions (exactly 1 correct answer each)
+  
+  AiSubjectGenerationService -> DataSource: UPDATE ai_subject_generation SET generatedData
+  activate DataSource
+  DataSource --> AiSubjectGenerationService: updated
+  deactivate DataSource
+  
+  AiSubjectGenerationService --> AiSubjectGenerationController: success
+  deactivate AiSubjectGenerationService
+  
+  AiSubjectGenerationController --> Coach: 200 OK
+end
+
+deactivate AiSubjectGenerationController
+
+@enduml
