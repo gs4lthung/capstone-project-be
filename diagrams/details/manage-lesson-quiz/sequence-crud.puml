@@ -1,0 +1,31 @@
+@startuml ManageLessonQuizViewSequence
+
+actor "Coach" as coach
+participant "Client" as client
+participant "Controller" as controller
+participant "Service" as service
+database "Database" as db
+
+== View Quiz by Lesson ==
+
+coach -> client: 1. View lesson
+client -> controller: 2. GET /lessons/:lessonId/quiz
+activate controller
+
+controller -> service: 3. findByLessonId(lessonId)
+activate service
+
+service -> db: 4. Query quiz with questions & options
+activate db
+db --> service: Quiz data
+deactivate db
+
+service --> controller: Quiz data
+deactivate service
+
+controller --> client: 5. HTTP 200 OK
+deactivate controller
+
+client --> coach: 6. Display quiz with questions & options
+
+@enduml

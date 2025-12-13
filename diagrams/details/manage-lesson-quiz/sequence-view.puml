@@ -1,0 +1,36 @@
+@startuml ManageLessonQuizViewSequence
+
+actor "Coach" as coach
+participant "Web Browser" as client
+participant "QuizController" as controller
+participant "QuizService" as service
+participant "QuizRepository" as quizRepo
+database "PostgreSQL" as db
+
+== View Quiz by Lesson ==
+
+coach -> client: 1. View lesson
+client -> controller: 2. GET /lessons/:lessonId/quiz
+activate controller
+
+controller -> service: 3. findByLessonId(lessonId)
+activate service
+
+service -> quizRepo: 4. findOne({ lesson: lessonId }, relations: ['questions.options'])
+activate quizRepo
+quizRepo -> db: Query quiz with questions & options
+activate db
+db --> quizRepo: Quiz data
+deactivate db
+quizRepo --> service: Quiz found
+deactivate quizRepo
+
+service --> controller: Quiz data
+deactivate service
+
+controller --> client: 5. HTTP 200 OK
+deactivate controller
+
+client --> coach: 6. Display quiz with questions & options
+
+@enduml

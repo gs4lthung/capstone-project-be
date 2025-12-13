@@ -1,0 +1,129 @@
+@startuml ManageSessionQuizClassDiagram
+!theme plain
+skinparam classBackgroundColor #f0f0f0
+skinparam classBorderColor #333
+skinparam arrowColor #333
+
+
+' ════════════════════════════════════════════════════════════════════════════════════
+' CONTROLLER LAYER
+' ════════════════════════════════════════════════════════════════════════════════════
+
+class QuizController {
+  --
+}
+
+' ════════════════════════════════════════════════════════════════════════════════════
+' SERVICE LAYER
+' ════════════════════════════════════════════════════════════════════════════════════
+
+class QuizService {
+  --
+}
+
+' ════════════════════════════════════════════════════════════════════════════════════
+' ENTITY LAYER
+' ════════════════════════════════════════════════════════════════════════════════════
+
+class Quiz {
+  --
+}
+
+class Question {
+  --
+}
+
+class QuestionOption {
+  --
+}
+
+class Session {
+  --
+}
+
+class Course {
+  --
+}
+
+class User {
+  --
+}
+
+' ════════════════════════════════════════════════════════════════════════════════════
+' DTO LAYER
+' ════════════════════════════════════════════════════════════════════════════════════
+
+class UpdateQuizDto {
+  --
+}
+
+class UpdateQuestionDto {
+  --
+}
+
+class UpdateQuestionOptionDto {
+  --
+}
+
+' ════════════════════════════════════════════════════════════════════════════════════
+' ENUMS
+' ════════════════════════════════════════════════════════════════════════════════════
+
+enum Role {
+  LEARNER
+  COACH
+  ADMIN
+  STAFF
+}
+
+enum SessionStatus {
+  SCHEDULED
+  ONGOING
+  COMPLETED
+  CANCELLED
+}
+
+enum CourseStatus {
+  PENDING_APPROVAL
+  APPROVED
+  REJECTED
+  CANCELLED
+  COMPLETED
+  FULL
+  READY_OPENED
+  ON_GOING
+}
+
+' ════════════════════════════════════════════════════════════════════════════════════
+' INFRASTRUCTURE
+' ════════════════════════════════════════════════════════════════════════════════════
+
+
+' ════════════════════════════════════════════════════════════════════════════════════
+' RELATIONSHIPS
+' ════════════════════════════════════════════════════════════════════════════════════
+
+' Presentation to Controller
+
+
+' Controller to Service
+QuizController --> QuizService: uses
+
+' Service to Repository & Entity
+QuizService --> Quiz: manages
+QuizService --> Session: validates
+
+' Entity Relationships
+Quiz "1" --> "many" Question: contains
+Question "1" --> "many" QuestionOption: has
+Quiz "many" --> "1" User: createdBy
+Session "1" --> "1" Quiz: has
+Course "1" --> "many" Session: contains
+Course "many" --> "1" User: coach
+
+' DTO usage
+QuizController ..> UpdateQuizDto: uses
+UpdateQuizDto "1" --> "many" UpdateQuestionDto: contains
+UpdateQuestionDto "1" --> "many" UpdateQuestionOptionDto: has
+
+@enduml

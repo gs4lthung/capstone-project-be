@@ -1,0 +1,76 @@
+# Diagrams Details Index
+
+This index links to each feature’s class description, class specification, and diagrams.
+
+- Login
+  - Description: `login/CLASS_DESCRIPTION.md`
+  - Spec: `login/CLASS_SPEC.md`
+  - Diagrams: `login/class.puml`, `login/sequence.puml`
+- Register
+  - Description: `register/CLASS_DESCRIPTION.md`
+  - Spec: `register/CLASS_SPEC.md`
+  - Diagrams: `register/class.puml`, `register/sequence.puml`
+- Approve Course (FUTURE)
+  - Description: `approve-course/CLASS_DESCRIPTION.md`
+  - Spec: `approve-course/CLASS_SPEC.md`
+  - Diagrams: `approve-course/class.puml`, `approve-course/sequence.puml`
+- Manage Course
+  - Description: `manage-course/CLASS_DESCRIPTION.md`
+  - Spec: `manage-course/CLASS_SPEC.md`
+  - Diagrams: `manage-course/class-diagram.puml`, `manage-course/sequence-crud.puml`
+- Manage Lesson
+  - Description: `manage-lesson/CLASS_DESCRIPTION.md`
+  - Spec: `manage-lesson/CLASS_SPEC.md`
+  - Diagrams: `manage-lesson/class.puml`, `manage-lesson/sequence-crud.puml`
+- Manage Lesson Quiz
+  - Description: `manage-lesson-quiz/CLASS_DESCRIPTION.md`
+  - Spec: `manage-lesson-quiz/CLASS_SPEC.md`
+  - Diagrams: `manage-lesson-quiz/class.puml`, `manage-lesson-quiz/sequence.puml`
+- Manage Lesson Video
+  - Description: `manage-lesson-video/CLASS_DESCRIPTION.md`
+  - Spec: `manage-lesson-video/CLASS_SPEC.md`
+  - Diagrams: `manage-lesson-video/class.puml`, `manage-lesson-video/sequence.puml`
+- Manage Session Quiz
+  - Description: `manage-session-quiz/CLASS_DESCRIPTION.md`
+  - Spec: `manage-session-quiz/CLASS_SPEC.md`
+  - Diagrams: `manage-session-quiz/class.puml`, `manage-session-quiz/sequence.puml`
+- Manage Subject
+  - Description: `manage-subject/CLASS_DESCRIPTION.md`
+  - Spec: `manage-subject/CLASS_SPEC.md`
+  - Diagrams: `manage-subject/class.puml`, `manage-subject/sequence.puml`
+- Register Coach
+  - Description: `register-coach/CLASS_DESCRIPTION.md`
+  - Spec: `register-coach/CLASS_SPEC.md`
+  - Diagrams: `register-coach/class.puml`, `register-coach/sequence.puml`
+- Take Attendance
+  - Description: `take-attendance/CLASS_DESCRIPTION.md`
+  - Spec: `take-attendance/CLASS_SPEC.md`
+  - Diagrams: `take-attendance/class.puml`, `take-attendance/sequence.puml`
+- Update Achievement
+  - Description: `update-achievement/CLASS_DESCRIPTION.md`
+  - Spec: `update-achievement/CLASS_SPEC.md`
+  - Diagrams: `update-achievement/class.puml`, `update-achievement/sequence.puml`
+- Update Coach Profile
+  - Description: `update-coach-profile/CLASS_DESCRIPTION.md`
+  - Spec: `update-coach-profile/CLASS_SPEC.md`
+  - Diagrams: `update-coach-profile/class.puml`, `update-coach-profile/sequence.puml`
+- Update Configuration
+  - Description: `update-configuration/CLASS_DESCRIPTION.md`
+  - Spec: `update-configuration/CLASS_SPEC.md`
+  - Diagrams: `update-configuration/class.puml`, `update-configuration/sequence.puml`
+- Update Session Calendar
+  - Description: `update-session-calendar/CLASS_DESCRIPTION.md`
+  - Spec: `update-session-calendar/CLASS_SPEC.md`
+  - Diagrams: `update-session-calendar/class.puml`, `update-session-calendar/sequence.puml`
+- Verify Coach
+  - Description: `verify-coach/CLASS_DESCRIPTION.md`
+  - Spec: `verify-coach/CLASS_SPEC.md`
+  - Diagrams: `verify-coach/verification-state.puml`, `verify-coach/verification-sequence.puml`
+- View Session Calendar
+  - Description: `view-session-calendar/CLASS_DESCRIPTION.md`
+  - Spec: `view-session-calendar/CLASS_SPEC.md`
+  - Diagrams: `view-session-calendar/class.puml`, `view-session-calendar/sequence.puml`
+- Coach Verification Flow
+  - Description: `coach-verification/CLASS_DESCRIPTION.md`
+  - Spec: `coach-verification/CLASS_SPEC.md`
+  - Diagrams: `coach-verification/verification-state.puml`, `coach-verification/verification-sequence.puml`
