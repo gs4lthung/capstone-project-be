@@ -167,7 +167,7 @@ export class CourseService extends BaseTypeOrmService<Course> {
       const course = await queryBuilder.getOne();
       if (!course) throw new BadRequestException('Course not found');
 
-      return course;
+    return course;
     });
   }
 
@@ -180,7 +180,7 @@ export class CourseService extends BaseTypeOrmService<Course> {
     district?: number,
   ): Promise<PaginateObject<Course>> {
     return await this.datasource.transaction(async (manager) => {
-      const offset = (page - 1) * size;
+    const offset = (page - 1) * size;
 
       const queryBuilder = manager
         .getRepository(Course)
@@ -198,9 +198,9 @@ export class CourseService extends BaseTypeOrmService<Course> {
 
       queryBuilder.where('course.status IN (:...statuses)', {
         statuses: [
-          CourseStatus.APPROVED,
-          CourseStatus.READY_OPENED,
-          CourseStatus.FULL,
+        CourseStatus.APPROVED,
+        CourseStatus.READY_OPENED,
+        CourseStatus.FULL,
         ],
       });
 
@@ -212,17 +212,17 @@ export class CourseService extends BaseTypeOrmService<Course> {
         queryBuilder.andWhere('course.level = :level', { level });
       }
 
-      if (province) {
+    if (province) {
         queryBuilder.andWhere('province.id = :provinceId', {
           provinceId: province,
         });
-      }
+    }
 
-      if (district) {
+    if (district) {
         queryBuilder.andWhere('district.id = :districtId', {
           districtId: district,
         });
-      }
+    }
 
       queryBuilder.skip(offset).take(size);
 
@@ -271,15 +271,15 @@ export class CourseService extends BaseTypeOrmService<Course> {
 
       const [courses, total] = await queryBuilder.getManyAndCount();
 
-      const result = new PaginateObject<Course>();
-      Object.assign(result, {
-        items: courses,
-        page,
-        pageSize: size,
-        total,
-      });
+    const result = new PaginateObject<Course>();
+    Object.assign(result, {
+      items: courses,
+      page,
+      pageSize: size,
+      total,
+    });
 
-      return result;
+    return result;
     });
   }
 
@@ -288,7 +288,7 @@ export class CourseService extends BaseTypeOrmService<Course> {
     size: number = 10,
   ): Promise<PaginateObject<Course>> {
     return await this.datasource.transaction(async (manager) => {
-      const offset = (page - 1) * size;
+    const offset = (page - 1) * size;
 
       const queryBuilder = manager
         .getRepository(Course)
@@ -335,14 +335,14 @@ export class CourseService extends BaseTypeOrmService<Course> {
 
       const [courses, total] = await queryBuilder.getManyAndCount();
 
-      const result = new PaginateObject<Course>();
-      Object.assign(result, {
-        items: courses,
-        page,
-        pageSize: size,
-        total,
-      });
-      return result;
+    const result = new PaginateObject<Course>();
+    Object.assign(result, {
+      items: courses,
+      page,
+      pageSize: size,
+      total,
+    });
+    return result;
     });
   }
 
@@ -614,7 +614,7 @@ export class CourseService extends BaseTypeOrmService<Course> {
             ) &&
             s1 !== s2
           ) {
-            throw new BadRequestException(
+        throw new BadRequestException(
               `Lịch học bị trùng: ${s1.dayOfWeek} ${s1.startTime} - ${s1.endTime}`,
             );
           }
@@ -780,55 +780,55 @@ export class CourseService extends BaseTypeOrmService<Course> {
         throw new BadRequestException('Khóa học chưa có buổi học nào');
 
       if (request.type === RequestType.COURSE_APPROVAL) {
-        if (
-          request.metadata.details.schedules &&
-          request.metadata.details.schedules.length > 0
-        ) {
-          const sessions =
-            await this.sessionService.generateSessionsFromSchedules(
-              course,
-              request.metadata.details.schedules,
-            );
-          for (const lesson of course.subject.lessons) {
+      if (
+        request.metadata.details.schedules &&
+        request.metadata.details.schedules.length > 0
+      ) {
+        const sessions =
+          await this.sessionService.generateSessionsFromSchedules(
+            course,
+            request.metadata.details.schedules,
+          );
+        for (const lesson of course.subject.lessons) {
             const session = sessions.find(
               (ses) => ses.lesson && ses.lesson.id === lesson.id,
             );
-            if (session) {
+          if (session) {
               if (lesson.video) {
                 delete lesson.video.id;
                 session.video = {
                   ...lesson.video,
-                  status: CoachVideoStatus.READY,
-                  lesson: null,
-                  session: session,
+                status: CoachVideoStatus.READY,
+                lesson: null,
+                session: session,
                   uploadedBy: course.createdBy,
                 };
-              }
+            }
 
               if (lesson.quiz) {
                 delete lesson.quiz.id;
                 if (lesson.quiz.questions) {
                   for (const question of lesson.quiz.questions) {
-                    delete question.id;
+                delete question.id;
                     if (question.options) {
-                      for (const option of question.options) {
-                        delete option.id;
-                      }
-                    }
+                for (const option of question.options) {
+                  delete option.id;
+                }
+              }
                   }
                 }
                 session.quiz = {
                   ...lesson.quiz,
-                  lesson: null,
-                  session: session,
+                lesson: null,
+                session: session,
                   createdBy: course.createdBy,
                 };
-              }
             }
           }
-
-          await manager.getRepository(Session).save(sessions);
         }
+
+        await manager.getRepository(Session).save(sessions);
+      }
       }
 
       course.status = CourseStatus.APPROVED;
@@ -1004,11 +1004,11 @@ export class CourseService extends BaseTypeOrmService<Course> {
           course.status = CourseStatus.APPROVED;
           break;
         case CourseLearningFormat.GROUP:
-          if (
-            course.currentParticipants >= course.minParticipants &&
-            course.currentParticipants < course.maxParticipants
-          ) {
-            course.status = CourseStatus.READY_OPENED;
+      if (
+        course.currentParticipants >= course.minParticipants &&
+        course.currentParticipants < course.maxParticipants
+      ) {
+        course.status = CourseStatus.READY_OPENED;
             for (const enr of course.enrollments) {
               if (
                 enr.status === EnrollmentStatus.PENDING_GROUP &&
@@ -1018,8 +1018,8 @@ export class CourseService extends BaseTypeOrmService<Course> {
                 await this.enrollmentRepository.save(enr);
               }
             }
-          } else if (course.currentParticipants >= course.maxParticipants) {
-            course.status = CourseStatus.FULL;
+      } else if (course.currentParticipants >= course.maxParticipants) {
+        course.status = CourseStatus.FULL;
             for (const enr of course.enrollments) {
               if (
                 enr.status === EnrollmentStatus.PENDING_GROUP &&
