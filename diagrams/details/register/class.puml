@@ -1,5 +1,8 @@
 @startuml RegisterClassDiagram
 !theme plain
+skinparam linetype ortho
+skinparam nodesep 80
+skinparam ranksep 80
 skinparam classBackgroundColor #f0f0f0
 skinparam classBorderColor #333
 skinparam arrowColor #333
@@ -64,16 +67,15 @@ class ConfigService {
 ' RELATIONSHIPS
 ' ════════════════════════════════════════════════════════════════════════════════════
 
-AuthController --> AuthService: delegates
 
-AuthService --> User: creates/updates
-AuthService --> JwtService: generates tokens
-AuthService --> MailService: sends emails
-AuthService --> TwilioService: sends SMS
-AuthService --> ConfigService: gets config
-
-User --> Role: belongs to
-User --> Learner: has_one
-User --> Wallet: has_one
+AuthController -- AuthService
+AuthService -- User
+AuthService -- JwtService
+AuthService -- MailService
+AuthService -- TwilioService
+AuthService -- ConfigService
+User -- Role
+User -- Learner
+User -- Wallet
 
 @enduml

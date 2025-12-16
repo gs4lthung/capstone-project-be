@@ -120,6 +120,8 @@ export class CoachService extends BaseTypeOrmService<Coach> {
     data: RegisterCoachDto,
     files: Express.Multer.File[],
   ): Promise<CustomApiResponse<void>> {
+    console.log('RegisterCoachDto data:', data);
+    console.log('Uploaded files:', files);
     return await this.datasource.transaction(async (manager) => {
       let existingUser: User;
       if (data.email) {

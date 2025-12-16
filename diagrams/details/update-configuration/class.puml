@@ -3,6 +3,9 @@
 skinparam classBackgroundColor #f0f0f0
 skinparam classBorderColor #333
 skinparam arrowColor #333
+skinparam linetype ortho
+skinparam nodesep 80
+skinparam ranksep 80
 
 ' ════════════════════════════════════════════════════════════════════════════════════
 ' CONTROLLER LAYER
@@ -48,18 +51,37 @@ class RoleGuard {
 
 }
 
+' RELATIONSHIPS
+' ════════════════════════════════════════════════════════════════════════════════════
+
+ConfigurationController --> ConfigurationService
+ConfigurationController --> AuthGuard
+ConfigurationController --> RoleGuard
+
+ConfigurationService --> Configuration
+ConfigurationService --> User
+
+Configuration --> User
+User --> Role
+
+' ════════════════════════════════════════════════════════════════════════════════════
+' DTO LAYER
+' ════════════════════════════════════════════════════════════════════════════════════
+
+class UpdateConfigurationDto {
+}
+
 ' ════════════════════════════════════════════════════════════════════════════════════
 ' RELATIONSHIPS
 ' ════════════════════════════════════════════════════════════════════════════════════
 
-ConfigurationController --> ConfigurationService: delegates
-ConfigurationController --> AuthGuard: validates
-ConfigurationController --> RoleGuard: checks admin
-
-ConfigurationService --> Configuration: reads/updates
-ConfigurationService --> User: tracks changes
-
-Configuration --> User: created by/updated by
-User --> Role: belongs to
+ConfigurationController -- UpdateConfigurationDto
+ConfigurationController -- ConfigurationService
+ConfigurationController -- AuthGuard
+ConfigurationController -- RoleGuard
+ConfigurationService -- Configuration
+ConfigurationService -- User
+Configuration -- User
+User -- Role
 
 @enduml

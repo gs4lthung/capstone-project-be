@@ -1,3 +1,4 @@
+'''' Mermaid version: 10.x (for reference)
 @startuml LoginClassDiagram
 !theme plain
 skinparam classBackgroundColor #f0f0f0

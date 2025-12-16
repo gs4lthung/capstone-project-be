@@ -1,0 +1,21 @@
+%% Mermaid version: 10.x
+%% Login Module - Class Diagram (Mermaid)
+classDiagram
+    class AuthController {
+    }
+    class AuthService {
+    }
+    class User {
+    }
+    class Role {
+    }
+    class JwtService {
+    }
+    class ConfigService {
+    }
+
+    AuthController --> AuthService : delegates
+    AuthService --> User : queries
+    AuthService --> JwtService : generates tokens
+    AuthService --> ConfigService : gets config
+    User --> Role : belongs to

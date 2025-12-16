@@ -67,6 +67,9 @@ export class Wallet {
   @OneToMany(
     () => WithdrawalRequest,
     (withdrawalRequest) => withdrawalRequest.wallet,
+    {
+      eager:true
+    }
   )
   withdrawalRequests: WithdrawalRequest[];
 

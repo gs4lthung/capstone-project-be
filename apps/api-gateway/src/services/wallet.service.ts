@@ -19,9 +19,12 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { BaseTypeOrmService } from '@app/shared/helpers/typeorm.helper';
 import { FindOptions } from '@app/shared/interfaces/find-options.interface';
-import { WalletTransactionType } from '@app/shared/enums/payment.enum';
+import { WalletTransactionType, WithdrawalRequestStatus } from '@app/shared/enums/payment.enum';
 import { WalletTransaction } from '@app/database/entities/wallet-transaction.entity';
 import { PaginateObject } from '@app/shared/dtos/paginate.dto';
+import { WithdrawalRequest } from '@app/database/entities/withdrawal-request.entity';
+import { NotificationService } from './notification.service';
+import { NotificationType } from '@app/shared/enums/notification.enum';
 
 @Injectable({ scope: Scope.REQUEST })
 export class WalletService extends BaseTypeOrmService<Wallet> {
@@ -31,9 +34,8 @@ export class WalletService extends BaseTypeOrmService<Wallet> {
     private readonly walletRepository: Repository<Wallet>,
     @InjectRepository(Bank)
     private readonly bankRepository: Repository<Bank>,
-    @InjectRepository(WalletTransaction)
-    private readonly walletTransactionRepository: Repository<WalletTransaction>,
     private readonly datasource: DataSource,
+    private readonly notificationService: NotificationService
   ) {
     super(walletRepository);
   }
@@ -52,6 +54,12 @@ export class WalletService extends BaseTypeOrmService<Wallet> {
     if (!wallet) throw new Error('Wallet not found');
 
     return wallet;
+  }
+
+  async findAllWithUserInfo(): Promise<Wallet[]> {
+    return await this.walletRepository.find({
+      relations: ['user', 'bank','transactions','withdrawalRequests'],
+    });
   }
 
   async findBanks(): Promise<Bank[]> {
@@ -112,27 +120,96 @@ export class WalletService extends BaseTypeOrmService<Wallet> {
     return await this.datasource.transaction(async (manager) => {
       const wallet = await manager.getRepository(Wallet).findOne({
         where: { user: { id: this.request.user.id as User['id'] } },
+        relations: ['user','bank'],
         withDeleted: false,
       });
       if (!wallet) throw new InternalServerErrorException('Ví không tồn tại');
+      if(!wallet.bankAccountNumber||!wallet.bank)
+        throw new InternalServerErrorException('Vui lòng cập nhật thông tin ngân hàng trước khi rút tiền');
 
       const currentBalance = Number(wallet.currentBalance ?? 0);
       if (amount > currentBalance)
         throw new InternalServerErrorException('Không đủ số dư');
-      const newCurrent = currentBalance - amount;
 
-      wallet.currentBalance = newCurrent;
-      await manager.getRepository(Wallet).save(wallet);
-
-      const newTransaction = manager.getRepository(WalletTransaction).create({
+      const withdrawalRequest = manager.getRepository(WithdrawalRequest).create({
         wallet: wallet,
-        type: WalletTransactionType.DEBIT,
         amount: amount,
+        status: WithdrawalRequestStatus.PENDING,
       });
-      await manager.getRepository(WalletTransaction).save(newTransaction);
+      await manager.getRepository('WithdrawalRequest').save(withdrawalRequest);
+
+      // const newCurrent = currentBalance - amount;
+
+      // wallet.currentBalance = newCurrent;
+      // await manager.getRepository(Wallet).save(wallet);
+
+      // const newTransaction = manager.getRepository(WalletTransaction).create({
+      //   wallet: wallet,
+      //   type: WalletTransactionType.DEBIT,
+      //   amount: amount,
+      // });
+      // await manager.getRepository(WalletTransaction).save(newTransaction);
+
+      await this.notificationService.sendNotificationToAdmins({
+        body: `Người dùng ${wallet.user.fullName} đã tạo yêu cầu rút tiền số tiền ${amount}`,
+        title: 'Yêu cầu rút tiền mới',
+        type: NotificationType.INFO,
+        navigateTo: '/wallets',
+      })
 
       return new CustomApiResponse<void>(HttpStatus.OK, 'Rút tiền thành công');
     });
+  }
+  
+  async approveWithdrawalRequest(withdrawalRequestId: number): Promise<void> {
+    return await this.datasource.transaction(async (manager) => {
+      const withdrawalRequest = await manager.getRepository(WithdrawalRequest).findOne({
+        where: { id: withdrawalRequestId },
+        relations: ['wallet'],
+        withDeleted: false,
+      });
+      if (!withdrawalRequest) throw new InternalServerErrorException('Yêu cầu rút tiền không tồn tại');
+      if (withdrawalRequest.status !== WithdrawalRequestStatus.PENDING) {
+        throw new InternalServerErrorException('Yêu cầu rút tiền đã được xử lý');
+      }
+      
+      const wallet = withdrawalRequest.wallet;
+      const currentBalance = Number(wallet.currentBalance ?? 0);
+      if (withdrawalRequest.amount > currentBalance) {
+        throw new InternalServerErrorException('Không đủ số dư trong ví');
+      }
+      
+      const newCurrent = currentBalance - withdrawalRequest.amount;
+      wallet.currentBalance = newCurrent;
+      await manager.getRepository(Wallet).save(wallet);
+      withdrawalRequest.status = WithdrawalRequestStatus.APPROVED;
+      await manager.getRepository(WithdrawalRequest).save(withdrawalRequest);
+      
+      const newTransaction = manager.getRepository(WalletTransaction).create({
+        wallet: wallet,
+        type: WalletTransactionType.DEBIT,
+        amount: withdrawalRequest.amount,
+      });
+      await manager.getRepository(WalletTransaction).save(newTransaction);
+    }
+    );
+  }
+
+  async rejectWithdrawalRequest(withdrawalRequestId: number): Promise<void> {
+    return await this.datasource.transaction(async (manager) => {
+      const withdrawalRequest = await manager.getRepository(WithdrawalRequest).findOne({
+        where: { id: withdrawalRequestId },
+        withDeleted: false,
+      });
+      if (!withdrawalRequest) throw new InternalServerErrorException('Yêu cầu rút tiền không tồn tại');
+      if (withdrawalRequest.status !== WithdrawalRequestStatus.PENDING) {
+        throw new InternalServerErrorException('Yêu cầu rút tiền đã được xử lý');
+      }
+      
+      withdrawalRequest.status = WithdrawalRequestStatus.REJECTED;
+      await manager.getRepository(WithdrawalRequest).save(withdrawalRequest);
+    }
+    );
   }
 
   async handleWalletTopUp(userId: User['id'], amount: number): Promise<void> {

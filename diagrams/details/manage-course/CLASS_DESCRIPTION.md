@@ -3,7 +3,7 @@
 - Controller: `CourseController.findAll(pagination, sort, filter)`, `CourseController.findOne(id)`, `CourseController.getAvailableCourses(page, size, name, level, province, district)`, `CourseController.getCoursesForCoach(page, size)`, `CourseController.getCoursesForLearner(page, size)`, `CourseController.createCourse(subjectId, data, file)`, `CourseController.updateCourseCreationRequest(id, data, file)`, `CourseController.approveCourseCreationRequest(id)`, `CourseController.rejectCourseCreationRequest(id, reason)`
 - Service: `CourseService.findAll(findOptions)`, `CourseService.findOne(id)`, `CourseService.findAvailableCourses(page, size, name, level, province, district)`, `CourseService.findCoachCourses(page, size)`, `CourseService.findLearnerCourses(page, size)`, `CourseService.createCourseCreationRequest(subjectId, data, file)`, `CourseService.updateCourseCreationRequest(id, data, file)`, `CourseService.approveCourseCreationRequest(id)`, `CourseService.rejectCourseCreationRequest(id, reason)`
 - Entities: `Course`, `Schedule`, `Session`, `User`, `Subject`, `Court`, `Request`, `RequestAction`, `Enrollment`
-- Utilities: `AuthGuard`, `RoleGuard`, `ScheduleService`, `SessionService`, `NotificationService`, `ConfigurationService`, `BunnyService`, `DataSource`
+- Utilities: `AuthGuard`, `RoleGuard`, `ScheduleService`, `SessionService`, `NotificationService`, `ConfigurationService`, `BunnyService`, `DataSource`, `PayosService`, `WalletService`
 
 Scope rules:
 - Coach can create/update course creation requests (PENDING_APPROVAL)
@@ -93,6 +93,15 @@ Class,No,Method,Description
 Class,No,Method,Description
 "BunnyService",01,"uploadToStorage(file): Promise<string>","Uploads file to Bunny CDN; returns publicUrl"
 ```
+
+## Class: PayosService
+
+```csv
+Class,No,Method,Description
+"PayosService",01,"createPayment(data): Promise<PaymentResult>","Initiates a payment transaction with PayOS and returns the result"
+"PayosService",02,"verifyPayment(paymentId): Promise<boolean>","Verifies the status of a payment transaction with PayOS"
+```
+
 
 ## Class: CourseRepository
 

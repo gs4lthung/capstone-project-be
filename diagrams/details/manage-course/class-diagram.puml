@@ -1,9 +1,12 @@
+
 @startuml ManageCourseClassDiagram
 !theme plain
+skinparam linetype ortho
+skinparam nodesep 80
+skinparam ranksep 80
 skinparam classBackgroundColor #f0f0f0
 skinparam classBorderColor #333
 skinparam arrowColor #333
-
 left to right direction
 
 ' ════════════════════════════════════════════════════════════════════════════════════
@@ -134,59 +137,45 @@ class Payment {
 ' RELATIONSHIPS
 ' ════════════════════════════════════════════════════════════════════════════════════
 
-' Controller relationships
-CourseController --> AuthGuard: validates
-CourseController --> RoleGuard: checks role
-CourseController --> CourseService: uses
-CourseController --> CreateCourseRequestDto: receives
-CourseController --> UpdateCourseDto: receives
-CourseController --> RejectCourseDto: receives
 
-PaymentController --> AuthGuard: validates
-PaymentController --> RoleGuard: checks role
-PaymentController --> PaymentService: uses
-
-' Service to Service relationships
-CourseService --> ScheduleService: uses
-CourseService --> SessionService: uses
-CourseService --> NotificationService: uses
-CourseService --> ConfigurationService: uses
-CourseService --> BunnyService: uses
-CourseService --> WalletService: uses
-
-PaymentService --> PayosService: uses
-PaymentService --> NotificationService: uses
-PaymentService --> ConfigurationService: uses
-
-' Service to Entity relationships
-CourseService --> Course: manages
-CourseService --> Request: manages
-CourseService --> RequestAction: creates
-CourseService --> Subject: validates
-CourseService --> Court: validates
-CourseService --> User: notifies
-
-PaymentService --> Payment: manages
-PaymentService --> Enrollment: updates
-
-ScheduleService --> Schedule: generates
-
-SessionService --> Session: generates
-
-' Entity relationships
-Course --> Schedule: has many
-Course --> User: coached by
-Course --> Subject: belongs to
-Course --> Court: held at
-Course --> Request: created from
-
-Schedule --> Session: has many
-
-Enrollment --> Course: enrolls in
-Enrollment --> User: belongs to
-Enrollment --> Payment: has
-
-Request --> User: requested by
-Request --> RequestAction: has many
+CourseController -- AuthGuard
+CourseController -- RoleGuard
+CourseController -- CourseService
+CourseController -- CreateCourseRequestDto
+CourseController -- UpdateCourseDto
+CourseController -- RejectCourseDto
+PaymentController -- AuthGuard
+PaymentController -- RoleGuard
+PaymentController -- PaymentService
+CourseService -- ScheduleService
+CourseService -- SessionService
+CourseService -- NotificationService
+CourseService -- ConfigurationService
+CourseService -- BunnyService
+CourseService -- WalletService
+PaymentService -- PayosService
+PaymentService -- NotificationService
+PaymentService -- ConfigurationService
+CourseService -- Course
+CourseService -- Request
+CourseService -- RequestAction
+CourseService -- Subject
+CourseService -- Court
+CourseService -- User
+PaymentService -- Payment
+PaymentService -- Enrollment
+ScheduleService -- Schedule
+SessionService -- Session
+Course -- Schedule
+Course -- User
+Course -- Subject
+Course -- Court
+Course -- Request
+Schedule -- Session
+Enrollment -- Course
+Enrollment -- User
+Enrollment -- Payment
+Request -- User
+Request -- RequestAction
 
 @enduml

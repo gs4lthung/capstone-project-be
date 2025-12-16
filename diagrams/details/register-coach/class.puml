@@ -1,9 +1,12 @@
+CoachController -- RegisterCoachDto : input
 @startuml RegisterCoachClassDiagram
 !theme plain
 skinparam classBackgroundColor #f0f0f0
 skinparam classBorderColor #333
 skinparam arrowColor #333
-
+skinparam linetype ortho
+skinparam nodesep 80
+skinparam ranksep 80
 ' ════════════════════════════════════════════════════════════════════════════════════
 ' CONTROLLER LAYER
 ' ════════════════════════════════════════════════════════════════════════════════════
@@ -73,25 +76,34 @@ class ConfigService {
 
 }
 
+
+' ════════════════════════════════════════════════════════════════════════════════════
+' DTO LAYER
+' ════════════════════════════════════════════════════════════════════════════════════
+
+class RegisterCoachDto {
+}
+class CreateCoachDto {
+}
+
 ' ════════════════════════════════════════════════════════════════════════════════════
 ' RELATIONSHIPS
 ' ════════════════════════════════════════════════════════════════════════════════════
 
-CoachController --> CoachService: delegates
-
-CoachService --> User: creates/updates
-CoachService --> Coach: creates/updates
-CoachService --> Credential: creates
-CoachService --> JwtService: generates tokens
-CoachService --> MailService: sends emails
-CoachService --> TwilioService: sends SMS
-CoachService --> BunnyService: uploads files
-CoachService --> NotificationService: sends notifications
-CoachService --> ConfigService: gets config
-
-User --> Role: belongs to
-User --> Coach: has many
-Coach --> Credential: has many
-Credential --> BaseCredential: belongs to
-
-@enduml
+CreateCoachDto -- Credential
+CoachController -- RegisterCoachDto
+CoachController -- CoachService
+CoachService -- User
+CoachService -- Coach
+CoachService -- Credential
+CoachService -- JwtService
+CoachService -- MailService
+CoachService -- TwilioService
+CoachService -- BunnyService
+CoachService -- NotificationService
+CoachService -- ConfigService
+User -- Role
+User -- Coach
+Coach -- Credential
+Credential -- BaseCredential
+RegisterCoachDto -- CreateCoachDto

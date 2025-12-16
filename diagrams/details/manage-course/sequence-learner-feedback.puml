@@ -1,0 +1,35 @@
+@startuml LearnerSubmitFeedback
+
+actor Learner
+participant Client
+participant CourseFeedbackController
+participant Auth
+participant Role
+participant CourseFeedbackService
+participant DataSource
+
+== Learner Submit Feedback After Completed Course ==
+
+Learner -> Client: 1. Open completed course and enter feedback
+Client -> CourseFeedbackController: 2. POST /courses/:id/feedback (feedback, rating)
+activate CourseFeedbackController
+CourseFeedbackController -> Auth: 3. validate JWT
+activate Auth
+Auth --> CourseFeedbackController: 4. valid
+deactivate Auth
+CourseFeedbackController -> Role: 5. check LEARNER role
+activate Role
+Role --> CourseFeedbackController: 6. authorized
+deactivate Role
+CourseFeedbackController -> CourseFeedbackService: 7. submitFeedback(courseId, feedback, rating, user)
+activate CourseFeedbackService
+CourseFeedbackService -> DataSource: 8. save feedback and rating for course and learner
+activate DataSource
+DataSource --> CourseFeedbackService: 9. saved feedback
+deactivate DataSource
+CourseFeedbackService --> CourseFeedbackController: 10. feedback result
+deactivate CourseFeedbackService
+CourseFeedbackController --> Client: 11. HTTP 201 Created (feedback saved)
+deactivate CourseFeedbackController
+Client --> Learner: 12. Show confirmation and feedback summary
+@enduml

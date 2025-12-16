@@ -1,0 +1,35 @@
+@startuml CoachSubmitNoteWithAiFeedbackSequence
+
+actor Coach
+participant Client
+participant AiVideoCompareResultController
+participant Auth
+participant Role
+participant AiVideoCompareResultService
+participant DataSource
+
+== Coach Submit Note with AI Feedback ==
+
+Coach -> Client: 1. Open AI feedback and enter note
+Client -> AiVideoCompareResultController: 2. POST /ai-video-compare-results/:id/note (coachNote)
+activate AiVideoCompareResultController
+AiVideoCompareResultController -> Auth: 3. validate JWT
+activate Auth
+Auth --> AiVideoCompareResultController: 4. valid
+deactivate Auth
+AiVideoCompareResultController -> Role: 5. check COACH role
+activate Role
+Role --> AiVideoCompareResultController: 6. authorized
+deactivate Role
+AiVideoCompareResultController -> AiVideoCompareResultService: 7. saveCoachNote(aiResultId, coachNote)
+activate AiVideoCompareResultService
+AiVideoCompareResultService -> DataSource: 8. update AI comparison result with coach note
+activate DataSource
+DataSource --> AiVideoCompareResultService: 9. updated result
+deactivate DataSource
+AiVideoCompareResultService --> AiVideoCompareResultController: 10. updated comparison result
+deactivate AiVideoCompareResultService
+AiVideoCompareResultController --> Client: 11. HTTP 200 OK (note saved)
+deactivate AiVideoCompareResultController
+Client --> Coach: 12. Show confirmation and updated feedback
+@enduml

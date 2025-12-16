@@ -1,5 +1,9 @@
+
 @startuml VerifyCoachClassDiagram
 !theme plain
+skinparam linetype ortho
+skinparam nodesep 80
+skinparam ranksep 80
 skinparam classBackgroundColor #f0f0f0
 skinparam classBorderColor #333
 skinparam arrowColor #333
@@ -44,8 +48,12 @@ class Role {
 
 }
 
-class RejectCoachDto {
 
+' ════════════════════════════════════════════════════════════════════════════════════
+' DTO LAYER
+' ════════════════════════════════════════════════════════════════════════════════════
+
+class RejectCoachDto {
 }
 
 ' ════════════════════════════════════════════════════════════════════════════════════
@@ -64,17 +72,16 @@ class RoleGuard {
 ' RELATIONSHIPS
 ' ════════════════════════════════════════════════════════════════════════════════════
 
-CoachController --> CoachService: delegates
-CoachController --> AuthGuard: validates
-CoachController --> RoleGuard: checks admin
-CoachController --> RejectCoachDto: uses
 
-CoachService --> Coach: queries/updates
-CoachService --> User: activates
-CoachService --> NotificationService: sends notifications
-
-Coach --> User: belongs to
-Coach --> Credential: has many
-User --> Role: belongs to
+CoachController -- CoachService
+CoachController -- AuthGuard
+CoachController -- RoleGuard
+CoachController -- RejectCoachDto
+CoachService -- Coach
+CoachService -- User
+CoachService -- NotificationService
+Coach -- User
+Coach -- Credential
+User -- Role
 
 @enduml

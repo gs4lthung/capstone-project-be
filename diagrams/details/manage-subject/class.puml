@@ -70,20 +70,21 @@ class Lesson {
 ' RELATIONSHIPS
 ' ════════════════════════════════════════════════════════════════════════════════════
 
+
 ' Controller relationships
-SubjectController --> AuthGuard: validates
-SubjectController --> RoleGuard: checks role
-SubjectController --> SubjectService: uses
-SubjectController --> CreateSubjectDto: receives
-SubjectController --> UpdateSubjectDto: receives
+SubjectController --> AuthGuard
+SubjectController --> RoleGuard
+SubjectController --> SubjectService
+SubjectController --> CreateSubjectDto
+SubjectController --> UpdateSubjectDto
 
 ' Service relationships
-SubjectService --> BunnyService: uses
-SubjectService --> Subject: manages
-SubjectService --> Lesson: validates
+SubjectService --> BunnyService
+SubjectService --> Subject
+SubjectService --> Lesson
 
 ' Entity relationships
-Subject --> User: createdBy
-Subject --> Lesson: has many
+Subject --> User
+Subject --> Lesson
 
 @enduml

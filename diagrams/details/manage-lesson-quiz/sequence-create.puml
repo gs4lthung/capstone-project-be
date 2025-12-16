@@ -24,7 +24,7 @@ client --> coach: 7. Display question forms
 coach -> client: 8. For each question, add options
 client --> coach: 9. Display option inputs
 
-coach -> client: 10. Mark correct answer(s)
+coach -> client: 10. Mark correct answer
 
 coach -> client: 11. Submit quiz
 client -> controller: 12. POST /lessons/:lessonId/quiz

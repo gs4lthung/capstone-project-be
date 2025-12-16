@@ -9,7 +9,7 @@
 
 | No | Method | Description |
 |----|--------|-------------|
-| 1 | findAllBySubjectId(id, pagination, sort, filter) | Get all lessons by subject ID with pagination, sorting, filtering |
+| 1 | findAllBySubjectId(id, pagination, sort, filter) |     |
 | 2 | findAllByCourseId(id, pagination, sort, filter) | Get all lessons by course ID with pagination, sorting, filtering |
 | 3 | createSubject(id, data) | Create new lesson for subject with auto lessonNumber (COACH only) |
 | 4 | updateLesson(id, data) | Update existing lesson properties (COACH only) |

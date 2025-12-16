@@ -19,10 +19,18 @@ export class AiVideoCompareResultService {
   ) {}
 
   async findAllByLearnerVideoId(learnerVideoId: number) {
-    return this.aiRepo.find({
-      where: { learnerVideo: { id: learnerVideoId } },
-      relations: ['video', 'learnerVideo'],
-      order: { createdAt: 'DESC' },
+    return await this.datasource.transaction(async (manager) => {
+      const learnerVideo = await manager
+        .getRepository(LearnerVideo)
+        .createQueryBuilder('learnerVideo')
+        .leftJoinAndSelect('learnerVideo.user', 'user')
+        .where('learnerVideo.id = :learnerVideoId', { learnerVideoId })
+        .orderBy('learnerVideo.score', 'ASC')
+        .getOne();
+      if (!learnerVideo) {
+        throw new BadRequestException('LearnerVideo not found');
+      }
+      return;
     });
   }
 
