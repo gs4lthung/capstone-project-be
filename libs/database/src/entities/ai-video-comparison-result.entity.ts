@@ -98,6 +98,9 @@ export class AiVideoComparisonResult {
   @PrimaryGeneratedColumn()
   id: number;
 
+  @Column({ type:'enum', enum:['PENDING','USED'], default: 'PENDING' })
+  status: 'PENDING' | 'USED';
+
   @Column({ type: 'text', nullable: true })
   @IsOptional()
   @IsString()

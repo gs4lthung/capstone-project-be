@@ -25,6 +25,7 @@ import { PaginateObject } from '@app/shared/dtos/paginate.dto';
 import { WithdrawalRequest } from '@app/database/entities/withdrawal-request.entity';
 import { NotificationService } from './notification.service';
 import { NotificationType } from '@app/shared/enums/notification.enum';
+import { Session } from '@app/database/entities/session.entity';
 
 @Injectable({ scope: Scope.REQUEST })
 export class WalletService extends BaseTypeOrmService<Wallet> {
@@ -191,6 +192,14 @@ export class WalletService extends BaseTypeOrmService<Wallet> {
         amount: withdrawalRequest.amount,
       });
       await manager.getRepository(WalletTransaction).save(newTransaction);
+
+      await this.notificationService.sendNotification({
+        userId: wallet.user.id,
+        title: 'Yêu cầu rút tiền của bạn đã được chấp thuận',
+        body: `Yêu cầu rút tiền số tiền ${withdrawalRequest.amount} từ ví của bạn đã được chấp thuận.`,
+        navigateTo: `/(learner)/wallet`,
+        type: NotificationType.SUCCESS,
+      });
     }
     );
   }
@@ -208,11 +217,25 @@ export class WalletService extends BaseTypeOrmService<Wallet> {
       
       withdrawalRequest.status = WithdrawalRequestStatus.REJECTED;
       await manager.getRepository(WithdrawalRequest).save(withdrawalRequest);
+
+      const wallet = await manager.getRepository(Wallet).findOne({
+        where: { id: withdrawalRequest.wallet.id },
+        withDeleted: false,
+      });
+      if (!wallet) throw new InternalServerErrorException('Ví không tồn tại');
+
+      await this.notificationService.sendNotification({
+        userId: wallet.user.id,
+        title: 'Yêu cầu rút tiền của bạn đã bị từ chối',
+        body: `Yêu cầu rút tiền số tiền ${withdrawalRequest.amount} từ ví của bạn đã bị từ chối.`,
+        navigateTo: `/(learner)/wallet`,
+        type: NotificationType.ERROR,
+      });
     }
     );
   }
 
-  async handleWalletTopUp(userId: User['id'], amount: number): Promise<void> {
+  async handleWalletTopUp(userId: User['id'], amount: number,description?: string,session?: Session): Promise<void> {
     return await this.datasource.transaction(async (manager) => {
       const wallet = await manager.getRepository(Wallet).findOne({
         where: { user: { id: userId } },
@@ -233,6 +256,8 @@ export class WalletService extends BaseTypeOrmService<Wallet> {
         wallet: wallet,
         type: WalletTransactionType.CREDIT,
         amount: amount,
+        description: description,
+        session: session,
       });
       await manager.getRepository(WalletTransaction).save(newTransaction);
     });

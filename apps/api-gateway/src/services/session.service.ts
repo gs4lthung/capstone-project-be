@@ -385,6 +385,8 @@ export class SessionService extends BaseTypeOrmService<Session> {
         await this.walletService.handleWalletTopUp(
           this.request.user.id as User['id'],
           sessionEarning,
+          `Thu nhập từ buổi học: ${session.name} (Khóa học: ${course.name})`,
+          session,
         );
       }
 

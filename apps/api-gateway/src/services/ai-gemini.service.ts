@@ -8,11 +8,15 @@ import {
 } from '@app/shared/dtos/ai-feedback/gemini-call.dto';
 import { PoseLandmark } from './ai-pose.service';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository,DataSource } from 'typeorm';
 import { AiSubjectGeneration } from '@app/database/entities/ai-subject-generation.entity';
 import { AiSubjectGenerationResponse } from '@app/shared/interfaces/ai-subject-generation.interface';
 import { AiLearnerProgressAnalysisResponse } from '@app/shared/interfaces/ai-learner-progress-analysis.interface';
 import { PickleballLevel } from '@app/shared/enums/pickleball.enum';
+import { AiVideoComparisonResult } from '@app/database/entities/ai-video-comparison-result.entity';
+import { LearnerVideo } from '@app/database/entities/learner-video.entity';
+import { Video } from '@app/database/entities/video.entity';
+import { buildDetailsArrayFromComparison } from '@app/shared/helpers/buildDetailArray.helper';
 
 // Interface matching the Gemini API response schema
 interface GeminiApiResponse {
@@ -47,8 +51,7 @@ export class AiGeminiService {
 
   constructor(
     private configService: ConfigService,
-    @InjectRepository(AiSubjectGeneration)
-    private readonly aiSubjectGenerationRepository: Repository<AiSubjectGeneration>,
+    private readonly dataSource: DataSource,
   ) {
     this.apiKey = this.configService.get('gemini').api_key as string;
     this.endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${this.model}:generateContent`;
@@ -59,8 +62,10 @@ export class AiGeminiService {
   }
 
   async comparePoseData(
+    coachVideoUrl: string,
     coachPoses: PoseLandmark[][],
     coachTimestamps: number[],
+    learnerVideoUrl: string,
     learnerPoses: PoseLandmark[][],
     learnerTimestamps: number[],
   ): Promise<GeminiApiResponse> {
@@ -139,6 +144,83 @@ Hãy trả lời CHỈ bằng một đối tượng JSON bằng tiếng Việt t
         this.logger.error('❌ Invalid response structure');
         return this.getDefaultResponse('Phản hồi AI không hợp lệ');
       }
+
+      await this.dataSource.transaction(async (manager) => {
+        const learnerVideo=await manager.getRepository(LearnerVideo).findOneBy({publicUrl:learnerVideoUrl});
+        if(!learnerVideo){
+          this.logger.error('❌ Learner video record not found for URL:', learnerVideoUrl);
+          return;
+        }
+        const coachVideo=await manager.getRepository(Video).findOneBy({publicUrl:coachVideoUrl});
+        if(!coachVideo){
+          this.logger.error('❌ Coach video record not found for URL:', coachVideoUrl);
+          return;
+        }
+
+              const aiResultRecord: any = {};
+        aiResultRecord.video = coachVideo;
+              aiResultRecord.learnerVideo = learnerVideo;
+        
+              // Only set fields that have values
+              if (jsonRes.summary) {
+                aiResultRecord.summary = jsonRes.summary;
+              }
+              if (
+                jsonRes.learnerScore !== undefined &&
+                jsonRes.learnerScore !== null
+              ) {
+                aiResultRecord.learnerScore = jsonRes.learnerScore;
+              }
+              if (
+                jsonRes.keyDifferents &&
+                Array.isArray(jsonRes.keyDifferents) &&
+                jsonRes.keyDifferents.length > 0
+              ) {
+                aiResultRecord.keyDifferents = jsonRes.keyDifferents.map((kd) => ({
+                  aspect: kd.aspect,
+                  impact: kd.impact,
+                  learnerTechnique: kd.learnerTechnique,
+                }));
+              }
+              if (
+                jsonRes.recommendationDrills &&
+                Array.isArray(jsonRes.recommendationDrills) &&
+                jsonRes.recommendationDrills.length > 0
+              ) {
+                aiResultRecord.recommendationDrills =
+                  jsonRes.recommendationDrills.map((r) => {
+                    const drill: any = {};
+                    if (r.name) {
+                      drill.name = r.name;
+                    }
+                    if (r.description) {
+                      drill.description = r.description;
+                    }
+                    if (r.practiceSets) {
+                      const practiceSets = r.practiceSets as
+                        | string
+                        | string[]
+                        | number;
+                      drill.practiceSets =
+                        typeof practiceSets === 'string'
+                          ? practiceSets
+                          : Array.isArray(practiceSets)
+                            ? practiceSets.join(', ')
+                            : String(practiceSets || '');
+                    }
+                    return drill;
+                  });
+              }
+                const details = buildDetailsArrayFromComparison(jsonRes.details);
+                if (details && details.length > 0) {
+                  aiResultRecord.details = details;
+                }
+        
+        const record = manager
+          .getRepository(AiVideoComparisonResult)
+          .create(aiResultRecord);
+        await manager.getRepository(AiVideoComparisonResult).save(record);
+      });
 
       return {
         details: jsonRes.details || [],
