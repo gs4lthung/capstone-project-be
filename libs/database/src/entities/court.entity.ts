@@ -68,6 +68,13 @@ export class Court {
   address: string;
 
   @Column({
+    name: 'is_active',
+    type: 'boolean',
+    default: false,
+  })
+  isActive: boolean;
+
+  @Column({
     name: 'latitude',
     type: 'numeric',
     precision: 10,
