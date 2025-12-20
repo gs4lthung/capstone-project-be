@@ -1,0 +1,48 @@
+@startuml RequestWithdrawal
+
+actor User
+participant WalletController
+participant AuthGuard
+participant WalletService
+participant DataSource
+
+User -> WalletController: POST /wallets/withdrawal
+activate WalletController
+
+WalletController -> AuthGuard: validate JWT
+activate AuthGuard
+AuthGuard --> WalletController: valid
+deactivate AuthGuard
+
+WalletController -> WalletService: handleWithdrawalRequest(amount)
+activate WalletService
+
+WalletService -> DataSource: BEGIN TRANSACTION
+activate DataSource
+
+DataSource -> DataSource: find user's wallet
+DataSource -> DataSource: verify wallet exists
+DataSource -> DataSource: verify sufficient balance
+DataSource -> DataSource: calculate new balance (current - amount)
+DataSource -> DataSource: update wallet currentBalance
+DataSource -> DataSource: create WalletTransaction (DEBIT)
+DataSource -> DataSource: COMMIT
+
+note right of DataSource
+  Transaction flow:
+  1. Find wallet by userId
+  2. Check: amount <= currentBalance
+  3. Deduct: currentBalance -= amount
+  4. Create DEBIT transaction
+end note
+
+DataSource --> WalletService: success
+deactivate DataSource
+
+WalletService --> WalletController: CustomApiResponse (200)
+deactivate WalletService
+
+WalletController --> User: HTTP 200 OK (withdrawal success)
+deactivate WalletController
+
+@enduml

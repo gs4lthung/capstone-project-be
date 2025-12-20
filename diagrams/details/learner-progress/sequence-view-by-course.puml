@@ -1,0 +1,40 @@
+@startuml ViewProgressByCourse
+
+actor Coach
+participant LearnerProgressController
+participant AuthGuard
+participant LearnerProgressService
+participant DataSource
+
+Coach -> LearnerProgressController: GET /learner-progresses/coaches?courseStatus
+activate LearnerProgressController
+
+LearnerProgressController -> AuthGuard: validate JWT
+activate AuthGuard
+AuthGuard --> LearnerProgressController: valid
+deactivate AuthGuard
+
+LearnerProgressController -> LearnerProgressService: getProgressForCourse(courseStatus)
+activate LearnerProgressService
+
+LearnerProgressService -> DataSource: BEGIN TRANSACTION
+activate DataSource
+
+DataSource -> DataSource: query learner progresses by course status
+DataSource -> DataSource: filter by coach (course.createdBy == currentUser)
+
+note right of DataSource
+  Join: user, course, course.createdBy
+  Filter: courseStatus, createdBy.id
+end note
+
+DataSource --> LearnerProgressService: learner progresses list
+deactivate DataSource
+
+LearnerProgressService --> LearnerProgressController: CustomApiResponse with progresses
+deactivate LearnerProgressService
+
+LearnerProgressController --> Coach: HTTP 200 with progresses
+deactivate LearnerProgressController
+
+@enduml

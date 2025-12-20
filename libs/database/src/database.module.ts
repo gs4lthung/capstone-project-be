@@ -46,6 +46,7 @@ import { Bank } from './entities/bank.entity';
 import { Court } from './entities/court.entity';
 import { BaseCredential } from './entities/base-credential.entity';
 import { AiSubjectGeneration } from './entities/ai-subject-generation.entity';
+import { AiLearnerProgressAnalysis } from './entities/ai-learner-progress-analysis.entity';
 
 @Module({
   imports: [
@@ -65,6 +66,7 @@ import { AiSubjectGeneration } from './entities/ai-subject-generation.entity';
           AchievementTracking,
           AiVideoComparisonResult,
           AiSubjectGeneration,
+          AiLearnerProgressAnalysis,
           Attendance,
           BaseCredential,
           Coach,

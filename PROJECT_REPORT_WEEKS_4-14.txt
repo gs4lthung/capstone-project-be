@@ -1,0 +1,208 @@
+PROJECT REPORT
+Group	GFA123
+
+Week	4/10/2025-11/10/2025
+I. Status Report
+#	Project Task	In-charge	Status	Notes (Work Item in Details)
+1	Prepare video's has group members for video analysis	Nguyen Anh Tuan, Do Minh Quang	Completed	
+2	Setup source code	Nguyen Anh Tuan, Lam Tien Hung	Completed	
+
+II. Project Issues
+#	Project Issue	Owner	Status	Notes (Solution, Suggestion, etc.)
+1	Learner video must has relationship with Coach video	Nguyen Thi Thu Hoai	Completed	
+			Pending	
+			Pending	
+
+III. Next Week Plan
+#	Project Work Item	In-charge	Deadline	Notes (Task Details, etc.)
+
+IV. Other Project Matters/Suggestions
+#	Project Matter/Suggestions	Raised By	Date	Notes
+
+
+Week	11/10/2025-18/10/2025
+I. Status Report
+#	Project Task	In-charge	Status	Notes (Work Item in Details)
+1	Frontend coding started	All members	In Progress	UI/UX setup, basic pages
+2	Backend coding started	All members	In Progress	API design, DB schema
+
+II. Project Issues
+#	Project Issue	Owner	Status	Notes (Solution, Suggestion, etc.)
+
+1	UI/UX design inconsistency	Nguyen Anh Tuan	Resolved	Standardized design system and shared Figma file
+2	API endpoint naming conflict	Lam Tien Hung	Resolved	Agreed on RESTful naming convention
+
+III. Next Week Plan
+#	Project Work Item	In-charge	Deadline	Notes (Task Details, etc.)
+Continue frontend/backend coding	All members	18/10/2025	
+
+IV. Other Project Matters/Suggestions
+#	Project Matter/Suggestions	Raised By	Date	Notes
+
+
+Week	18/10/2025-25/10/2025
+I. Status Report
+#	Project Task	In-charge	Status	Notes (Work Item in Details)
+1	Frontend coding	All members	In Progress	Component development
+2	Backend coding	All members	In Progress	API endpoints, DB integration
+
+II. Project Issues
+#	Project Issue	Owner	Status	Notes (Solution, Suggestion, etc.)
+
+1	Component state management bug	Do Minh Quang	Resolved	Introduced Redux for state management
+2	Database migration error	Nguyen Thi Thu Hoai	Resolved	Fixed migration scripts and added rollback
+
+III. Next Week Plan
+#	Project Work Item	In-charge	Deadline	Notes (Task Details, etc.)
+Continue frontend/backend coding	All members	25/10/2025	
+
+IV. Other Project Matters/Suggestions
+#	Project Matter/Suggestions	Raised By	Date	Notes
+
+
+Week	25/10/2025-1/11/2025
+I. Status Report
+#	Project Task	In-charge	Status	Notes (Work Item in Details)
+1	Frontend coding	All members	In Progress	UI polish, bug fixes
+2	Backend coding	All members	In Progress	API testing, bug fixes
+
+II. Project Issues
+#	Project Issue	Owner	Status	Notes (Solution, Suggestion, etc.)
+
+1	API response delay	Lam Tien Hung	Resolved	Optimized queries and added caching
+2	Cross-browser compatibility	Nguyen Anh Tuan	Resolved	Tested and fixed CSS for all major browsers
+
+III. Next Week Plan
+#	Project Work Item	In-charge	Deadline	Notes (Task Details, etc.)
+Prepare for mobile development	All members	1/11/2025	
+
+IV. Other Project Matters/Suggestions
+#	Project Matter/Suggestions	Raised By	Date	Notes
+
+
+Week	1/11/2025-8/11/2025
+I. Status Report
+#	Project Task	In-charge	Status	Notes (Work Item in Details)
+1	Frontend coding	All members	Completed	
+2	Backend coding	All members	Completed	
+
+II. Project Issues
+#	Project Issue	Owner	Status	Notes (Solution, Suggestion, etc.)
+
+1	Deployment script failure	Do Minh Quang	Resolved	Updated deployment pipeline and scripts
+
+III. Next Week Plan
+#	Project Work Item	In-charge	Deadline	Notes (Task Details, etc.)
+Start mobile development	All members	8/11/2025	
+
+IV. Other Project Matters/Suggestions
+#	Project Matter/Suggestions	Raised By	Date	Notes
+
+
+Week	8/11/2025-15/11/2025
+I. Status Report
+#	Project Task	In-charge	Status	Notes (Work Item in Details)
+1	Mobile app development started	All members	In Progress	Setup, navigation, basic screens
+
+II. Project Issues
+#	Project Issue	Owner	Status	Notes (Solution, Suggestion, etc.)
+
+1	Mobile navigation bug	Nguyen Thi Thu Hoai	Resolved	Refactored navigation logic
+
+III. Next Week Plan
+#	Project Work Item	In-charge	Deadline	Notes (Task Details, etc.)
+Continue mobile development	All members	15/11/2025	
+
+IV. Other Project Matters/Suggestions
+#	Project Matter/Suggestions	Raised By	Date	Notes
+
+
+Week	15/11/2025-22/11/2025
+I. Status Report
+#	Project Task	In-charge	Status	Notes (Work Item in Details)
+1	Mobile app development	All members	In Progress	Feature implementation
+
+II. Project Issues
+#	Project Issue	Owner	Status	Notes (Solution, Suggestion, etc.)
+
+1	Push notification integration	Do Minh Quang	Resolved	Configured Firebase Cloud Messaging
+
+III. Next Week Plan
+#	Project Work Item	In-charge	Deadline	Notes (Task Details, etc.)
+Continue mobile development	All members	22/11/2025	
+
+IV. Other Project Matters/Suggestions
+#	Project Matter/Suggestions	Raised By	Date	Notes
+
+
+Week	22/11/2025-29/11/2025
+I. Status Report
+#	Project Task	In-charge	Status	Notes (Work Item in Details)
+1	AI feature development started	All members	In Progress	Research, data collection
+
+II. Project Issues
+#	Project Issue	Owner	Status	Notes (Solution, Suggestion, etc.)
+
+1	Data labeling inconsistency	Nguyen Thi Thu Hoai	Resolved	Created clear labeling guidelines
+
+III. Next Week Plan
+#	Project Work Item	In-charge	Deadline	Notes (Task Details, etc.)
+Continue AI feature development	All members	29/11/2025	
+
+IV. Other Project Matters/Suggestions
+#	Project Matter/Suggestions	Raised By	Date	Notes
+
+
+Week	29/11/2025-6/12/2025
+I. Status Report
+#	Project Task	In-charge	Status	Notes (Work Item in Details)
+1	AI feature development	All members	In Progress	Model training, integration
+
+II. Project Issues
+#	Project Issue	Owner	Status	Notes (Solution, Suggestion, etc.)
+
+1	Model overfitting	Lam Tien Hung	Resolved	Applied regularization and cross-validation
+
+III. Next Week Plan
+#	Project Work Item	In-charge	Deadline	Notes (Task Details, etc.)
+Continue AI feature development	All members	6/12/2025	
+
+IV. Other Project Matters/Suggestions
+#	Project Matter/Suggestions	Raised By	Date	Notes
+
+
+Week	6/12/2025-13/12/2025
+I. Status Report
+#	Project Task	In-charge	Status	Notes (Work Item in Details)
+1	Documentation started	All members	In Progress	User guide, API docs
+
+II. Project Issues
+#	Project Issue	Owner	Status	Notes (Solution, Suggestion, etc.)
+
+1	Incomplete API documentation	Nguyen Anh Tuan	Resolved	Reviewed and updated all API docs
+
+III. Next Week Plan
+#	Project Work Item	In-charge	Deadline	Notes (Task Details, etc.)
+Continue documentation	All members	13/12/2025	
+
+IV. Other Project Matters/Suggestions
+#	Project Matter/Suggestions	Raised By	Date	Notes
+
+
+Week	13/12/2025-20/12/2025
+I. Status Report
+#	Project Task	In-charge	Status	Notes (Work Item in Details)
+1	Documentation completed	All members	Completed	Final review, submission
+
+II. Project Issues
+#	Project Issue	Owner	Status	Notes (Solution, Suggestion, etc.)
+
+1	Final report formatting	Do Minh Quang	Resolved	Standardized template and formatting
+
+III. Next Week Plan
+#	Project Work Item	In-charge	Deadline	Notes (Task Details, etc.)
+Project wrap-up	All members	20/12/2025	
+
+IV. Other Project Matters/Suggestions
+#	Project Matter/Suggestions	Raised By	Date	Notes
+

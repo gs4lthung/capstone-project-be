@@ -1,38 +1,44 @@
-@startuml ManageLessonVideoDeleteSequenceDiagram
+@startuml DeleteLessonVideo
 
-actor "Coach" as coach
-participant "Controller" as controller
-participant "Service" as service
-participant "BunnyService" as bunny
-database "Database" as db
+actor Coach
+participant VideoController
+participant AuthGuard
+participant RoleGuard
+participant VideoService
+participant DataSource
 
-coach -> controller: DELETE /videos/:id
-activate controller
+Coach -> VideoController: DELETE /videos/:id
+activate VideoController
 
-controller -> service: deleteVideo(id)
-activate service
+VideoController -> AuthGuard: validate JWT
+activate AuthGuard
+AuthGuard --> VideoController: valid
+deactivate AuthGuard
 
-service -> db: Get video
-activate db
-db --> service: Video data
-deactivate db
+VideoController -> RoleGuard: check COACH role
+activate RoleGuard
+RoleGuard --> VideoController: authorized
+deactivate RoleGuard
 
-service -> service: Validate video exists\nValidate coach is owner
+VideoController -> VideoService: deleteVideo(id)
+activate VideoService
 
-service -> bunny: Delete video from storage
-activate bunny
-bunny --> service: Deleted
-deactivate bunny
+VideoService -> DataSource: BEGIN TRANSACTION
+activate DataSource
 
-service -> db: Delete video record
-activate db
-db --> service: Deleted
-deactivate db
+DataSource -> DataSource: find video with lesson/subject relations
+DataSource -> DataSource: verify is lesson video (not session video)
+DataSource -> DataSource: verify ownership (subject.createdBy == currentUser)
+DataSource -> DataSource: soft delete video (set deletedAt)
+DataSource -> DataSource: COMMIT
 
-service --> controller: Success response
-deactivate service
+DataSource --> VideoService: success
+deactivate DataSource
 
-controller --> coach: 200 OK
-deactivate controller
+VideoService --> VideoController: CustomApiResponse (OK)
+deactivate VideoService
+
+VideoController --> Coach: HTTP 200 deleted
+deactivate VideoController
 
 @enduml

@@ -17,21 +17,21 @@ import { User } from '@app/database/entities/user.entity';
  * ═══════════════════════════════════════════════════════════════════════════════
  * ACHIEVEMENT TRACKING SERVICE
  * ═══════════════════════════════════════════════════════════════════════════════
- * 
+ *
  * Service này tự động lắng nghe các events từ hệ thống và track progress
  * của user với các achievements.
- * 
+ *
  * VERSION 3: HOÀN CHỈNH - Hỗ trợ đủ cả 3 loại achievements:
- * 
+ *
  * 1. EVENT_COUNT - Đếm số lần event
  *    VD: "Complete 50 quizzes", "Attend 100 sessions"
- * 
+ *
  * 2. STREAK - Đếm chuỗi ngày liên tiếp
  *    VD: "Login 7 days in a row", "Do quiz daily for 14 days"
- * 
+ *
  * 3. PROPERTY_CHECK - Kiểm tra điều kiện/thuộc tính
  *    VD: "avgQuizScore >= 80", "yearOfExperience >= 5"
- * 
+ *
  * ═══════════════════════════════════════════════════════════════════════════════
  */
 @Injectable()
@@ -77,14 +77,14 @@ export class AchievementTrackingService implements OnModuleInit {
    * ═══════════════════════════════════════════════════════════════════════════════
    * REGISTER EVENT LISTENERS
    * ═══════════════════════════════════════════════════════════════════════════════
-   * 
+   *
    * Đăng ký lắng nghe các events từ hệ thống
-   * 
+   *
    * Flow:
    * 1. SessionService emit event: 'quiz.completed'
    * 2. EventEmitter broadcast event đến tất cả listeners
    * 3. Method handleEvent() của service này tự động được gọi
-   * 
+   *
    * VERSION 3: Listen 3 events
    * - quiz.completed: EVENT_COUNT + STREAK + PROPERTY_CHECK
    * - session.attended: EVENT_COUNT + STREAK
@@ -95,19 +95,28 @@ export class AchievementTrackingService implements OnModuleInit {
 
     // Listen event: quiz.completed (EVENT_COUNT)
     this.eventEmitter.on('quiz.completed', (payload) => {
-      console.log('📨 [Achievement Tracking] Received event: quiz.completed', payload);
+      console.log(
+        '📨 [Achievement Tracking] Received event: quiz.completed',
+        payload,
+      );
       this.handleEvent('QUIZ_COMPLETED', payload);
     });
 
     // Listen event: session.attended (EVENT_COUNT)
     this.eventEmitter.on('session.attended', (payload) => {
-      console.log('📨 [Achievement Tracking] Received event: session.attended', payload);
+      console.log(
+        '📨 [Achievement Tracking] Received event: session.attended',
+        payload,
+      );
       this.handleEvent('SESSION_ATTENDED', payload);
     });
 
     // Listen event: user.login (STREAK)
     this.eventEmitter.on('user.login', (payload) => {
-      console.log('📨 [Achievement Tracking] Received event: user.login', payload);
+      console.log(
+        '📨 [Achievement Tracking] Received event: user.login',
+        payload,
+      );
       this.handleEvent('DAILY_LOGIN', payload);
     });
 
@@ -118,12 +127,12 @@ export class AchievementTrackingService implements OnModuleInit {
    * ═══════════════════════════════════════════════════════════════════════════════
    * HANDLE EVENT (Main Entry Point)
    * ═══════════════════════════════════════════════════════════════════════════════
-   * 
+   *
    * Method này được gọi khi có event xảy ra
-   * 
+   *
    * @param eventName - Tên event (VD: QUIZ_COMPLETED)
    * @param payload - Data của event { userId, ... }
-   * 
+   *
    * Flow:
    * 1. Nhận event từ EventEmitter
    * 2. Tìm tất cả achievements có eventName khớp
@@ -138,17 +147,23 @@ export class AchievementTrackingService implements OnModuleInit {
         return;
       }
 
-      console.log(`🔍 [Achievement Tracking] Finding achievements for event: ${eventName}`);
+      console.log(
+        `🔍 [Achievement Tracking] Finding achievements for event: ${eventName}`,
+      );
 
       // Tìm tất cả achievements liên quan đến event này
       const achievements = await this.findAchievementsByEvent(eventName);
 
       if (achievements.length === 0) {
-        console.log(`ℹ️ [Achievement Tracking] No achievements found for event: ${eventName}`);
+        console.log(
+          `ℹ️ [Achievement Tracking] No achievements found for event: ${eventName}`,
+        );
         return;
       }
 
-      console.log(`✅ [Achievement Tracking] Found ${achievements.length} achievement(s) for event: ${eventName}`);
+      console.log(
+        `✅ [Achievement Tracking] Found ${achievements.length} achievement(s) for event: ${eventName}`,
+      );
 
       // Xử lý từng achievement
       for (const achievement of achievements) {
@@ -163,23 +178,25 @@ export class AchievementTrackingService implements OnModuleInit {
    * ═══════════════════════════════════════════════════════════════════════════════
    * FIND ACHIEVEMENTS BY EVENT
    * ═══════════════════════════════════════════════════════════════════════════════
-   * 
+   *
    * Tìm tất cả achievements có eventName khớp và đang active
-   * 
+   *
    * VERSION 3: Hỗ trợ CẢ 3 LOẠI
-   * 
+   *
    * @param eventName - Tên event cần tìm
    * @returns Array of achievements (EVENT_COUNT + STREAK + PROPERTY_CHECK)
-   * 
+   *
    * Query example:
-   * SELECT * FROM achievements 
-   * WHERE event_name = 'QUIZ_COMPLETED' 
+   * SELECT * FROM achievements
+   * WHERE event_name = 'QUIZ_COMPLETED'
    * AND is_active = true
    * AND type IN ('EVENT_COUNT', 'STREAK', 'PROPERTY_CHECK')
    */
   private async findAchievementsByEvent(
     eventName: string,
-  ): Promise<(EventCountAchievement | StreakAchievement | PropertyCheckAchievement)[]> {
+  ): Promise<
+    (EventCountAchievement | StreakAchievement | PropertyCheckAchievement)[]
+  > {
     // Tìm CẢ 3 loại achievements
     const achievements = await this.achievementRepository
       .createQueryBuilder('achievement')
@@ -201,22 +218,25 @@ export class AchievementTrackingService implements OnModuleInit {
    * ═══════════════════════════════════════════════════════════════════════════════
    * PROCESS ACHIEVEMENT
    * ═══════════════════════════════════════════════════════════════════════════════
-   * 
+   *
    * Xử lý 1 achievement cụ thể cho user
-   * 
+   *
    * VERSION 3: Hỗ trợ CẢ 3 LOẠI
-   * 
+   *
    * @param userId - ID của user
    * @param achievement - Achievement cần xử lý
    * @param payload - Data từ event
-   * 
+   *
    * Flow:
    * 1. Check user đã earn achievement này chưa
    * 2. Nếu chưa → Xử lý theo type (EVENT_COUNT, STREAK, hoặc PROPERTY_CHECK)
    */
   private async processAchievement(
     userId: number,
-    achievement: EventCountAchievement | StreakAchievement | PropertyCheckAchievement,
+    achievement:
+      | EventCountAchievement
+      | StreakAchievement
+      | PropertyCheckAchievement,
     payload: any,
   ): Promise<void> {
     try {
@@ -253,7 +273,10 @@ export class AchievementTrackingService implements OnModuleInit {
 
       // Xử lý theo type
       if ('targetCount' in achievement) {
-        await this.processEventCount(userId, achievement as EventCountAchievement);
+        await this.processEventCount(
+          userId,
+          achievement as EventCountAchievement,
+        );
       } else if ('targetStreakLength' in achievement) {
         await this.processStreak(userId, achievement as StreakAchievement);
       } else if ('propertyName' in achievement) {
@@ -275,19 +298,19 @@ export class AchievementTrackingService implements OnModuleInit {
    * ═══════════════════════════════════════════════════════════════════════════════
    * PROCESS EVENT_COUNT ACHIEVEMENT
    * ═══════════════════════════════════════════════════════════════════════════════
-   * 
+   *
    * Xử lý achievement kiểu đếm số lần
-   * 
+   *
    * @param userId - ID user
    * @param achievement - EVENT_COUNT achievement
-   * 
+   *
    * Flow:
    * 1. Tìm hoặc tạo tracking record
    * 2. Tăng eventCount lên 1
    * 3. Tính progress (%)
    * 4. Update progress record
    * 5. Nếu đạt 100% → Award achievement
-   * 
+   *
    * Example:
    * - Achievement: "Complete 50 quizzes"
    * - User làm quiz lần 1 → eventCount: 0 → 1 (progress: 2%)
@@ -312,8 +335,10 @@ export class AchievementTrackingService implements OnModuleInit {
 
       if (!tracking) {
         // Lần đầu tiên làm event này → Tạo record mới
-        console.log(`📝 [Achievement Tracking] Creating new tracking record for user ${userId}`);
-        
+        console.log(
+          `📝 [Achievement Tracking] Creating new tracking record for user ${userId}`,
+        );
+
         tracking = this.trackingRepository.create({
           userId,
           achievementId: achievement.id,
@@ -332,7 +357,7 @@ export class AchievementTrackingService implements OnModuleInit {
 
       console.log(
         `📊 [Achievement Tracking] User ${userId}: ${achievement.name} - ` +
-        `${tracking.eventCount}/${achievement.targetCount}`,
+          `${tracking.eventCount}/${achievement.targetCount}`,
       );
 
       // ═══════════════════════════════════════════════════════════════════════════════
@@ -357,7 +382,10 @@ export class AchievementTrackingService implements OnModuleInit {
         await this.awardAchievement(userId, achievement);
       }
     } catch (error) {
-      console.error('❌ [Achievement Tracking] Error processing event count:', error);
+      console.error(
+        '❌ [Achievement Tracking] Error processing event count:',
+        error,
+      );
     }
   }
 
@@ -365,12 +393,12 @@ export class AchievementTrackingService implements OnModuleInit {
    * ═══════════════════════════════════════════════════════════════════════════════
    * PROCESS STREAK ACHIEVEMENT
    * ═══════════════════════════════════════════════════════════════════════════════
-   * 
+   *
    * Xử lý achievement kiểu chuỗi liên tiếp
-   * 
+   *
    * @param userId - ID user
    * @param achievement - STREAK achievement
-   * 
+   *
    * Flow:
    * 1. Lấy tracking record
    * 2. Check xem có phải ngày liên tiếp không
@@ -378,7 +406,7 @@ export class AchievementTrackingService implements OnModuleInit {
    * 4. Tính progress
    * 5. Update progress
    * 6. Award nếu đạt target
-   * 
+   *
    * Example:
    * - Achievement: "Login 7 days streak"
    * - Day 1: Login → streak = 1/7 (14%)
@@ -410,8 +438,10 @@ export class AchievementTrackingService implements OnModuleInit {
         // ═══════════════════════════════════════════════════════════════════════════════
         // FIRST TIME - Tạo streak đầu tiên
         // ═══════════════════════════════════════════════════════════════════════════════
-        console.log(`📝 [Achievement Tracking] Creating new streak record for user ${userId}`);
-        
+        console.log(
+          `📝 [Achievement Tracking] Creating new streak record for user ${userId}`,
+        );
+
         currentStreak = 1;
         tracking = this.trackingRepository.create({
           userId,
@@ -425,7 +455,7 @@ export class AchievementTrackingService implements OnModuleInit {
             startDate: now.toISOString(),
           },
         });
-        
+
         await this.trackingRepository.save(tracking);
       } else {
         // ═══════════════════════════════════════════════════════════════════════════════
@@ -443,19 +473,25 @@ export class AchievementTrackingService implements OnModuleInit {
           // SAME DAY - Không làm gì (user đã login rồi hôm nay)
           // ═══════════════════════════════════════════════════════════════════════════════
           currentStreak = tracking.metadata?.currentStreak || 1;
-          console.log(`ℹ️ [Achievement Tracking] Same day event, streak unchanged: ${currentStreak}`);
+          console.log(
+            `ℹ️ [Achievement Tracking] Same day event, streak unchanged: ${currentStreak}`,
+          );
           return; // Exit sớm, không update gì cả
         } else if (daysDiff === 1) {
           // ═══════════════════════════════════════════════════════════════════════════════
           // CONSECUTIVE DAY - Tăng streak
           // ═══════════════════════════════════════════════════════════════════════════════
           currentStreak = (tracking.metadata?.currentStreak || 0) + 1;
-          console.log(`🔥 [Achievement Tracking] Consecutive day! Streak increased: ${currentStreak}`);
+          console.log(
+            `🔥 [Achievement Tracking] Consecutive day! Streak increased: ${currentStreak}`,
+          );
         } else {
           // ═══════════════════════════════════════════════════════════════════════════════
           // BROKEN STREAK - Reset về 1
           // ═══════════════════════════════════════════════════════════════════════════════
-          console.log(`💔 [Achievement Tracking] Streak broken! Days missed: ${daysDiff - 1}`);
+          console.log(
+            `💔 [Achievement Tracking] Streak broken! Days missed: ${daysDiff - 1}`,
+          );
           currentStreak = 1;
         }
 
@@ -466,10 +502,9 @@ export class AchievementTrackingService implements OnModuleInit {
           currentStreak,
           maxStreak: Math.max(currentStreak, tracking.metadata?.maxStreak || 0),
           startDate:
-            daysDiff === 1
-              ? tracking.metadata?.startDate
-              : now.toISOString(),
-          lastBreakDate: daysDiff > 1 ? now.toISOString() : tracking.metadata?.lastBreakDate,
+            daysDiff === 1 ? tracking.metadata?.startDate : now.toISOString(),
+          lastBreakDate:
+            daysDiff > 1 ? now.toISOString() : tracking.metadata?.lastBreakDate,
         };
 
         await this.trackingRepository.save(tracking);
@@ -477,7 +512,7 @@ export class AchievementTrackingService implements OnModuleInit {
 
       console.log(
         `📊 [Achievement Tracking] User ${userId}: ${achievement.name} - ` +
-        `Streak ${currentStreak}/${achievement.targetStreakLength}`,
+          `Streak ${currentStreak}/${achievement.targetStreakLength}`,
       );
 
       // ═══════════════════════════════════════════════════════════════════════════════
@@ -502,7 +537,10 @@ export class AchievementTrackingService implements OnModuleInit {
         await this.awardAchievement(userId, achievement);
       }
     } catch (error) {
-      console.error('❌ [Achievement Tracking] Error processing streak:', error);
+      console.error(
+        '❌ [Achievement Tracking] Error processing streak:',
+        error,
+      );
     }
   }
 
@@ -510,24 +548,24 @@ export class AchievementTrackingService implements OnModuleInit {
    * ═══════════════════════════════════════════════════════════════════════════════
    * PROCESS PROPERTY_CHECK ACHIEVEMENT
    * ═══════════════════════════════════════════════════════════════════════════════
-   * 
+   *
    * Xử lý achievement kiểu kiểm tra điều kiện/thuộc tính
-   * 
+   *
    * @param userId - ID user
    * @param achievement - PROPERTY_CHECK achievement
    * @param payload - Data từ event (có thể chứa property value)
-   * 
+   *
    * Flow:
    * 1. Lấy giá trị property (từ payload hoặc query DB)
    * 2. So sánh với target value theo operator
    * 3. Nếu đạt điều kiện → progress = 100%, award
    * 4. Nếu không đạt → progress = 0%
-   * 
+   *
    * Example:
    * - Achievement: "Quiz Pro" - avgQuizScore >= 80
    * - User avgQuizScore = 85
    * - Check: 85 >= 80 → TRUE → Award!
-   * 
+   *
    * - Achievement: "Perfect Score" - avgQuizScore == 100
    * - User avgQuizScore = 95
    * - Check: 95 == 100 → FALSE → No award
@@ -589,7 +627,10 @@ export class AchievementTrackingService implements OnModuleInit {
         await this.awardAchievement(userId, achievement);
       }
     } catch (error) {
-      console.error('❌ [Achievement Tracking] Error processing property check:', error);
+      console.error(
+        '❌ [Achievement Tracking] Error processing property check:',
+        error,
+      );
     }
   }
 
@@ -597,14 +638,14 @@ export class AchievementTrackingService implements OnModuleInit {
    * ═══════════════════════════════════════════════════════════════════════════════
    * GET PROPERTY VALUE
    * ═══════════════════════════════════════════════════════════════════════════════
-   * 
+   *
    * Lấy giá trị property từ database
-   * 
+   *
    * @param userId - ID user
    * @param entityName - Tên entity (VD: LearnerProgress, Coach, User)
    * @param propertyName - Tên property (VD: avgQuizScore, yearOfExperience)
    * @returns Giá trị property
-   * 
+   *
    * Supported entities:
    * - LearnerProgress: avgQuizScore, avgAiAnalysisScore, sessionsCompleted
    * - Coach: yearOfExperience, verificationStatus
@@ -640,7 +681,9 @@ export class AchievementTrackingService implements OnModuleInit {
           });
 
           if (!coach) {
-            console.warn(`⚠️ [Achievement Tracking] No Coach found for user ${userId}`);
+            console.warn(
+              `⚠️ [Achievement Tracking] No Coach found for user ${userId}`,
+            );
             return null;
           }
 
@@ -679,20 +722,24 @@ export class AchievementTrackingService implements OnModuleInit {
    * ═══════════════════════════════════════════════════════════════════════════════
    * EVALUATE CONDITION
    * ═══════════════════════════════════════════════════════════════════════════════
-   * 
+   *
    * Kiểm tra điều kiện so sánh
-   * 
+   *
    * @param value - Giá trị thực tế
    * @param operator - Toán tử (==, !=, >, <, >=, <=)
    * @param target - Giá trị mục tiêu
    * @returns true nếu điều kiện đúng, false nếu sai
-   * 
+   *
    * Examples:
    * - evaluateCondition(85, '>=', '80') → true
    * - evaluateCondition(75, '>=', '80') → false
    * - evaluateCondition(100, '==', '100') → true
    */
-  private evaluateCondition(value: any, operator: string, target: string): boolean {
+  private evaluateCondition(
+    value: any,
+    operator: string,
+    target: string,
+  ): boolean {
     // Try parse as number
     const numValue = parseFloat(value);
     const numTarget = parseFloat(target);
@@ -713,7 +760,9 @@ export class AchievementTrackingService implements OnModuleInit {
         case '<=':
           return numValue <= numTarget;
         default:
-          console.warn(`⚠️ [Achievement Tracking] Unknown operator: ${operator}`);
+          console.warn(
+            `⚠️ [Achievement Tracking] Unknown operator: ${operator}`,
+          );
           return false;
       }
     }
@@ -736,38 +785,30 @@ export class AchievementTrackingService implements OnModuleInit {
    * ═══════════════════════════════════════════════════════════════════════════════
    * GET DAYS DIFFERENCE
    * ═══════════════════════════════════════════════════════════════════════════════
-   * 
+   *
    * Tính số ngày chênh lệch giữa 2 dates (chỉ tính phần ngày, bỏ qua giờ)
-   * 
+   *
    * @param date1 - Ngày 1
    * @param date2 - Ngày 2
    * @returns Số ngày chênh lệch
-   * 
+   *
    * Example:
    * - date1: 2025-11-16 23:59:00
    * - date2: 2025-11-17 00:01:00
    * - Result: 1 (ngày liên tiếp)
-   * 
+   *
    * - date1: 2025-11-16 10:00:00
    * - date2: 2025-11-16 20:00:00
    * - Result: 0 (cùng ngày)
-   * 
+   *
    * - date1: 2025-11-16
    * - date2: 2025-11-19
    * - Result: 3 (cách 3 ngày)
    */
   private getDaysDifference(date1: Date, date2: Date): number {
     // Normalize về đầu ngày (00:00:00) để chỉ so sánh ngày
-    const d1 = new Date(
-      date1.getFullYear(),
-      date1.getMonth(),
-      date1.getDate(),
-    );
-    const d2 = new Date(
-      date2.getFullYear(),
-      date2.getMonth(),
-      date2.getDate(),
-    );
+    const d1 = new Date(date1.getFullYear(), date1.getMonth(), date1.getDate());
+    const d2 = new Date(date2.getFullYear(), date2.getMonth(), date2.getDate());
 
     // Tính diff bằng milliseconds, convert sang ngày
     const diffTime = Math.abs(d2.getTime() - d1.getTime());
@@ -780,13 +821,13 @@ export class AchievementTrackingService implements OnModuleInit {
    * ═══════════════════════════════════════════════════════════════════════════════
    * UPDATE PROGRESS
    * ═══════════════════════════════════════════════════════════════════════════════
-   * 
+   *
    * Update progress của user với achievement
-   * 
+   *
    * @param userId - ID user
    * @param achievementId - ID achievement
    * @param progress - Progress (0-100)
-   * 
+   *
    * Table: achievement_progress
    * - Lưu progress của user với từng achievement
    * - Dùng để hiển thị UI progress bar
@@ -823,12 +864,12 @@ export class AchievementTrackingService implements OnModuleInit {
    * ═══════════════════════════════════════════════════════════════════════════════
    * AWARD ACHIEVEMENT
    * ═══════════════════════════════════════════════════════════════════════════════
-   * 
+   *
    * Trao achievement cho user khi đạt 100%
-   * 
+   *
    * @param userId - ID user
    * @param achievement - Achievement đã đạt
-   * 
+   *
    * Flow:
    * 1. Double check user chưa có achievement
    * 2. Tạo learner_achievement record
@@ -860,7 +901,9 @@ export class AchievementTrackingService implements OnModuleInit {
 
       await this.learnerAchievementRepository.save(earned);
 
-      console.log(`🎉🎉🎉 [Achievement Tracking] User ${userId} EARNED: ${achievement.name}! 🎉🎉🎉`);
+      console.log(
+        `🎉🎉🎉 [Achievement Tracking] User ${userId} EARNED: ${achievement.name}! 🎉🎉🎉`,
+      );
 
       // Emit event để WebSocket gateway gửi notification
       this.eventEmitter.emit('achievement.earned', {
@@ -870,9 +913,14 @@ export class AchievementTrackingService implements OnModuleInit {
         achievementIcon: achievement.iconUrl,
       });
 
-      console.log(`📢 [Achievement Tracking] Event 'achievement.earned' emitted`);
+      console.log(
+        `📢 [Achievement Tracking] Event 'achievement.earned' emitted`,
+      );
     } catch (error) {
-      console.error('❌ [Achievement Tracking] Error awarding achievement:', error);
+      console.error(
+        '❌ [Achievement Tracking] Error awarding achievement:',
+        error,
+      );
     }
   }
 }

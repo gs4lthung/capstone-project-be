@@ -1,0 +1,52 @@
+@startuml CreateBaseCredential
+
+actor Admin
+participant BaseCredentialController
+participant BaseCredentialService
+participant BunnyService
+participant DataSource
+
+Admin -> BaseCredentialController: POST /base-credentials (multipart/form-data)
+activate BaseCredentialController
+
+note right of BaseCredentialController
+  DTO: name, description, type
+  File: base_credential_image
+end note
+
+BaseCredentialController -> BaseCredentialService: create(CreateBaseCredentialDto, file)
+activate BaseCredentialService
+
+BaseCredentialService -> DataSource: BEGIN TRANSACTION
+activate DataSource
+
+alt file provided
+  BaseCredentialService -> BunnyService: uploadToStorage(file)
+  activate BunnyService
+  
+  note right of BunnyService
+    Upload credential image
+    Generate random ID
+    Type: base_credential_image
+  end note
+  
+  BunnyService --> BaseCredentialService: publicUrl
+  deactivate BunnyService
+  
+  DataSource -> DataSource: assign publicUrl to DTO
+end
+
+DataSource -> DataSource: create base credential entity
+DataSource -> DataSource: save base credential
+DataSource -> DataSource: COMMIT
+
+DataSource --> BaseCredentialService: success
+deactivate DataSource
+
+BaseCredentialService --> BaseCredentialController: CustomApiResponse (201)
+deactivate BaseCredentialService
+
+BaseCredentialController --> Admin: HTTP 201 Created
+deactivate BaseCredentialController
+
+@enduml

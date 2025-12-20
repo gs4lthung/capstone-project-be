@@ -1,0 +1,85 @@
+@startuml DeleteActivateAchievementSequence
+
+actor "Admin" as admin
+participant "AchievementController" as controller
+participant "AuthGuard" as authGuard
+participant "RoleGuard" as roleGuard
+participant "AchievementService" as service
+database "DataSource" as db
+
+== Delete Achievement ==
+
+admin -> controller: DELETE /achievements/:id
+activate controller
+
+controller -> authGuard: canActivate
+authGuard --> controller: authenticated
+
+controller -> roleGuard: canActivate
+roleGuard --> controller: ADMIN role
+
+controller -> service: delete(id)
+activate service
+
+service -> db: soft delete achievement\n(set deletedAt)
+activate db
+db --> service: deleted
+deactivate db
+
+service --> controller: CustomApiResponse(success)
+deactivate service
+
+controller --> admin: HTTP 200 {message}
+deactivate controller
+
+== Activate Achievement ==
+
+admin -> controller: PATCH /achievements/:id/activate
+activate controller
+
+controller -> authGuard: canActivate
+authGuard --> controller: authenticated
+
+controller -> roleGuard: canActivate
+roleGuard --> controller: ADMIN role
+
+controller -> service: activate(id)
+activate service
+
+service -> db: UPDATE achievement\nSET isActive = true
+activate db
+db --> service: updated
+deactivate db
+
+service --> controller: CustomApiResponse(success)
+deactivate service
+
+controller --> admin: HTTP 200 {message}
+deactivate controller
+
+== Deactivate Achievement ==
+
+admin -> controller: PATCH /achievements/:id/deactivate
+activate controller
+
+controller -> authGuard: canActivate
+authGuard --> controller: authenticated
+
+controller -> roleGuard: canActivate
+roleGuard --> controller: ADMIN role
+
+controller -> service: deactivate(id)
+activate service
+
+service -> db: UPDATE achievement\nSET isActive = false
+activate db
+db --> service: updated
+deactivate db
+
+service --> controller: CustomApiResponse(success)
+deactivate service
+
+controller --> admin: HTTP 200 {message}
+deactivate controller
+
+@enduml

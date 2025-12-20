@@ -1,36 +1,19 @@
+
 @startuml VerifyCoachClassDiagram
 !theme plain
+skinparam linetype ortho
+skinparam nodesep 80
+skinparam ranksep 80
 skinparam classBackgroundColor #f0f0f0
 skinparam classBorderColor #333
 skinparam arrowColor #333
-
-' ════════════════════════════════════════════════════════════════════════════════════
-' PRESENTATION LAYER
-' ════════════════════════════════════════════════════════════════════════════════════
-
-class CoachVerificationPanel {
-  -pendingCoaches: Coach[]
-  -selectedCoach: Coach
-  -rejectionReason: string
-  --
-  +loadPendingCoaches(): void
-  +viewCoachProfile(): void
-  +approveCoach(): void
-  +rejectCoach(reason: string): void
-  +displayStatus(): void
-}
 
 ' ════════════════════════════════════════════════════════════════════════════════════
 ' CONTROLLER LAYER
 ' ════════════════════════════════════════════════════════════════════════════════════
 
 class CoachController {
-  -coachService: CoachService
-  --
-  +findAll(pagination, filter): Promise<Response>
-  +verify(id: number): Promise<Response>
-  +reject(id: number, body): Promise<Response>
-  ...
+
 }
 
 ' ════════════════════════════════════════════════════════════════════════════════════
@@ -38,14 +21,11 @@ class CoachController {
 ' ════════════════════════════════════════════════════════════════════════════════════
 
 class CoachService {
-  -coachRepository: Repository
-  -userRepository: Repository
-  -datasource: DataSource
-  --
-  +findAll(findOptions): Promise<Response>
-  +verifyCoach(coachId): Promise<void>
-  +rejectCoach(coachId, reason): Promise<void>
-  ...
+
+}
+
+class NotificationService {
+
 }
 
 ' ════════════════════════════════════════════════════════════════════════════════════
@@ -53,104 +33,55 @@ class CoachService {
 ' ════════════════════════════════════════════════════════════════════════════════════
 
 class Coach {
-  -id: number
-  -user: User
-  -bio: string
-  -specialties: string[]
-  -teachingMethods: string[]
-  -yearOfExperience: number
-  -verificationStatus: CoachVerificationStatus
-  -verificationReason?: string
-  -credentials: Credential[]
-  -createdAt: Date
-  -updatedAt: Date
+
 }
 
 class Credential {
-  -id: number
-  -coach: Coach
-  -name: string
-  -type: CourseCredentialType
-  -description?: string
-  -publicUrl?: string
-  -issuedAt?: Date
-  -expiresAt?: Date
+
 }
 
 class User {
-  -id: number
-  -fullName: string
-  -email: string
-  -phoneNumber: string
-  -isActive: boolean
-  -role: Role
+
 }
 
 class Role {
-  -id: number
-  -name: string (ADMIN)
+
+}
+
+
+' ════════════════════════════════════════════════════════════════════════════════════
+' DTO LAYER
+' ════════════════════════════════════════════════════════════════════════════════════
+
+class RejectCoachDto {
 }
 
 ' ════════════════════════════════════════════════════════════════════════════════════
-' ENUMS/CONSTANTS
-' ════════════════════════════════════════════════════════════════════════════════════
-
-enum CoachVerificationStatus {
-  UNVERIFIED
-  VERIFIED
-  REJECTED
-}
-
-enum CourseCredentialType {
-  CERTIFICATE
-  LICENSE
-  CERTIFICATION
-  AWARD
-}
-
-' ════════════════════════════════════════════════════════════════════════════════════
-' SECURITY LAYER
+' UTILITY LAYER
 ' ════════════════════════════════════════════════════════════════════════════════════
 
 class AuthGuard {
-  --
-  +canActivate(context): boolean
+
 }
 
 class RoleGuard {
-  --
-  +canActivate(context): boolean
-  -checkAdminRole(user): boolean
-}
 
-' ════════════════════════════════════════════════════════════════════════════════════
-' INFRASTRUCTURE
-' ════════════════════════════════════════════════════════════════════════════════════
-
-class DataSource {
-  --
-  +transaction(callback): Promise<Result>
 }
 
 ' ════════════════════════════════════════════════════════════════════════════════════
 ' RELATIONSHIPS
 ' ════════════════════════════════════════════════════════════════════════════════════
 
-CoachVerificationPanel --> CoachController: calls
 
-CoachController --> CoachService: delegates
-CoachController --> AuthGuard: validates
-CoachController --> RoleGuard: checks admin
-
-CoachService --> Coach: queries/updates
-CoachService --> User: activates
-CoachService --> Credential: retrieves
-CoachService --> DataSource: transactions
-
-Coach --> User: has_one
-Coach --> Credential: has_many
-Coach --> CoachVerificationStatus: has status
-Credential --> CourseCredentialType: has type
-User --> Role: belongs to
+CoachController -- CoachService
+CoachController -- AuthGuard
+CoachController -- RoleGuard
+CoachController -- RejectCoachDto
+CoachService -- Coach
+CoachService -- User
+CoachService -- NotificationService
+Coach -- User
+Coach -- Credential
+User -- Role
 
 @enduml

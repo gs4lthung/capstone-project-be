@@ -1,0 +1,65 @@
+@startuml CancelEnrollmentSequence
+
+actor "Learner" as learner
+participant "CourseController" as controller
+participant "AuthGuard" as authGuard
+participant "CourseService" as service
+participant "ConfigurationService" as configService
+participant "WalletService" as walletService
+participant "NotificationService" as notificationService
+database "DataSource" as db
+
+== Cancel Course Enrollment ==
+
+learner -> controller: PATCH /courses/:id/learners/cancel
+activate controller
+
+controller -> authGuard: canActivate
+authGuard --> controller: authenticated
+
+controller -> service: learnerCancelCourse(courseId)
+activate service
+
+service -> db: transaction
+activate db
+
+service -> db: validate course\n(status, startDate timing)
+
+service -> configService: getMinDaysBeforeCourseStart
+activate configService
+configService --> service: minDays
+deactivate configService
+
+service -> db: find enrollment\n(courseId, learnerId)
+
+alt enrollment = PENDING_GROUP or CONFIRMED
+    service -> walletService: refund to wallet\n(paymentAmount)
+    activate walletService
+    walletService -> db: UPDATE wallet balance
+    walletService --> service: refunded
+    deactivate walletService
+end
+
+service -> db: update course\ncurrentParticipants -= 1\ntotalEarnings -= refund
+
+alt GROUP course below minParticipants
+    service -> db: CONFIRMED enrollments\n-> PENDING_GROUP\ncourse.status = APPROVED
+end
+
+service -> db: update enrollment\nstatus = CANCELLED
+
+service -> notificationService: notify coach and learner
+activate notificationService
+notificationService --> service: sent
+deactivate notificationService
+
+db --> service: commit
+deactivate db
+
+service --> controller: CustomApiResponse(success)
+deactivate service
+
+controller --> learner: HTTP 200 {message}
+deactivate controller
+
+@enduml

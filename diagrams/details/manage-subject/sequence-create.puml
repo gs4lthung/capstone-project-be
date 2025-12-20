@@ -1,0 +1,47 @@
+@startuml ManageSubjectCreateDiagram
+
+actor Coach
+participant AuthGuard
+participant RoleGuard
+participant SubjectController
+participant SubjectService
+participant BunnyService
+database DataSource
+
+== Create Subject ==
+
+Coach -> SubjectController: POST /subjects (name, description, level, file)
+activate SubjectController
+
+SubjectController -> AuthGuard: validate token
+activate AuthGuard
+AuthGuard --> SubjectController: valid
+deactivate AuthGuard
+
+SubjectController -> RoleGuard: check COACH role
+activate RoleGuard
+RoleGuard --> SubjectController: authorized
+deactivate RoleGuard
+
+SubjectController -> SubjectService: create(data, file)
+activate SubjectService
+
+alt File provided
+  SubjectService -> BunnyService: uploadToStorage(file)
+  activate BunnyService
+  BunnyService --> SubjectService: publicUrl
+  deactivate BunnyService
+end
+
+SubjectService -> DataSource: INSERT subject (status=DRAFT)
+activate DataSource
+DataSource --> SubjectService: created
+deactivate DataSource
+
+SubjectService --> SubjectController: success
+deactivate SubjectService
+
+SubjectController --> Coach: 201 Created
+deactivate SubjectController
+
+@enduml

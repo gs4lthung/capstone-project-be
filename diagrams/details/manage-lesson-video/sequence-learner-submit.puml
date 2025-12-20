@@ -1,0 +1,47 @@
+@startuml LearnerSubmitLessonVideo
+
+actor Learner
+participant Client as client
+participant LearnerVideoController
+participant AuthGuard as auth
+participant RoleGuard as role
+participant LearnerVideoService as service
+participant FfmpegService as ffmpeg
+participant BunnyCDNService as bunny
+participant DataSource as db
+== Learner Submit Practice Video ==
+learner -> client: 1. select video and submit
+client -> LearnerVideoController: 2. POST /learner-videos (multipart/form-data)
+activate LearnerVideoController
+LearnerVideoController -> auth: 3. validate JWT
+activate auth
+auth --> LearnerVideoController: 4. valid
+deactivate auth
+LearnerVideoController -> role: 5. check LEARNER role
+activate role
+role --> LearnerVideoController: 6. authorized
+deactivate role
+LearnerVideoController -> service: 7. upload(videoFile, data, user)
+activate service
+service -> ffmpeg: 8. createVideoThumbnailVer2(videoFile)
+activate ffmpeg
+ffmpeg --> service: 9. thumbnail path
+deactivate ffmpeg
+service -> bunny: 10. uploadToStorage(thumbnail)
+activate bunny
+bunny --> service: 11. thumbnail public url
+deactivate bunny
+service -> bunny: 12. uploadToStorage(videoFile)
+activate bunny
+bunny --> service: 13. video public url
+deactivate bunny
+service -> db: 14. save LearnerVideo entity (with urls, user, session, etc)
+activate db
+db --> service: 15. saved entity
+deactivate db
+service --> LearnerVideoController: 16. upload result
+deactivate service
+LearnerVideoController --> client: 17. http 201 created (upload success)
+deactivate LearnerVideoController
+client --> Learner: 18. show upload success
+@enduml

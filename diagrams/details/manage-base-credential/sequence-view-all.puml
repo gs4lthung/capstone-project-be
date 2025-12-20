@@ -1,0 +1,25 @@
+@startuml ViewAllBaseCredentials
+
+actor User
+participant BaseCredentialController
+participant BaseCredentialService
+participant DataSource
+
+User -> BaseCredentialController: GET /base-credentials
+activate BaseCredentialController
+
+BaseCredentialController -> BaseCredentialService: findAll(pagination, sort, filter)
+activate BaseCredentialService
+
+BaseCredentialService -> DataSource: query base credentials with pagination
+activate DataSource
+DataSource --> BaseCredentialService: paginated credentials
+deactivate DataSource
+
+BaseCredentialService --> BaseCredentialController: PaginateObject<BaseCredential>
+deactivate BaseCredentialService
+
+BaseCredentialController --> User: HTTP 200 with credentials
+deactivate BaseCredentialController
+
+@enduml

@@ -1,0 +1,105 @@
+@startuml ManageLessonQuizClassDiagram
+
+!theme plain
+skinparam linetype ortho
+skinparam nodesep 80
+skinparam ranksep 80
+
+left to right direction
+
+' ════════════════════════════════════════════════════════════════════════════════════
+' CONTROLLER LAYER
+' ════════════════════════════════════════════════════════════════════════════════════
+
+class QuizController {
+}
+
+' ════════════════════════════════════════════════════════════════════════════════════
+' GUARD LAYER
+' ════════════════════════════════════════════════════════════════════════════════════
+
+class AuthGuard {
+}
+
+class RoleGuard {
+}
+
+' ════════════════════════════════════════════════════════════════════════════════════
+' DTO LAYER
+' ════════════════════════════════════════════════════════════════════════════════════
+
+class CreateQuizDto {
+}
+
+class CreateQuestionDto {
+}
+
+class UpdateQuizDto {
+}
+
+class LearnerAttemptQuizDto {
+}
+
+' ════════════════════════════════════════════════════════════════════════════════════
+' SERVICE LAYER
+' ════════════════════════════════════════════════════════════════════════════════════
+
+class QuizService {
+}
+
+class DataSource {
+}
+
+' ════════════════════════════════════════════════════════════════════════════════════
+' ENTITY LAYER
+' ════════════════════════════════════════════════════════════════════════════════════
+
+class Quiz {
+}
+
+class Question {
+}
+
+class QuestionOption {
+}
+
+class QuizAttempt {
+}
+
+class Lesson {
+}
+
+class Session {
+}
+
+class User {
+}
+
+' ════════════════════════════════════════════════════════════════════════════════════
+' RELATIONSHIPS
+' ════════════════════════════════════════════════════════════════════════════════════
+
+QuizController --> AuthGuard
+QuizController --> RoleGuard
+QuizController --> QuizService
+QuizController ..> CreateQuizDto
+QuizController ..> CreateQuestionDto
+QuizController ..> UpdateQuizDto
+QuizController ..> LearnerAttemptQuizDto
+
+QuizService --> DataSource
+QuizService --> Quiz
+QuizService --> Question
+QuizService --> Lesson
+QuizService --> Session
+
+Quiz --> Question
+Question --> QuestionOption
+Quiz --> QuizAttempt
+Quiz --> Lesson
+Quiz --> Session
+Quiz --> User
+
+QuizAttempt --> User
+
+@enduml

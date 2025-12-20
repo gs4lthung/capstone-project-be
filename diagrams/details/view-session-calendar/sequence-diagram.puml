@@ -1,73 +1,74 @@
 @startuml ViewSessionCalendarSequenceDiagram
 
-actor "User" as user
-participant "Client" as client
-participant "Controller" as controller
-participant "Service" as service
-database "Database" as db
+actor User
+participant SessionController
+participant AuthGuard
+participant RoleGuard
+participant SessionService
+participant DataSource
 
-== View Course Calendar ==
+== View Sessions by Course ==
 
-user -> client: 1. Navigate to course details
-client -> controller: 2. GET /courses/:id
-activate controller
+User -> SessionController: GET /sessions/courses/:id
+activate SessionController
 
-controller -> service: 3. findOne(id)
-activate service
+SessionController -> AuthGuard: validate JWT
+activate AuthGuard
+AuthGuard --> SessionController: valid
+deactivate AuthGuard
 
-service -> db: 4. Query course with sessions
-activate db
-db --> service: Course with sessions[]
-deactivate db
+SessionController -> RoleGuard: check COACH/LEARNER role
+activate RoleGuard
+RoleGuard --> SessionController: authorized
+deactivate RoleGuard
 
-service --> controller: Response with sessions
-deactivate service
+SessionController -> SessionService: findByCourseId(courseId)
+activate SessionService
 
-controller --> client: 5. HTTP 200
-deactivate controller
+SessionService -> DataSource: query sessions by course with relations
+activate DataSource
+DataSource --> SessionService: sessions list
+deactivate DataSource
 
-client --> user: 6. Display course calendar view
-note right of client
-  Calendar grid showing all sessions
-  with their dates and times
+SessionService --> SessionController: sessions data
+deactivate SessionService
+
+SessionController --> User: HTTP 200 with sessions
+deactivate SessionController
+
+== View Weekly Calendar ==
+
+User -> SessionController: GET /sessions/calendar/weekly?startDate&endDate
+activate SessionController
+
+SessionController -> AuthGuard: validate JWT
+activate AuthGuard
+AuthGuard --> SessionController: valid
+deactivate AuthGuard
+
+SessionController -> RoleGuard: check COACH/LEARNER role
+activate RoleGuard
+RoleGuard --> SessionController: authorized
+deactivate RoleGuard
+
+SessionController -> SessionService: getSessionsForWeeklyCalendar(data)
+activate SessionService
+
+SessionService -> DataSource: query sessions by date range and user
+activate DataSource
+
+note right of DataSource
+  Filter by startDate, endDate
+  Optionally filter by userId
 end note
 
-== Filter Sessions by Date ==
+DataSource --> SessionService: filtered sessions
+deactivate DataSource
 
-user -> client: 7. Select date range or month
-client --> client: 8. Filter/group sessions locally
-note right of client
-  Group sessions by week or month
-  Apply date range filter
-end note
+SessionService --> SessionController: weekly sessions
+deactivate SessionService
 
-client --> user: 9. Update calendar display
-note right of user
-  Calendar updates to show
-  filtered sessions
-end note
-
-== View Session Details ==
-
-user -> client: 10. Click on session in calendar
-client --> user: 11. Show session details popup
-note right of client
-  Display:
-  - Session date & time
-  - Duration
-  - Location/Court
-  - Enrolled participants count
-  - Status
-end note
-
-== View Availability ==
-
-user -> client: 12. Check session availability
-client --> user: 13. Show availability info
-note right of client
-  Display available/full status
-  Show spaces remaining
-  Display enrollment button if available
-end note
+SessionController --> User: HTTP 200 with calendar data
+deactivate SessionController
 
 @enduml

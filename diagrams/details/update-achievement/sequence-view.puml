@@ -1,0 +1,60 @@
+@startuml ViewAchievementSequence
+
+actor "Admin" as admin
+participant "AchievementController" as controller
+participant "AuthGuard" as authGuard
+participant "RoleGuard" as roleGuard
+participant "AchievementService" as service
+database "DataSource" as db
+
+== View All Achievements ==
+
+admin -> controller: GET /achievements\n?page=1&size=10&filter
+activate controller
+
+controller -> authGuard: canActivate
+authGuard --> controller: authenticated
+
+controller -> roleGuard: canActivate
+roleGuard --> controller: ADMIN role
+
+controller -> service: findAll(findOptions)
+activate service
+
+service -> db: SELECT achievements\nwith pagination and filtering
+activate db
+db --> service: PaginateObject<Achievement>
+deactivate db
+
+service --> controller: PaginateObject<Achievement>
+deactivate service
+
+controller --> admin: HTTP 200 PaginateObject<Achievement>
+deactivate controller
+
+== View Single Achievement ==
+
+admin -> controller: GET /achievements/:id
+activate controller
+
+controller -> authGuard: canActivate
+authGuard --> controller: authenticated
+
+controller -> roleGuard: canActivate
+roleGuard --> controller: ADMIN role
+
+controller -> service: findOne(id)
+activate service
+
+service -> db: SELECT achievement by ID\nwith relations
+activate db
+db --> service: Achievement
+deactivate db
+
+service --> controller: Achievement
+deactivate service
+
+controller --> admin: HTTP 200 Achievement
+deactivate controller
+
+@enduml

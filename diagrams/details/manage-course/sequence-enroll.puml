@@ -1,0 +1,85 @@
+@startuml EnrollCourseSequence
+
+actor "Learner" as learner
+participant "PaymentController" as paymentController
+participant "AuthGuard" as authGuard
+participant "RoleGuard" as roleGuard
+participant "PaymentService" as paymentService
+participant "PayosService" as payos
+participant "NotificationService" as notificationService
+database "DataSource" as db
+
+== Enroll in Course (Create Payment Link) ==
+
+learner -> paymentController: POST /payments/courses/:id/link
+activate paymentController
+
+paymentController -> authGuard: canActivate
+authGuard --> paymentController: authenticated
+
+paymentController -> roleGuard: canActivate
+roleGuard --> paymentController: LEARNER role
+
+paymentController -> paymentService: createCoursePaymentLink(id)
+activate paymentService
+
+paymentService -> db: transaction
+activate db
+
+paymentService -> db: validate course\n(status = APPROVED/READY_OPENED)
+
+alt already enrolled
+    paymentService -> db: update enrollment\nstatus = UNPAID
+else new enrollment
+    paymentService -> db: create enrollment\nstatus = UNPAID
+end
+
+paymentService -> payos: createPaymentLink(\namount, description, expiredAt)
+activate payos
+payos --> paymentService: checkoutUrl, qrCode, orderCode
+deactivate payos
+
+paymentService -> db: create payment\nstatus = PENDING
+db --> paymentService: commit
+deactivate db
+
+paymentService --> paymentController: Payment with checkoutUrl
+deactivate paymentService
+
+paymentController --> learner: HTTP 201 {checkoutUrl, qrCode}
+deactivate paymentController
+
+== Payment Success Callback ==
+
+payos -> paymentController: GET /payments/courses/success\n?orderCode&status=PAID
+activate paymentController
+
+paymentController -> paymentService: handlePaymentSuccess(data)
+activate paymentService
+
+paymentService -> db: transaction
+activate db
+
+paymentService -> db: find payment by orderCode
+
+paymentService -> db: update payment.status = PAID
+
+paymentService -> db: update enrollment.paymentAmount\nenrollment.status based on format\n(INDIVIDUAL→CONFIRMED,\nGROUP→PENDING_GROUP/CONFIRMED)
+
+paymentService -> db: update course\ncurrentParticipants += 1\ntotalEarnings, status
+
+paymentService -> notificationService: notify coach and learner
+activate notificationService
+notificationService --> paymentService: sent
+deactivate notificationService
+
+db --> paymentService: commit
+deactivate db
+
+paymentService --> paymentController: void
+deactivate paymentService
+
+paymentController --> payos: HTTP 200
+deactivate paymentController
+
+@enduml

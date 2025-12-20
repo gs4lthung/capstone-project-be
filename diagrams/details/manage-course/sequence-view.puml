@@ -1,0 +1,102 @@
+@startuml ViewCourseSequence
+
+actor "Client" as client
+participant "CourseController" as controller
+participant "CourseService" as service
+participant "CourseRepository" as courseRepo
+database "DataSource" as db
+
+== View All Courses ==
+
+client -> controller: GET /courses?page=1&size=10
+activate controller
+
+controller -> service: findAll(findOptions)
+activate service
+
+service -> courseRepo: find(findOptions)
+activate courseRepo
+
+courseRepo -> db: SELECT courses with pagination
+activate db
+db --> courseRepo: Course records
+deactivate db
+
+courseRepo --> service: PaginateObject<Course>
+deactivate courseRepo
+
+service --> controller: PaginateObject<Course>
+deactivate service
+
+controller --> client: HTTP 200 PaginateObject<Course>
+deactivate controller
+
+== View Single Course ==
+
+client -> controller: GET /courses/:id
+activate controller
+
+controller -> service: findOne(id)
+activate service
+
+service -> db: transaction
+activate db
+
+db -> db: SELECT course with relations\n(sessions, createdBy, quiz, video,\nenrollments, user, subject,\nschedules, court, province, district)
+
+db --> service: Course with full relations
+deactivate db
+
+service --> controller: Course
+deactivate service
+
+controller --> client: HTTP 200 Course
+deactivate controller
+
+== View Coach's Courses ==
+
+client -> controller: GET /courses/coach?page=1&size=10
+activate controller
+
+controller -> controller: AuthGuard validates JWT
+
+controller -> service: findCoachCourses(page, size)
+activate service
+
+service -> db: transaction
+activate db
+
+db -> db: SELECT courses\nWHERE createdBy = :userId\nwith schedules, court
+
+db --> service: PaginateObject<Course>
+deactivate db
+
+service --> controller: PaginateObject<Course>
+deactivate service
+
+controller --> client: HTTP 200 PaginateObject<Course>
+deactivate controller
+
+== View Available Courses (Public) ==
+
+client -> controller: GET /courses/available\n?page=1&size=10\n&name=Beginner&level=BEGINNER\n&province=1&district=2
+activate controller
+
+controller -> service: findAvailableCourses(page, size, name, level, province, district)
+activate service
+
+service -> db: transaction
+activate db
+
+db -> db: SELECT courses\nWHERE status IN (APPROVED, READY_OPENED, FULL)\nAND name LIKE :name\nAND level = :level\nAND province.id = :provinceId\nAND district.id = :districtId\nwith sessions, court, schedules, enrollments
+
+db --> service: PaginateObject<Course>
+deactivate db
+
+service --> controller: PaginateObject<Course>
+deactivate service
+
+controller --> client: HTTP 200 PaginateObject<Course>
+deactivate controller
+
+@enduml

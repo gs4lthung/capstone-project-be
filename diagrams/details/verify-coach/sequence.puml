@@ -2,23 +2,27 @@
 
 actor "Admin" as admin
 participant "Client" as client
-participant "Controller" as controller
-participant "Service" as service
-database "Database" as db
+participant "CoachController" as controller
+participant "AuthGuard" as authGuard
+participant "RoleGuard" as roleGuard
+participant "CoachService" as service
+participant "CoachRepository" as coachRepo
+participant "UserRepository" as userRepo
+participant "NotificationService" as notification
 
 admin -> client: 1. View pending coach profiles
-client -> controller: 2. GET /coaches?filter=UNVERIFIED
+client -> controller: 2. GET /coaches?filter=verificationStatus:UNVERIFIED
 activate controller
 
-controller -> service: 3. findAll(filter, pagination)
+controller -> service: 3. findAll(findOptions)
 activate service
 
-service -> db: 4. Query coaches by status
-activate db
-db --> service: Pending coaches list
-deactivate db
+service -> coachRepo: 4. Find coaches with filter
+activate coachRepo
+coachRepo --> service: Coach list
+deactivate coachRepo
 
-service --> controller: Response
+service --> controller: PaginateObject<Coach>
 deactivate service
 
 controller --> client: 5. HTTP 200
@@ -30,15 +34,15 @@ admin -> client: 7. Click coach to view details
 client -> controller: 8. GET /coaches/:id
 activate controller
 
-controller -> service: 9. findOne(coachId)
+controller -> service: 9. findOne(id, isUser: false)
 activate service
 
-service -> db: 10. Get coach profile + credentials
-activate db
-db --> service: Coach data
-deactivate db
+service -> coachRepo: 10. Find coach with relations\n(user, credentials, baseCredential)
+activate coachRepo
+coachRepo --> service: Coach with details
+deactivate coachRepo
 
-service --> controller: Response
+service --> controller: Coach
 deactivate service
 
 controller --> client: 11. HTTP 200
@@ -50,25 +54,47 @@ admin -> client: 13. Approve coach
 client -> controller: 14. PUT /coaches/:id/verify
 activate controller
 
-controller -> service: 15. verifyCoach(coachId)
+controller -> authGuard: 15. Validate token
+activate authGuard
+authGuard --> controller: User authenticated
+deactivate authGuard
+
+controller -> roleGuard: 16. Check ADMIN role
+activate roleGuard
+roleGuard --> controller: Role authorized
+deactivate roleGuard
+
+controller -> service: 17. verifyCoach(coachId)
 activate service
 
-service -> db: 16. Update verification status = VERIFIED
-activate db
-db --> service: Updated
-deactivate db
+service -> coachRepo: 18. Find coach with relations
+activate coachRepo
+coachRepo --> service: Coach
+deactivate coachRepo
 
-service -> db: 17. Activate user account
-activate db
-db --> service: Updated
-deactivate db
+service -> coachRepo: 19. Update verificationStatus = VERIFIED
+activate coachRepo
+coachRepo --> service: Updated
+deactivate coachRepo
 
-service --> controller: Success
+alt User not active
+    service -> userRepo: 20. Update isActive = true
+    activate userRepo
+    userRepo --> service: Updated
+    deactivate userRepo
+end
+
+service -> notification: 21. sendNotification\n("Verification successful")
+activate notification
+notification --> service: Notification sent
+deactivate notification
+
+service --> controller: CustomApiResponse(200)
 deactivate service
 
-controller --> client: 18. HTTP 200
+controller --> client: 22. HTTP 200
 deactivate controller
 
-client --> admin: 19. Coach approved
+client --> admin: 23. Coach verified successfully
 
 @enduml

@@ -1,0 +1,55 @@
+@startuml ManageSubjectUpdateDiagram
+
+actor Coach
+participant AuthGuard
+participant RoleGuard
+participant SubjectController
+participant SubjectService
+database DataSource
+
+== Update Subject ==
+
+Coach -> SubjectController: PUT /subjects/:id (data)
+activate SubjectController
+
+SubjectController -> AuthGuard: validate token
+activate AuthGuard
+AuthGuard --> SubjectController: valid
+deactivate AuthGuard
+
+SubjectController -> RoleGuard: check COACH role
+activate RoleGuard
+RoleGuard --> SubjectController: authorized
+deactivate RoleGuard
+
+SubjectController -> SubjectService: update(id, data)
+activate SubjectService
+
+SubjectService -> DataSource: SELECT subject with lessons
+activate DataSource
+DataSource --> SubjectService: subject found
+deactivate DataSource
+
+SubjectService -> SubjectService: verify ownership
+
+alt Status change to PUBLISHED
+  SubjectService -> DataSource: SELECT lessons for validation
+  activate DataSource
+  DataSource --> SubjectService: lessons
+  deactivate DataSource
+  
+  SubjectService -> SubjectService: validate all lessons have video & quiz
+end
+
+SubjectService -> DataSource: UPDATE subject
+activate DataSource
+DataSource --> SubjectService: updated
+deactivate DataSource
+
+SubjectService --> SubjectController: success
+deactivate SubjectService
+
+SubjectController --> Coach: 200 OK
+deactivate SubjectController
+
+@enduml

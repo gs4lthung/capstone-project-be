@@ -1,0 +1,90 @@
+@startuml LearnerProgressClassDiagram
+
+!theme plain
+skinparam linetype ortho
+skinparam nodesep 80
+skinparam ranksep 80
+
+left to right direction
+
+' ════════════════════════════════════════════════════════════════════════════════════
+' CONTROLLER LAYER
+' ════════════════════════════════════════════════════════════════════════════════════
+
+class LearnerProgressController {
+}
+
+' ════════════════════════════════════════════════════════════════════════════════════
+' GUARD LAYER
+' ════════════════════════════════════════════════════════════════════════════════════
+
+class AuthGuard {
+}
+
+' ════════════════════════════════════════════════════════════════════════════════════
+' SERVICE LAYER
+' ════════════════════════════════════════════════════════════════════════════════════
+
+class LearnerProgressService {
+}
+
+class AiGeminiService {
+}
+
+class DataSource {
+}
+
+' ════════════════════════════════════════════════════════════════════════════════════
+' ENTITY LAYER
+' ════════════════════════════════════════════════════════════════════════════════════
+
+class LearnerProgress {
+}
+
+class Course {
+}
+
+class User {
+}
+
+class Session {
+}
+
+class QuizAttempt {
+}
+
+class LearnerVideo {
+}
+
+class AiLearnerProgressAnalysis {
+}
+
+class AiVideoComparisonResult {
+}
+
+' ════════════════════════════════════════════════════════════════════════════════════
+' RELATIONSHIPS
+' ════════════════════════════════════════════════════════════════════════════════════
+
+LearnerProgressController --> AuthGuard
+LearnerProgressController --> LearnerProgressService
+
+LearnerProgressService --> DataSource
+LearnerProgressService --> AiGeminiService
+LearnerProgressService --> LearnerProgress
+LearnerProgressService --> Session
+LearnerProgressService --> QuizAttempt
+LearnerProgressService --> LearnerVideo
+
+LearnerProgress --> User
+LearnerProgress --> Course
+LearnerProgress --> AiLearnerProgressAnalysis
+
+Course --> Session
+
+Session --> QuizAttempt
+Session --> LearnerVideo
+
+LearnerVideo --> AiVideoComparisonResult
+
+@enduml

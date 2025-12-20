@@ -1,0 +1,57 @@
+@startuml ManageLessonQuizViewSequence
+
+actor Coach
+participant QuizController
+participant AuthGuard
+participant QuizService
+participant DataSource
+
+== View Quiz by Lesson ==
+
+Coach -> QuizController: GET /quizzes/lessons/:id
+activate QuizController
+
+QuizController -> AuthGuard: validate JWT
+activate AuthGuard
+AuthGuard --> QuizController: valid
+deactivate AuthGuard
+
+QuizController -> QuizService: getQuizByLesson(lessonId)
+activate QuizService
+
+QuizService -> DataSource: query quiz by lesson with questions/options
+activate DataSource
+DataSource --> QuizService: quiz data
+deactivate DataSource
+
+QuizService --> QuizController: quiz with questions
+deactivate QuizService
+
+QuizController --> Coach: HTTP 200 with quiz
+deactivate QuizController
+
+== View Quiz by Session ==
+
+Coach -> QuizController: GET /quizzes/sessions/:id
+activate QuizController
+
+QuizController -> AuthGuard: validate JWT
+activate AuthGuard
+AuthGuard --> QuizController: valid
+deactivate AuthGuard
+
+QuizController -> QuizService: getQuizBySession(sessionId)
+activate QuizService
+
+QuizService -> DataSource: query quiz by session with questions/options
+activate DataSource
+DataSource --> QuizService: quiz data
+deactivate DataSource
+
+QuizService --> QuizController: quiz with questions
+deactivate QuizService
+
+QuizController --> Coach: HTTP 200 with quiz
+deactivate QuizController
+
+@enduml

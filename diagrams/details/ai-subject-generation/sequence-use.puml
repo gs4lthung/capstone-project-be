@@ -1,0 +1,45 @@
+@startuml AiSubjectGenerationUseDiagram
+
+actor Coach
+participant AuthGuard
+participant AiSubjectGenerationController
+participant AiSubjectGenerationService
+database DataSource
+
+== Use AI Generation (Convert to Subject) ==
+
+Coach -> AiSubjectGenerationController: POST /ai-subject-generations/:id/use-generated-subject
+activate AiSubjectGenerationController
+
+AiSubjectGenerationController -> AuthGuard: validate token
+activate AuthGuard
+AuthGuard --> AiSubjectGenerationController: valid
+deactivate AuthGuard
+
+AiSubjectGenerationController -> AiSubjectGenerationService: saveNewSubject(id)
+activate AiSubjectGenerationService
+
+AiSubjectGenerationService -> DataSource: BEGIN TRANSACTION
+activate DataSource
+
+AiSubjectGenerationService -> DataSource: SELECT ai_subject_generation with requestedBy
+DataSource --> AiSubjectGenerationService: AI generation found
+
+AiSubjectGenerationService -> AiSubjectGenerationService: verify ownership (requestedBy == currentUser)
+
+AiSubjectGenerationService -> DataSource: INSERT Subject (isAIGenerated=true, name, description, level, status=DRAFT, lessons, createdBy)
+DataSource --> AiSubjectGenerationService: subject created
+
+AiSubjectGenerationService -> DataSource: UPDATE ai_subject_generation SET status=USED, createdSubject=newSubject
+DataSource --> AiSubjectGenerationService: updated
+
+AiSubjectGenerationService -> DataSource: COMMIT TRANSACTION
+deactivate DataSource
+
+AiSubjectGenerationService --> AiSubjectGenerationController: success
+deactivate AiSubjectGenerationService
+
+AiSubjectGenerationController --> Coach: 201 Created
+deactivate AiSubjectGenerationController
+
+@enduml

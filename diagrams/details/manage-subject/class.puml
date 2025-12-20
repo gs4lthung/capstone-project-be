@@ -4,51 +4,38 @@ skinparam classBackgroundColor #f0f0f0
 skinparam classBorderColor #333
 skinparam arrowColor #333
 
-' ════════════════════════════════════════════════════════════════════════════════════
-' PRESENTATION LAYER
-' ════════════════════════════════════════════════════════════════════════════════════
-
-class SubjectListPanel {
-  -subjects: Subject[]
-  -filters: FilterCriteria
-  -pagination: Pagination
-  --
-  +loadSubjects(): void
-  +applyFilters(criteria): void
-  +searchSubjects(query): void
-  +sortSubjects(field): void
-  +selectSubject(id): void
-  +displayList(): void
-}
-
-class SubjectFormPanel {
-  -subject: Subject
-  -formData: CreateSubjectDto|UpdateSubjectDto
-  -selectedFile: File
-  --
-  +loadSubject(): void
-  +populateForm(): void
-  +updateFields(data): void
-  +selectIcon(): void
-  +submitCreate(): void
-  +submitUpdate(): void
-  +displayMessage(status): void
-}
+left to right direction
 
 ' ════════════════════════════════════════════════════════════════════════════════════
 ' CONTROLLER LAYER
 ' ════════════════════════════════════════════════════════════════════════════════════
 
 class SubjectController {
-  -subjectService: SubjectService
-  --
-  +findAll(pagination, sort, filter): Promise<Response>
-  +findOne(id): Promise<Subject>
-  +create(data, file): Promise<Response>
-  +update(id, data): Promise<Response>
-  +delete(id): Promise<Response>
-  +restore(id): Promise<Response>
-  ...
+
+}
+
+' ════════════════════════════════════════════════════════════════════════════════════
+' GUARD LAYER
+' ════════════════════════════════════════════════════════════════════════════════════
+
+class AuthGuard {
+
+}
+
+class RoleGuard {
+
+}
+
+' ════════════════════════════════════════════════════════════════════════════════════
+' DTO LAYER
+' ════════════════════════════════════════════════════════════════════════════════════
+
+class CreateSubjectDto {
+
+}
+
+class UpdateSubjectDto {
+
 }
 
 ' ════════════════════════════════════════════════════════════════════════════════════
@@ -56,17 +43,11 @@ class SubjectController {
 ' ════════════════════════════════════════════════════════════════════════════════════
 
 class SubjectService {
-  -subjectRepository: Repository
-  -bunnyService: BunnyService
-  -datasource: DataSource
-  --
-  +findAll(findOptions): Promise<PaginateObject<Subject>>
-  +findOne(id): Promise<Subject>
-  +create(data, file): Promise<Response>
-  +update(id, data): Promise<Response>
-  +delete(id): Promise<Response>
-  +restore(id): Promise<Response>
-  ...
+
+}
+
+class BunnyService {
+
 }
 
 ' ════════════════════════════════════════════════════════════════════════════════════
@@ -74,118 +55,36 @@ class SubjectService {
 ' ════════════════════════════════════════════════════════════════════════════════════
 
 class Subject {
-  -id: number
-  -name: string
-  -description?: string
-  -level: PickleballLevel
-  -status: SubjectStatus
-  -publicUrl?: string
-  -createdAt: Date
-  -updatedAt: Date
-  -deletedAt?: Date
-  -createdBy: User
+
 }
 
 class User {
-  -id: number
-  -email: string
-  -fullName: string
-  -role: Role
-  -subjects: Subject[]
+
 }
 
-class Role {
-  -id: number
-  -name: string (COACH)
-}
+class Lesson {
 
-' ════════════════════════════════════════════════════════════════════════════════════
-' DTOs (INPUT/OUTPUT)
-' ════════════════════════════════════════════════════════════════════════════════════
-
-class CreateSubjectDto {
-  +name: string
-  +description?: string
-  +level: PickleballLevel
-}
-
-class UpdateSubjectDto {
-  +name?: string
-  +description?: string
-  +level?: PickleballLevel
-  +status?: SubjectStatus
-  +publicUrl?: string
-}
-
-' ════════════════════════════════════════════════════════════════════════════════════
-' ENUMS
-' ════════════════════════════════════════════════════════════════════════════════════
-
-enum PickleballLevel {
-  BEGINNER
-  INTERMEDIATE
-  ADVANCED
-}
-
-enum SubjectStatus {
-  DRAFT
-  PUBLISHED
-}
-
-' ════════════════════════════════════════════════════════════════════════════════════
-' UTILITY SERVICES
-' ════════════════════════════════════════════════════════════════════════════════════
-
-class BunnyService {
-  --
-  +uploadToStorage(data): Promise<string>
-}
-
-class DataSource {
-  --
-  +transaction(callback): Promise<Result>
-}
-
-' ════════════════════════════════════════════════════════════════════════════════════
-' SECURITY LAYER
-' ════════════════════════════════════════════════════════════════════════════════════
-
-class AuthGuard {
-  --
-  +canActivate(context): boolean
-}
-
-class RoleGuard {
-  --
-  +canActivate(context): boolean
-  -checkCoachRole(user): boolean
 }
 
 ' ════════════════════════════════════════════════════════════════════════════════════
 ' RELATIONSHIPS
 ' ════════════════════════════════════════════════════════════════════════════════════
 
-SubjectListPanel --> SubjectController: calls findAll
-SubjectListPanel --> SubjectFormPanel: navigates to edit
 
-SubjectFormPanel --> SubjectController: calls create/update
-SubjectFormPanel --> SubjectListPanel: navigates back
+' Controller relationships
+SubjectController --> AuthGuard
+SubjectController --> RoleGuard
+SubjectController --> SubjectService
+SubjectController --> CreateSubjectDto
+SubjectController --> UpdateSubjectDto
 
-SubjectController --> SubjectService: delegates
-SubjectController --> AuthGuard: validates
-SubjectController --> RoleGuard: checks coach role
+' Service relationships
+SubjectService --> BunnyService
+SubjectService --> Subject
+SubjectService --> Lesson
 
-SubjectService --> Subject: creates/reads/updates/deletes
-SubjectService --> User: tracks creator
-SubjectService --> BunnyService: uploads icon
-SubjectService --> DataSource: manages transactions
-
-Subject --> User: createdBy
-Subject --> PickleballLevel: has level
-Subject --> SubjectStatus: has status
-User --> Role: has_one
-
-CreateSubjectDto --> Subject: maps to
-UpdateSubjectDto --> Subject: maps to
+' Entity relationships
+Subject --> User
+Subject --> Lesson
 
 @enduml

@@ -1,0 +1,152 @@
+# DANH SÁCH THÔNG ĐIỆP ỨNG DỤNG - Nền Tảng Học Pickleball
+
+1	MSG.001	Toast Error	Đăng nhập với thông tin không chính xác	Không tìm thấy tài khoản
+2	MSG.002	Toast Error	Mật khẩu không khớp khi đăng nhập	Mật khẩu không chính xác
+3	MSG.003	Toast Error	Truy cập không được phép	Không có quyền truy cập
+4	MSG.004	Toast Error	Số điện thoại đã được xác minh	Số điện thoại đã được xác minh
+5	MSG.005	Toast Error	Mã xác minh không hợp lệ	Mã xác minh không hợp lệ
+6	MSG.006	Toast Success	Xác minh số điện thoại thành công	Xác minh số điện thoại thành công
+7	MSG.007	Toast Success	Xác minh email thành công	Xác minh email thành công
+8	MSG.008	Toast Success	Đăng ký thành công	Đăng ký thành công
+9	MSG.009	Toast Error	Người dùng đã tồn tại	Người dùng đã tồn tại
+10	MSG.010	Toast Error	Không tìm thấy người dùng	Không tìm thấy người dùng
+11	MSG.011	Toast Error	Email đã tồn tại	Email đã tồn tại
+12	MSG.012	Toast Error	Số điện thoại đã tồn tại	Số điện thoại đã tồn tại
+13	MSG.013	Toast Error	Không tìm thấy tỉnh thành	Không tìm thấy tỉnh thành
+14	MSG.014	Toast Error	Không tìm thấy quận huyện	Không tìm thấy quận huyện
+15	MSG.015	Toast Error	Quận huyện không thuộc tỉnh thành	Quận huyện không thuộc tỉnh thành
+16	MSG.016	Toast Success	Cập nhật hồ sơ thành công	Cập nhật hồ sơ thành công
+17	MSG.017	Toast Error	Email tồn tại khi đăng ký huấn luyện viên	Email đã tồn tại
+18	MSG.018	Toast Error	Số điện thoại tồn tại khi đăng ký huấn luyện viên	Số điện thoại đã tồn tại
+19	MSG.019	Toast Error	Không tìm thấy vai trò huấn luyện viên	Không tìm thấy vai trò huấn luyện viên
+20	MSG.020	Toast Error	Không tìm thấy chứng chỉ cơ sở	Không tìm thấy chứng chỉ cơ sở
+21	MSG.021	Toast Success	Đăng ký huấn luyện viên thành công	Đăng ký huấn luyện viên thành công
+22	MSG.022	Toast Success	Cập nhật hồ sơ huấn luyện viên thành công	Cập nhật hồ sơ thành công
+23	MSG.023	Toast Error	Cập nhật huấn luyện viên yêu cầu xác minh	Cập nhật hồ sơ yêu cầu xác minh lại
+24	MSG.024	Toast Success	Xác minh huấn luyện viên thành công	Xác minh huấn luyện viên thành công
+25	MSG.025	Toast Success	Từ chối huấn luyện viên	Từ chối xác minh huấn luyện viên
+26	MSG.026	Toast Error	Không tìm thấy khóa học	Không tìm thấy khóa học
+27	MSG.027	Toast Error	Không tìm thấy sân tập	Không tìm thấy sân tập
+28	MSG.028	Toast Error	Xung đột lịch học	Lịch học bị trùng: {dayOfWeek} {startTime} - {endTime}
+29	MSG.029	Toast Error	Ngày bắt đầu quá sớm	Ngày bắt đầu khóa học phải cách ngày hiện tại ít nhất {days} ngày
+30	MSG.030	Toast Error	Không tìm thấy chủ đề	Không tìm thấy chủ đề
+31	MSG.031	Toast Error	Tài liệu khóa học chưa đầy đủ	Tài liệu khóa học chưa đầy đủ
+32	MSG.032	Toast Error	Quá nhiều lịch học	Số lượng lịch học {scheduleLength} không thể lớn hơn số buổi học {lessonCount}
+33	MSG.033	Toast Error	Tỷ lệ lịch/buổi học không hợp lệ	Số buổi học của khóa: {lessonCount} không phù hợp với lịch đã chọn {scheduleLength}
+34	MSG.034	Toast Error	Xung đột lịch với lịch hiện có	Lịch vào {dayOfWeek} {startTime} - {endTime} bị trùng với lịch đã có
+35	MSG.035	Toast Success	Đã gửi yêu cầu tạo khóa học	Đã gửi yêu cầu tạo khóa học
+36	MSG.036	Toast Success	Đã gửi yêu cầu cập nhật khóa học	Đã gửi yêu cầu cập nhật khóa học
+37	MSG.037	Toast Error	Không tìm thấy yêu cầu	Không tìm thấy yêu cầu
+38	MSG.038	Toast Error	Yêu cầu không ở trạng thái chờ duyệt	Yêu cầu không được chờ duyệt
+39	MSG.039	Toast Error	Khóa học chưa có buổi học	Khóa học chưa có buổi học nào
+40	MSG.040	Toast Success	Phê duyệt khóa học thành công	Phê duyệt khóa học thành công
+41	MSG.041	Toast Success	Từ chối khóa học	Từ chối khóa học
+42	MSG.042	Toast Error	Không thể hủy khóa học (trạng thái không đúng)	Khóa học không thể hủy
+43	MSG.043	Toast Error	Không thể hủy sau khi bắt đầu	Không thể hủy khóa học
+44	MSG.044	Toast Success	Huấn luyện viên hủy khóa học thành công	Hủy khóa học thành công
+45	MSG.045	Toast Error	Không tìm thấy đăng ký	Không tìm thấy đăng ký
+46	MSG.046	Toast Error	Trạng thái đăng ký không hợp lệ	Trạng thái đăng ký không hợp lệ
+47	MSG.047	Toast Success	Học viên hủy khóa học thành công	Hủy khóa học thành công
+48	MSG.048	Toast Error	Không thể bắt đầu khóa học chưa được phê duyệt	Không thể bắt đầu khóa học chưa được phê duyệt
+49	MSG.049	Toast Error	Cần ít nhất một buổi học	Bạn phải có ít nhất 1 buổi học
+50	MSG.050	Toast Error	Thiếu tham số ngày tháng	Yêu cầu startDate và endDate
+51	MSG.051	Toast Error	Định dạng ngày không hợp lệ	startDate hoặc endDate không hợp lệ
+52	MSG.052	Toast Error	Khoảng ngày không hợp lệ	endDate phải bằng hoặc sau startDate
+53	MSG.053	Toast Error	Lỗi server	Lỗi server
+54	MSG.054	Toast Error	Không tìm thấy buổi học	Buổi học không tồn tại
+55	MSG.055	Toast Error	Buổi học chưa được lên lịch	Buổi học chưa được lên lịch
+56	MSG.056	Toast Error	Buổi học chưa kết thúc	Buổi học chưa kết thúc
+57	MSG.057	Toast Error	Phải kiểm tra điểm danh tất cả học viên	Phải kiểm tra điểm danh cho tất cả học viên đã đăng ký
+58	MSG.058	Toast Error	Giá trị cấu hình không hợp lệ	Giá trị cấu hình không hợp lệ
+59	MSG.059	Toast Success	Hoàn thành buổi học thành công	Hoàn thành buổi học thành công
+60	MSG.060	Toast Error	Vai trò người dùng không hợp lệ	Vai trò người dùng không hợp lệ cho buổi học
+61	MSG.061	Toast Error	Khóa học chưa sẵn sàng để đăng ký	Khóa học chưa sẵn sàng để đăng ký
+62	MSG.062	Toast Error	Đã đăng ký khóa học	Bạn đã đăng ký khóa học này rồi
+63	MSG.063	Toast Error	Lỗi đăng ký khóa học	Lỗi đăng ký khóa học
+64	MSG.064	Toast Success	Tạo liên kết thanh toán thành công	Tạo liên kết thanh toán thành công
+65	MSG.065	Toast Success	Xác nhận thanh toán thành công	Xác nhận thanh toán thành công
+66	MSG.066	Toast Info	Thanh toán bị hủy	Thanh toán bị hủy
+67	MSG.067	Toast Error	Không tìm thấy môn học	Không tìm thấy môn học
+68	MSG.068	Toast Success	Tạo bài học thành công	Tạo bài học thành công
+69	MSG.069	Toast Error	Không tìm thấy bài học	Không tìm thấy bài học
+70	MSG.070	Toast Success	Cập nhật bài học thành công	Cập nhật bài học thành công
+71	MSG.071	Toast Success	Xóa bài học thành công	Xóa bài học thành công
+72	MSG.072	Toast Success	Khôi phục bài học thành công	Khôi phục bài học thành công
+73	MSG.073	Toast Error	Không tìm thấy bài học (video)	Không tìm thấy bài học
+74	MSG.074	Toast Error	Không tìm thấy buổi học (video)	Không tìm thấy buổi học
+75	MSG.075	Toast Error	Không tìm thấy video	Không tìm thấy video
+76	MSG.076	Toast Error	Bài học đã có video	Bài học đã có video rồi
+77	MSG.077	Toast Error	Buổi học đã có video	Buổi học đã có video rồi
+78	MSG.078	Toast Error	Không thể cập nhật quiz	Không thể cập nhật quiz
+79	MSG.079	Toast Error	Không thể xóa video có buổi học	Không thể xóa video đang được sử dụng
+80	MSG.080	Toast Error	Người dùng chưa đăng ký khóa học	Bạn chưa đăng ký khóa học này
+81	MSG.081	Toast Error	Khóa học chưa bắt đầu	Khóa học chưa bắt đầu
+82	MSG.082	Toast Error	Đã gửi đánh giá rồi	Bạn đã gửi đánh giá rồi
+83	MSG.083	Toast Success	Gửi đánh giá thành công	Gửi đánh giá thành công
+84	MSG.084	Toast Error	Không tìm thấy đánh giá	Không tìm thấy đánh giá hoặc không có quyền truy cập
+85	MSG.085	Toast Success	Cập nhật đánh giá thành công	Cập nhật đánh giá thành công
+86	MSG.086	Toast Success	Tạo ví thành công	Tạo ví thành công
+87	MSG.087	Toast Error	Không tìm thấy ví	Không tìm thấy ví
+88	MSG.088	Toast Success	Cập nhật ví thành công	Cập nhật ví thành công
+89	MSG.089	Toast Error	Ví không tồn tại	Ví không tồn tại
+90	MSG.090	Toast Error	Số dư không đủ	Không đủ số dư
+91	MSG.091	Toast Success	Rút tiền thành công	Rút tiền thành công
+92	MSG.092	Toast Success	Tạo chứng chỉ thành công	Tạo chứng chỉ thành công
+93	MSG.093	Toast Error	Không tìm thấy chứng chỉ	Chứng chỉ không tồn tại
+94	MSG.094	Toast Success	Cập nhật chứng chỉ thành công	Cập nhật chứng chỉ thành công
+95	MSG.095	Toast Success	Xóa chứng chỉ thành công	Xóa chứng chỉ thành công
+96	MSG.096	Toast Error	Không tìm thấy thông báo	Không tìm thấy thông báo
+97	MSG.097	Toast Error	Không tìm thấy người dùng (thông báo)	Không tìm thấy người dùng
+98	MSG.098	Push Notification	Học viên đăng ký khóa học	Học viên đăng ký khóa học
+99	MSG.099	Push Notification	Đăng ký thành công	Đăng ký khóa học thành công
+100	MSG.100	Push Notification	Khóa học sắp bắt đầu	Khởi động khóa học
+101	MSG.101	Push Notification	Khóa học đã bắt đầu	Khóa học đã bắt đầu
+102	MSG.102	Push Notification	Thanh toán thành công	Xác nhận thanh toán thành công
+103	MSG.103	Push Notification	Thanh toán bị hủy	Thanh toán bị hủy
+104	MSG.104	Push Notification	Phân tích AI hoàn tất	Video của bạn đã được phân tích bởi AI và HLV
+105	MSG.105	Toast Error	Không tìm thấy điểm danh	Không tìm thấy thông tin điểm danh
+106	MSG.106	Toast Success	Lấy thông tin điểm danh thành công	Lấy thông tin điểm danh thành công
+107	MSG.107	Toast Success	Lấy tiến độ học tập thành công	Lấy thông tin tiến độ học tập thành công
+108	MSG.108	Toast Error	Không tìm thấy tiến độ học tập	Không tìm thấy thông tin tiến độ học tập
+109	MSG.109	Toast Success	Phân tích AI tiến độ thành công	Phân tích tiến độ học tập thành công
+110	MSG.110	Toast Error	Loại phân tích không hợp lệ	Loại phân tích không hợp lệ
+111	MSG.111	Toast Success	Phân tích hoàn tất	Phân tích hoàn tất thành công
+112	MSG.112	Toast Error	Không tìm thấy video học viên	Không tìm thấy video học viên
+113	MSG.113	Toast Error	Không tìm thấy video huấn luyện viên	Không tìm thấy video
+114	MSG.114	Toast Success	Tạo thành tích thành công	Tạo thành tích thành công
+115	MSG.115	Toast Error	Không tìm thấy thành tích	Không tìm thấy thành tích
+116	MSG.116	Toast Success	Cập nhật thành tích thành công	Cập nhật thành tích thành công
+117	MSG.117	Toast Success	Xóa thành tích thành công	Xóa thành tích thành công
+118	MSG.118	Toast Success	Kích hoạt thành tích thành công	Kích hoạt thành tích thành công
+119	MSG.119	Toast Success	Vô hiệu hóa thành tích thành công	Vô hiệu hóa thành tích thành công
+120	MSG.120	Toast Success	Lấy dữ liệu tổng quan thành công	Lấy tổng quan dashboard thành công
+121	MSG.121	Toast Success	Lấy phân tích doanh thu thành công	Lấy phân tích doanh thu thành công
+122	MSG.122	Toast Success	Lấy thống kê khóa học thành công	Lấy thống kê khóa học thành công
+123	MSG.123	Toast Success	Lấy thống kê người dùng thành công	Lấy thống kê người dùng thành công
+124	MSG.124	Inline Error	Trường bắt buộc để trống	Trường này là bắt buộc
+125	MSG.125	Inline Error	Định dạng email không hợp lệ	Định dạng email không hợp lệ
+126	MSG.126	Inline Error	Vượt quá độ dài tối đa	Vượt quá độ dài tối đa {max_length}
+127	MSG.127	Inline Error	Yêu cầu email	Email là bắt buộc
+128	MSG.128	Inline Error	Yêu cầu họ tên	Họ tên là bắt buộc
+129	MSG.129	Inline Error	Yêu cầu mật khẩu	Mật khẩu là bắt buộc
+130	MSG.130	Inline Error	Yêu cầu token	Token là bắt buộc
+131	MSG.131	Inline Error	Yêu cầu trình độ kỹ năng	Trình độ kỹ năng là bắt buộc
+132	MSG.132	Inline Error	Yêu cầu mục tiêu học tập	Mục tiêu học tập là bắt buộc
+133	MSG.133	Inline Error	Yêu cầu tỉnh thành	ID tỉnh thành là bắt buộc
+134	MSG.134	Inline Error	Yêu cầu quận huyện	ID quận huyện là bắt buộc
+135	MSG.135	Inline Error	Yêu cầu loại thiết bị	Loại thiết bị là bắt buộc
+136	MSG.136	Inline Error	Định dạng mật khẩu không hợp lệ	Mật khẩu phải có 8-20 ký tự
+137	MSG.137	Toast Error	Định dạng video không hợp lệ	Định dạng không hợp lệ. Định dạng cho phép: mp3, mp4, avi, flv, wmv, mov, mkv
+138	MSG.138	Toast Error	Định dạng hình ảnh không hợp lệ	Định dạng không hợp lệ. Định dạng cho phép: jpeg, jpg, png, gif
+139	MSG.139	Toast Error	Không tìm thấy tệp	Không tìm thấy tệp: {filePath}
+140	MSG.140	Toast Error	Không tìm thấy thư mục	Không tìm thấy thư mục: {folderPath}
+141	MSG.141	System Log	Kiểm tra khóa học cần bắt đầu	Kiểm tra khóa học cần bắt đầu
+142	MSG.142	System Log	Kiểm tra khóa học cần hủy	Kiểm tra khóa học cần hủy
+143	MSG.143	Push Notification	Khóa học chưa được phê duyệt	Khóa học chưa được phê duyệt kịp thời
+144	MSG.144	Push Notification	Không đủ học viên	Khóa học không đủ học viên để bắt đầu
+145	MSG.145	Push Notification	Khóa học bị từ chối	Khóa học bị từ chối phê duyệt
+146	MSG.146	Inline	Không có kết quả tìm kiếm	Không có kết quả tìm kiếm
+147	MSG.147	Toast Success	Thao tác thành công	Thao tác thành công
+148	MSG.148	Toast Error	Thao tác thất bại	Thao tác thất bại
+149	MSG.149	Toast Error	Lỗi server	Lỗi server nội bộ
+150	MSG.150	Toast Error	Yêu cầu không hợp lệ	Yêu cầu không hợp lệ

@@ -1,0 +1,86 @@
+@startuml CourtClassDiagram
+
+!theme plain
+skinparam linetype ortho
+skinparam nodesep 80
+skinparam ranksep 80
+
+left to right direction
+
+' ════════════════════════════════════════════════════════════════════════════════════
+' CONTROLLER LAYER
+' ════════════════════════════════════════════════════════════════════════════════════
+
+class CourtController {
+}
+
+' ════════════════════════════════════════════════════════════════════════════════════
+' GUARD LAYER
+' ════════════════════════════════════════════════════════════════════════════════════
+
+class AuthGuard {
+}
+
+class RoleGuard {
+}
+
+' ════════════════════════════════════════════════════════════════════════════════════
+' DTO LAYER
+' ════════════════════════════════════════════════════════════════════════════════════
+
+class CreateCourtDto {
+}
+
+class UpdateCourtDto {
+}
+
+' ════════════════════════════════════════════════════════════════════════════════════
+' SERVICE LAYER
+' ════════════════════════════════════════════════════════════════════════════════════
+
+class CourtService {
+}
+
+class BunnyService {
+}
+
+class DataSource {
+}
+
+' ════════════════════════════════════════════════════════════════════════════════════
+' ENTITY LAYER
+' ════════════════════════════════════════════════════════════════════════════════════
+
+class Court {
+}
+
+class Province {
+}
+
+class District {
+}
+
+class Course {
+}
+
+' ════════════════════════════════════════════════════════════════════════════════════
+' RELATIONSHIPS
+' ════════════════════════════════════════════════════════════════════════════════════
+
+CourtController --> AuthGuard
+CourtController --> RoleGuard
+CourtController --> CreateCourtDto
+CourtController --> UpdateCourtDto
+CourtController --> CourtService
+
+CourtService --> DataSource
+CourtService --> BunnyService
+CourtService --> Court
+CourtService --> Province
+CourtService --> District
+
+Court --> Province
+Court --> District
+Court --> Course
+
+@enduml

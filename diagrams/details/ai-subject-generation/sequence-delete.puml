@@ -1,0 +1,40 @@
+@startuml AiSubjectGenerationDeleteDiagram
+
+actor Coach
+participant AuthGuard
+participant AiSubjectGenerationController
+participant AiSubjectGenerationService
+database DataSource
+
+== Delete AI Generation ==
+
+Coach -> AiSubjectGenerationController: DELETE /ai-subject-generations/:id
+activate AiSubjectGenerationController
+
+AiSubjectGenerationController -> AuthGuard: validate token
+activate AuthGuard
+AuthGuard --> AiSubjectGenerationController: valid
+deactivate AuthGuard
+
+AiSubjectGenerationController -> AiSubjectGenerationService: delete(id)
+activate AiSubjectGenerationService
+
+AiSubjectGenerationService -> DataSource: SELECT ai_subject_generation with requestedBy
+activate DataSource
+DataSource --> AiSubjectGenerationService: AI generation found
+deactivate DataSource
+
+AiSubjectGenerationService -> AiSubjectGenerationService: verify ownership (requestedBy == currentUser)
+
+AiSubjectGenerationService -> DataSource: UPDATE ai_subject_generation SET deletedAt = NOW()
+activate DataSource
+DataSource --> AiSubjectGenerationService: soft deleted
+deactivate DataSource
+
+AiSubjectGenerationService --> AiSubjectGenerationController: success
+deactivate AiSubjectGenerationService
+
+AiSubjectGenerationController --> Coach: 200 OK
+deactivate AiSubjectGenerationController
+
+@enduml

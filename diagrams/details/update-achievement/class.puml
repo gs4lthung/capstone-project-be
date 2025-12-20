@@ -3,165 +3,61 @@
 skinparam classBackgroundColor #f0f0f0
 skinparam classBorderColor #333
 skinparam arrowColor #333
+left to right direction
 
-' ════════════════════════════════════════════════════════════════════════════════════
-' PRESENTATION LAYER
-' ════════════════════════════════════════════════════════════════════════════════════
-
-class AchievementEditPanel {
-  -achievementId: number
-  -achievementData: Achievement
-  -selectedFile: File
-  --
-  +loadAchievementDetails(): void
-  +populateForm(): void
-  +updateFields(data): void
-  +selectIcon(): void
-  +submitUpdate(): void
-  +displayMessage(status): void
-}
-
-' ════════════════════════════════════════════════════════════════════════════════════
 ' CONTROLLER LAYER
-' ════════════════════════════════════════════════════════════════════════════════════
+class AchievementController {}
 
-class AchievementController {
-  -achievementService: AchievementService
-  --
-  +updateEventCount(id, data, icon): Promise<Response>
-  +updateStreak(id, data, icon): Promise<Response>
-  +updatePropertyCheck(id, data, icon): Promise<Response>
-}
+' GUARD LAYER
+class AuthGuard {}
+class RoleGuard {}
 
-' ════════════════════════════════════════════════════════════════════════════════════
+' DTO LAYER
+class CreateEventCountAchievementDto {}
+class CreateStreakAchievementDto {}
+class CreatePropertyCheckAchievementDto {}
+class UpdateEventCountAchievementDto {}
+class UpdateStreakAchievementDto {}
+class UpdatePropertyCheckAchievementDto {}
+
 ' SERVICE LAYER
-' ════════════════════════════════════════════════════════════════════════════════════
+class AchievementService {}
+class BunnyService {}
 
-class AchievementService {
-  -eventCountRepository: Repository
-  -streakRepository: Repository
-  -propertyCheckRepository: Repository
-  -bunnyService: BunnyService
-  --
-  +updateEventCount(id, data, icon?): Promise<void>
-  +updateStreak(id, data, icon?): Promise<void>
-  +updatePropertyCheck(id, data, icon?): Promise<void>
-  ...
-}
-
-' ════════════════════════════════════════════════════════════════════════════════════
 ' ENTITY LAYER
-' ════════════════════════════════════════════════════════════════════════════════════
+class Achievement {}
+class EventCountAchievement {}
+class StreakAchievement {}
+class PropertyCheckAchievement {}
+class LearnerProgress {}
+class User {}
 
-class Achievement {
-  -id: number
-  -name: string
-  -description?: string
-  -iconUrl?: string
-  -isActive: boolean
-  -createdAt: Date
-  -createdBy: User
-}
+' RELATIONSHIPS
+AchievementController --> AuthGuard
+AchievementController --> RoleGuard
+AchievementController --> AchievementService
+AchievementController --> CreateEventCountAchievementDto
+AchievementController --> CreateStreakAchievementDto
+AchievementController --> CreatePropertyCheckAchievementDto
+AchievementController --> UpdateEventCountAchievementDto
+AchievementController --> UpdateStreakAchievementDto
+AchievementController --> UpdatePropertyCheckAchievementDto
 
-class EventCountAchievement {
-  -id: number
-  -name: string
-  -description?: string
-  -iconUrl?: string
-  -isActive: boolean
-  -eventName: string
-  -targetCount: number
-  -createdBy: User
-}
+AchievementService --> BunnyService
+AchievementService --> Achievement
+AchievementService --> EventCountAchievement
+AchievementService --> StreakAchievement
+AchievementService --> PropertyCheckAchievement
+AchievementService --> LearnerProgress
 
-class StreakAchievement {
-  -id: number
-  -name: string
-  -description?: string
-  -iconUrl?: string
-  -isActive: boolean
-  -eventName: string
-  -targetStreakLength: number
-  -streakUnit: string (days|weeks|months)
-  -createdBy: User
-}
+EventCountAchievement --|> Achievement
+StreakAchievement --|> Achievement
+PropertyCheckAchievement --|> Achievement
 
-class PropertyCheckAchievement {
-  -id: number
-  -name: string
-  -description?: string
-  -iconUrl?: string
-  -isActive: boolean
-  -eventName: string
-  -entityName: string
-  -propertyName: string
-  -comparisonOperator: string (==|!=|>|<|>=|<=)
-  -targetValue: string
-  -createdBy: User
-}
+LearnerProgress --> Achievement
+LearnerProgress --> User
 
-class User {
-  -id: number
-  -email: string
-  -fullName: string
-  -role: Role
-  -achievements: Achievement[]
-}
-
-class Role {
-  -id: number
-  -name: string (ADMIN)
-}
-
-' ════════════════════════════════════════════════════════════════════════════════════
-' DTOs (UPDATE)
-' ════════════════════════════════════════════════════════════════════════════════════
-
-class UpdateEventCountAchievementDto {
-  +name?: string
-  +description?: string
-  +iconUrl?: string
-  +eventName?: string
-  +targetCount?: number
-  +isActive?: boolean
-}
-
-class UpdateStreakAchievementDto {
-  +name?: string
-  +description?: string
-  +iconUrl?: string
-  +eventName?: string
-  +targetStreakLength?: number
-  +streakUnit?: string
-  +isActive?: boolean
-}
-
-class UpdatePropertyCheckAchievementDto {
-  +name?: string
-  +description?: string
-  +iconUrl?: string
-  +eventName?: string
-  +entityName?: string
-  +propertyName?: string
-  +comparisonOperator?: string
-  +targetValue?: string
-  +isActive?: boolean
-}
-
-' ════════════════════════════════════════════════════════════════════════════════════
-' UTILITY SERVICES
-' ════════════════════════════════════════════════════════════════════════════════════
-
-class BunnyService {
-  --
-  +uploadToStorage(data): Promise<string>
-}
-
-' ════════════════════════════════════════════════════════════════════════════════════
-' SECURITY LAYER
-' ════════════════════════════════════════════════════════════════════════════════════
-
-class AuthGuard {
+@enduml
   --
   +canActivate(context): boolean
 }
@@ -184,17 +80,12 @@ AchievementController --> RoleGuard: checks admin
 
 AchievementService --> EventCountAchievement: updates
 AchievementService --> StreakAchievement: updates
-AchievementService --> PropertyCheckAchievement: updates
-AchievementService --> BunnyService: uploads icon
+' Entity relationships
+EventCountAchievement --|> Achievement: extends
+StreakAchievement --|> Achievement: extends
+PropertyCheckAchievement --|> Achievement: extends
 
-Achievement <|-- EventCountAchievement: extends
-Achievement <|-- StreakAchievement: extends
-Achievement <|-- PropertyCheckAchievement: extends
-
-Achievement --> User: createdBy
-
-UpdateEventCountAchievementDto --> EventCountAchievement: maps to
-UpdateStreakAchievementDto --> StreakAchievement: maps to
-UpdatePropertyCheckAchievementDto --> PropertyCheckAchievement: maps to
+LearnerProgress --> Achievement: tracks
+LearnerProgress --> User: belongs to
 
 @enduml

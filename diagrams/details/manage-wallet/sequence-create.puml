@@ -1,0 +1,47 @@
+@startuml CreateWallet
+
+actor User
+participant WalletController
+participant AuthGuard
+participant WalletService
+participant DataSource
+
+User -> WalletController: POST /wallets
+activate WalletController
+
+WalletController -> AuthGuard: validate JWT
+activate AuthGuard
+AuthGuard --> WalletController: valid
+deactivate AuthGuard
+
+WalletController -> WalletService: create(CreateWalletDto)
+activate WalletService
+
+WalletService -> DataSource: BEGIN TRANSACTION
+activate DataSource
+
+DataSource -> DataSource: find bank by bankId
+DataSource -> DataSource: create new wallet
+DataSource -> DataSource: assign user, bank, bankAccountNumber
+DataSource -> DataSource: save wallet
+DataSource -> DataSource: COMMIT
+
+note right of DataSource
+  Create wallet with:
+  - userId from auth context
+  - bankId from DTO
+  - bankAccountNumber from DTO
+  - currentBalance default 0
+  - totalIncome default 0
+end note
+
+DataSource --> WalletService: success
+deactivate DataSource
+
+WalletService --> WalletController: CustomApiResponse (201)
+deactivate WalletService
+
+WalletController --> User: HTTP 201 Created
+deactivate WalletController
+
+@enduml

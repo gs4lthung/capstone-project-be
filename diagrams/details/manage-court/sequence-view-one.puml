@@ -1,0 +1,31 @@
+@startuml ViewCourtById
+
+actor User
+participant CourtController
+participant CourtService
+participant DataSource
+
+User -> CourtController: GET /courts/:id
+activate CourtController
+
+CourtController -> CourtService: findOne(id)
+activate CourtService
+
+CourtService -> DataSource: find court by id
+activate DataSource
+
+note right of DataSource
+  Filter: withDeleted = false
+  Load: province, district (eager)
+end note
+
+DataSource --> CourtService: court
+deactivate DataSource
+
+CourtService --> CourtController: CustomApiResponse<Court>
+deactivate CourtService
+
+CourtController --> User: HTTP 200 with court
+deactivate CourtController
+
+@enduml

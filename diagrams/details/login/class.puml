@@ -1,3 +1,4 @@
+'''' Mermaid version: 10.x (for reference)
 @startuml LoginClassDiagram
 !theme plain
 skinparam classBackgroundColor #f0f0f0
@@ -5,28 +6,11 @@ skinparam classBorderColor #333
 skinparam arrowColor #333
 
 ' ════════════════════════════════════════════════════════════════════════════════════
-' PRESENTATION LAYER
-' ════════════════════════════════════════════════════════════════════════════════════
-
-class LoginScreen {
-  -email: string
-  -phoneNumber: string
-  -password: string
-  --
-  +handleLogin(): void
-  +storeTokens(): void
-  +redirectDashboard(): void
-}
-
-' ════════════════════════════════════════════════════════════════════════════════════
 ' CONTROLLER LAYER
 ' ════════════════════════════════════════════════════════════════════════════════════
 
 class AuthController {
-  -authService: AuthService
-  --
-  +login(data): Promise<Response>
-  ...
+
 }
 
 ' ════════════════════════════════════════════════════════════════════════════════════
@@ -34,14 +18,7 @@ class AuthController {
 ' ════════════════════════════════════════════════════════════════════════════════════
 
 class AuthService {
-  -userRepository: Repository
-  -jwtService: JwtService
-  -configService: ConfigService
-  --
-  +login(email, phoneNumber, password): Promise<Response>
-  -validateCredentials(password, hashedPassword): boolean
-  -generateTokens(user): Promise<Tokens>
-  ...
+
 }
 
 ' ════════════════════════════════════════════════════════════════════════════════════
@@ -49,17 +26,11 @@ class AuthService {
 ' ════════════════════════════════════════════════════════════════════════════════════
 
 class User {
-  -id: number
-  -email: string
-  -phoneNumber: string
-  -fullName: string
-  -password: string
-  -role: Role
+
 }
 
 class Role {
-  -id: number
-  -name: string
+
 }
 
 ' ════════════════════════════════════════════════════════════════════════════════════
@@ -67,21 +38,17 @@ class Role {
 ' ════════════════════════════════════════════════════════════════════════════════════
 
 class JwtService {
-  --
-  +signAsync(payload): Promise<Token>
-  +verifyAsync(token): Promise<Payload>
+
 }
 
 class ConfigService {
-  --
-  +get(key: string): any
+
 }
 
 ' ════════════════════════════════════════════════════════════════════════════════════
 ' RELATIONSHIPS
 ' ════════════════════════════════════════════════════════════════════════════════════
 
-LoginScreen --> AuthController: calls login()
 AuthController --> AuthService: delegates
 
 AuthService --> User: queries

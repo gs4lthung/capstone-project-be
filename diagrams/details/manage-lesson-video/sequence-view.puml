@@ -1,0 +1,81 @@
+@startuml ViewLessonVideo
+
+actor Coach
+participant VideoController
+participant AuthGuard
+participant VideoService
+participant DataSource
+
+== View Videos by Lesson ==
+
+Coach -> VideoController: GET /videos/lessons/:id
+activate VideoController
+
+VideoController -> AuthGuard: validate JWT
+activate AuthGuard
+AuthGuard --> VideoController: valid
+deactivate AuthGuard
+
+VideoController -> VideoService: getVideoByLesson(lessonId)
+activate VideoService
+
+VideoService -> DataSource: query videos by lesson
+activate DataSource
+DataSource --> VideoService: videos list
+deactivate DataSource
+
+VideoService --> VideoController: videos with details
+deactivate VideoService
+
+VideoController --> Coach: HTTP 200 with videos
+deactivate VideoController
+
+== View Videos by Session ==
+
+Coach -> VideoController: GET /videos/sessions/:id
+activate VideoController
+
+VideoController -> AuthGuard: validate JWT
+activate AuthGuard
+AuthGuard --> VideoController: valid
+deactivate AuthGuard
+
+VideoController -> VideoService: getVideoBySession(sessionId)
+activate VideoService
+
+VideoService -> DataSource: query videos by session
+activate DataSource
+DataSource --> VideoService: videos list
+deactivate DataSource
+
+VideoService --> VideoController: videos with details
+deactivate VideoService
+
+VideoController --> Coach: HTTP 200 with videos
+deactivate VideoController
+
+== View Single Video ==
+
+Coach -> VideoController: GET /videos/:id
+activate VideoController
+
+VideoController -> AuthGuard: validate JWT
+activate AuthGuard
+AuthGuard --> VideoController: valid
+deactivate AuthGuard
+
+VideoController -> VideoService: getVideoById(id)
+activate VideoService
+
+VideoService -> DataSource: query video by id with relations
+activate DataSource
+DataSource --> VideoService: video details
+deactivate DataSource
+
+VideoService --> VideoController: video data
+deactivate VideoService
+
+VideoController --> Coach: HTTP 200 with video
+deactivate VideoController
+
+@enduml

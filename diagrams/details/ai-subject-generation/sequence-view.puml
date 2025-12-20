@@ -1,0 +1,59 @@
+@startuml AiSubjectGenerationViewDiagram
+
+actor Coach
+participant AuthGuard
+participant AiSubjectGenerationController
+participant AiSubjectGenerationService
+database DataSource
+
+== View All AI Generations ==
+
+Coach -> AiSubjectGenerationController: GET /ai-subject-generations?page=1&limit=10
+activate AiSubjectGenerationController
+
+AiSubjectGenerationController -> AuthGuard: validate token
+activate AuthGuard
+AuthGuard --> AiSubjectGenerationController: valid
+deactivate AuthGuard
+
+AiSubjectGenerationController -> AiSubjectGenerationService: findAll(options)
+activate AiSubjectGenerationService
+
+AiSubjectGenerationService -> DataSource: SELECT ai_subject_generations with pagination
+activate DataSource
+DataSource --> AiSubjectGenerationService: AI generations list
+deactivate DataSource
+
+AiSubjectGenerationService --> AiSubjectGenerationController: paginated results
+deactivate AiSubjectGenerationService
+
+AiSubjectGenerationController --> Coach: 200 OK
+deactivate AiSubjectGenerationController
+
+== View AI Generation Details ==
+
+Coach -> AiSubjectGenerationController: GET /ai-subject-generations/:id
+activate AiSubjectGenerationController
+
+AiSubjectGenerationController -> AuthGuard: validate token
+activate AuthGuard
+AuthGuard --> AiSubjectGenerationController: valid
+deactivate AuthGuard
+
+AiSubjectGenerationController -> AiSubjectGenerationService: findOne(id)
+activate AiSubjectGenerationService
+
+AiSubjectGenerationService -> DataSource: SELECT ai_subject_generation with requestedBy
+activate DataSource
+DataSource --> AiSubjectGenerationService: AI generation found
+deactivate DataSource
+
+AiSubjectGenerationService -> AiSubjectGenerationService: verify ownership (requestedBy == currentUser)
+
+AiSubjectGenerationService --> AiSubjectGenerationController: AI generation
+deactivate AiSubjectGenerationService
+
+AiSubjectGenerationController --> Coach: 200 OK
+deactivate AiSubjectGenerationController
+
+@enduml

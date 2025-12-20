@@ -1,32 +1,64 @@
-@startuml ManageLessonVideoUpdateSequenceDiagram
+@startuml UpdateLessonVideo
 
-actor "Coach" as coach
-participant "Controller" as controller
-participant "Service" as service
-database "Database" as db
+actor Coach
+participant VideoController
+participant AuthGuard
+participant RoleGuard
+participant VideoService
+participant BunnyService
+participant FFmpegService
+participant DataSource
 
-coach -> controller: PATCH /videos/:id
-activate controller
+Coach -> VideoController: PUT /videos/:id (optional multipart/form-data)
+activate VideoController
 
-controller -> service: updateVideo(id, data)
-activate service
+VideoController -> AuthGuard: validate JWT
+activate AuthGuard
+AuthGuard --> VideoController: valid
+deactivate AuthGuard
 
-service -> db: Get video
-activate db
-db --> service: Video data
-deactivate db
+VideoController -> RoleGuard: check COACH role
+activate RoleGuard
+RoleGuard --> VideoController: authorized
+deactivate RoleGuard
 
-service -> service: Validate video exists\nValidate coach is owner
+VideoController -> VideoService: updateVideo(id, data, videoFile?)
+activate VideoService
 
-service -> db: Update video properties
-activate db
-db --> service: Updated video
-deactivate db
+VideoService -> DataSource: BEGIN TRANSACTION
+activate DataSource
 
-service --> controller: Success response
-deactivate service
+DataSource -> DataSource: find video with lesson/subject relations
+DataSource -> DataSource: verify is lesson video (not session video)
+DataSource -> DataSource: verify ownership (subject.createdBy == currentUser)
 
-controller --> coach: 200 OK
-deactivate controller
+alt video file provided
+    VideoService -> BunnyService: deleteVideo(oldUrl)
+    activate BunnyService
+    BunnyService --> VideoService: deleted
+    deactivate BunnyService
+    
+    VideoService -> BunnyService: uploadVideo(newVideoFile)
+    activate BunnyService
+    BunnyService --> VideoService: publicUrl, thumbnailUrl
+    deactivate BunnyService
+    
+    VideoService -> FFmpegService: extractMetadata(newVideoFile)
+    activate FFmpegService
+    FFmpegService --> VideoService: duration, resolution
+    deactivate FFmpegService
+end
+
+DataSource -> DataSource: update video record
+DataSource -> DataSource: COMMIT
+
+DataSource --> VideoService: success
+deactivate DataSource
+
+VideoService --> VideoController: CustomApiResponse (OK)
+deactivate VideoService
+
+VideoController --> Coach: HTTP 200 updated
+deactivate VideoController
 
 @enduml

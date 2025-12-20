@@ -3,33 +3,16 @@
 skinparam classBackgroundColor #f0f0f0
 skinparam classBorderColor #333
 skinparam arrowColor #333
-
-' ════════════════════════════════════════════════════════════════════════════════════
-' PRESENTATION LAYER
-' ════════════════════════════════════════════════════════════════════════════════════
-
-class ConfigurationPanel {
-  -configurations: Configuration[]
-  -selectedConfig: Configuration
-  -newValue: string
-  --
-  +loadConfigurations(): void
-  +updateConfiguration(): void
-  +displaySuccess(): void
-  +displayError(): void
-}
+skinparam linetype ortho
+skinparam nodesep 80
+skinparam ranksep 80
 
 ' ════════════════════════════════════════════════════════════════════════════════════
 ' CONTROLLER LAYER
 ' ════════════════════════════════════════════════════════════════════════════════════
 
 class ConfigurationController {
-  -configurationService: ConfigurationService
-  --
-  +findAll(pagination, sort, filter): Promise<Response>
-  +findByKey(key: string): Promise<Response>
-  +updateConfiguration(id, data): Promise<Response>
-  ...
+
 }
 
 ' ════════════════════════════════════════════════════════════════════════════════════
@@ -37,14 +20,7 @@ class ConfigurationController {
 ' ════════════════════════════════════════════════════════════════════════════════════
 
 class ConfigurationService {
-  -configRepository: Repository
-  -datasource: DataSource
-  --
-  +findAll(findOptions): Promise<Response>
-  +findByKey(key): Promise<Response>
-  +update(id, data): Promise<Response>
-  -validateConfigData(data): boolean
-  ...
+
 }
 
 ' ════════════════════════════════════════════════════════════════════════════════════
@@ -52,27 +28,15 @@ class ConfigurationService {
 ' ════════════════════════════════════════════════════════════════════════════════════
 
 class Configuration {
-  -id: number
-  -key: string
-  -value: string
-  -description?: string
-  -dataType: string (string|number|boolean|json)
-  -createdBy: User
-  -updatedBy: User
-  -createdAt: Date
-  -updatedAt: Date
+
 }
 
 class User {
-  -id: number
-  -email: string
-  -fullName: string
-  -role: Role
+
 }
 
 class Role {
-  -id: number
-  -name: string (ADMIN)
+
 }
 
 ' ════════════════════════════════════════════════════════════════════════════════════
@@ -80,36 +44,44 @@ class Role {
 ' ════════════════════════════════════════════════════════════════════════════════════
 
 class AuthGuard {
-  --
-  +canActivate(context): boolean
+
 }
 
 class RoleGuard {
-  --
-  +canActivate(context): boolean
-  -checkAdminRole(user): boolean
+
 }
 
-class DataSource {
-  --
-  +transaction(callback): Promise<Result>
+' RELATIONSHIPS
+' ════════════════════════════════════════════════════════════════════════════════════
+
+ConfigurationController --> ConfigurationService
+ConfigurationController --> AuthGuard
+ConfigurationController --> RoleGuard
+
+ConfigurationService --> Configuration
+ConfigurationService --> User
+
+Configuration --> User
+User --> Role
+
+' ════════════════════════════════════════════════════════════════════════════════════
+' DTO LAYER
+' ════════════════════════════════════════════════════════════════════════════════════
+
+class UpdateConfigurationDto {
 }
 
 ' ════════════════════════════════════════════════════════════════════════════════════
 ' RELATIONSHIPS
 ' ════════════════════════════════════════════════════════════════════════════════════
 
-ConfigurationPanel --> ConfigurationController: calls
-
-ConfigurationController --> ConfigurationService: delegates
-ConfigurationController --> AuthGuard: validates
-ConfigurationController --> RoleGuard: checks admin
-
-ConfigurationService --> Configuration: reads/updates
-ConfigurationService --> User: tracks changes
-ConfigurationService --> DataSource: manages transactions
-
-Configuration --> User: createdBy/updatedBy
-User --> Role: belongs to
+ConfigurationController -- UpdateConfigurationDto
+ConfigurationController -- ConfigurationService
+ConfigurationController -- AuthGuard
+ConfigurationController -- RoleGuard
+ConfigurationService -- Configuration
+ConfigurationService -- User
+Configuration -- User
+User -- Role
 
 @enduml

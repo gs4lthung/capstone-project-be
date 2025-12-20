@@ -1,0 +1,80 @@
+@startuml ViewCourseLearnerSequence
+
+actor "Learner" as learner
+participant "CourseController" as controller
+participant "AuthGuard" as authGuard
+participant "CourseService" as service
+database "DataSource" as db
+
+== View Available Courses (Public) ==
+
+learner -> controller: GET /courses/available\n?page=1&size=10\n&name=Beginner&level=BEGINNER\n&province=1&district=2
+activate controller
+
+controller -> service: findAvailableCourses(page, size, name, level, province, district)
+activate service
+
+service -> db: transaction
+activate db
+
+db -> db: SELECT courses\nWHERE status IN (APPROVED, READY_OPENED, FULL)\nAND name LIKE :name\nAND level = :level\nAND province.id = :provinceId\nAND district.id = :districtId\nwith sessions, court, schedules, enrollments
+
+db --> service: PaginateObject<Course>
+deactivate db
+
+service --> controller: PaginateObject<Course>
+deactivate service
+
+controller --> learner: HTTP 200 PaginateObject<Course>
+deactivate controller
+
+== View Learner's Enrolled Courses ==
+
+learner -> controller: GET /courses/learner?page=1&size=10
+activate controller
+
+controller -> authGuard: canActivate(context)
+activate authGuard
+authGuard --> controller: true (authenticated)
+deactivate authGuard
+
+controller -> service: findLearnerCourses(page, size)
+activate service
+
+service -> db: transaction
+activate db
+
+db -> db: SELECT courses\nWHERE enrollment.user.id = :userId\nAND enrollment.status IN\n(CONFIRMED, LEARNING, PENDING_GROUP, DONE, UNPAID)\nAND course.status != CANCELLED\nwith enrollments, createdBy
+
+db --> service: PaginateObject<Course>
+deactivate db
+
+service --> controller: PaginateObject<Course>
+deactivate service
+
+controller --> learner: HTTP 200 PaginateObject<Course>
+deactivate controller
+
+== View Single Course Details ==
+
+learner -> controller: GET /courses/:id
+activate controller
+
+controller -> service: findOne(id)
+activate service
+
+service -> db: transaction
+activate db
+
+db -> db: SELECT course with relations\n(sessions, createdBy, quiz, video,\nenrollments, user, subject,\nschedules, court, province, district)
+
+db --> service: Course with full relations
+deactivate db
+
+service --> controller: Course
+deactivate service
+
+controller --> learner: HTTP 200 Course
+deactivate controller
+
+@enduml

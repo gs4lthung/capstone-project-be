@@ -1,141 +1,150 @@
 @startuml ManageSubjectCRUDDiagram
 
-actor "Coach" as coach
-participant "Client" as client
-participant "Controller" as controller
-participant "Service" as service
-participant "Bunny CDN" as bunny
-database "Database" as db
+actor Coach
+participant AuthGuard
+participant RoleGuard
+participant SubjectController
+participant SubjectService
+participant BunnyService
+database DataSource
 
 == Create Subject ==
 
-coach -> client: 1. Navigate to create subject
-client --> coach: 2. Display create subject form
+Coach -> SubjectController: POST /subjects (name, description, level, file)
+activate SubjectController
 
-coach -> client: 3. Fill in subject details
-note right of client
-  - Name (required)
-  - Description (optional)
-  - Level (BEGINNER, INTERMEDIATE, ADVANCED)
-  - Subject icon/image file (optional)
-end note
+SubjectController -> AuthGuard: validate token
+activate AuthGuard
+AuthGuard --> SubjectController: valid
+deactivate AuthGuard
 
-coach -> client: 4. Submit form
-client -> controller: 5. POST /subjects
-activate controller
+SubjectController -> RoleGuard: check COACH role
+activate RoleGuard
+RoleGuard --> SubjectController: authorized
+deactivate RoleGuard
 
-controller -> service: 6. create(data, file)
-activate service
+SubjectController -> SubjectService: create(data, file)
+activate SubjectService
 
 alt File provided
-  service -> bunny: 7. uploadToStorage(file)
-  activate bunny
-  bunny --> service: 8. publicUrl
-  deactivate bunny
+  SubjectService -> BunnyService: uploadToStorage(file)
+  activate BunnyService
+  BunnyService --> SubjectService: publicUrl
+  deactivate BunnyService
 end
 
-service -> db: 9. Create subject record with status=DRAFT
-activate db
-db --> service: Created
-deactivate db
+SubjectService -> DataSource: INSERT subject (status=DRAFT)
+activate DataSource
+DataSource --> SubjectService: created
+deactivate DataSource
 
-service --> controller: Success response
-deactivate service
+SubjectService --> SubjectController: success
+deactivate SubjectService
 
-controller --> client: 10. HTTP 201
-deactivate controller
-
-client --> coach: 11. Subject created successfully (Draft status)
+SubjectController --> Coach: 201 Created
+deactivate SubjectController
 
 == View All Subjects ==
 
-coach -> client: 12. View subjects list
-client -> controller: 13. GET /subjects?page=1&limit=10
-activate controller
+Coach -> SubjectController: GET /subjects?page=1&limit=10
+activate SubjectController
 
-controller -> service: 14. findAll(options)
-activate service
+SubjectController -> AuthGuard: validate token
+activate AuthGuard
+AuthGuard --> SubjectController: valid
+deactivate AuthGuard
 
-service -> db: 15. Query subjects with pagination
-activate db
-db --> service: Subjects list with count
-deactivate db
+SubjectController -> RoleGuard: check COACH role
+activate RoleGuard
+RoleGuard --> SubjectController: authorized
+deactivate RoleGuard
 
-service --> controller: Response
-deactivate service
+SubjectController -> SubjectService: findAll(options)
+activate SubjectService
 
-controller --> client: 16. HTTP 200
-deactivate controller
+SubjectService -> DataSource: SELECT subjects with pagination
+activate DataSource
+DataSource --> SubjectService: subjects list
+deactivate DataSource
 
-client --> coach: 17. Display subjects list
+SubjectService --> SubjectController: paginated results
+deactivate SubjectService
+
+SubjectController --> Coach: 200 OK
+deactivate SubjectController
 
 == View Subject Details ==
 
-coach -> client: 18. Click on subject to view
-client -> controller: 19. GET /subjects/:id
-activate controller
+Coach -> SubjectController: GET /subjects/:id
+activate SubjectController
 
-controller -> service: 20. findOne(id)
-activate service
+SubjectController -> AuthGuard: validate token
+activate AuthGuard
+AuthGuard --> SubjectController: valid
+deactivate AuthGuard
 
-service -> db: 21. Query subject with relations
-activate db
-db --> service: Subject data
-deactivate db
+SubjectController -> RoleGuard: check COACH role
+activate RoleGuard
+RoleGuard --> SubjectController: authorized
+deactivate RoleGuard
 
-service --> controller: Response
-deactivate service
+SubjectController -> SubjectService: findOne(id)
+activate SubjectService
 
-controller --> client: 22. HTTP 200
-deactivate controller
+SubjectService -> DataSource: SELECT subject with relations
+activate DataSource
+DataSource --> SubjectService: subject data
+deactivate DataSource
 
-client --> coach: 23. Display subject details
+SubjectService --> SubjectController: subject
+deactivate SubjectService
+
+SubjectController --> Coach: 200 OK
+deactivate SubjectController
 
 == Update Subject ==
 
-coach -> client: 24. Click "Edit Subject"
-client --> coach: 25. Show editable form with current data
+Coach -> SubjectController: PUT /subjects/:id (data)
+activate SubjectController
 
-coach -> client: 26. Modify subject fields
-note right of client
-  Can update:
-  - Name
-  - Description
-  - Level
-  - Status (DRAFT → PUBLISHED)
-end note
+SubjectController -> AuthGuard: validate token
+activate AuthGuard
+AuthGuard --> SubjectController: valid
+deactivate AuthGuard
 
-coach -> client: 27. Submit updated subject
-client -> controller: 28. PUT /subjects/:id
-activate controller
+SubjectController -> RoleGuard: check COACH role
+activate RoleGuard
+RoleGuard --> SubjectController: authorized
+deactivate RoleGuard
 
-controller -> service: 29. update(id, data)
-activate service
+SubjectController -> SubjectService: update(id, data)
+activate SubjectService
 
-service -> db: 30. Find subject by id with lessons
-activate db
-db --> service: Subject found
-deactivate db
+SubjectService -> DataSource: SELECT subject with lessons
+activate DataSource
+DataSource --> SubjectService: subject found
+deactivate DataSource
+
+SubjectService -> SubjectService: verify ownership
 
 alt Status change to PUBLISHED
-  service -> service: 31. Validate all lessons have video & quiz
-  note right of service
-    If any lesson missing video or quiz,
-    throw error - cannot publish
-  end note
+  SubjectService -> DataSource: SELECT lessons for validation
+  activate DataSource
+  DataSource --> SubjectService: lessons
+  deactivate DataSource
+  
+  SubjectService -> SubjectService: validate all lessons have video & quiz
 end
 
-service -> db: 32. Update subject record
-activate db
-db --> service: Updated
-deactivate db
+SubjectService -> DataSource: UPDATE subject
+activate DataSource
+DataSource --> SubjectService: updated
+deactivate DataSource
 
-service --> controller: Success response
-deactivate service
+SubjectService --> SubjectController: success
+deactivate SubjectService
 
-controller --> client: 33. HTTP 200
-deactivate controller
-
-client --> coach: 34. Subject updated successfully
+SubjectController --> Coach: 200 OK
+deactivate SubjectController
 
 @enduml

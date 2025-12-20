@@ -4,13 +4,19 @@ import { ConfigService } from '@app/config';
 import {
   AiVideoComparisonResultSchema,
   AiSubjectGenerationSchema,
+  AiLearnerProgressAnalysisSchema,
 } from '@app/shared/dtos/ai-feedback/gemini-call.dto';
 import { PoseLandmark } from './ai-pose.service';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository,DataSource } from 'typeorm';
 import { AiSubjectGeneration } from '@app/database/entities/ai-subject-generation.entity';
 import { AiSubjectGenerationResponse } from '@app/shared/interfaces/ai-subject-generation.interface';
+import { AiLearnerProgressAnalysisResponse } from '@app/shared/interfaces/ai-learner-progress-analysis.interface';
 import { PickleballLevel } from '@app/shared/enums/pickleball.enum';
+import { AiVideoComparisonResult } from '@app/database/entities/ai-video-comparison-result.entity';
+import { LearnerVideo } from '@app/database/entities/learner-video.entity';
+import { Video } from '@app/database/entities/video.entity';
+import { buildDetailsArrayFromComparison } from '@app/shared/helpers/buildDetailArray.helper';
 
 // Interface matching the Gemini API response schema
 interface GeminiApiResponse {
@@ -45,8 +51,7 @@ export class AiGeminiService {
 
   constructor(
     private configService: ConfigService,
-    @InjectRepository(AiSubjectGeneration)
-    private readonly aiSubjectGenerationRepository: Repository<AiSubjectGeneration>,
+    private readonly dataSource: DataSource,
   ) {
     this.apiKey = this.configService.get('gemini').api_key as string;
     this.endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${this.model}:generateContent`;
@@ -57,8 +62,10 @@ export class AiGeminiService {
   }
 
   async comparePoseData(
+    coachVideoUrl: string,
     coachPoses: PoseLandmark[][],
     coachTimestamps: number[],
+    learnerVideoUrl: string,
     learnerPoses: PoseLandmark[][],
     learnerTimestamps: number[],
   ): Promise<GeminiApiResponse> {
@@ -137,6 +144,83 @@ Hãy trả lời CHỈ bằng một đối tượng JSON bằng tiếng Việt t
         this.logger.error('❌ Invalid response structure');
         return this.getDefaultResponse('Phản hồi AI không hợp lệ');
       }
+
+      await this.dataSource.transaction(async (manager) => {
+        const learnerVideo=await manager.getRepository(LearnerVideo).findOneBy({publicUrl:learnerVideoUrl});
+        if(!learnerVideo){
+          this.logger.error('❌ Learner video record not found for URL:', learnerVideoUrl);
+          return;
+        }
+        const coachVideo=await manager.getRepository(Video).findOneBy({publicUrl:coachVideoUrl});
+        if(!coachVideo){
+          this.logger.error('❌ Coach video record not found for URL:', coachVideoUrl);
+          return;
+        }
+
+              const aiResultRecord: any = {};
+        aiResultRecord.video = coachVideo;
+              aiResultRecord.learnerVideo = learnerVideo;
+        
+              // Only set fields that have values
+              if (jsonRes.summary) {
+                aiResultRecord.summary = jsonRes.summary;
+              }
+              if (
+                jsonRes.learnerScore !== undefined &&
+                jsonRes.learnerScore !== null
+              ) {
+                aiResultRecord.learnerScore = jsonRes.learnerScore;
+              }
+              if (
+                jsonRes.keyDifferents &&
+                Array.isArray(jsonRes.keyDifferents) &&
+                jsonRes.keyDifferents.length > 0
+              ) {
+                aiResultRecord.keyDifferents = jsonRes.keyDifferents.map((kd) => ({
+                  aspect: kd.aspect,
+                  impact: kd.impact,
+                  learnerTechnique: kd.learnerTechnique,
+                }));
+              }
+              if (
+                jsonRes.recommendationDrills &&
+                Array.isArray(jsonRes.recommendationDrills) &&
+                jsonRes.recommendationDrills.length > 0
+              ) {
+                aiResultRecord.recommendationDrills =
+                  jsonRes.recommendationDrills.map((r) => {
+                    const drill: any = {};
+                    if (r.name) {
+                      drill.name = r.name;
+                    }
+                    if (r.description) {
+                      drill.description = r.description;
+                    }
+                    if (r.practiceSets) {
+                      const practiceSets = r.practiceSets as
+                        | string
+                        | string[]
+                        | number;
+                      drill.practiceSets =
+                        typeof practiceSets === 'string'
+                          ? practiceSets
+                          : Array.isArray(practiceSets)
+                            ? practiceSets.join(', ')
+                            : String(practiceSets || '');
+                    }
+                    return drill;
+                  });
+              }
+                const details = buildDetailsArrayFromComparison(jsonRes.details);
+                if (details && details.length > 0) {
+                  aiResultRecord.details = details;
+                }
+        
+        const record = manager
+          .getRepository(AiVideoComparisonResult)
+          .create(aiResultRecord);
+        await manager.getRepository(AiVideoComparisonResult).save(record);
+      });
 
       return {
         details: jsonRes.details || [],
@@ -441,5 +525,176 @@ Trả về JSON theo đúng schema đã định nghĩa.
         }
       });
     });
+  }
+
+  /**
+   * Analyze learner progress and provide personalized recommendations
+   * @param learnerProgressData - Data containing session completion info, quiz attempts, and video comparisons
+   */
+  async analyzeLearnerProgress(learnerProgressData: {
+    learnerId: number;
+    learnerName: string;
+    courseName: string;
+    totalSessions: number;
+    completedSessions: number;
+    completedSessionDetails: Array<{
+      sessionNumber: number;
+      sessionName: string;
+      completedAt: Date;
+      quizAttempts?: Array<{
+        attemptNumber: number;
+        score: number;
+        totalQuestions: number;
+        correctAnswers: number;
+        wrongAnswers: Array<{
+          questionTitle: string;
+          selectedAnswer: string;
+          correctAnswer: string;
+        }>;
+      }>;
+      videoComparisons?: Array<{
+        learnerScore: number;
+        summary: string;
+        strengths: string[];
+        weaknesses: string[];
+        keyDifferences: Array<{
+          aspect: string;
+          impact: string;
+        }>;
+      }>;
+    }>;
+  }): Promise<AiLearnerProgressAnalysisResponse> {
+    this.logger.log(
+      `🎯 Analyzing progress for learner: ${learnerProgressData.learnerName}`,
+    );
+
+    const prompt = `
+Bạn là một huấn luyện viên pickleball AI chuyên nghiệp, có nhiệm vụ phân tích tiến độ học tập của học viên và đưa ra các đề xuất cải thiện có tính cá nhân hóa cao.
+
+THÔNG TIN HỌC VIÊN:
+- Tên học viên: ${learnerProgressData.learnerName}
+- Khóa học: ${learnerProgressData.courseName}
+- Tiến độ: ${learnerProgressData.completedSessions}/${learnerProgressData.totalSessions} buổi học đã hoàn thành (${((learnerProgressData.completedSessions / learnerProgressData.totalSessions) * 100).toFixed(1)}%)
+
+CHI TIẾT CÁC BUỔI HỌC ĐÃ HOÀN THÀNH:
+${JSON.stringify(learnerProgressData.completedSessionDetails, null, 2)}
+
+YÊU CẦU PHÂN TÍCH:
+
+0. **Tiêu đề phân tích (title):**
+   - Một tiêu đề ngắn gọn, súc tích (max 100 ký tự) tóm tắt nội dung phân tích
+   - Ví dụ: "Phân tích tiến độ buổi 2/4 - Khóa học Pickleball Cơ bản"
+   - Ví dụ: "Đánh giá kỹ năng sau 3/10 buổi - Lớp Advanced Techniques"
+
+1. **Tổng quan (overallSummary):**
+   - Đánh giá tổng quát về tiến độ học tập của học viên
+   - Nhận xét về sự tiến bộ qua các buổi học
+   - Đề cập đến xu hướng cải thiện hoặc những vấn đề cần lưu ý
+
+2. **Phần trăm tiến độ (progressPercentage):**
+   - Tính toán phần trăm tiến độ hoàn thành (0-100)
+
+3. **Điểm mạnh đã xác định (strengthsIdentified):**
+   - Liệt kê 3-5 điểm mạnh chính của học viên dựa trên:
+     + Kết quả quiz (điểm cao, chủ đề nắm vững)
+     + Phân tích video (kỹ thuật tốt, điểm mạnh được AI nhận diện)
+   - Mỗi điểm mạnh nên cụ thể và có bằng chứng từ dữ liệu
+
+4. **Các lĩnh vực cần cải thiện (areasForImprovement):**
+   - Liệt kê 3-5 lĩnh vực cần tập trung cải thiện
+   - Dựa trên:
+     + Câu hỏi quiz trả lời sai thường xuyên
+     + Điểm yếu từ phân tích video AI
+     + Xu hướng giảm điểm hoặc không tiến bộ
+
+5. **Phân tích hiệu suất quiz (quizPerformanceAnalysis):**
+   - averageScore: Điểm trung bình tất cả các lần làm quiz
+   - summary: Tóm tắt ngắn gọn về hiệu suất làm quiz
+   - topicsMastered: Các chủ đề học viên đã nắm vững (dựa trên câu trả lời đúng)
+   - topicsNeedingReview: Các chủ đề cần ôn lại (dựa trên câu trả lời sai)
+
+6. **Phân tích hiệu suất video (videoPerformanceAnalysis):**
+   - averageScore: Điểm trung bình từ AI video comparison
+   - summary: Tóm tắt về kỹ thuật thực hành
+   - techniqueStrengths: Các kỹ thuật thực hiện tốt
+   - techniqueWeaknesses: Các kỹ thuật cần cải thiện
+
+7. **Đề xuất cho buổi học tiếp theo (recommendationsForNextSession):**
+   - Liệt kê 3-5 đề xuất ưu tiên (HIGH, MEDIUM, LOW)
+   - Mỗi đề xuất bao gồm:
+     + priority: Mức độ ưu tiên
+     + title: Tiêu đề ngắn gọn
+     + description: Mô tả chi tiết về cần làm gì và tại sao
+     + focusAreas: Các lĩnh vực cụ thể cần tập trung
+
+8. **Bài tập luyện tập (practiceDrills):**
+   - Đề xuất 3-5 bài tập drill cụ thể
+   - Mỗi drill bao gồm:
+     + name: Tên bài tập
+     + description: Hướng dẫn thực hiện chi tiết
+     + targetArea: Kỹ năng/lĩnh vực mục tiêu
+     + sets: Số lượng luyện tập đề xuất (ví dụ: "3 sets x 10 reps")
+
+9. **Lời động viên (motivationalMessage):**
+   - Một đoạn văn ngắn (2-3 câu) động viên học viên
+   - Nhấn mạnh những tiến bộ đã đạt được
+   - Khuyến khích tiếp tục nỗ lực
+
+QUAN TRỌNG:
+- Phân tích phải dựa HOÀN TOÀN trên dữ liệu thực tế được cung cấp
+- Đề xuất phải CỤ THỂ, THỰC TẾ và CÓ THỂ THỰC HIỆN được
+- Ngôn ngữ phải TÍCH CỰC, ĐỘNG VIÊN và HỖ TRỢ
+- Nội dung bằng TIẾNG VIỆT, chuyên nghiệp và dễ hiểu
+- Tập trung vào cải thiện kỹ năng pickleball
+
+Trả về JSON theo đúng schema đã định nghĩa.
+    `;
+
+    try {
+      if (!this.apiKey) {
+        throw new Error('Gemini API key not configured');
+      }
+
+      // Call Gemini API
+      const rawResponse = await this.callGeminiWithRetry({
+        contents: [
+          {
+            role: 'user',
+            parts: [{ text: prompt }],
+          },
+        ],
+        generationConfig: {
+          response_mime_type: 'application/json',
+          response_schema: AiLearnerProgressAnalysisSchema,
+        },
+      });
+
+      if (!rawResponse) {
+        throw new Error('Empty response from Gemini API');
+      }
+
+      const analysisData =
+        this.parseJsonResponse<AiLearnerProgressAnalysisResponse>(rawResponse);
+
+      // Validate that we have meaningful data
+      if (
+        !analysisData.overallSummary ||
+        !analysisData.recommendationsForNextSession ||
+        analysisData.recommendationsForNextSession.length === 0
+      ) {
+        throw new Error('Invalid analysis response structure');
+      }
+
+      this.logger.log(
+        `✅ Successfully analyzed progress for learner ${learnerProgressData.learnerId}`,
+      );
+
+      return analysisData;
+    } catch (error) {
+      this.logger.error('❌ Learner progress analysis failed:', error);
+      throw new Error(
+        `Failed to analyze learner progress: ${error.message || 'Unknown error'}`,
+      );
+    }
   }
 }

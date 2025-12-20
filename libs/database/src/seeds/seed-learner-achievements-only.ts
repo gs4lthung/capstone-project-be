@@ -15,7 +15,9 @@ export const runLearnerAchievementSeedOnly = async () => {
   try {
     console.log('============================================================');
     console.log('🏅 SEEDING LEARNER ACHIEVEMENTS ONLY (TEST DATA)');
-    console.log('============================================================\n');
+    console.log(
+      '============================================================\n',
+    );
 
     console.log('📡 Connecting to database...');
     dataSource = await AppDataSource.initialize();
@@ -26,7 +28,9 @@ export const runLearnerAchievementSeedOnly = async () => {
 
     console.log('============================================================');
     console.log('🎉 LEARNER ACHIEVEMENT SEED COMPLETED!');
-    console.log('============================================================\n');
+    console.log(
+      '============================================================\n',
+    );
   } catch (error) {
     console.error('❌ LEARNER ACHIEVEMENT SEEDING FAILED!', error);
   } finally {
@@ -39,4 +43,3 @@ export const runLearnerAchievementSeedOnly = async () => {
 };
 
 runLearnerAchievementSeedOnly();
-

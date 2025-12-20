@@ -1,79 +1,27 @@
+CoachController -- RegisterCoachDto : input
 @startuml RegisterCoachClassDiagram
 !theme plain
 skinparam classBackgroundColor #f0f0f0
 skinparam classBorderColor #333
 skinparam arrowColor #333
-
-' ════════════════════════════════════════════════════════════════════════════════════
-' PRESENTATION LAYER
-' ════════════════════════════════════════════════════════════════════════════════════
-
-class RegisterCoachScreen {
-  -fullName: string
-  -email: string
-  -phoneNumber: string
-  -password: string
-  -province: number
-  -district: number
-  -bio: string
-  -specialties: string[]
-  -teachingMethods: string[]
-  -yearOfExperience: number
-  --
-  +handleCoachRegister(): void
-  +handleCredentialUpload(): void
-  +handleEmailVerification(): void
-  +validateForm(): boolean
-}
-
+skinparam linetype ortho
+skinparam nodesep 80
+skinparam ranksep 80
 ' ════════════════════════════════════════════════════════════════════════════════════
 ' CONTROLLER LAYER
 ' ════════════════════════════════════════════════════════════════════════════════════
 
 class CoachController {
-  -coachService: CoachService
-  --
-  +registerCoach(data: RegisterCoachDto): Promise<Response>
-  +uploadCredential(data: CredentialDto, file): Promise<Response>
-  +updateCredential(id, data, file): Promise<Response>
-  +deleteCredential(id): Promise<Response>
-  ...
+
 }
 
-class AuthController {
-  -authService: AuthService
-  --
-  +verifyEmail(token: string): Promise<Response>
-}
 
 ' ════════════════════════════════════════════════════════════════════════════════════
 ' SERVICE LAYER
 ' ════════════════════════════════════════════════════════════════════════════════════
 
 class CoachService {
-  -coachRepository: Repository
-  -userRepository: Repository
-  -jwtService: JwtService
-  -mailService: MailService
-  -twilioService: TwilioService
-  -bunnyService: BunnyService
-  -configService: ConfigService
-  --
-  +registerCoach(data: RegisterCoachDto): Promise<Response>
-  +uploadCredential(data: CredentialDto, file): Promise<Response>
-  +updateCredential(id, data, file): Promise<void>
-  +deleteCredential(id): Promise<void>
-  -hashPassword(plain): Promise<string>
-  -validateFile(file): boolean
-  ...
-}
 
-class AuthService {
-  -userRepository: Repository
-  -jwtService: JwtService
-  --
-  +verifyEmail(token: string): Promise<string>
-  ...
 }
 
 ' ════════════════════════════════════════════════════════════════════════════════════
@@ -81,45 +29,23 @@ class AuthService {
 ' ════════════════════════════════════════════════════════════════════════════════════
 
 class User {
-  -id: number
-  -fullName: string
-  -email?: string
-  -phoneNumber?: string
-  -password: string
-  -isEmailVerified: boolean
-  -isPhoneVerified: boolean
-  -isActive: boolean
-  -emailVerificationToken?: string
-  -role: Role
-  -coach: Coach
+
 }
 
 class Coach {
-  -id: number
-  -user: User
-  -bio: string
-  -specialties: string[]
-  -teachingMethods: string[]
-  -yearOfExperience: number
-  -verificationStatus: CoachVerificationStatus
-  -credentials: Credential[]
+
 }
 
 class Credential {
-  -id: number
-  -coach: Coach
-  -name: string
-  -type: CourseCredentialType
-  -description?: string
-  -publicUrl?: string
-  -credentialImage?: string
-  -issuedAt?: Date
-  -expiresAt?: Date
+
 }
 
 class Role {
-  -id: number
-  -name: string
+
+}
+
+class BaseCredential {
+
 }
 
 ' ════════════════════════════════════════════════════════════════════════════════════
@@ -127,58 +53,57 @@ class Role {
 ' ════════════════════════════════════════════════════════════════════════════════════
 
 class JwtService {
-  --
-  +signAsync(payload): Promise<Token>
-  +verifyAsync(token): Promise<Payload>
+
 }
 
 class MailService {
-  --
-  +sendMail(data): Promise<void>
+
 }
 
 class TwilioService {
-  --
-  +sendSMS(phoneNumber): Promise<void>
-  +verifyPhoneNumber(phone, code): Promise<boolean>
+
 }
 
 class BunnyService {
-  --
-  +uploadFile(file): Promise<string>
-  +deleteFile(path): Promise<void>
+
+}
+
+class NotificationService {
+
 }
 
 class ConfigService {
-  --
-  +get(key: string): any
+
+}
+
+
+' ════════════════════════════════════════════════════════════════════════════════════
+' DTO LAYER
+' ════════════════════════════════════════════════════════════════════════════════════
+
+class RegisterCoachDto {
+}
+class CreateCoachDto {
 }
 
 ' ════════════════════════════════════════════════════════════════════════════════════
 ' RELATIONSHIPS
 ' ════════════════════════════════════════════════════════════════════════════════════
 
-RegisterCoachScreen --> CoachController: calls registerCoach()
-RegisterCoachScreen --> CoachController: calls uploadCredential()
-RegisterCoachScreen --> AuthController: calls verifyEmail()
-
-CoachController --> CoachService: delegates
-AuthController --> AuthService: delegates
-
-CoachService --> User: creates/updates
-CoachService --> Coach: creates/updates
-CoachService --> Credential: creates/updates
-CoachService --> JwtService: generates tokens
-CoachService --> MailService: sends emails
-CoachService --> TwilioService: sends SMS
-CoachService --> BunnyService: uploads files
-CoachService --> ConfigService: gets config
-
-AuthService --> User: updates
-AuthService --> JwtService: verifies tokens
-
-User --> Role: belongs to
-User --> Coach: has_one
-Coach --> Credential: has_many
-
-@enduml
+CreateCoachDto -- Credential
+CoachController -- RegisterCoachDto
+CoachController -- CoachService
+CoachService -- User
+CoachService -- Coach
+CoachService -- Credential
+CoachService -- JwtService
+CoachService -- MailService
+CoachService -- TwilioService
+CoachService -- BunnyService
+CoachService -- NotificationService
+CoachService -- ConfigService
+User -- Role
+User -- Coach
+Coach -- Credential
+Credential -- BaseCredential
+RegisterCoachDto -- CreateCoachDto

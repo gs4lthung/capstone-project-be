@@ -1,0 +1,37 @@
+@startuml ViewWalletById
+
+actor User
+participant WalletController
+participant AuthGuard
+participant WalletService
+participant DataSource
+
+User -> WalletController: GET /wallets/:id
+activate WalletController
+
+WalletController -> AuthGuard: validate JWT
+activate AuthGuard
+AuthGuard --> WalletController: valid
+deactivate AuthGuard
+
+WalletController -> WalletService: findOne(id)
+activate WalletService
+
+WalletService -> DataSource: find wallet by id
+activate DataSource
+
+note right of DataSource
+  Relations: user, bank, transactions
+  Verify: wallet exists
+end note
+
+DataSource --> WalletService: wallet
+deactivate DataSource
+
+WalletService --> WalletController: Wallet
+deactivate WalletService
+
+WalletController --> User: HTTP 200 with wallet
+deactivate WalletController
+
+@enduml

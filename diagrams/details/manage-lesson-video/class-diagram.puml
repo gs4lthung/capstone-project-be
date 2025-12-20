@@ -1,107 +1,90 @@
 @startuml ManageLessonVideoClassDiagram
+
+!theme plain
+skinparam linetype ortho
+skinparam nodesep 80
+skinparam ranksep 80
+
 left to right direction
 
-class Coach {
-    -id: number
-    -fullName: string
-    -email: string
-    -phoneNumber: string
-    -role: Role
-    +uploadVideo(): void
-    +updateVideo(): void
-    +deleteVideo(): void
+' ════════════════════════════════════════════════════════════════════════════════════
+' CONTROLLER LAYER
+' ════════════════════════════════════════════════════════════════════════════════════
+
+class VideoController {
 }
 
-class Lesson {
-    -id: number
-    -name: string
-    -description: string
-    -lessonNumber: number
-    -videos: CoachVideo[]
-    -quiz: Quiz
-    -subject: Subject
+' ════════════════════════════════════════════════════════════════════════════════════
+' GUARD LAYER
+' ════════════════════════════════════════════════════════════════════════════════════
+
+class AuthGuard {
 }
 
-class CoachVideo {
-    -id: number
-    -title: string
-    -description: string
-    -duration: number
-    -drillName: string
-    -drillDescription: string
-    -drillPracticeSets: number
-    -publicUrl: string
-    -thumbnailUrl: string
-    -status: CoachVideoStatus
-    -uploadedBy: Coach
-    -lesson: Lesson
-    -createdAt: Date
-    -updatedAt: Date
+class RoleGuard {
 }
 
-class Subject {
-    -id: number
-    -name: string
-    -description: string
-    -level: PickleballLevel
-    -status: SubjectStatus
-    -lessons: Lesson[]
-    -courses: Course[]
-}
+' ════════════════════════════════════════════════════════════════════════════════════
+' DTO LAYER
+' ════════════════════════════════════════════════════════════════════════════════════
 
-class Course {
-    -id: number
-    -name: string
-    -status: CourseStatus
-    -startDate: Date
-    -endDate: Date
-}
-
-enum CoachVideoStatus {
-    PENDING
-    READY
-    PUBLISHED
-    REJECTED
-}
-
-enum SubjectStatus {
-    DRAFT
-    PUBLISHED
-}
-
-enum CourseStatus {
-    PENDING_APPROVAL
-    APPROVED
-    REJECTED
-    CANCELLED
-    COMPLETED
-    FULL
-    READY_OPENED
-    ON_GOING
-}
-
-class UploadVideoDto {
-    +title: string
-    +description: string
-    +drillName: string
-    +drillDescription: string
-    +drillPracticeSets: number
+class CreateVideoDto {
 }
 
 class UpdateVideoDto {
-    +title?: string
-    +description?: string
-    +drillName?: string
-    +drillDescription?: string
-    +drillPracticeSets?: number
 }
 
-Coach "1" -- "many" CoachVideo: uploads
-Lesson "1" -- "many" CoachVideo: contains
-Lesson "many" -- "1" Subject: belongs to
-Subject "1" -- "many" Course: has
-CoachVideo --> CoachVideoStatus: uses
-Subject --> SubjectStatus: uses
-Course --> CourseStatus: uses
+' ════════════════════════════════════════════════════════════════════════════════════
+' SERVICE LAYER
+' ════════════════════════════════════════════════════════════════════════════════════
+
+class VideoService {
+}
+
+class BunnyService {
+}
+
+class FFmpegService {
+}
+
+class DataSource {
+}
+
+' ════════════════════════════════════════════════════════════════════════════════════
+' ENTITY LAYER
+' ════════════════════════════════════════════════════════════════════════════════════
+
+class Video {
+}
+
+class Lesson {
+}
+
+class Session {
+}
+
+class User {
+}
+
+' ════════════════════════════════════════════════════════════════════════════════════
+' RELATIONSHIPS
+' ════════════════════════════════════════════════════════════════════════════════════
+
+VideoController --> AuthGuard
+VideoController --> RoleGuard
+VideoController --> VideoService
+VideoController ..> CreateVideoDto
+VideoController ..> UpdateVideoDto
+
+VideoService --> DataSource
+VideoService --> BunnyService
+VideoService --> FFmpegService
+VideoService --> Video
+VideoService --> Lesson
+VideoService --> Session
+
+Video --> Lesson
+Video --> Session
+Video --> User
 
 @enduml

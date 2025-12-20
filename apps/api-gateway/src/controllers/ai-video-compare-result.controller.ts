@@ -23,6 +23,11 @@ import { SaveAiFeedbackDto } from '@app/shared/dtos/ai-feedback/ai-feedback.dto'
 import { AiVideoCompareResultService } from '../services/ai-video-compare-result.service';
 import { AiPoseService } from '../services/ai-pose.service';
 import { AiGeminiService } from '../services/ai-gemini.service';
+import { DataSource } from 'typeorm';
+import { AiVideoComparisonResult } from '@app/database/entities/ai-video-comparison-result.entity';
+import { LearnerVideo } from '@app/database/entities/learner-video.entity';
+import { Video } from '@app/database/entities/video.entity';
+import { buildDetailsArrayFromComparison } from '@app/shared/helpers/buildDetailArray.helper';
 
 @Controller('ai-video-compare-results')
 export class AiVideoCompareResultController {
@@ -138,8 +143,10 @@ export class AiVideoCompareResultController {
     ]);
 
     const analysis = await this.geminiService.comparePoseData(
+      coachVideoUrl,
       coachResult.poses,
       coachResult.timestamps,
+      learnerVideoUrl,
       learnerResult.poses,
       learnerResult.timestamps,
     );

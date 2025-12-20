@@ -1,0 +1,49 @@
+@startuml ViewConfigurationSequenceDiagram
+
+actor "Admin" as admin
+participant "Client" as client
+participant "ConfigurationController" as controller
+participant "ConfigurationService" as service
+participant "ConfigurationRepository" as repo
+
+admin -> client: 1. Open configuration panel
+client -> controller: 2. GET /configurations
+activate controller
+
+controller -> service: 3. findAll(findOptions)
+activate service
+
+service -> repo: 4. Find configurations with pagination
+activate repo
+repo --> service: Configuration list
+deactivate repo
+
+service --> controller: PaginateObject<Configuration>
+deactivate service
+
+controller --> client: 5. HTTP 200
+deactivate controller
+
+client --> admin: 6. Display configurations
+
+admin -> client: 7. Select specific configuration
+client -> controller: 8. GET /configurations/:key
+activate controller
+
+controller -> service: 9. findByKey(key)
+activate service
+
+service -> repo: 10. Find configuration by key
+activate repo
+repo --> service: Configuration | null
+deactivate repo
+
+service --> controller: CustomApiResponse<Configuration>
+deactivate service
+
+controller --> client: 11. HTTP 200
+deactivate controller
+
+client --> admin: 12. Display configuration details
+
+@enduml

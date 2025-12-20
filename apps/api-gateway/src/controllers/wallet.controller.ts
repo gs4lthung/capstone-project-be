@@ -7,6 +7,7 @@ import {
   Param,
   Post,
   Put,
+  Patch,
   UseGuards,
 } from '@nestjs/common';
 import { WalletService } from '../services/wallet.service';
@@ -22,6 +23,9 @@ import { SortingParams } from '@app/shared/decorators/sorting-params.decorator';
 import { Sorting } from '@app/shared/interfaces/sorting.interface';
 import { Filtering } from '@app/shared/interfaces/filtering.interface';
 import { FilteringParams } from '@app/shared/decorators/filtering-params.decorator';
+import { RoleGuard } from '../guards/role.guard';
+import { CheckRoles } from '@app/shared/decorators/check-roles.decorator';
+import { UserRole } from '@app/shared/enums/user.enum';
 
 @Controller('wallets')
 export class WalletController {
@@ -47,6 +51,18 @@ export class WalletController {
       filter,
     });
   }
+
+  @Get('all-with-user-info')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    tags: ['Wallets'],
+    summary: 'Get all wallets with user information',
+    description: 'Retrieve a list of all wallets along with associated user info',
+  })
+  async findAllWithUserInfo() {
+    return this.walletService.findAllWithUserInfo();
+  }
+
 
   @Get('banks')
   @HttpCode(HttpStatus.OK)
@@ -121,4 +137,33 @@ export class WalletController {
   async requestWithdrawal(@Body('amount') amount: number) {
     return this.walletService.handleWithdrawalRequest(amount);
   }
+
+  @Patch('withdrawal/:id/approve')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiOperation({
+    tags: ['Wallets'],
+    summary: 'Approve a withdrawal request',
+    description: 'Approve a specific withdrawal request by its ID',
+  })
+  @CheckRoles(UserRole.ADMIN)
+  @UseGuards(AuthGuard,RoleGuard)
+  async approveWithdrawal(@Param('id') id: number) {
+    return this.walletService.approveWithdrawalRequest(id);
+  }
+
+  @Patch('withdrawal/:id/reject')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiOperation({
+    tags: ['Wallets'],
+    summary: 'Reject a withdrawal request',
+    description: 'Reject a specific withdrawal request by its ID',
+  })
+  @CheckRoles(UserRole.ADMIN)
+  @UseGuards(AuthGuard,RoleGuard)
+  async rejectWithdrawal(@Param('id') id: number) {
+    return this.walletService.rejectWithdrawalRequest(id);
+  }
+
 }

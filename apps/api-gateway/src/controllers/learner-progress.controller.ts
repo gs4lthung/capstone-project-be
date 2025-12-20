@@ -3,6 +3,8 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Param,
+  Post,
   Query,
   UseGuards,
 } from '@nestjs/common';
@@ -89,6 +91,28 @@ export class LearnerProgressController {
     return this.learnerProgressService.getLearnerProgressDetails(
       userId,
       courseId,
+    );
+  }
+
+  @Post('/:id/ai-analysis')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiOperation({
+    tags: ['Learner Progresses'],
+    summary:
+      "Get AI-powered analysis of learner's progress with recommendations",
+    description:
+      "Retrieve AI-generated analysis and recommendations for a learner's progress",
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description:
+      'AI-powered analysis and recommendations retrieved successfully',
+  })
+  @UseGuards(AuthGuard)
+  async getAiLearnerProgressAnalysis(@Param('id') learnerProgressId: number) {
+    return this.learnerProgressService.generateAiProgressAnalysis(
+      learnerProgressId,
     );
   }
 }

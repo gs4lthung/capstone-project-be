@@ -1,0 +1,31 @@
+@startuml ViewLessonsBySubject
+
+actor Coach
+participant LessonController
+participant AuthGuard
+participant LessonService
+participant DataSource
+
+Coach -> LessonController: GET /lessons/subjects/:id
+activate LessonController
+
+LessonController -> AuthGuard: validate JWT
+activate AuthGuard
+AuthGuard --> LessonController: valid
+deactivate AuthGuard
+
+LessonController -> LessonService: findAllBySubjectId(options, id)
+activate LessonService
+
+LessonService -> DataSource: query lessons by subject
+activate DataSource
+DataSource --> LessonService: lessons list
+deactivate DataSource
+
+LessonService --> LessonController: PaginateObject<Lesson>
+deactivate LessonService
+
+LessonController --> Coach: HTTP 200 with lessons
+deactivate LessonController
+
+@enduml

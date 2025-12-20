@@ -11,13 +11,15 @@ import { User } from '../entities/user.entity';
  * Tạo data test cho:
  * - Earned achievements (learner_achievements)
  * - Achievement progress (achievement_progresses)
- * 
+ *
  * Mục đích: Test leaderboard và progress APIs
  */
 
 export const learnerAchievementSeed = async (dataSource: DataSource) => {
-  const learnerAchievementRepository = dataSource.getRepository(LearnerAchievement);
-  const achievementProgressRepository = dataSource.getRepository(AchievementProgress);
+  const learnerAchievementRepository =
+    dataSource.getRepository(LearnerAchievement);
+  const achievementProgressRepository =
+    dataSource.getRepository(AchievementProgress);
   const achievementRepository = dataSource.getRepository(Achievement);
   const userRepository = dataSource.getRepository(User);
 
@@ -26,14 +28,16 @@ export const learnerAchievementSeed = async (dataSource: DataSource) => {
   // Check if data already exists
   const existingCount = await learnerAchievementRepository.count();
   if (existingCount > 0) {
-    console.log(`⚠️  Learner achievements already exist (${existingCount} records). Skipping seed.`);
+    console.log(
+      `⚠️  Learner achievements already exist (${existingCount} records). Skipping seed.`,
+    );
     return;
   }
 
   // ============================================
   // Lấy data từ database
   // ============================================
-  
+
   // Lấy tất cả achievements
   const achievements = await achievementRepository.find({
     where: { isActive: true },
@@ -58,51 +62,57 @@ export const learnerAchievementSeed = async (dataSource: DataSource) => {
     return;
   }
 
-  console.log(`📝 Found ${achievements.length} achievements and ${learners.length} learners`);
+  console.log(
+    `📝 Found ${achievements.length} achievements and ${learners.length} learners`,
+  );
   console.log(`📝 Creating earned achievements and progress records...`);
 
   // ============================================
   // Tạo earned achievements (random distribution)
   // ============================================
-  
+
   let totalEarned = 0;
   let totalProgress = 0;
 
   // Mỗi learner sẽ earn từ 0-8 achievements (random)
   for (const learner of learners) {
     const numToEarn = Math.floor(Math.random() * 9); // 0-8 achievements
-    
+
     // Shuffle achievements để random
-    const shuffledAchievements = [...achievements].sort(() => Math.random() - 0.5);
-    
+    const shuffledAchievements = [...achievements].sort(
+      () => Math.random() - 0.5,
+    );
+
     for (let i = 0; i < numToEarn && i < shuffledAchievements.length; i++) {
       const achievement = shuffledAchievements[i];
-      
+
       // Tạo earned achievement
       const earnedAchievement = learnerAchievementRepository.create({
         user: learner,
         achievement: achievement,
-        earnedAt: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000), // Random trong 30 ngày qua
+        earnedAt: new Date(
+          Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000,
+        ), // Random trong 30 ngày qua
       });
-      
+
       await learnerAchievementRepository.save(earnedAchievement);
       totalEarned++;
     }
 
     // Tạo progress cho những achievements chưa earn (in progress)
     const unearnedAchievements = shuffledAchievements.slice(numToEarn);
-    
+
     for (const achievement of unearnedAchievements) {
       // Random progress từ 0-99%
       const randomProgress = Math.floor(Math.random() * 100);
-      
+
       if (randomProgress > 0) {
         const progress = achievementProgressRepository.create({
           user: learner,
           achievement: achievement,
           currentProgress: randomProgress,
         });
-        
+
         await achievementProgressRepository.save(progress);
         totalProgress++;
       }
@@ -132,4 +142,3 @@ runSeed().catch((error) => {
   process.exit(1);
 });
 */
-

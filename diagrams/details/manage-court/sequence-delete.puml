@@ -1,0 +1,49 @@
+@startuml DeleteCourt
+
+actor Admin
+participant CourtController
+participant AuthGuard
+participant RoleGuard
+participant CourtService
+participant DataSource
+
+Admin -> CourtController: DELETE /courts/:id
+activate CourtController
+
+CourtController -> AuthGuard: validate JWT
+activate AuthGuard
+AuthGuard --> CourtController: valid
+deactivate AuthGuard
+
+CourtController -> RoleGuard: verify ADMIN role
+activate RoleGuard
+RoleGuard --> CourtController: authorized
+deactivate RoleGuard
+
+CourtController -> CourtService: delete(id)
+activate CourtService
+
+CourtService -> DataSource: BEGIN TRANSACTION
+activate DataSource
+
+DataSource -> DataSource: find court by id
+DataSource -> DataSource: verify court exists (not deleted)
+DataSource -> DataSource: soft delete court (set deletedAt)
+DataSource -> DataSource: COMMIT
+
+note right of DataSource
+  Soft delete - sets deletedAt timestamp
+  Court remains in database but hidden
+  Can be restored later
+end note
+
+DataSource --> CourtService: success
+deactivate DataSource
+
+CourtService --> CourtController: CustomApiResponse (200)
+deactivate CourtService
+
+CourtController --> Admin: HTTP 200 OK
+deactivate CourtController
+
+@enduml

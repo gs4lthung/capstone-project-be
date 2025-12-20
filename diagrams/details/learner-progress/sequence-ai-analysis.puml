@@ -1,0 +1,65 @@
+@startuml GenerateAiAnalysis
+
+actor User
+participant LearnerProgressController
+participant AuthGuard
+participant LearnerProgressService
+participant AiGeminiService
+participant DataSource
+
+User -> LearnerProgressController: POST /learner-progresses/:id/ai-analysis
+activate LearnerProgressController
+
+LearnerProgressController -> AuthGuard: validate JWT
+activate AuthGuard
+AuthGuard --> LearnerProgressController: valid
+deactivate AuthGuard
+
+LearnerProgressController -> LearnerProgressService: generateAiProgressAnalysis(learnerProgressId)
+activate LearnerProgressService
+
+LearnerProgressService -> DataSource: BEGIN TRANSACTION
+activate DataSource
+
+DataSource -> DataSource: find learner progress with user/course
+DataSource -> DataSource: find completed sessions with quiz attempts
+DataSource -> DataSource: find learner videos with AI comparison results
+
+note right of DataSource
+  Aggregate data:
+  - Quiz scores per session
+  - Video analysis scores
+  - Attendance records
+  - Overall progress metrics
+end note
+
+LearnerProgressService -> AiGeminiService: generateProgressAnalysis(progressData)
+activate AiGeminiService
+
+note right of AiGeminiService
+  AI analyzes:
+  - Session completion rate
+  - Quiz performance trends
+  - Video technique scores
+  - Strengths and weaknesses
+  - Personalized recommendations
+end note
+
+AiGeminiService --> LearnerProgressService: AI analysis response
+deactivate AiGeminiService
+
+DataSource -> DataSource: save AiLearnerProgressAnalysis record
+DataSource -> DataSource: update avgAiAnalysisScore, avgQuizScore
+DataSource -> DataSource: update canGenerateAIAnalysis flag
+DataSource -> DataSource: COMMIT
+
+DataSource --> LearnerProgressService: success
+deactivate DataSource
+
+LearnerProgressService --> LearnerProgressController: CustomApiResponse with AI analysis
+deactivate LearnerProgressService
+
+LearnerProgressController --> User: HTTP 200 with AI analysis
+deactivate LearnerProgressController
+
+@enduml

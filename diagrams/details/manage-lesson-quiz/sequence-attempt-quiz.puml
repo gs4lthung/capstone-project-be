@@ -1,0 +1,50 @@
+@startuml ManageLessonQuizAttemptSequence
+
+actor "Learner" as learner
+participant "Client" as client
+participant "QuizController" as controller
+participant "QuizService" as service
+participant "QuizAttemptRepository" as attemptRepo
+database "PostgreSQL" as db
+
+== Attempt Quiz ==
+
+learner -> client: 1. Click "Attempt Quiz"
+client --> learner: 2. Show quiz form
+
+learner -> client: 3. Fill answers and submit
+client -> controller: 4. POST /quizzes/:id/attempts
+activate controller
+
+controller -> controller: 5. Validate DTO, check auth/role
+
+controller -> service: 6. learnerAttemptQuiz(quizId, data, userId)
+activate service
+
+service -> attemptRepo: 7. Validate quiz/session/learner
+
+service -> attemptRepo: 8. Save QuizAttempt and LearnerAnswers
+activate attemptRepo
+attemptRepo -> db: Insert attempt and answers
+activate db
+db --> attemptRepo: Save result
+deactivate db
+attemptRepo --> service: Attempt saved
+deactivate attemptRepo
+
+service -> attemptRepo: 9. Recalculate avgQuizScore for learner
+attemptRepo -> db: Query all attempts for learner & quiz
+activate db
+db --> attemptRepo: Attempts data
+deactivate db
+attemptRepo --> service: Scores
+
+service --> controller: Attempt result (score, avgQuizScore)
+deactivate service
+
+controller --> client: 10. HTTP 201 Created (score)
+deactivate controller
+
+client --> learner: 11. Show quiz result/score
+
+@enduml

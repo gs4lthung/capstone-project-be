@@ -5,32 +5,11 @@ skinparam classBorderColor #333
 skinparam arrowColor #333
 
 ' ════════════════════════════════════════════════════════════════════════════════════
-' PRESENTATION LAYER
-' ════════════════════════════════════════════════════════════════════════════════════
-
-class CourseApprovalPanel {
-  -pendingCourses: Course[]
-  -selectedCourse: Course
-  -rejectionReason: string
-  --
-  +loadPendingCourses(): void
-  +viewCourseDetails(): void
-  +approveCourse(): void
-  +rejectCourse(reason: string): void
-  +displayStatus(): void
-}
-
-' ════════════════════════════════════════════════════════════════════════════════════
 ' CONTROLLER LAYER
 ' ════════════════════════════════════════════════════════════════════════════════════
 
 class CourseController {
-  -courseService: CourseService
-  --
-  +findCourseRequests(filter): Promise<Response>
-  +getCourseDetails(id): Promise<Response>
-  +approveCourseCreationRequest(id): Promise<Response>
-  +rejectCourseCreationRequest(id, reason): Promise<Response>
+
 }
 
 ' ════════════════════════════════════════════════════════════════════════════════════
@@ -38,17 +17,15 @@ class CourseController {
 ' ════════════════════════════════════════════════════════════════════════════════════
 
 class CourseService {
-  -courseRepository: Repository
-  -requestRepository: Repository
-  -sessionService: SessionService
-  -notificationService: NotificationService
-  -datasource: DataSource
-  --
-  +findCourseRequests(filter): Promise<Response>
-  +getCourseDetails(id): Promise<Course>
-  +approveCourseCreationRequest(id): Promise<void>
-  +rejectCourseCreationRequest(id, reason): Promise<void>
-  ...
+
+}
+
+class SessionService {
+
+}
+
+class NotificationService {
+
 }
 
 ' ════════════════════════════════════════════════════════════════════════════════════
@@ -56,39 +33,48 @@ class CourseService {
 ' ════════════════════════════════════════════════════════════════════════════════════
 
 class Course {
-  -id: number
-  -name: string
-  -description?: string
-  -level: PickleballLevel
-  -learningFormat: CourseLearningFormat
-  -status: CourseStatus
-  -minParticipants: number
-  -maxParticipants: number
-  -startDate: Date
-  -endDate: Date
-  -createdBy: User (Coach)
-  -subject: Subject
-  -sessions: Session[]
-  -enrollments: Enrollment[]
+
 }
 
 class Request {
-  -id: number
-  -type: RequestType
-  -status: RequestStatus
-  -metadata: CourseMetadata
-  -createdBy: User (Coach)
-  -actions: RequestAction[]
+
 }
 
 class RequestAction {
-  -id: number
-  -type: RequestActionType
-  -comment: string
-  -request: Request
-  -handledBy: User (Admin)
-  -createdAt: Date
+
 }
+
+class Session {
+
+}
+
+class Subject {
+
+}
+
+class User {
+
+}
+
+' ════════════════════════════════════════════════════════════════════════════════════
+' RELATIONSHIPS
+' ════════════════════════════════════════════════════════════════════════════════════
+
+CourseController --> CourseService: delegates
+
+CourseService --> Course: reads/updates
+CourseService --> Request: reads/updates
+CourseService --> RequestAction: creates
+CourseService --> SessionService: generates sessions
+CourseService --> NotificationService: sends notifications
+
+Course --> Subject: belongs to
+Course --> Session: has many
+Course --> User: created by
+Request --> RequestAction: has many
+RequestAction --> User: handled by
+
+@enduml
 
 class Session {
   -id: number

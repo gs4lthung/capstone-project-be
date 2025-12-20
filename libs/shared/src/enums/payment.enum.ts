@@ -13,7 +13,6 @@ export enum WalletTransactionType {
 
 export enum WithdrawalRequestStatus {
   PENDING = 'PENDING',
-  PROCESSING = 'PROCESSING',
-  COMPLETED = 'COMPLETED',
-  FAILED = 'FAILED',
+  APPROVED = 'APPROVED',
+  REJECTED = 'REJECTED',
 }

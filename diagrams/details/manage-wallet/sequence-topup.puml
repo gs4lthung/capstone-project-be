@@ -1,0 +1,35 @@
+@startuml WalletTopUp
+
+participant System
+participant WalletService
+participant DataSource
+
+System -> WalletService: handleWalletTopUp(userId, amount)
+activate WalletService
+
+WalletService -> DataSource: BEGIN TRANSACTION
+activate DataSource
+
+DataSource -> DataSource: find wallet by userId
+DataSource -> DataSource: verify wallet exists
+DataSource -> DataSource: calculate new currentBalance (current + amount)
+DataSource -> DataSource: calculate new totalIncome (total + amount)
+DataSource -> DataSource: update wallet balances
+DataSource -> DataSource: create WalletTransaction (CREDIT)
+DataSource -> DataSource: COMMIT
+
+note right of DataSource
+  Transaction flow:
+  1. Find wallet by userId
+  2. Add: currentBalance += amount
+  3. Add: totalIncome += amount
+  4. Create CREDIT transaction
+end note
+
+DataSource --> WalletService: success
+deactivate DataSource
+
+WalletService --> System: void (success)
+deactivate WalletService
+
+@enduml
