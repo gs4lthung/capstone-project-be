@@ -187,6 +187,10 @@ export class BaseTypeOrmService<T> {
 
     const qb: SelectQueryBuilder<T> = this.repository.createQueryBuilder(alias);
 
+    if (findOptions.withDeleted) {
+      qb.withDeleted();
+    }
+
     switch (alias) {
       case 'coach':
         qb.leftJoinAndSelect(`${alias}.user`, 'user');
