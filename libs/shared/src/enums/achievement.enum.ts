@@ -35,9 +35,37 @@ export enum AchievementEventName {
 }
 
 /**
- * Get all achievement event names as an array
- * @returns Array of event name strings
+ * Mapping event names to Vietnamese labels
  */
-export function getAllAchievementEventNames(): string[] {
-  return Object.values(AchievementEventName);
+export const AchievementEventLabels: Record<AchievementEventName, string> = {
+  [AchievementEventName.LESSON_COMPLETED]: 'Hoàn thành bài học',
+  [AchievementEventName.SESSION_ATTENDED]: 'Tham gia buổi học',
+  [AchievementEventName.VIDEO_WATCHED]: 'Xem video bài giảng',
+  [AchievementEventName.COURSE_COMPLETED]: 'Hoàn thành khóa học',
+  [AchievementEventName.QUIZ_COMPLETED]: 'Hoàn thành quiz',
+  [AchievementEventName.DAILY_LOGIN]: 'Đăng nhập hàng ngày',
+  [AchievementEventName.DAILY_LESSON]: 'Hoàn thành bài học hàng ngày',
+  [AchievementEventName.DAILY_QUIZ]: 'Làm quiz hàng ngày',
+  [AchievementEventName.DAILY_VIDEO]: 'Xem video hàng ngày',
+  [AchievementEventName.WEEKLY_SESSION]: 'Tham gia session hàng tuần',
+  [AchievementEventName.FEEDBACK_RECEIVED]: 'Nhận phản hồi',
+};
+
+/**
+ * Event name with label interface
+ */
+export interface AchievementEventNameOption {
+  value: string;
+  label: string;
+}
+
+/**
+ * Get all achievement event names with labels
+ * @returns Array of event name objects with value and label
+ */
+export function getAllAchievementEventNames(): AchievementEventNameOption[] {
+  return Object.values(AchievementEventName).map((value) => ({
+    value,
+    label: AchievementEventLabels[value],
+  }));
 }
