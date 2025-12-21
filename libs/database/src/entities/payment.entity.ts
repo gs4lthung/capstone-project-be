@@ -43,6 +43,9 @@ export class Payment {
   @Column({ type: 'enum', enum: PaymentStatus, default: PaymentStatus.PENDING })
   status: PaymentStatus;
 
+  @Column({name:'is_using_wallet', type:'boolean', default:false})
+  isUsingWallet: boolean;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 

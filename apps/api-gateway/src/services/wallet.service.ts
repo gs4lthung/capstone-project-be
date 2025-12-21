@@ -16,7 +16,7 @@ import {
 } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, Repository,In } from 'typeorm';
 import { BaseTypeOrmService } from '@app/shared/helpers/typeorm.helper';
 import { FindOptions } from '@app/shared/interfaces/find-options.interface';
 import { WalletTransactionType, WithdrawalRequestStatus } from '@app/shared/enums/payment.enum';
@@ -26,6 +26,7 @@ import { WithdrawalRequest } from '@app/database/entities/withdrawal-request.ent
 import { NotificationService } from './notification.service';
 import { NotificationType } from '@app/shared/enums/notification.enum';
 import { Session } from '@app/database/entities/session.entity';
+import { UserRole } from '@app/shared/enums/user.enum';
 
 @Injectable({ scope: Scope.REQUEST })
 export class WalletService extends BaseTypeOrmService<Wallet> {
@@ -57,9 +58,30 @@ export class WalletService extends BaseTypeOrmService<Wallet> {
     return wallet;
   }
 
-  async findAllWithUserInfo(): Promise<Wallet[]> {
+  async findAllWithUserInfo(role:string): Promise<Wallet[]> {
+    // If role is provided and not ADMIN, filter by that role
+    // If no role is provided, get all with COACH and LEARNER roles
+    let whereClause: any = {};
+    if (role && role !== UserRole.ADMIN) {
+      whereClause = {
+        user: {
+          role: {
+            name: role
+          }
+        }
+      };
+    } else {
+      whereClause = {
+        user: {
+          role: {
+            name: In([UserRole.COACH, UserRole.LEARNER])
+          }
+        }
+      };
+    }
     return await this.walletRepository.find({
-      relations: ['user', 'bank','transactions','withdrawalRequests'],
+      relations: ['user', 'user.role', 'bank', 'transactions', 'withdrawalRequests'],
+      where: whereClause
     });
   }
 
