@@ -570,7 +570,7 @@ export class CourseService extends BaseTypeOrmService<Course> {
 
       return new CustomApiResponse<void>(
         HttpStatus.CREATED,
-        'COURSE.CREATE_SUCCESS',
+        'Đã gửi yêu cầu tạo khóa học thành công',
       );
     });
   }
@@ -858,7 +858,7 @@ export class CourseService extends BaseTypeOrmService<Course> {
 
       return new CustomApiResponse<void>(
         HttpStatus.CREATED,
-        'COURSE.CREATE_SUCCESS',
+        'Duyệt yêu cầu tạo khóa học thành công',
       );
     });
   }
@@ -936,7 +936,7 @@ export class CourseService extends BaseTypeOrmService<Course> {
 
       return new CustomApiResponse<void>(
         HttpStatus.OK,
-        'COURSE.CANCEL_SUCCESS',
+        'Hủy khóa học thành công',
       );
     });
   }
@@ -1062,7 +1062,7 @@ export class CourseService extends BaseTypeOrmService<Course> {
 
       return new CustomApiResponse<void>(
         HttpStatus.OK,
-        'COURSE.CANCEL_SUCCESS',
+        'Hủy khóa học thành công',
       );
     });
   }

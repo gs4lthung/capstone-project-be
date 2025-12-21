@@ -14,7 +14,7 @@ import {
   CourseStatus,
 } from '@app/shared/enums/course.enum';
 import { EnrollmentStatus } from '@app/shared/enums/enrollment.enum';
-import { PaymentStatus } from '@app/shared/enums/payment.enum';
+import { PaymentStatus, WalletTransactionType } from '@app/shared/enums/payment.enum';
 import { CryptoUtils } from '@app/shared/utils/crypto.util';
 import {
   BadRequestException,
@@ -33,6 +33,8 @@ import { ConfigurationService } from './configuration.service';
 import { DateTimeUtils } from '@app/shared/utils/datetime.util';
 import { NotificationService } from './notification.service';
 import { NotificationType } from '@app/shared/enums/notification.enum';
+import { Wallet } from '@app/database/entities/wallet.entity';
+import { WalletTransaction } from '@app/database/entities/wallet-transaction.entity';
 
 @Injectable({ scope: Scope.REQUEST })
 export class PaymentService extends BaseTypeOrmService<Payment> {
@@ -119,29 +121,65 @@ export class PaymentService extends BaseTypeOrmService<Payment> {
         await manager.getRepository(Enrollment).save(newEnrollment);
       }
 
-      const payosResponse = await this.payosService.createPaymentLink({
-        orderCode: CryptoUtils.generateRandomNumber(10_000, 99_999),
-        amount: parseInt(course.pricePerParticipant.toString()),
-        description: 'Thanh toán khóa học',
-        expiredAt: new Date(Date.now() + 1000 * 60 * 60 * 24),
+      let isUsingWallet=false;
+      const user=await manager.getRepository(User).findOne({
+        where:{id:this.request.user.id as User['id']},
+        relations:['wallet','wallet.transactions']
       });
+      if(user.wallet && user.wallet.currentBalance>0&&user.wallet.currentBalance>=course.pricePerParticipant){
+        isUsingWallet=true;
+      }
+      
+let payment:Payment;
+      if(isUsingWallet){
+        payment = manager.getRepository(Payment).create({
+          amount: course.pricePerParticipant,
+          description: 'Thanh toán khóa học sử dụng ví điện tử',
+          orderCode: CryptoUtils.generateRandomNumber(10_000, 99_999),
+          paymentLinkId: null,
+          checkoutUrl: null,
+          qrCode: null,
+          status: PaymentStatus.PAID,
+          enrollment: enrollment ? enrollment : newEnrollment,
+          expiredAt: new Date(Date.now() + 1000 * 60 * 60 * 24),
+        });
+        await manager.getRepository(Payment).save(payment);
+        
+        user.wallet.currentBalance -= Number(course.pricePerParticipant);
+        user.wallet.transactions.push({
+          amount: Number(course.pricePerParticipant),
+          type: WalletTransactionType.DEBIT,
+          description: `Thanh toán khóa học ${course.name}`,
+          createdAt: new Date(),
+        } as WalletTransaction);
+        await manager.getRepository(Wallet).save(user.wallet);
+      }
+else{
 
-      const payment = manager.getRepository(Payment).create({
-        amount: payosResponse.amount,
-        description: payosResponse.description,
-        orderCode: payosResponse.orderCode,
-        paymentLinkId: payosResponse.paymentLinkId,
-        checkoutUrl: payosResponse.checkoutUrl,
-        qrCode: payosResponse.qrCode,
-        status: PaymentStatus.PENDING,
-        enrollment: enrollment ? enrollment : newEnrollment,
-        expiredAt: DateTimeUtils.convertUnixTimestampToDate(
-          payosResponse.expiredAt,
-        ),
-      });
-      await manager.getRepository(Payment).save(payment);
-
-      delete payment.enrollment;
+  const payosResponse = await this.payosService.createPaymentLink({
+    orderCode: CryptoUtils.generateRandomNumber(10_000, 99_999),
+    amount: parseInt(course.pricePerParticipant.toString()),
+    description: 'Thanh toán khóa học',
+    expiredAt: new Date(Date.now() + 1000 * 60 * 60 * 24),
+  });
+  
+  const payment = manager.getRepository(Payment).create({
+    amount: payosResponse.amount,
+    description: payosResponse.description,
+    orderCode: payosResponse.orderCode,
+    paymentLinkId: payosResponse.paymentLinkId,
+    checkoutUrl: payosResponse.checkoutUrl,
+    qrCode: payosResponse.qrCode,
+    status: PaymentStatus.PENDING,
+    enrollment: enrollment ? enrollment : newEnrollment,
+    expiredAt: DateTimeUtils.convertUnixTimestampToDate(
+      payosResponse.expiredAt,
+    ),
+  });
+  await manager.getRepository(Payment).save(payment);
+  
+}
+delete payment.enrollment;
 
       return new CustomApiResponse<Payment>(
         HttpStatus.CREATED,

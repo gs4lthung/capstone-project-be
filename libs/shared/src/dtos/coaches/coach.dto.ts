@@ -2,10 +2,10 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 
 export enum AnalysisType {
-  WEEKLY = 'WEEKLY',
-  MONTHLY = 'MONTHLY',
-  PREVIOUSLY = 'PREVIOUSLY',
-  YEARLY = 'YEARLY',
+  WEEKLY = 'weekly',
+  MONTHLY = 'monthly',
+  PREVIOUSLY = 'previously',
+  YEARLY = 'yearly',
 }
 
 export class AnalysisData {

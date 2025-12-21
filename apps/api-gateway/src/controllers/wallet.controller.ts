@@ -8,6 +8,7 @@ import {
   Post,
   Put,
   Patch,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { WalletService } from '../services/wallet.service';
@@ -59,8 +60,8 @@ export class WalletController {
     summary: 'Get all wallets with user information',
     description: 'Retrieve a list of all wallets along with associated user info',
   })
-  async findAllWithUserInfo() {
-    return this.walletService.findAllWithUserInfo();
+  async findAllWithUserInfo(@Query('role') role: string) {
+    return this.walletService.findAllWithUserInfo(role as UserRole);
   }
 
 
