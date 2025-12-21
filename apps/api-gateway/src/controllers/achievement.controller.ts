@@ -601,6 +601,47 @@ export class AchievementController {
     return this.achievementService.getLeaderboard(validatedLimit);
   }
 
+  /**
+   * Get list of achievement event names
+   * Public - No authentication required
+   */
+  @Get('event-names')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Get list of achievement event names',
+    description:
+      'Get all available event names that can be used for achievements (Public - No authentication required)',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Event names retrieved successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        eventNames: {
+          type: 'array',
+          items: { type: 'string' },
+          example: [
+            'LESSON_COMPLETED',
+            'SESSION_ATTENDED',
+            'VIDEO_WATCHED',
+            'COURSE_COMPLETED',
+            'QUIZ_COMPLETED',
+            'DAILY_LOGIN',
+            'DAILY_LESSON',
+            'DAILY_QUIZ',
+            'DAILY_VIDEO',
+            'WEEKLY_SESSION',
+            'FEEDBACK_RECEIVED',
+          ],
+        },
+      },
+    },
+  })
+  async getEventNames(): Promise<{ eventNames: string[] }> {
+    return this.achievementService.getEventNames();
+  }
+
   // =====================================================================================================================
   // USER ACHIEVEMENT PROGRESS ENDPOINTS
   // =====================================================================================================================

@@ -33,6 +33,7 @@ import {
   UpdatePropertyCheckAchievementDto,
 } from '@app/shared/dtos/achievements/achievement.dto';
 import { PaginateObject } from '@app/shared/dtos/paginate.dto';
+import { getAllAchievementEventNames } from '@app/shared/enums/achievement.enum';
 
 /**
  * ============================================
@@ -969,6 +970,16 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
     } catch (error) {
       throw new BadRequestException(error);
     }
+  }
+
+  /**
+   * Get list of achievement event names
+   * @returns Array of event name strings
+   */
+  async getEventNames(): Promise<{ eventNames: string[] }> {
+    return {
+      eventNames: getAllAchievementEventNames(),
+    };
   }
 
   /**
