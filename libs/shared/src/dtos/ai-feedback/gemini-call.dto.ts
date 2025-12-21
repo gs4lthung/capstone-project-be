@@ -97,6 +97,7 @@ export const AiSubjectGenerationSchema = {
               drillName: { type: 'string' },
               drillDescription: { type: 'string' },
               drillPracticeSets: { type: 'string' },
+              createInstructions: { type: 'string'},
             },
             required: ['title', 'description'],
           },

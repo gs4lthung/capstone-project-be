@@ -382,26 +382,27 @@ YÊU CẦU:
    - Nếu người dùng KHÔNG chỉ định, mặc định tạo 4-6 bài học tuần tự, logic
    - Số lượng bài học tối thiểu: 3, tối đa: 10
    - Mỗi bài học có:
-     + Tên rõ ràng, hấp dẫn
+     + Tên rõ ràng, hấp dẫn (tối đa 100 ký tự)
      + Mô tả chi tiết (100-200 từ)
      + Số thứ tự (lessonNumber) từ 1 trở đi
 
 3. **Video (Video hướng dẫn):**
    - MỖI bài học có ĐÚNG 1 video
    - Mỗi video có:
-     + title: Tiêu đề video (ngắn gọn, hấp dẫn)
+     + title: Tiêu đề video (ngắn gọn, hấp dẫn, tối đa 50 ký tự)
      + description: Mô tả chi tiết nội dung video (100-200 từ)
      + tags: Mảng các từ khóa liên quan (3-5 tags)
      + drillName: Tên bài tập drill (nếu có)
      + drillDescription: Mô tả bài tập drill chi tiết (nếu có)
      + drillPracticeSets: Hướng dẫn số lượng luyện tập (ví dụ: "3 sets x 10 reps")
+     + createInstructions: Hướng dẫn tạo video (nếu có)
    - Lưu ý: File video thực tế sẽ được upload sau, chỉ cần tạo metadata
 
 4. **Quiz (Trắc nghiệm):**
    - MỖI bài học có ĐÚNG 1 quiz
    - Mỗi quiz có 5 câu hỏi
    - Mỗi câu hỏi có:
-     + Tiêu đề câu hỏi rõ ràng
+     + Tiêu đề câu hỏi rõ ràng (tối đa 100 ký tự)
      + Giải thích chi tiết (explanation) cho câu trả lời
      + 4 lựa chọn, trong đó có ĐÚNG 1 đáp án đúng (isCorrect: true)
    - Quiz title: "Kiểm tra [Tên bài học]"
