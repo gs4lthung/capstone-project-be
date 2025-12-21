@@ -75,7 +75,12 @@ export class UserService extends BaseTypeOrmService<User> {
   }
 
   async findAll(findOptions: FindOptions): Promise<PaginateObject<User>> {
-    return super.find(findOptions, 'user', PaginateObject<User>);
+    // Admin should see all users including soft-deleted ones
+    return super.find(
+      { ...findOptions, withDeleted: true },
+      'user',
+      PaginateObject<User>,
+    );
   }
 
   async findOne(id: number): Promise<User> {
@@ -210,6 +215,7 @@ export class UserService extends BaseTypeOrmService<User> {
     }
 
     await this.userRepository.softDelete(id);
+    await this.userRepository.update(id, { isActive: false });
 
     return new CustomApiResponse<void>(
       HttpStatus.OK,
@@ -245,6 +251,7 @@ export class UserService extends BaseTypeOrmService<User> {
     }
 
     await this.userRepository.restore(id);
+    await this.userRepository.update(id, { isActive: true });
 
     return new CustomApiResponse<void>(
       HttpStatus.OK,

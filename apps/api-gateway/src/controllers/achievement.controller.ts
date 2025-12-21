@@ -40,6 +40,7 @@ import {
   UserAchievementStatsDto,
   LeaderboardResponseDto,
 } from '@app/shared/dtos/achievements/achievement.dto';
+import { AchievementEventNameOption } from '@app/shared/enums/achievement.enum';
 import { AuthGuard } from '../guards/auth.guard';
 import { RoleGuard } from '../guards/role.guard';
 import { CheckRoles } from '@app/shared/decorators/check-roles.decorator';
@@ -599,6 +600,97 @@ export class AchievementController {
   ): Promise<LeaderboardResponseDto> {
     const validatedLimit = Math.min(Math.max(limit, 1), 100);
     return this.achievementService.getLeaderboard(validatedLimit);
+  }
+
+  /**
+   * Get list of achievement event names
+   * Public - No authentication required
+   */
+  @Get('event-names')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Get list of achievement event names',
+    description:
+      'Get all available event names that can be used for achievements with Vietnamese labels (Public - No authentication required)',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Event names retrieved successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        eventNames: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              value: {
+                type: 'string',
+                description: 'Event name value (e.g., LESSON_COMPLETED)',
+                example: 'LESSON_COMPLETED',
+              },
+              label: {
+                type: 'string',
+                description: 'Vietnamese label for the event',
+                example: 'Hoàn thành bài học',
+              },
+            },
+            required: ['value', 'label'],
+          },
+          example: [
+            {
+              value: 'LESSON_COMPLETED',
+              label: 'Hoàn thành bài học',
+            },
+            {
+              value: 'SESSION_ATTENDED',
+              label: 'Tham gia buổi học',
+            },
+            {
+              value: 'VIDEO_WATCHED',
+              label: 'Xem video bài giảng',
+            },
+            {
+              value: 'COURSE_COMPLETED',
+              label: 'Hoàn thành khóa học',
+            },
+            {
+              value: 'QUIZ_COMPLETED',
+              label: 'Hoàn thành quiz',
+            },
+            {
+              value: 'DAILY_LOGIN',
+              label: 'Đăng nhập hàng ngày',
+            },
+            {
+              value: 'DAILY_LESSON',
+              label: 'Hoàn thành bài học hàng ngày',
+            },
+            {
+              value: 'DAILY_QUIZ',
+              label: 'Làm quiz hàng ngày',
+            },
+            {
+              value: 'DAILY_VIDEO',
+              label: 'Xem video hàng ngày',
+            },
+            {
+              value: 'WEEKLY_SESSION',
+              label: 'Tham gia session hàng tuần',
+            },
+            {
+              value: 'FEEDBACK_RECEIVED',
+              label: 'Nhận phản hồi',
+            },
+          ],
+        },
+      },
+    },
+  })
+  async getEventNames(): Promise<{
+    eventNames: AchievementEventNameOption[];
+  }> {
+    return this.achievementService.getEventNames();
   }
 
   // =====================================================================================================================

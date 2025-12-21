@@ -6,4 +6,5 @@ export interface FindOptions {
   pagination?: Pagination;
   sort?: Sorting;
   filter?: Filtering;
+  withDeleted?: boolean;
 }
