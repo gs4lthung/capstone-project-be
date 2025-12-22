@@ -1,0 +1,43 @@
+sequenceDiagram
+    actor Coach
+    participant controller as SubjectController
+    participant auth as AuthGuard
+    participant role as RoleGuard
+    participant service as SubjectService
+    participant db as DataSource
+
+    Note over Coach, db: Delete Subject (Soft Delete)
+
+    Coach->>controller: DELETE /subjects/:id
+    activate controller
+
+    controller->>auth: validate token
+    activate auth
+    auth-->>controller: valid
+    deactivate auth
+
+    controller->>role: check COACH role
+    activate role
+    role-->>controller: authorized
+    deactivate role
+
+    controller->>service: delete(id)
+    activate service
+
+    service->>db: SELECT subject
+    activate db
+    db-->>service: subject found
+    deactivate db
+
+    service->>service: verify ownership
+
+    service->>db: UPDATE subject SET deletedAt = NOW()
+    activate db
+    db-->>service: soft deleted
+    deactivate db
+
+    service-->>controller: success
+    deactivate service
+
+    controller-->>Coach: 200 OK
+    deactivate controller

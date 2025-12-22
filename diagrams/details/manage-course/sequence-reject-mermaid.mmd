@@ -1,0 +1,69 @@
+sequenceDiagram
+    actor admin as Admin
+    participant controller as CourseController
+    participant authGuard as AuthGuard
+    participant roleGuard as RoleGuard
+    participant service as CourseService
+    participant requestRepo as RequestRepository
+    participant actionRepo as RequestActionRepository
+    participant notificationService as NotificationService
+    participant db as DataSource
+
+    admin->>controller: PATCH /courses/requests/:id/reject (reason: string)
+    activate controller
+
+    controller->>authGuard: canActivate(context)
+    activate authGuard
+    authGuard-->>controller: true (authenticated)
+    deactivate authGuard
+
+    controller->>roleGuard: canActivate(context)
+    activate roleGuard
+    roleGuard-->>controller: true (ADMIN role)
+    deactivate roleGuard
+
+    controller->>service: rejectCourseCreationRequest(id, reason)
+    activate service
+
+    service->>db: transaction start
+    activate db
+
+    service->>requestRepo: find Request (COURSE_CREATION, PENDING_APPROVAL)
+    activate requestRepo
+    requestRepo->>db: SELECT request
+    db-->>requestRepo: Request
+    requestRepo-->>service: Request
+    deactivate requestRepo
+
+    alt request not found or already processed
+        service-->>controller: throw BadRequestException
+        controller-->>admin: HTTP 400 Error
+    else request valid
+        service->>requestRepo: update request (status: REJECTED, reason: reason)
+        activate requestRepo
+        requestRepo->>db: UPDATE request
+        db-->>requestRepo: updated
+        requestRepo-->>service: Request
+        deactivate requestRepo
+
+        service->>actionRepo: create RequestAction (type: REJECTED, reason: reason)
+        activate actionRepo
+        actionRepo->>db: INSERT request_action
+        db-->>actionRepo: RequestAction
+        actionRepo-->>service: RequestAction
+        deactivate actionRepo
+
+        service->>notificationService: sendNotification(coach, course_creation_rejected, reason)
+        activate notificationService
+        notificationService-->>service: sent
+        deactivate notificationService
+
+        db-->>service: commit
+        deactivate db
+
+        service-->>controller: CustomApiResponse(success)
+        deactivate service
+
+        controller-->>admin: HTTP 200 {message}
+    end
+    deactivate controller

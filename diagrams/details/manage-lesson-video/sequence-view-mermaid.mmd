@@ -1,0 +1,60 @@
+sequenceDiagram
+    actor coach as Coach
+    participant controller as VideoController
+    participant auth as AuthGuard
+    participant service as VideoService
+    participant db as DataSource
+
+    Note over coach, db: View Videos by Lesson
+    coach->>controller: GET /videos/lessons/:id
+    activate controller
+    controller->>auth: validate JWT
+    activate auth
+    auth-->>controller: valid
+    deactivate auth
+    controller->>service: getVideoByLesson(lessonId)
+    activate service
+    service->>db: query videos by lesson
+    activate db
+    db-->>service: videos list
+    deactivate db
+    service-->>controller: videos with details
+    deactivate service
+    controller-->>coach: HTTP 200 with videos
+    deactivate controller
+
+    Note over coach, db: View Videos by Session
+    coach->>controller: GET /videos/sessions/:id
+    activate controller
+    controller->>auth: validate JWT
+    activate auth
+    auth-->>controller: valid
+    deactivate auth
+    controller->>service: getVideoBySession(sessionId)
+    activate service
+    service->>db: query videos by session
+    activate db
+    db-->>service: videos list
+    deactivate db
+    service-->>controller: videos with details
+    deactivate service
+    controller-->>coach: HTTP 200 with videos
+    deactivate controller
+
+    Note over coach, db: View Single Video
+    coach->>controller: GET /videos/:id
+    activate controller
+    controller->>auth: validate JWT
+    activate auth
+    auth-->>controller: valid
+    deactivate auth
+    controller->>service: getVideoById(id)
+    activate service
+    service->>db: query video by id with relations
+    activate db
+    db-->>service: video details
+    deactivate db
+    service-->>controller: video data
+    deactivate service
+    controller-->>coach: HTTP 200 with video
+    deactivate controller

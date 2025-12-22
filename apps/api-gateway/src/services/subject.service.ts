@@ -104,6 +104,40 @@ export class SubjectService extends BaseTypeOrmService<Subject> {
     });
   }
 
+  async publish(id: number): Promise<CustomApiResponse<void>> {
+    return await this.datasource.transaction(async (manager) => {
+      const subject = await manager
+        .getRepository(Subject)
+        .createQueryBuilder('subject')
+        .leftJoinAndSelect('subject.lessons', 'lessons')
+        .leftJoinAndSelect('lessons.video', 'video')
+        .leftJoinAndSelect('lessons.quiz', 'quiz')
+        .leftJoinAndSelect('subject.createdBy', 'createdBy')
+        .where('subject.id = :id', { id })
+        .getOne();
+      if (!subject) throw new BadRequestException('Không tìm thấy chủ đề');
+      if (subject.createdBy.id !== this.request.user.id)
+        throw new ForbiddenException('Không có quyền truy cập chủ đề này');
+      
+      for (const lesson of subject.lessons) {
+        if (!lesson.video || !lesson.video.publicUrl || !lesson.quiz) {
+          throw new BadRequestException(
+            'Không thể xuất bản chủ đề khi còn bài học chưa có video hoặc quiz',
+          );
+        }
+      }
+
+      await manager.getRepository(Subject).update(subject.id, {
+        status: SubjectStatus.PUBLISHED,
+      });
+
+      return new CustomApiResponse<void>(
+        HttpStatus.OK,
+        'Xuất bản tài liệu thành công',
+      );
+    });
+  }
+
   async delete(id: number): Promise<CustomApiResponse<void>> {
     return await this.datasource.transaction(async (manager) => {
       const subject = await manager.getRepository(Subject).findOne({

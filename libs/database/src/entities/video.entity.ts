@@ -23,7 +23,7 @@ export class Video {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'varchar', length: 50 })
+  @Column({ type: 'varchar', length: 200 })
   title: string;
 
   @Column({ type: 'text', nullable: true })
@@ -35,7 +35,7 @@ export class Video {
   @Column({ type: 'int', nullable: true })
   duration?: number;
 
-  @Column({ name: 'drill_name', type: 'varchar', length: 50, nullable: true })
+  @Column({ name: 'drill_name', type: 'varchar', length: 200, nullable: true })
   drillName: string;
 
   @Column({ name: 'drill_description', type: 'text', nullable: true })

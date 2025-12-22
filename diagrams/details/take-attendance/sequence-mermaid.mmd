@@ -1,0 +1,63 @@
+sequenceDiagram
+    actor coach as Coach
+    participant controller as Controller
+    participant service as Service
+    participant db as Database
+
+    coach->>controller: PATCH /sessions/:id/complete
+    activate controller
+
+    controller->>service: completeAndCheckAttendance(id, data)
+    activate service
+
+    service->>db: Get session and validate
+    activate db
+    db-->>service: Session data
+    deactivate db
+
+    service->>db: Get course with enrollments
+    activate db
+    db-->>service: Course data
+    deactivate db
+
+    service->>service: Validate attendance count matches enrollments
+
+    loop For each attendance
+        service->>db: Create Attendance record
+        activate db
+        db-->>service: Saved
+        deactivate db
+        
+        opt If PRESENT
+            service->>db: Increment LearnerProgress.sessionsCompleted
+            activate db
+            db-->>service: Updated
+            deactivate db
+        end
+    end
+
+    service->>db: Create SessionEarning
+    activate db
+    db-->>service: Saved
+    deactivate db
+
+    service->>db: Update session status to COMPLETED
+    activate db
+    db-->>service: Updated
+    deactivate db
+
+    service->>db: Update course progress
+    activate db
+    db-->>service: Updated
+    deactivate db
+
+    service->>db: Send notifications
+    activate db
+    db-->>service: Sent
+    deactivate db
+
+    service-->>controller: Success response
+    deactivate service
+
+    controller-->>coach: 200 OK
+    deactivate controller

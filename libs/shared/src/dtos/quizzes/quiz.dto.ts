@@ -71,7 +71,7 @@ export class CreateQuizDto {
   })
   @IsString()
   @IsNotEmpty()
-  @MaxLength(50)
+  @MaxLength(200)
   title: string;
 
   @ApiProperty({

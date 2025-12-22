@@ -1,0 +1,48 @@
+sequenceDiagram
+    actor coach as Coach
+    participant controller as SessionController
+    participant auth as AuthGuard
+    participant role as RoleGuard
+    participant service as SessionService
+    participant db as DataSource
+
+    coach->>controller: PATCH /sessions/:id/complete
+    activate controller
+    controller->>auth: validate JWT
+    activate auth
+    auth-->>controller: valid
+    deactivate auth
+    controller->>role: check COACH role
+    activate role
+    role-->>controller: authorized
+    deactivate role
+    controller->>service: completeSession(id, data)
+    activate service
+    service->>db: BEGIN TRANSACTION
+    activate db
+    db->>db: find session with course/enrollments
+    db->>db: verify coach is course creator
+    db->>db: validate session status (must be SCHEDULED)
+    
+    Note right of db: data.attendances: [{learnerId, status}]
+    db->>db: validate attendance count matches enrollments
+
+    loop for each attendance in data.attendances
+        db->>db: create Attendance record
+        alt status = PRESENT
+            db->>db: increment LearnerProgress.sessionsCompleted
+            db->>db: check achievement progress
+        end
+    end
+
+    db->>db: create SessionEarning for coach
+    db->>db: update session status to COMPLETED
+    db->>db: update course overall progress
+    db->>db: COMMIT
+
+    db-->>service: success
+    deactivate db
+    service-->>controller: CustomApiResponse (OK)
+    deactivate service
+    controller-->>coach: HTTP 200 completed
+    deactivate controller

@@ -1,0 +1,42 @@
+sequenceDiagram
+    actor Admin
+    participant controller as CourtController
+    participant auth as AuthGuard
+    participant role as RoleGuard
+    participant service as CourtService
+    participant db as DataSource
+
+    Admin->>controller: DELETE /courts/:id
+    activate controller
+
+    controller->>auth: validate JWT
+    activate auth
+    auth-->>controller: valid
+    deactivate auth
+
+    controller->>role: verify ADMIN role
+    activate role
+    role-->>controller: authorized
+    deactivate role
+
+    controller->>service: delete(id)
+    activate service
+
+    service->>db: BEGIN TRANSACTION
+    activate db
+
+    db->>db: find court by id
+    db->>db: verify court exists (not deleted)
+    db->>db: soft delete court (set deletedAt)
+    db->>db: COMMIT
+
+    Note right of db: Soft delete - sets deletedAt timestamp<br/>Court remains in database but hidden<br/>Can be restored later
+
+    db-->>service: success
+    deactivate db
+
+    service-->>controller: CustomApiResponse (200)
+    deactivate service
+
+    controller-->>Admin: HTTP 200 OK
+    deactivate controller

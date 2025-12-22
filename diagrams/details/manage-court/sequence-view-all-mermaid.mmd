@@ -1,0 +1,22 @@
+sequenceDiagram
+    actor User
+    participant controller as CourtController
+    participant service as CourtService
+    participant db as DataSource
+
+    User->>controller: GET /courts
+    activate controller
+
+    controller->>service: findAll(pagination, sort, filter)
+    activate service
+
+    service->>db: query courts with pagination
+    activate db
+    db-->>service: paginated courts
+    deactivate db
+
+    service-->>controller: PaginateObject~Court~
+    deactivate service
+
+    controller-->>User: HTTP 200 with courts
+    deactivate controller

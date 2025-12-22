@@ -1,0 +1,22 @@
+sequenceDiagram
+    actor User
+    participant controller as WalletController
+    participant service as WalletService
+    participant db as DataSource
+
+    User->>controller: GET /wallets/banks
+    activate controller
+
+    controller->>service: findBanks()
+    activate service
+
+    service->>db: find all banks
+    activate db
+    db-->>service: banks list
+    deactivate db
+
+    service-->>controller: Bank[]
+    deactivate service
+
+    controller-->>User: HTTP 200 with banks
+    deactivate controller

@@ -1,0 +1,77 @@
+classDiagram
+    class SessionController {
+    }
+
+    class AttendanceController {
+    }
+
+    class AuthGuard {
+    }
+
+    class RoleGuard {
+    }
+
+    class CompleteSessionDto {
+    }
+
+    class GetSessionForWeeklyCalendarRequestDto {
+    }
+
+    class SessionService {
+    }
+
+    class AttendanceService {
+    }
+
+    class DataSource {
+    }
+
+    class Session {
+    }
+
+    class Attendance {
+    }
+
+    class Course {
+    }
+
+    class Schedule {
+    }
+
+    class Enrollment {
+    }
+
+    class User {
+    }
+
+    class LearnerProgress {
+    }
+
+    class SessionEarning {
+    }
+
+    SessionController --> AuthGuard
+    SessionController --> RoleGuard
+    SessionController --> SessionService
+    SessionController ..> CompleteSessionDto
+    SessionController ..> GetSessionForWeeklyCalendarRequestDto
+
+    AttendanceController --> AuthGuard
+    AttendanceController --> AttendanceService
+
+    SessionService --> DataSource
+    SessionService --> Session
+    SessionService --> Attendance
+    SessionService --> LearnerProgress
+    SessionService --> SessionEarning
+
+    AttendanceService --> DataSource
+    AttendanceService --> Attendance
+
+    Session --> Course
+    Session --> Schedule
+    Session --> Attendance
+    Session --> Enrollment
+
+    Attendance --> Session
+    Attendance --> User

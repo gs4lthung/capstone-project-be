@@ -1,0 +1,36 @@
+sequenceDiagram
+    actor User
+    participant controller as WalletController
+    participant auth as AuthGuard
+    participant service as WalletService
+    participant db as DataSource
+
+    User->>controller: PUT /wallets/:id
+    activate controller
+
+    controller->>auth: validate JWT
+    activate auth
+    auth-->>controller: valid
+    deactivate auth
+
+    controller->>service: update(id, UpdateWalletDto)
+    activate service
+
+    service->>db: BEGIN TRANSACTION
+    activate db
+
+    db->>db: find wallet by id
+    db->>db: verify wallet exists
+    db->>db: update wallet with DTO data
+    db->>db: COMMIT
+
+    Note right of db: Update allowed fields:<br/>- bankId<br/>- bankAccountNumber
+
+    db-->>service: success
+    deactivate db
+
+    service-->>controller: CustomApiResponse (200)
+    deactivate service
+
+    controller-->>User: HTTP 200 OK
+    deactivate controller

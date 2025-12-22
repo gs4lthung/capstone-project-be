@@ -1,0 +1,50 @@
+classDiagram
+    class WalletController {
+    }
+
+    class AuthGuard {
+    }
+
+    class CreateWalletDto {
+    }
+
+    class UpdateWalletDto {
+    }
+
+    class WalletService {
+    }
+
+    class DataSource {
+    }
+
+    class Wallet {
+    }
+
+    class WalletTransaction {
+    }
+
+    class Bank {
+    }
+
+    class User {
+    }
+
+    class WithdrawalRequest {
+    }
+
+    WalletController --> AuthGuard
+    WalletController --> CreateWalletDto
+    WalletController --> UpdateWalletDto
+    WalletController --> WalletService
+
+    WalletService --> DataSource
+    WalletService --> Wallet
+    WalletService --> Bank
+    WalletService --> WalletTransaction
+
+    Wallet --> User
+    Wallet --> Bank
+    Wallet --> WalletTransaction
+    Wallet --> WithdrawalRequest
+
+    WalletTransaction --> Wallet

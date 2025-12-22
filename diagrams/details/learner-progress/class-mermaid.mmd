@@ -1,0 +1,60 @@
+classDiagram
+    class LearnerProgressController {
+    }
+
+    class AuthGuard {
+    }
+
+    class LearnerProgressService {
+    }
+
+    class AiGeminiService {
+    }
+
+    class DataSource {
+    }
+
+    class LearnerProgress {
+    }
+
+    class Course {
+    }
+
+    class User {
+    }
+
+    class Session {
+    }
+
+    class QuizAttempt {
+    }
+
+    class LearnerVideo {
+    }
+
+    class AiLearnerProgressAnalysis {
+    }
+
+    class AiVideoComparisonResult {
+    }
+
+    LearnerProgressController --> AuthGuard
+    LearnerProgressController --> LearnerProgressService
+
+    LearnerProgressService --> DataSource
+    LearnerProgressService --> AiGeminiService
+    LearnerProgressService --> LearnerProgress
+    LearnerProgressService --> Session
+    LearnerProgressService --> QuizAttempt
+    LearnerProgressService --> LearnerVideo
+
+    LearnerProgress --> User
+    LearnerProgress --> Course
+    LearnerProgress --> AiLearnerProgressAnalysis
+
+    Course --> Session
+
+    Session --> QuizAttempt
+    Session --> LearnerVideo
+
+    LearnerVideo --> AiVideoComparisonResult

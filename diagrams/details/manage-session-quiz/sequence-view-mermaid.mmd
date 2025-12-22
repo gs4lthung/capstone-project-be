@@ -1,0 +1,33 @@
+sequenceDiagram
+    actor coach as Coach
+    participant client as Web Browser
+    participant controller as QuizController
+    participant service as QuizService
+    participant quizRepo as QuizRepository
+    participant db as PostgreSQL
+
+    Note over coach, db: View Quiz by Session
+
+    coach->>client: 1. View session
+    client->>controller: 2. GET /sessions/:sessionId/quiz
+    activate controller
+
+    controller->>service: 3. findBySessionId(sessionId)
+    activate service
+
+    service->>quizRepo: 4. findOne({ session: sessionId }, relations: ['questions.options'])
+    activate quizRepo
+    quizRepo->>db: Query quiz with questions & options
+    activate db
+    db-->>quizRepo: Quiz data
+    deactivate db
+    quizRepo-->>service: Quiz found
+    deactivate quizRepo
+
+    service-->>controller: Quiz data
+    deactivate service
+
+    controller-->>client: 5. HTTP 200 OK
+    deactivate controller
+
+    client-->>coach: 6. Display quiz with questions & options

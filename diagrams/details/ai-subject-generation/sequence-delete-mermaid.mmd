@@ -1,4 +1,35 @@
-%% Mermaid version: 10.x
-%% ai-subject-generation sequence diagram (Mermaid)
 sequenceDiagram
-    %% Add sequence steps here based on sequence-delete.puml
+    actor Coach
+    participant AuthGuard
+    participant controller as AiSubjectGenerationController
+    participant service as AiSubjectGenerationService
+    participant db as DataSource
+
+    Coach->>controller: DELETE /ai-subject-generations/:id
+    activate controller
+
+    controller->>AuthGuard: validate token
+    activate AuthGuard
+    AuthGuard-->>controller: valid
+    deactivate AuthGuard
+
+    controller->>service: delete(id)
+    activate service
+
+    service->>db: SELECT ai_subject_generation with requestedBy
+    activate db
+    db-->>service: AI generation found
+    deactivate db
+
+    service->>service: verify ownership (requestedBy == currentUser)
+
+    service->>db: UPDATE ai_subject_generation SET deletedAt = NOW()
+    activate db
+    db-->>service: soft deleted
+    deactivate db
+
+    service-->>controller: success
+    deactivate service
+
+    controller-->>Coach: 200 OK
+    deactivate controller

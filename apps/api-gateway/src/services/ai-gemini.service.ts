@@ -409,11 +409,12 @@ YÊU CẦU:
    - Quiz description: Mô tả ngắn gọn về nội dung quiz
 
 QUAN TRỌNG:
-- Nội dung phải bằng tiếng Việt
+- Nội dung phải bằng tiếng Việt hoàn toàn và không lẫn tiếng Anh, trừ các thuật ngữ chuyên ngành pickleball phổ biến và tên riêng, nếu là thuật ngữ chuyên ngành thì phải có giải thích rõ ràng ví dụ như("smash (đập bóng mạnh)").
+- Tất cả nội dung phải tập trung vào pickleball
 - Phù hợp với bối cảnh pickleball
 - Câu hỏi phải kiểm tra được kiến thức trong bài học
 - Đáp án phải chính xác và có giải thích rõ ràng
-- CHÚ Ý: Nếu người dùng yêu cầu số lượng bài học cụ thể, PHẢI tạo đúng số lượng đó (trong khoảng 3-10)
+- CHÚ Ý: Nếu người dùng yêu cầu số lượng bài học cụ thể, PHẢI tạo đúng số lượng đó
 
 YÊU CẦU CỦA NGƯỜI DÙNG: ${prompt}
 

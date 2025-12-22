@@ -1,0 +1,128 @@
+classDiagram
+    class CourseController {
+    }
+
+    class PaymentController {
+    }
+
+    class AuthGuard {
+    }
+
+    class RoleGuard {
+    }
+
+    class CreateCourseRequestDto {
+    }
+
+    class UpdateCourseDto {
+    }
+
+    class RejectCourseDto {
+    }
+
+    class CourseService {
+    }
+
+    class PaymentService {
+    }
+
+    class ScheduleService {
+    }
+
+    class SessionService {
+    }
+
+    class NotificationService {
+    }
+
+    class ConfigurationService {
+    }
+
+    class BunnyService {
+    }
+
+    class PayosService {
+    }
+
+    class WalletService {
+    }
+
+    class Course {
+    }
+
+    class Schedule {
+    }
+
+    class Session {
+    }
+
+    class User {
+    }
+
+    class Subject {
+    }
+
+    class Court {
+    }
+
+    class Request {
+    }
+
+    class RequestAction {
+    }
+
+    class Enrollment {
+    }
+
+    class Payment {
+    }
+
+    CourseController -- AuthGuard
+    CourseController -- RoleGuard
+    CourseController -- CourseService
+    CourseController -- CreateCourseRequestDto
+    CourseController -- UpdateCourseDto
+    CourseController -- RejectCourseDto
+    
+    PaymentController -- AuthGuard
+    PaymentController -- RoleGuard
+    PaymentController -- PaymentService
+    
+    CourseService -- ScheduleService
+    CourseService -- SessionService
+    CourseService -- NotificationService
+    CourseService -- ConfigurationService
+    CourseService -- BunnyService
+    CourseService -- WalletService
+    
+    PaymentService -- PayosService
+    PaymentService -- NotificationService
+    PaymentService -- ConfigurationService
+    
+    CourseService -- Course
+    CourseService -- Request
+    CourseService -- RequestAction
+    CourseService -- Subject
+    CourseService -- Court
+    CourseService -- User
+    
+    PaymentService -- Payment
+    PaymentService -- Enrollment
+    
+    ScheduleService -- Schedule
+    SessionService -- Session
+    
+    Course -- Schedule
+    Course -- User
+    Course -- Subject
+    Course -- Court
+    Course -- Request
+    
+    Schedule -- Session
+    
+    Enrollment -- Course
+    Enrollment -- User
+    Enrollment -- Payment
+    
+    Request -- User
+    Request -- RequestAction

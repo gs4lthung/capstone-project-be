@@ -49,10 +49,10 @@ export class Course {
   @Min(1)
   order: number;
 
-  @Column({ type: 'varchar', length: 100 })
+  @Column({ type: 'varchar', length: 200 })
   @IsNotEmpty()
   @IsString()
-  @MaxLength(100)
+  @MaxLength(200)
   name: string;
 
   @Column({ type: 'text', nullable: true })

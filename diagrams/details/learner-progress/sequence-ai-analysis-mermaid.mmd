@@ -1,0 +1,49 @@
+sequenceDiagram
+    actor User
+    participant controller as LearnerProgressController
+    participant guard as AuthGuard
+    participant service as LearnerProgressService
+    participant ai as AiGeminiService
+    participant db as DataSource
+
+    User->>controller: POST /learner-progresses/:id/ai-analysis
+    activate controller
+
+    controller->>guard: validate JWT
+    activate guard
+    guard-->>controller: valid
+    deactivate guard
+
+    controller->>service: generateAiProgressAnalysis(learnerProgressId)
+    activate service
+
+    service->>db: BEGIN TRANSACTION
+    activate db
+
+    db->>db: find learner progress with user/course
+    db->>db: find completed sessions with quiz attempts
+    db->>db: find learner videos with AI comparison results
+
+    Note right of db: Aggregate data:<br/>- Quiz scores per session<br/>- Video analysis scores<br/>- Attendance records<br/>- Overall progress metrics
+
+    service->>ai: generateProgressAnalysis(progressData)
+    activate ai
+
+    Note right of ai: AI analyzes:<br/>- Session completion rate<br/>- Quiz performance trends<br/>- Video technique scores<br/>- Strengths and weaknesses<br/>- Personalized recommendations
+
+    ai-->>service: AI analysis response
+    deactivate ai
+
+    db->>db: save AiLearnerProgressAnalysis record
+    db->>db: update avgAiAnalysisScore, avgQuizScore
+    db->>db: update canGenerateAIAnalysis flag
+    db->>db: COMMIT
+
+    db-->>service: success
+    deactivate db
+
+    service-->>controller: CustomApiResponse with AI analysis
+    deactivate service
+
+    controller-->>User: HTTP 200 with AI analysis
+    deactivate controller

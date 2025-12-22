@@ -1,0 +1,114 @@
+sequenceDiagram
+    actor Coach
+    participant controller as SubjectController
+    participant auth as AuthGuard
+    participant role as RoleGuard
+    participant service as SubjectService
+    participant bunny as BunnyService
+    participant db as DataSource
+
+    Note over Coach, db: Create Subject
+    Coach->>controller: POST /subjects
+    activate controller
+    controller->>auth: validate token
+    activate auth
+    auth-->>controller: valid
+    deactivate auth
+    controller->>role: check COACH role
+    activate role
+    role-->>controller: authorized
+    deactivate role
+    controller->>service: create(data, file)
+    activate service
+    alt File provided
+        service->>bunny: uploadToStorage(file)
+        activate bunny
+        bunny-->>service: publicUrl
+        deactivate bunny
+    end
+    service->>db: INSERT subject (status=DRAFT)
+    activate db
+    db-->>service: created
+    deactivate db
+    service-->>controller: success
+    deactivate service
+    controller-->>Coach: 201 Created
+    deactivate controller
+
+    Note over Coach, db: View All Subjects
+    Coach->>controller: GET /subjects
+    activate controller
+    controller->>auth: validate token
+    activate auth
+    auth-->>controller: valid
+    deactivate auth
+    controller->>role: check COACH role
+    activate role
+    role-->>controller: authorized
+    deactivate role
+    controller->>service: findAll(options)
+    activate service
+    service->>db: SELECT subjects with pagination
+    activate db
+    db-->>service: subjects list
+    deactivate db
+    service-->>controller: paginated results
+    deactivate service
+    controller-->>Coach: 200 OK
+    deactivate controller
+
+    Note over Coach, db: View Subject Details
+    Coach->>controller: GET /subjects/:id
+    activate controller
+    controller->>auth: validate token
+    activate auth
+    auth-->>controller: valid
+    deactivate auth
+    controller->>role: check COACH role
+    activate role
+    role-->>controller: authorized
+    deactivate role
+    controller->>service: findOne(id)
+    activate service
+    service->>db: SELECT subject with relations
+    activate db
+    db-->>service: subject data
+    deactivate db
+    service-->>controller: subject
+    deactivate service
+    controller-->>Coach: 200 OK
+    deactivate controller
+
+    Note over Coach, db: Update Subject
+    Coach->>controller: PUT /subjects/:id
+    activate controller
+    controller->>auth: validate token
+    activate auth
+    auth-->>controller: valid
+    deactivate auth
+    controller->>role: check COACH role
+    activate role
+    role-->>controller: authorized
+    deactivate role
+    controller->>service: update(id, data)
+    activate service
+    service->>db: SELECT subject with lessons
+    activate db
+    db-->>service: subject found
+    deactivate db
+    service->>service: verify ownership
+    alt Status change to PUBLISHED
+        service->>db: SELECT lessons for validation
+        activate db
+        db-->>service: lessons
+        deactivate db
+        service->>service: validate all lessons have video & quiz
+    end
+    service->>db: UPDATE subject
+    activate db
+    db-->>service: updated
+    deactivate db
+    service-->>controller: success
+    deactivate service
+    controller-->>Coach: 200 OK
+    deactivate controller

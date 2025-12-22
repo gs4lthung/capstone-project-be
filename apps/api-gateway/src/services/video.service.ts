@@ -229,6 +229,7 @@ export class VideoService {
         });
         video.publicUrl = videoPublicUrl;
       }
+      video.status = CoachVideoStatus.READY;
       Object.assign(video, data);
       await manager.getRepository(Video).save(video);
       return new CustomApiResponse<void>(

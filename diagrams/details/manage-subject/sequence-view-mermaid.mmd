@@ -1,0 +1,66 @@
+sequenceDiagram
+    actor Coach
+    participant controller as SubjectController
+     Brewster: Web Browser
+    participant auth as AuthGuard
+    participant role as RoleGuard
+    participant service as SubjectService
+    participant db as DataSource
+
+    Note over Coach, db: View All Subjects
+
+    Coach->>controller: GET /subjects?page=1&limit=10
+    activate controller
+
+    controller->>auth: validate token
+    activate auth
+    auth-->>controller: valid
+    deactivate auth
+
+    controller->>role: check COACH role
+    activate role
+    role-->>controller: authorized
+    deactivate role
+
+    controller->>service: findAll(options)
+    activate service
+
+    service->>db: SELECT subjects with pagination
+    activate db
+    db-->>service: subjects list
+    deactivate db
+
+    service-->>controller: paginated results
+    deactivate service
+
+    controller-->>Coach: 200 OK
+    deactivate controller
+
+    Note over Coach, db: View Subject Details
+
+    Coach->>controller: GET /subjects/:id
+    activate controller
+
+    controller->>auth: validate token
+    activate auth
+    auth-->>controller: valid
+    deactivate auth
+
+    controller->>role: check COACH role
+    activate role
+    role-->>controller: authorized
+    deactivate role
+
+    controller->>service: findOne(id)
+    activate service
+
+    service->>db: SELECT subject with relations
+    activate db
+    db-->>service: subject data
+    deactivate db
+
+    service-->>controller: subject
+    deactivate service
+
+    controller-->>Coach: 200 OK
+    deactivate controller

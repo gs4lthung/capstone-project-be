@@ -16,7 +16,7 @@ export class CreateVideoDto {
   })
   @IsString()
   @IsNotEmpty()
-  @MaxLength(50)
+  @MaxLength(200)
   title: string;
 
   @ApiProperty({
@@ -49,7 +49,7 @@ export class CreateVideoDto {
   })
   @IsOptional()
   @IsString()
-  @MaxLength(50)
+  @MaxLength(200)
   drillName?: string;
 
   @ApiProperty({

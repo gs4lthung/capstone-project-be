@@ -1,4 +1,35 @@
-%% Mermaid version: 10.x
-%% ai-subject-generation sequence diagram (Mermaid)
 sequenceDiagram
-    %% Add sequence steps here based on sequence-generate.puml
+    actor Coach
+    participant AuthGuard
+    participant controller as AiSubjectGenerationController
+    participant service as AiSubjectGenerationService
+    participant ai as AiGeminiService
+    participant db as DataSource
+
+    Coach->>controller: POST /ai-subject-generations (prompt)
+    activate controller
+
+    controller->>AuthGuard: validate token
+    activate AuthGuard
+    AuthGuard-->>controller: valid
+    deactivate AuthGuard
+
+    controller->>service: create(prompt)
+    activate service
+
+    service->>ai: generateSubjectFromPrompt(prompt)
+    activate ai
+    Note right of ai: Calls Gemini API with:<br/>- System prompt + user prompt<br/>- AiSubjectGenerationSchema<br/>Generates: name, description, level, lessons, quizzes
+    ai-->>service: AiSubjectGenerationResponse
+    deactivate ai
+
+    service->>db: INSERT AiSubjectGeneration (prompt, generatedData, status=PENDING, requestedBy)
+    activate db
+    db-->>service: created
+    deactivate db
+
+    service-->>controller: AiSubjectGeneration
+    deactivate service
+
+    controller-->>Coach: 201 Created
+    deactivate controller

@@ -1,0 +1,43 @@
+sequenceDiagram
+    actor admin as Admin
+    participant controller as AchievementController
+    participant authGuard as AuthGuard
+    participant roleGuard as RoleGuard
+    participant service as AchievementService
+    participant db as DataSource
+
+    Note over admin, db: View All Achievements
+    admin->>controller: GET /achievements
+    activate controller
+    controller->>authGuard: canActivate
+    authGuard-->>controller: authenticated
+    controller->>roleGuard: canActivate
+    roleGuard-->>controller: ADMIN role
+    controller->>service: findAll(findOptions)
+    activate service
+    service->>db: SELECT achievements with pagination and filtering
+    activate db
+    db-->>service: PaginateObject~Achievement~
+    deactivate db
+    service-->>controller: PaginateObject~Achievement~
+    deactivate service
+    controller-->>admin: HTTP 200 PaginateObject~Achievement~
+    deactivate controller
+
+    Note over admin, db: View Single Achievement
+    admin->>controller: GET /achievements/:id
+    activate controller
+    controller->>authGuard: canActivate
+    authGuard-->>controller: authenticated
+    controller->>roleGuard: canActivate
+    roleGuard-->>controller: ADMIN role
+    controller->>service: findOne(id)
+    activate service
+    service->>db: SELECT achievement by ID with relations
+    activate db
+    db-->>service: Achievement
+    deactivate db
+    service-->>controller: Achievement
+    deactivate service
+    controller-->>admin: HTTP 200 Achievement
+    deactivate controller

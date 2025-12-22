@@ -1,0 +1,79 @@
+sequenceDiagram
+    actor client as Client
+    participant controller as CourseController
+    participant service as CourseService
+    participant courseRepo as CourseRepository
+    participant db as DataSource
+
+    Note over client, db: View All Courses
+
+    client->>controller: GET /courses?page=1&size=10
+    activate controller
+
+    controller->>service: findAll(findOptions)
+    activate service
+
+    service->>courseRepo: find(findOptions)
+    activate courseRepo
+    courseRepo->>db: SELECT courses with pagination
+    activate db
+    db-->>courseRepo: Course records
+    deactivate db
+    courseRepo-->>service: PaginateObject~Course~
+    deactivate courseRepo
+
+    service-->>controller: PaginateObject~Course~
+    deactivate service
+
+    controller-->>client: HTTP 200 PaginateObject~Course~
+    deactivate controller
+
+    Note over client, db: View Single Course
+
+    client->>controller: GET /courses/:id
+    activate controller
+
+    controller->>service: findOne(id)
+    activate service
+
+    service->>db: transaction
+    activate db
+    db-->>service: Course with full relations
+    deactivate db
+
+    service-->>controller: Course
+    deactivate service
+
+    controller-->>client: HTTP 200 Course
+    deactivate controller
+
+    Note over client, db: View Coach's Courses
+
+    client->>controller: GET /courses/coach?page=1&size=10
+    activate controller
+    controller->>controller: AuthGuard validates JWT
+    controller->>service: findCoachCourses(page, size)
+    activate service
+    service->>db: transaction
+    activate db
+    db-->>service: PaginateObject~Course~
+    deactivate db
+    service-->>controller: PaginateObject~Course~
+    deactivate service
+    controller-->>client: HTTP 200 PaginateObject~Course~
+    deactivate controller
+
+    Note over client, db: View Available Courses (Public)
+
+    client->>controller: GET /courses/available?...
+    activate controller
+    controller->>service: findAvailableCourses(...)
+    activate service
+    service->>db: transaction
+    activate db
+    db-->>service: PaginateObject~Course~
+    deactivate db
+    service-->>controller: PaginateObject~Course~
+    deactivate service
+    controller-->>client: HTTP 200 PaginateObject~Course~
+    deactivate controller

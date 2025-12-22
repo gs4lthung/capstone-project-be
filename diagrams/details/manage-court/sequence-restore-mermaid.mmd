@@ -1,0 +1,43 @@
+sequenceDiagram
+    actor Admin
+    participant controller as CourtController
+    participant auth as AuthGuard
+    participant role as RoleGuard
+    participant service as CourtService
+    participant db as DataSource
+
+    Admin->>controller: PATCH /courts/:id/restore
+    activate controller
+
+    controller->>auth: validate JWT
+    activate auth
+    auth-->>controller: valid
+    deactivate auth
+
+    controller->>role: verify ADMIN role
+    activate role
+    role-->>controller: authorized
+    deactivate role
+
+    controller->>service: restore(id)
+    activate service
+
+    service->>db: BEGIN TRANSACTION
+    activate db
+
+    db->>db: find court by id (withDeleted: true)
+    db->>db: verify court exists
+    db->>db: verify court is deleted (has deletedAt)
+    db->>db: restore court (clear deletedAt)
+    db->>db: COMMIT
+
+    Note right of db: Restore soft-deleted court<br/>Clears deletedAt timestamp<br/>Court becomes visible again
+
+    db-->>service: success
+    deactivate db
+
+    service-->>controller: CustomApiResponse (200)
+    deactivate service
+
+    controller-->>Admin: HTTP 200 OK
+    deactivate controller

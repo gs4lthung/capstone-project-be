@@ -1,0 +1,108 @@
+sequenceDiagram
+    actor coach as Coach
+    participant client as Client
+    participant controller as Controller
+    participant service as Service
+    participant bunny as Bunny CDN
+    participant db as Database
+
+    Note over coach, db: Create Course (Request)
+
+    coach->>client: 1. Navigate to create course
+    client-->>coach: 2. Show course creation form
+
+    coach->>client: 3. Select subject (must be PUBLISHED)
+    Note right of client: Subject must be PUBLISHED<br/>and have lessons
+
+    coach->>client: 4. Fill in course details
+    Note right of client: Name, Description, Level,<br/>Format, Participants, Price,<br/>Start Date, Court, Schedules,<br/>Image, Meet link
+
+    coach->>client: 5. Submit form
+    client->>controller: 6. POST /courses/subjects/:id
+    activate controller
+
+    controller->>service: 7. createCourseCreationRequest(subjectId, data, file)
+    activate service
+
+    service->>db: 8. Find court
+    activate db
+    db-->>service: Court found
+    deactivate db
+
+    service->>service: 9. Validate schedule times
+    service->>service: 10. Validate start date >= config days
+    
+    service->>db: 11. Find subject
+    activate db
+    db-->>service: Subject found
+    deactivate db
+
+    service->>service: 12. Validate lessons have video & quiz
+    service->>service: 13. Validate schedule count <= lesson count
+    service->>service: 14. Validate lesson count divisible by schedules
+    service->>service: 15. Calculate course end date
+    service->>service: 16. Validate no scheduling conflicts
+
+    alt File provided
+        service->>bunny: 17. uploadToStorage(file)
+        activate bunny
+        bunny-->>service: 18. publicUrl
+        deactivate bunny
+    end
+
+    service->>db: 19. Create Request with metadata
+    activate db
+    db-->>service: Created
+    deactivate db
+
+    service-->>controller: Success response
+    deactivate service
+
+    controller-->>client: 20. HTTP 201
+    deactivate controller
+
+    client-->>coach: 21. Request submitted (PENDING_APPROVAL)
+
+    Note over coach, db: View All Courses
+
+    coach->>client: 22. View courses
+    client->>controller: 23. GET /courses
+    activate controller
+
+    controller->>service: 24. findAll()
+    activate service
+
+    service->>db: 25. Query courses with relations
+    activate db
+    db-->>service: Courses list
+    deactivate db
+
+    service-->>controller: Response
+    deactivate service
+
+    controller-->>client: 26. HTTP 200
+    deactivate controller
+
+    client-->>coach: 27. Display courses list
+
+    Note over coach, db: View Course Details
+
+    coach->>client: 28. Click on course to view
+    client->>controller: 29. GET /courses/:id
+    activate controller
+
+    controller->>service: 30. findOne(id)
+    activate service
+
+    service->>db: 31. Query course with full relations
+    activate db
+    db-->>service: Course details
+    deactivate db
+
+    service-->>controller: Response
+    deactivate service
+
+    controller-->>client: 32. HTTP 200
+    deactivate controller
+
+    client-->>coach: 33. Display course details

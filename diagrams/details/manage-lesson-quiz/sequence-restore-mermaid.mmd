@@ -1,0 +1,64 @@
+sequenceDiagram
+    actor coach as Coach
+    participant client as Client
+    participant controller as QuizController
+    participant service as QuizService
+    participant quizRepo as QuizRepository
+    participant db as PostgreSQL
+
+    Note over coach, db: Restore Quiz
+
+    coach->>client: 1. View deleted quizzes
+    client->>controller: 2. GET /quizzes?withDeleted=true
+    activate controller
+    controller->>service: 3. findAll({ withDeleted: true })
+    activate service
+    service->>quizRepo: 4. find({ withDeleted: true })
+    activate quizRepo
+    quizRepo->>db: Query including soft-deleted
+    activate db
+    db-->>quizRepo: Quiz list
+    deactivate db
+    quizRepo-->>service: Quiz list
+    deactivate quizRepo
+    service-->>controller: Quiz list with deleted
+    deactivate service
+    controller-->>client: 5. HTTP 200 OK
+    deactivate controller
+
+    client-->>coach: 6. Display quizzes (mark deleted ones)
+
+    coach->>client: 7. Click "Restore" on deleted quiz
+    client-->>coach: 8. Show confirmation dialog
+
+    coach->>client: 9. Confirm restore
+    client->>controller: 10. PATCH /quizzes/:id/restore
+    activate controller
+    controller->>service: 11. restore(id, userId)
+    activate service
+    service->>quizRepo: 12. findOne(id, { withDeleted: true, relations: ['lesson.subject'] })
+    activate quizRepo
+    quizRepo->>db: Query including deleted
+    activate db
+    db-->>quizRepo: Quiz data
+    deactivate db
+    quizRepo-->>service: Quiz found
+    deactivate quizRepo
+
+    service->>service: 12. Verify ownership (quiz.lesson.subject.createdBy == currentUser)
+
+    service->>quizRepo: 13. Restore quiz (clear deletedAt)
+    activate quizRepo
+    quizRepo->>db: UPDATE quizzes SET deleted_at = NULL WHERE id = ?
+    activate db
+    db-->>quizRepo: Updated
+    deactivate db
+    quizRepo-->>service: Restore success
+    deactivate quizRepo
+
+    service-->>controller: Success response
+    deactivate service
+    controller-->>client: 15. HTTP 200 OK
+    deactivate controller
+
+    client-->>coach: 16. "Quiz restored successfully"

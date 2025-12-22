@@ -1,0 +1,60 @@
+sequenceDiagram
+    actor learner as Learner
+    participant controller as CourseController
+    participant authGuard as AuthGuard
+    participant service as CourseService
+    participant configService as ConfigurationService
+    participant walletService as WalletService
+    participant notificationService as NotificationService
+    participant db as DataSource
+
+    learner->>controller: PATCH /courses/:id/learners/cancel
+    activate controller
+
+    controller->>authGuard: canActivate
+    authGuard-->>controller: authenticated
+
+    controller->>service: learnerCancelCourse(courseId)
+    activate service
+
+    service->>db: transaction
+    activate db
+
+    service->>db: validate course (status, startDate timing)
+
+    service->>configService: getMinDaysBeforeCourseStart
+    activate configService
+    configService-->>service: minDays
+    deactivate configService
+
+    service->>db: find enrollment (courseId, learnerId)
+
+    alt enrollment = PENDING_GROUP or CONFIRMED
+        service->>walletService: refund to wallet (paymentAmount)
+        activate walletService
+        walletService->>db: UPDATE wallet balance
+        walletService-->>service: refunded
+        deactivate walletService
+    end
+
+    service->>db: update course (currentParticipants, totalEarnings)
+
+    alt GROUP course below minParticipants
+        service->>db: CONFIRMED enrollments -> PENDING_GROUP, course.status = APPROVED
+    end
+
+    service->>db: update enrollment (status = CANCELLED)
+
+    service->>notificationService: notify coach and learner
+    activate notificationService
+    notificationService-->>service: sent
+    deactivate notificationService
+
+    db-->>service: commit
+    deactivate db
+
+    service-->>controller: CustomApiResponse(success)
+    deactivate service
+
+    controller-->>learner: HTTP 200 {message}
+    deactivate controller

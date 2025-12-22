@@ -1,0 +1,40 @@
+classDiagram
+    class AuthController {
+    }
+
+    class AuthService {
+    }
+
+    class User {
+    }
+
+    class Learner {
+    }
+
+    class Wallet {
+    }
+
+    class Role {
+    }
+
+    class JwtService {
+    }
+
+    class MailService {
+    }
+
+    class TwilioService {
+    }
+
+    class ConfigService {
+    }
+
+    AuthController -- AuthService
+    AuthService -- User
+    AuthService -- JwtService
+    AuthService -- MailService
+    AuthService -- TwilioService
+    AuthService -- ConfigService
+    User -- Role
+    User -- Learner
+    User -- Wallet

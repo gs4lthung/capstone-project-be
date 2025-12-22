@@ -1,6 +1,7 @@
 import { Course } from '@app/database/entities/course.entity';
 import { Enrollment } from '@app/database/entities/enrollment.entity';
 import { Session } from '@app/database/entities/session.entity';
+import { Subject } from '@app/database/entities/subject.entity';
 import { User } from '@app/database/entities/user.entity';
 import { WalletTransaction } from '@app/database/entities/wallet-transaction.entity';
 import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
@@ -34,6 +35,8 @@ export class StudentAnalysisService {
     private readonly enrollmentRepository: Repository<Enrollment>,
     @InjectRepository(Session)
     private readonly sessionRepository: Repository<Session>,
+    @InjectRepository(Subject)
+    private readonly subjectRepository: Repository<Subject>,
   ) {}
   async getMonthlyRevenue(
     userId: number,
@@ -437,5 +440,48 @@ export class StudentAnalysisService {
         { data: monthlyData },
       );
     }
+  }
+
+  async getSubjectAnalysis(userId: number) {
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+    });
+    if (!user) throw new NotFoundException('User not found'); 
+    
+    const subjects= await this.subjectRepository.find({
+      where: {
+        createdBy: { id: user.id },
+      },
+    });
+
+    const courses= await this.courseRepository.find({
+      where: {
+        subject: In(subjects),
+      },
+    });
+
+    const enrollments= await this.enrollmentRepository.find({
+      where: {
+        course: In(courses),
+      },
+    });
+
+    const mapSubjectWithEnrollments= subjects.map((subject:Subject)=>{
+      const enrolls= enrollments.filter((e:Enrollment)=> e.course.subject.id===subject.id);
+      return {
+        subject,
+        enrolls,
+      };
+    });
+
+    const result= mapSubjectWithEnrollments.map((item:{subject:Subject,enrolls:Enrollment[]})=>{
+      return {
+        subject: item.subject,
+        enrollments: item.enrolls,
+        totalEnrollments: item.enrolls.length,
+        totalRevenue: item.enrolls.reduce((total:number, enroll:Enrollment) => total + enroll.paymentAmount, 0),
+      };
+    });
+    return result;
   }
 }

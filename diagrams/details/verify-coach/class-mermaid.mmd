@@ -1,0 +1,43 @@
+classDiagram
+    class CoachController {
+    }
+
+    class CoachService {
+    }
+
+    class NotificationService {
+    }
+
+    class Coach {
+    }
+
+    class Credential {
+    }
+
+    class User {
+    }
+
+    class Role {
+    }
+
+    class RejectCoachDto {
+    }
+
+    class AuthGuard {
+    }
+
+    class RoleGuard {
+    }
+
+    CoachController -- CoachService
+    CoachController -- AuthGuard
+    CoachController -- RoleGuard
+    CoachController ..> RejectCoachDto
+
+    CoachService -- Coach
+    CoachService -- User
+    CoachService -- NotificationService
+
+    Coach -- User : has_one
+    Coach -- Credential : has_many
+    User -- Role : has_one
