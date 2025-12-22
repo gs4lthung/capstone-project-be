@@ -1,0 +1,145 @@
+classDiagram
+    class CourseController {
+    }
+
+    class CourseService {
+    }
+
+    class SessionService {
+        +generateSessionsFromSchedules(course, schedules) Promise~Session[]~
+    }
+
+    class NotificationService {
+        +sendNotification(data) Promise~void~
+    }
+
+    class Course {
+    }
+
+    class Request {
+    }
+
+    class RequestAction {
+    }
+
+    class Session {
+        -id: number
+        -course: Course
+        -lesson: Lesson
+        -video: Video
+        -quiz: Quiz
+        -schedule: Date
+    }
+
+    class Subject {
+        -id: number
+        -name: string
+        -lessons: Lesson[]
+    }
+
+    class Lesson {
+        -id: number
+        -name: string
+        -subject: Subject
+        -video: Video
+        -quiz: Quiz
+    }
+
+    class Video {
+        -id: number
+        -url: string
+        -status: CoachVideoStatus
+        -lesson: Lesson
+        -session: Session
+    }
+
+    class Quiz {
+        -id: number
+        -name: string
+        -lesson: Lesson
+        -session: Session
+        -questions: Question[]
+    }
+
+    class User {
+        -id: number
+        -email: string
+        -fullName: string
+        -role: Role
+    }
+
+    class Role {
+        -id: number
+        -name: string
+    }
+
+    class AuthGuard {
+        +canActivate(context) boolean
+    }
+
+    class RoleGuard {
+        +canActivate(context) boolean
+        -checkAdminRole(user) boolean
+    }
+
+    class DataSource {
+        +transaction(callback) Promise~Result~
+    }
+
+    class CourseStatus {
+        <<enumeration>>
+        PENDING_APPROVAL
+        APPROVED
+        REJECTED
+        READY_OPENED
+        FULL
+        CANCELLED
+    }
+
+    class RequestStatus {
+        <<enumeration>>
+        PENDING
+        APPROVED
+        REJECTED
+    }
+
+    class RequestActionType {
+        <<enumeration>>
+        APPROVED
+        REJECTED
+        COMMENTED
+    }
+
+    CourseController --> CourseService : delegates
+    CourseController --> AuthGuard : validates
+    CourseController --> RoleGuard : checks admin
+    
+    CourseService --> Course : reads/updates
+    CourseService --> Request : reads/updates
+    CourseService --> RequestAction : creates
+    CourseService --> Session : generates
+    CourseService --> User : tracks
+    CourseService --> SessionService : generates sessions
+    CourseService --> NotificationService : sends notifications
+    CourseService --> DataSource : transactions
+
+    Course --> Subject : has
+    Course --> Session : has_many
+    Course --> User : createdBy
+    Course --> CourseStatus : has status
+    
+    Request --> RequestAction : has_many
+    Request --> RequestStatus : has status
+    
+    RequestAction --> User : handledBy
+    
+    Session --> Lesson : references
+    Session --> Video : references
+    Session --> Quiz : references
+    
+    Subject --> Lesson : has_many
+    
+    Lesson --> Video : has_one
+    Lesson --> Quiz : has_one
+
+    User --> Role : has role

@@ -1,4 +1,40 @@
-%% Mermaid version: 10.x
-%% ai-subject-generation sequence diagram (Mermaid)
 sequenceDiagram
-    %% Add sequence steps here based on sequence-use.puml
+    actor Coach
+    participant AuthGuard
+    participant controller as AiSubjectGenerationController
+    participant service as AiSubjectGenerationService
+    participant db as DataSource
+
+    Coach->>controller: POST /ai-subject-generations/:id/use-generated-subject
+    activate controller
+
+    controller->>AuthGuard: validate token
+    activate AuthGuard
+    AuthGuard-->>controller: valid
+    deactivate AuthGuard
+
+    controller->>service: saveNewSubject(id)
+    activate service
+
+    service->>db: BEGIN TRANSACTION
+    activate db
+
+    service->>db: SELECT ai_subject_generation with requestedBy
+    db-->>service: AI generation found
+
+    service->>service: verify ownership (requestedBy == currentUser)
+
+    service->>db: INSERT Subject (isAIGenerated=true, name, status=DRAFT, lessons, etc)
+    db-->>service: subject created
+
+    service->>db: UPDATE ai_subject_generation SET status=USED, createdSubject=newSubject
+    db-->>service: updated
+
+    service->>db: COMMIT TRANSACTION
+    deactivate db
+
+    service-->>controller: success
+    deactivate service
+
+    controller-->>Coach: 201 Created
+    deactivate controller

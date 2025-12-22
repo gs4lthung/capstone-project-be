@@ -1,4 +1,43 @@
-%% Mermaid version: 10.x
-%% ai-subject-generation sequence diagram (Mermaid)
 sequenceDiagram
-    %% Add sequence steps here based on sequence-view.puml
+    actor Coach
+    participant AuthGuard
+    participant controller as AiSubjectGenerationController
+    participant service as AiSubjectGenerationService
+    participant db as DataSource
+
+    Note over Coach, db: View All AI Generations
+    Coach->>controller: GET /ai-subject-generations?page=1&limit=10
+    activate controller
+    controller->>AuthGuard: validate token
+    activate AuthGuard
+    AuthGuard-->>controller: valid
+    deactivate AuthGuard
+    controller->>service: findAll(options)
+    activate service
+    service->>db: SELECT ai_subject_generations with pagination
+    activate db
+    db-->>service: AI generations list
+    deactivate db
+    service-->>controller: paginated results
+    deactivate service
+    controller-->>Coach: 200 OK
+    deactivate controller
+
+    Note over Coach, db: View AI Generation Details
+    Coach->>controller: GET /ai-subject-generations/:id
+    activate controller
+    controller->>AuthGuard: validate token
+    activate AuthGuard
+    AuthGuard-->>controller: valid
+    deactivate AuthGuard
+    controller->>service: findOne(id)
+    activate service
+    service->>db: SELECT ai_subject_generation with requestedBy
+    activate db
+    db-->>service: AI generation found
+    deactivate db
+    service->>service: verify ownership (requestedBy == currentUser)
+    service-->>controller: AI generation
+    deactivate service
+    controller-->>Coach: 200 OK
+    deactivate controller

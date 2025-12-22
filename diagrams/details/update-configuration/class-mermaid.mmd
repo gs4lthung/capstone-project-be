@@ -1,0 +1,35 @@
+classDiagram
+    class ConfigurationController {
+    }
+
+    class ConfigurationService {
+    }
+
+    class Configuration {
+    }
+
+    class User {
+    }
+
+    class Role {
+    }
+
+    class AuthGuard {
+    }
+
+    class RoleGuard {
+    }
+
+    class UpdateConfigurationDto {
+    }
+
+    ConfigurationController --> ConfigurationService
+    ConfigurationController --> AuthGuard
+    ConfigurationController --> RoleGuard
+    ConfigurationController ..> UpdateConfigurationDto
+
+    ConfigurationService --> Configuration
+    ConfigurationService --> User
+
+    Configuration --> User : updatedBy
+    User --> Role

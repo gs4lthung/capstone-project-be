@@ -1,0 +1,84 @@
+sequenceDiagram
+    actor coach as Coach
+    participant controller as CourseController
+    participant authGuard as AuthGuard
+    participant roleGuard as RoleGuard
+    participant service as CourseService
+    participant configService as ConfigurationService
+    participant scheduleService as ScheduleService
+    participant bunny as BunnyService
+    participant requestRepo as RequestRepository
+    participant db as DataSource
+
+    coach->>controller: PUT /courses/:id (UpdateCourseDto, file)
+    activate controller
+
+    controller->>authGuard: canActivate(context)
+    activate authGuard
+    authGuard-->>controller: true (authenticated)
+    deactivate authGuard
+
+    controller->>roleGuard: canActivate(context)
+    activate roleGuard
+    roleGuard-->>controller: true (COACH role)
+    deactivate roleGuard
+
+    controller->>service: updateCourseCreationRequest(id, data, file)
+    activate service
+
+    service->>db: transaction start
+    activate db
+
+    service->>requestRepo: find Request (COURSE_CREATION, PENDING_APPROVAL)
+    activate requestRepo
+    requestRepo->>db: SELECT request
+    db-->>requestRepo: Request
+    requestRepo-->>service: Request
+    deactivate requestRepo
+
+    service->>service: validateOwnership(request.createdBy.id === userId)
+
+    alt courtId provided
+        service->>db: validate court exists
+    end
+
+    alt schedules provided
+        service->>service: validateScheduleTimes(schedules)
+        
+        service->>configService: getMinDaysBeforeCourseStart()
+        activate configService
+        configService-->>service: minDays
+        deactivate configService
+        
+        service->>service: validateStartDate >= minDays from now
+        
+        service->>scheduleService: checkScheduleConflicts(coachId, schedules, startDate)
+        activate scheduleService
+        scheduleService-->>service: no conflicts
+        deactivate scheduleService
+    end
+
+    alt file provided
+        service->>bunny: uploadToStorage(file)
+        activate bunny
+        bunny-->>service: publicUrl
+        deactivate bunny
+    end
+
+    service->>service: mergeMetadata(existingMetadata, updateData)
+
+    service->>requestRepo: update request metadata
+    activate requestRepo
+    requestRepo->>db: UPDATE request SET metadata
+    db-->>requestRepo: updated
+    requestRepo-->>service: Request
+    deactivate requestRepo
+
+    db-->>service: commit
+    deactivate db
+
+    service-->>controller: CustomApiResponse(success)
+    deactivate service
+
+    controller-->>coach: HTTP 200 {message, data}
+    deactivate controller

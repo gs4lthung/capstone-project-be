@@ -1,0 +1,28 @@
+sequenceDiagram
+    actor Admin
+    participant controller as BaseCredentialController
+    participant service as BaseCredentialService
+    participant db as DataSource
+
+    Admin->>controller: DELETE /base-credentials/:id
+    activate controller
+
+    controller->>service: delete(id)
+    activate service
+
+    service->>db: BEGIN TRANSACTION
+    activate db
+
+    db->>db: find base credential by id
+    db->>db: verify credential exists
+    db->>db: remove base credential (soft delete)
+    db->>db: COMMIT
+
+    db-->>service: success
+    deactivate db
+
+    service-->>controller: CustomApiResponse (200)
+    deactivate service
+
+    controller-->>Admin: HTTP 200 OK
+    deactivate controller

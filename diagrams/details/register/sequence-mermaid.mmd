@@ -1,0 +1,58 @@
+sequenceDiagram
+    actor user as User
+    participant client as Client
+    participant controller as Controller
+    participant service as Service
+    participant mail as Mail
+    participant db as Database
+
+    user->>client: 1. Submit registration form
+    client->>controller: 2. POST /auth/register
+    activate controller
+
+    controller->>service: 3. register(data)
+    activate service
+
+    alt Email/Phone exists
+        service-->>controller: Conflict error
+    else Valid
+        service->>service: 4. Hash password
+        service->>db: 5. Create user + learner
+        activate db
+        db-->>service: Created
+        deactivate db
+
+        service->>mail: 6. Send verification email
+        activate mail
+        mail-->>service: Sent
+        deactivate mail
+
+        service-->>controller: Success
+    end
+
+    deactivate service
+
+    controller-->>client: 7. HTTP 201
+    deactivate controller
+
+    client-->>user: 8. Show confirmation
+
+    user->>client: 9. Click email verification link
+    client->>controller: 10. GET /auth/verify-email?token=...
+    activate controller
+
+    controller->>service: 11. verifyEmail(token)
+    activate service
+
+    service->>db: 12. Update user verified
+    activate db
+    db-->>service: Updated
+    deactivate db
+
+    service-->>controller: Success
+    deactivate service
+
+    controller-->>client: 13. Redirect
+    deactivate controller
+
+    client-->>user: 14. Verification complete

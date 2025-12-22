@@ -382,37 +382,39 @@ YÊU CẦU:
    - Nếu người dùng KHÔNG chỉ định, mặc định tạo 4-6 bài học tuần tự, logic
    - Số lượng bài học tối thiểu: 3, tối đa: 10
    - Mỗi bài học có:
-     + Tên rõ ràng, hấp dẫn
+     + Tên rõ ràng, hấp dẫn (tối đa 100 ký tự)
      + Mô tả chi tiết (100-200 từ)
      + Số thứ tự (lessonNumber) từ 1 trở đi
 
 3. **Video (Video hướng dẫn):**
    - MỖI bài học có ĐÚNG 1 video
    - Mỗi video có:
-     + title: Tiêu đề video (ngắn gọn, hấp dẫn)
+     + title: Tiêu đề video (ngắn gọn, hấp dẫn, tối đa 50 ký tự)
      + description: Mô tả chi tiết nội dung video (100-200 từ)
      + tags: Mảng các từ khóa liên quan (3-5 tags)
      + drillName: Tên bài tập drill (nếu có)
      + drillDescription: Mô tả bài tập drill chi tiết (nếu có)
      + drillPracticeSets: Hướng dẫn số lượng luyện tập (ví dụ: "3 sets x 10 reps")
+     + createInstructions: Hướng dẫn tạo video (nếu có)
    - Lưu ý: File video thực tế sẽ được upload sau, chỉ cần tạo metadata
 
 4. **Quiz (Trắc nghiệm):**
    - MỖI bài học có ĐÚNG 1 quiz
    - Mỗi quiz có 5 câu hỏi
    - Mỗi câu hỏi có:
-     + Tiêu đề câu hỏi rõ ràng
+     + Tiêu đề câu hỏi rõ ràng (tối đa 100 ký tự)
      + Giải thích chi tiết (explanation) cho câu trả lời
      + 4 lựa chọn, trong đó có ĐÚNG 1 đáp án đúng (isCorrect: true)
    - Quiz title: "Kiểm tra [Tên bài học]"
    - Quiz description: Mô tả ngắn gọn về nội dung quiz
 
 QUAN TRỌNG:
-- Nội dung phải bằng tiếng Việt
+- Nội dung phải bằng tiếng Việt hoàn toàn và không lẫn tiếng Anh, trừ các thuật ngữ chuyên ngành pickleball phổ biến và tên riêng, nếu là thuật ngữ chuyên ngành thì phải có giải thích rõ ràng ví dụ như("smash (đập bóng mạnh)").
+- Tất cả nội dung phải tập trung vào pickleball
 - Phù hợp với bối cảnh pickleball
 - Câu hỏi phải kiểm tra được kiến thức trong bài học
 - Đáp án phải chính xác và có giải thích rõ ràng
-- CHÚ Ý: Nếu người dùng yêu cầu số lượng bài học cụ thể, PHẢI tạo đúng số lượng đó (trong khoảng 3-10)
+- CHÚ Ý: Nếu người dùng yêu cầu số lượng bài học cụ thể, PHẢI tạo đúng số lượng đó
 
 YÊU CẦU CỦA NGƯỜI DÙNG: ${prompt}
 

@@ -1,0 +1,22 @@
+sequenceDiagram
+    actor User
+    participant controller as BaseCredentialController
+    participant service as BaseCredentialService
+    participant db as DataSource
+
+    User->>controller: GET /base-credentials/:id
+    activate controller
+
+    controller->>service: findById(id)
+    activate service
+
+    service->>db: find base credential by id
+    activate db
+    db-->>service: credential
+    deactivate db
+
+    service-->>controller: BaseCredential
+    deactivate service
+
+    controller-->>User: HTTP 200 with credential
+    deactivate controller

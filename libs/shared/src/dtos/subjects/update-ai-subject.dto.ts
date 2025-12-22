@@ -56,7 +56,7 @@ export class UpdateQuizDto {
   id?: number;
 
   @IsString()
-  @MaxLength(100)
+  @MaxLength(200)
   title: string;
 
   @IsString()
@@ -77,7 +77,7 @@ export class UpdateVideoDto {
   id?: number;
 
   @IsString()
-  @MaxLength(100)
+  @MaxLength(200)
   title: string;
 
   @IsString()
@@ -109,7 +109,7 @@ export class UpdateLessonDto {
 
   @IsString()
   @MinLength(5)
-  @MaxLength(100)
+  @MaxLength(200)
   name: string;
 
   @IsString()
@@ -131,11 +131,10 @@ export class UpdateLessonDto {
 export class UpdateAiGeneratedSubjectDto {
   @IsString()
   @MinLength(5)
-  @MaxLength(100)
+  @MaxLength(200)
   name: string;
 
   @IsString()
-  @MinLength(50)
   @MaxLength(1000)
   description: string;
 

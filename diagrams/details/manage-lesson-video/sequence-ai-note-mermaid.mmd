@@ -1,0 +1,40 @@
+sequenceDiagram
+    actor coach as Coach
+    participant client as Client
+    participant controller as AiVideoCompareResultController
+    participant auth as Auth
+    participant role as Role
+    participant service as AiVideoCompareResultService
+    participant db as DataSource
+
+    Note over coach, db: Coach Submit Note with AI Feedback
+
+    coach->>client: 1. Open AI feedback and enter note
+    client->>controller: 2. POST /ai-video-compare-results/:id/note (coachNote)
+    activate controller
+
+    controller->>auth: 3. validate JWT
+    activate auth
+    auth-->>controller: 4. valid
+    deactivate auth
+
+    controller->>role: 5. check COACH role
+    activate role
+    role-->>controller: 6. authorized
+    deactivate role
+
+    controller->>service: 7. saveCoachNote(aiResultId, coachNote)
+    activate service
+
+    service->>db: 8. update AI comparison result with coach note
+    activate db
+    db-->>service: 9. updated result
+    deactivate db
+
+    service-->>controller: 10. updated comparison result
+    deactivate service
+
+    controller-->>client: 11. HTTP 200 OK (note saved)
+    deactivate controller
+
+    client-->>coach: 12. Show confirmation and updated feedback

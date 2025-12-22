@@ -1,0 +1,101 @@
+sequenceDiagram
+    actor coach as Coach
+    participant controller as VideoController
+    participant auth as AuthGuard
+    participant role as RoleGuard
+    participant service as VideoService
+    participant bunny as BunnyService
+    participant ffmpeg as FFmpegService
+    participant db as DataSource
+
+    Note over coach, db: Create Lesson Video
+
+    coach->>controller: POST /videos/lessons/:id (multipart/form-data)
+    activate controller
+
+    controller->>auth: validate JWT
+    activate auth
+    auth-->>controller: valid
+    deactivate auth
+
+    controller->>role: check COACH role
+    activate role
+    role-->>controller: authorized
+    deactivate role
+
+    controller->>service: createLessonVideo(lessonId, data, videoFile)
+    activate service
+
+    service->>db: BEGIN TRANSACTION
+    activate db
+
+    db->>db: find lesson with subject relations
+    db->>db: verify ownership (subject.createdBy == currentUser)
+
+    service->>bunny: uploadVideo(videoFile)
+    activate bunny
+    bunny-->>service: publicUrl, thumbnailUrl
+    deactivate bunny
+
+    service->>ffmpeg: extractMetadata(videoFile)
+    activate ffmpeg
+    ffmpeg-->>service: duration, resolution
+    deactivate ffmpeg
+
+    db->>db: create video with PENDING status
+    db->>db: COMMIT
+
+    db-->>service: success
+    deactivate db
+
+    service-->>controller: CustomApiResponse (CREATED)
+    deactivate service
+
+    controller-->>coach: HTTP 201 created
+    deactivate controller
+
+    Note over coach, db: Create Session Video
+
+    coach->>controller: POST /videos/sessions/:id (multipart/form-data)
+    activate controller
+
+    controller->>auth: validate JWT
+    activate auth
+    auth-->>controller: valid
+    deactivate auth
+
+    controller->>role: check COACH role
+    activate role
+    role-->>controller: authorized
+    deactivate role
+
+    controller->>service: createSessionVideo(sessionId, data, videoFile)
+    activate service
+
+    service->>db: BEGIN TRANSACTION
+    activate db
+
+    db->>db: find session with course relations
+    db->>db: verify ownership (course.createdBy == currentUser)
+
+    service->>bunny: uploadVideo(videoFile)
+    activate bunny
+    bunny-->>service: publicUrl, thumbnailUrl
+    deactivate bunny
+
+    service->>ffmpeg: extractMetadata(videoFile)
+    activate ffmpeg
+    ffmpeg-->>service: duration, resolution
+    deactivate ffmpeg
+
+    db->>db: create video with PENDING status
+    db->>db: COMMIT
+
+    db-->>service: success
+    deactivate db
+
+    service-->>controller: CustomApiResponse (CREATED)
+    deactivate service
+
+    controller-->>coach: HTTP 201 created
+    deactivate controller

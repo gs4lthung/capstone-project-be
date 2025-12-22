@@ -1,0 +1,80 @@
+sequenceDiagram
+    actor admin as Admin
+    participant controller as AchievementController
+    participant authGuard as AuthGuard
+    participant roleGuard as RoleGuard
+    participant service as AchievementService
+    participant bunny as BunnyService
+    participant db as DataSource
+
+    Note over admin, db: Create Event Count Achievement
+    admin->>controller: POST /achievements/event-count
+    activate controller
+    controller->>authGuard: canActivate
+    authGuard-->>controller: authenticated
+    controller->>roleGuard: canActivate
+    roleGuard-->>controller: ADMIN role
+    controller->>service: createEventCount(data, icon)
+    activate service
+    alt icon file provided
+        service->>bunny: uploadToStorage(icon)
+        activate bunny
+        bunny-->>service: iconUrl
+        deactivate bunny
+    end
+    service->>db: INSERT event count achievement
+    activate db
+    db-->>service: Achievement
+    deactivate db
+    service-->>controller: CustomApiResponse(success)
+    deactivate service
+    controller-->>admin: HTTP 201 {message}
+    deactivate controller
+
+    Note over admin, db: Create Streak Achievement
+    admin->>controller: POST /achievements/streak
+    activate controller
+    controller->>authGuard: canActivate
+    authGuard-->>controller: authenticated
+    controller->>roleGuard: canActivate
+    roleGuard-->>controller: ADMIN role
+    controller->>service: createStreak(data, icon)
+    activate service
+    alt icon file provided
+        service->>bunny: uploadToStorage(icon)
+        activate bunny
+        bunny-->>service: iconUrl
+        deactivate bunny
+    end
+    service->>db: INSERT streak achievement
+    activate db
+    db-->>service: Achievement
+    deactivate db
+    service-->>controller: CustomApiResponse(success)
+    deactivate service
+    controller-->>admin: HTTP 201 {message}
+    deactivate controller
+
+    Note over admin, db: Create Property Check Achievement
+    admin->>controller: POST /achievements/property-check
+    activate controller
+    controller->>authGuard: canActivate
+    authGuard-->>controller: authenticated
+    controller->>roleGuard: canActivate
+    roleGuard-->>controller: ADMIN role
+    controller->>service: createPropertyCheck(data, icon)
+    activate service
+    alt icon file provided
+        service->>bunny: uploadToStorage(icon)
+        activate bunny
+        bunny-->>service: iconUrl
+        deactivate bunny
+    end
+    service->>db: INSERT property check achievement
+    activate db
+    db-->>service: Achievement
+    deactivate db
+    service-->>controller: CustomApiResponse(success)
+    deactivate service
+    controller-->>admin: HTTP 201 {message}
+    deactivate controller

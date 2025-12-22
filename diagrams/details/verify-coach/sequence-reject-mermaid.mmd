@@ -1,0 +1,67 @@
+sequenceDiagram
+    actor admin as Admin
+    participant client as Client
+    participant controller as CoachController
+    participant authGuard as AuthGuard
+    participant roleGuard as RoleGuard
+    participant service as CoachService
+    participant coachRepo as CoachRepository
+    participant notification as NotificationService
+
+    admin->>client: 1. View pending coach profiles
+    client->>controller: 2. GET /coaches?filter=verificationStatus:UNVERIFIED
+    activate controller
+    controller->>service: 3. findAll(findOptions)
+    activate service
+    service->>coachRepo: 4. Find coaches with filter
+    activate coachRepo
+    coachRepo-->>service: Coach list
+    deactivate coachRepo
+    service-->>controller: PaginateObject~Coach~
+    deactivate service
+    controller-->>client: 5. HTTP 200
+    deactivate controller
+    client-->>admin: 6. Display coaches list
+
+    admin->>client: 7. Click coach to view details
+    client->>controller: 8. GET /coaches/:id
+    activate controller
+    controller->>service: 9. findOne(id, isUser: false)
+    activate service
+    service->>coachRepo: 10. Find coach with relations (user, credentials, baseCredential)
+    activate coachRepo
+    coachRepo-->>service: Coach with details
+    deactivate coachRepo
+    service-->>controller: Coach
+    deactivate service
+    controller-->>client: 11. HTTP 200
+    deactivate controller
+    client-->>admin: 12. Show coach profile + credentials
+
+    admin->>client: 13. Reject coach with reason
+    client->>controller: 14. PUT /coaches/:id/reject
+    Note right of client: body: RejectCoachDto
+    activate controller
+    controller->>authGuard: 15. Validate token
+    activate authGuard
+    authGuard-->>controller: User authenticated
+    deactivate authGuard
+    controller->>roleGuard: 16. Check ADMIN role
+    activate roleGuard
+    roleGuard-->>controller: Role authorized
+    deactivate roleGuard
+    controller->>service: 17. rejectCoach(coachId, reason?)
+    activate service
+    service->>coachRepo: 18. Update verificationStatus = REJECTED
+    activate coachRepo
+    coachRepo-->>service: Updated
+    deactivate coachRepo
+    service->>notification: 19. sendNotification("Verification rejected", reason)
+    activate notification
+    notification-->>service: Notification sent
+    deactivate notification
+    service-->>controller: CustomApiResponse(200)
+    deactivate service
+    controller-->>client: 20. HTTP 200
+    deactivate controller
+    client-->>admin: 21. Coach rejected successfully

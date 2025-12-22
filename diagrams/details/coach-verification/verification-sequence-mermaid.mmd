@@ -1,0 +1,69 @@
+sequenceDiagram
+    title Coach Verification Flow (Actual Implementation - Simple Direct Flow)
+    
+    actor coach as Coach
+    participant service as CoachService
+    participant db as Database
+    actor admin as Admin
+
+    rect rgb(240, 240, 240)
+    Note over coach, admin: 1. Registration
+    coach->>service: POST /coaches/register
+    service->>db: Create User + Coach (status: UNVERIFIED)
+    service->>db: Upload credentials to Bunny CDN
+    service->>db: Create Credential entities
+    service->>db: Create Wallet (balance: 0)
+    service->>admin: Notify ALL admins immediately
+    service-->>coach: "Đăng ký thành công"
+    end
+
+    Note right of admin: Admin receives notification<br/>right after registration,<br/>not when coach submits
+
+    rect rgb(240, 240, 240)
+    Note over coach, admin: 2. Admin Approves
+    admin->>service: POST /coaches/{coachId}/verify
+    service->>db: Find coach by ID
+    service->>db: Update coach status to VERIFIED
+    service->>db: Activate user account if inactive
+    service->>coach: Send notification
+    service-->>admin: "Xác minh huấn luyện viên thành công"
+    end
+
+    rect rgb(240, 240, 240)
+    Note over coach, admin: 3. Admin Rejects
+    admin->>service: POST /coaches/{coachId}/reject
+    service->>db: Update coach status to REJECTED
+    service->>coach: Send notification
+    service-->>admin: "Từ chối xác minh huấn luyện viên thành công"
+    end
+
+    rect rgb(240, 240, 240)
+    Note over coach, admin: 4. Coach Updates Profile (After Rejection)
+    coach->>service: PUT /coaches/profile
+    service->>db: Check verification status
+    alt Status is VERIFIED
+        service-->>coach: Error: "Không thể cập nhật hồ sơ..."
+    else Status is UNVERIFIED or REJECTED
+        service->>db: Update coach profile
+        service->>db: Update credentials if provided
+        service-->>coach: "Cập nhật hồ sơ huấn luyện viên thành công"
+    end
+    end
+
+    Note right of coach: After updating profile,<br/>coach must WAIT for admin<br/>to re-verify manually.<br/><br/>No submit-verification endpoint exists!
+
+    rect rgb(240, 240, 240)
+    Note over coach, admin: 5. Admin Re-verifies (Manual)
+    admin->>service: POST /coaches/{coachId}/verify
+    Note right of service: Admin must manually re-verify<br/>after coach updates profile
+    end
+
+    rect rgb(240, 240, 240)
+    Note over coach, admin: 6. Coach Gets Own Credentials
+    coach->>service: GET /coaches/credentials
+    service->>db: Query coach by authenticated user
+    service->>db: Load credentials with base credentials
+    service-->>coach: List of credentials
+    end
+
+    Note over coach, admin: NO REQUEST ENTITY USED<br/>NO AUDIT TRAIL<br/>NO VERIFICATION HISTORY<br/>NO PENDING STATUS<br/>DIRECT STATUS UPDATES ONLY

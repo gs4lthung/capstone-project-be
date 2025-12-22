@@ -1,0 +1,44 @@
+sequenceDiagram
+    actor Coach
+    participant controller as SubjectController
+    participant auth as AuthGuard
+    participant role as RoleGuard
+    participant service as SubjectService
+    participant bunny as BunnyService
+    participant db as DataSource
+
+    Note over Coach, db: Create Subject
+
+    Coach->>controller: POST /subjects (name, description, level, file)
+    activate controller
+
+    controller->>auth: validate token
+    activate auth
+    auth-->>controller: valid
+    deactivate auth
+
+    controller->>role: check COACH role
+    activate role
+    role-->>controller: authorized
+    deactivate role
+
+    controller->>service: create(data, file)
+    activate service
+
+    alt File provided
+        service->>bunny: uploadToStorage(file)
+        activate bunny
+        bunny-->>service: publicUrl
+        deactivate bunny
+    end
+
+    service->>db: INSERT subject (status=DRAFT)
+    activate db
+    db-->>service: created
+    deactivate db
+
+    service-->>controller: success
+    deactivate service
+
+    controller-->>Coach: 201 Created
+    deactivate controller

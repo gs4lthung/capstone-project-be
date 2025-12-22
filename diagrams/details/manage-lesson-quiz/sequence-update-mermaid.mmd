@@ -1,0 +1,63 @@
+sequenceDiagram
+    actor coach as Coach
+    participant client as Web Browser
+    participant controller as QuizController
+    participant service as QuizService
+    participant quizRepo as QuizRepository
+    participant db as PostgreSQL
+
+    Note over coach, db: Update Quiz
+
+    coach->>client: 1. Click "Edit Quiz"
+    client-->>coach: 2. Show quiz edit form
+
+    coach->>client: 3. Modify quiz details
+
+    coach->>client: 4. Submit updated quiz
+    client->>controller: 5. PUT /quizzes/:id
+    activate controller
+
+    controller->>controller: 6. Validate DTO
+
+    controller->>service: 7. update(id, data, userId)
+    activate service
+
+    service->>quizRepo: 8. findOne(id, ...)
+    activate quizRepo
+    quizRepo->>db: Query quiz
+    activate db
+    db-->>quizRepo: Quiz data
+    deactivate db
+    quizRepo-->>service: Quiz found
+    deactivate quizRepo
+
+    service->>service: 8. Verify ownership (quiz.lesson.subject.createdBy == currentUser)
+
+    service->>db: 9. Start transaction
+    activate db
+
+    service->>quizRepo: 11. Remove old questions
+    activate quizRepo
+    quizRepo->>db: Delete questions
+    deactivate quizRepo
+
+    service->>quizRepo: 12. Insert new questions & options
+    activate quizRepo
+    quizRepo->>db: Insert with cascade
+    deactivate quizRepo
+
+    service->>quizRepo: 13. Update quiz metadata
+    activate quizRepo
+    quizRepo->>db: Update quiz
+    deactivate quizRepo
+
+    service->>db: 14. Commit transaction
+    deactivate db
+
+    service-->>controller: Success response
+    deactivate service
+
+    controller-->>client: 15. HTTP 200 OK
+    deactivate controller
+
+    client-->>coach: 16. "Quiz updated successfully"

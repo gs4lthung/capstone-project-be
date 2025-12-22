@@ -1,0 +1,45 @@
+sequenceDiagram
+    actor Admin
+    participant controller as BaseCredentialController
+    participant service as BaseCredentialService
+    participant bunny as BunnyService
+    participant db as DataSource
+
+    Admin->>controller: PUT /base-credentials/:id (multipart/form-data)
+    activate controller
+
+    Note right of controller: DTO: name, description, type (optional)<br/>File: base_credential_image (optional)
+
+    controller->>service: update(id, UpdateBaseCredentialDto, file)
+    activate service
+
+    service->>db: BEGIN TRANSACTION
+    activate db
+
+    db->>db: find base credential by id
+    db->>db: verify credential exists
+
+    alt file provided
+        service->>bunny: uploadToStorage(file)
+        activate bunny
+        
+        Note right of bunny: Upload new credential image<br/>Replace existing image
+        
+        bunny-->>service: publicUrl
+        deactivate bunny
+        
+        db->>db: update publicUrl in DTO
+    end
+
+    db->>db: merge DTO with entity
+    db->>db: save updated credential
+    db->>db: COMMIT
+
+    db-->>service: success
+    deactivate db
+
+    service-->>controller: CustomApiResponse (200)
+    deactivate service
+
+    controller-->>Admin: HTTP 200 OK
+    deactivate controller

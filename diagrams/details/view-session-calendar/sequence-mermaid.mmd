@@ -1,0 +1,52 @@
+sequenceDiagram
+    actor User
+    participant controller as SessionController
+    participant auth as AuthGuard
+    participant role as RoleGuard
+    participant service as SessionService
+    participant db as DataSource
+
+    Note over User, db: View Sessions by Course
+    User->>controller: GET /sessions/courses/:id
+    activate controller
+    controller->>auth: validate JWT
+    activate auth
+    auth-->>controller: valid
+    deactivate auth
+    controller->>role: check COACH/LEARNER role
+    activate role
+    role-->>controller: authorized
+    deactivate role
+    controller->>service: findByCourseId(courseId)
+    activate service
+    service->>db: query sessions by course with relations
+    activate db
+    db-->>service: sessions list
+    deactivate db
+    service-->>controller: sessions data
+    deactivate service
+    controller-->>User: HTTP 200 with sessions
+    deactivate controller
+
+    Note over User, db: View Weekly Calendar
+    User->>controller: GET /sessions/calendar/weekly?startDate&endDate
+    activate controller
+    controller->>auth: validate JWT
+    activate auth
+    auth-->>controller: valid
+    deactivate auth
+    controller->>role: check COACH/LEARNER role
+    activate role
+    role-->>controller: authorized
+    deactivate role
+    controller->>service: getSessionsForWeeklyCalendar(data)
+    activate service
+    service->>db: query sessions by date range and user
+    activate db
+    Note right of db: Filter by startDate, endDate<br/>Optionally filter by userId
+    db-->>service: filtered sessions
+    deactivate db
+    service-->>controller: weekly sessions
+    deactivate service
+    controller-->>User: HTTP 200 with calendar data
+    deactivate controller

@@ -1,0 +1,34 @@
+sequenceDiagram
+    actor Coach
+    participant controller as LearnerProgressController
+    participant guard as AuthGuard
+    participant service as LearnerProgressService
+    participant db as DataSource
+
+    Coach->>controller: GET /learner-progresses/coaches?courseStatus
+    activate controller
+
+    controller->>guard: validate JWT
+    activate guard
+    guard-->>controller: valid
+    deactivate guard
+
+    controller->>service: getProgressForCourse(courseStatus)
+    activate service
+
+    service->>db: BEGIN TRANSACTION
+    activate db
+
+    db->>db: query learner progresses by course status
+    db->>db: filter by coach (course.createdBy == currentUser)
+
+    Note right of db: Join: user, course, course.createdBy<br/>Filter: courseStatus, createdBy.id
+
+    db-->>service: learner progresses list
+    deactivate db
+
+    service-->>controller: CustomApiResponse with progresses
+    deactivate service
+
+    controller-->>Coach: HTTP 200 with progresses
+    deactivate controller

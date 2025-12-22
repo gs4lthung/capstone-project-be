@@ -1,0 +1,25 @@
+sequenceDiagram
+    actor User
+    participant controller as CourtController
+    participant service as CourtService
+    participant db as DataSource
+
+    User->>controller: GET /courts/:id
+    activate controller
+
+    controller->>service: findOne(id)
+    activate service
+
+    service->>db: find court by id
+    activate db
+
+    Note right of db: Filter: withDeleted = false<br/>Load: province, district (eager)
+
+    db-->>service: court
+    deactivate db
+
+    service-->>controller: CustomApiResponse~Court~
+    deactivate service
+
+    controller-->>User: HTTP 200 with court
+    deactivate controller

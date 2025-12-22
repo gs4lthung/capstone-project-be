@@ -1,0 +1,43 @@
+classDiagram
+    class SubjectController {
+    }
+
+    class AuthGuard {
+    }
+
+    class RoleGuard {
+    }
+
+    class CreateSubjectDto {
+    }
+
+    class UpdateSubjectDto {
+    }
+
+    class SubjectService {
+    }
+
+    class BunnyService {
+    }
+
+    class Subject {
+    }
+
+    class User {
+    }
+
+    class Lesson {
+    }
+
+    SubjectController --> AuthGuard
+    SubjectController --> RoleGuard
+    SubjectController --> SubjectService
+    SubjectController --> CreateSubjectDto
+    SubjectController --> UpdateSubjectDto
+
+    SubjectService --> BunnyService
+    SubjectService --> Subject
+    SubjectService --> Lesson
+
+    Subject --> User
+    Subject --> Lesson

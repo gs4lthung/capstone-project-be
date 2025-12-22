@@ -1,0 +1,40 @@
+sequenceDiagram
+    actor Coach
+    participant controller as LessonController
+    participant auth as AuthGuard
+    participant role as RoleGuard
+    participant service as LessonService
+    participant db as DataSource
+
+    Coach->>controller: PUT /lessons/:id
+    activate controller
+
+    controller->>auth: validate JWT
+    activate auth
+    auth-->>controller: valid
+    deactivate auth
+
+    controller->>role: check COACH role
+    activate role
+    role-->>controller: authorized
+    deactivate role
+
+    controller->>service: update(id, data)
+    activate service
+
+    service->>db: BEGIN TRANSACTION
+    activate db
+
+    db->>db: find lesson with subject relations
+    db->>db: verify ownership (subject.createdBy == currentUser)
+    db->>db: update lesson
+    db->>db: COMMIT
+
+    db-->>service: success
+    deactivate db
+
+    service-->>controller: CustomApiResponse (OK)
+    deactivate service
+
+    controller-->>Coach: HTTP 200 updated
+    deactivate controller

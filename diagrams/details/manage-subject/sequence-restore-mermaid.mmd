@@ -1,0 +1,56 @@
+sequenceDiagram
+    actor Coach
+    participant controller as SubjectController
+    participant auth as AuthGuard
+    participant role as RoleGuard
+    participant service as SubjectService
+    participant db as DataSource
+
+    Note over Coach, db: View Deleted Subjects
+    Coach->>controller: GET /subjects?withDeleted=true
+    activate controller
+    controller->>auth: validate token
+    activate auth
+    auth-->>controller: valid
+    deactivate auth
+    controller->>role: check COACH role
+    activate role
+    role-->>controller: authorized
+    deactivate role
+    controller->>service: findAll(options)
+    activate service
+    service->>db: SELECT subjects including deleted
+    activate db
+    db-->>service: deleted subjects
+    deactivate db
+    service-->>controller: results
+    deactivate service
+    controller-->>Coach: 200 OK
+    deactivate controller
+
+    Note over Coach, db: Restore Subject
+    Coach->>controller: PATCH /subjects/:id/restore
+    activate controller
+    controller->>auth: validate token
+    activate auth
+    auth-->>controller: valid
+    deactivate auth
+    controller->>role: check COACH role
+    activate role
+    role-->>controller: authorized
+    deactivate role
+    controller->>service: restore(id)
+    activate service
+    service->>db: SELECT subject with deleted
+    activate db
+    db-->>service: deleted subject found
+    deactivate db
+    service->>service: verify ownership
+    service->>db: UPDATE subject SET deletedAt = NULL
+    activate db
+    db-->>service: restored
+    deactivate db
+    service-->>controller: success
+    deactivate service
+    controller-->>Coach: 200 OK
+    deactivate controller

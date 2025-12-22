@@ -1,0 +1,69 @@
+sequenceDiagram
+    actor Admin
+    participant controller as CourtController
+    participant auth as AuthGuard
+    participant role as RoleGuard
+    participant service as CourtService
+    participant bunny as BunnyService
+    participant db as DataSource
+
+    Admin->>controller: PUT /courts/:id (multipart/form-data)
+    activate controller
+
+    Note right of controller: DTO: name, phoneNumber, pricePerHour,<br/>address, latitude, longitude,<br/>provinceId, districtId (all optional)<br/>File: court_image (optional)
+
+    controller->>auth: validate JWT
+    activate auth
+    auth-->>controller: valid
+    deactivate auth
+
+    controller->>role: verify ADMIN role
+    activate role
+    role-->>controller: authorized
+    deactivate role
+
+    controller->>service: update(id, UpdateCourtDto, file)
+    activate service
+
+    service->>db: BEGIN TRANSACTION
+    activate db
+
+    db->>db: find court by id
+    db->>db: verify court exists (not deleted)
+
+    alt provinceId provided
+        db->>db: find province by provinceId
+        db->>db: verify province exists
+        db->>db: update court.province
+    end
+
+    alt districtId provided
+        db->>db: find district by districtId
+        db->>db: verify district exists
+        db->>db: update court.district
+    end
+
+    alt file provided
+        service->>bunny: uploadToStorage(file)
+        activate bunny
+        
+        Note right of bunny: Upload new court image<br/>Replace existing image
+        
+        bunny-->>service: publicUrl
+        deactivate bunny
+        
+        db->>db: update publicUrl in DTO
+    end
+
+    db->>db: merge DTO with court entity
+    db->>db: save updated court
+    db->>db: COMMIT
+
+    db-->>service: success
+    deactivate db
+
+    service-->>controller: CustomApiResponse (200)
+    deactivate service
+
+    controller-->>Admin: HTTP 200 OK
+    deactivate controller

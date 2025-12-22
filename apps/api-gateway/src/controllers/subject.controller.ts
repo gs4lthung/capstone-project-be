@@ -113,6 +113,24 @@ export class SubjectController {
     return this.subjectService.update(id, data);
   }
 
+  @Patch(':id/publish')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiOperation({
+    tags: ['Subjects'],
+    summary: 'Publish a subject',
+    description: 'Publish a subject',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Subject published successfully',
+  })
+  @CheckRoles(UserRole.COACH)
+  @UseGuards(AuthGuard, RoleGuard)
+  async publish(@Param('id') id: number) {
+    return this.subjectService.publish(id);
+  }
+
   @Delete(':id')
   @HttpCode(HttpStatus.OK)
   @ApiBearerAuth()

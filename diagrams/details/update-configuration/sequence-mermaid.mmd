@@ -1,0 +1,45 @@
+sequenceDiagram
+    actor admin as Admin
+    participant client as Client
+    participant controller as ConfigurationController
+    participant authGuard as AuthGuard
+    participant roleGuard as RoleGuard
+    participant service as ConfigurationService
+    participant repo as ConfigurationRepository
+
+    admin->>client: 1. Update configuration value
+    client->>controller: 2. PUT /configurations/:id
+    Note right of client: data: UpdateConfigurationDto
+    activate controller
+
+    controller->>authGuard: 3. Validate token
+    activate authGuard
+    authGuard-->>controller: User authenticated
+    deactivate authGuard
+
+    controller->>roleGuard: 4. Check ADMIN role
+    activate roleGuard
+    roleGuard-->>controller: Role authorized
+    deactivate roleGuard
+
+    controller->>service: 5. update(id, data)
+    activate service
+    service->>repo: 6. Find configuration by id
+    activate repo
+    repo-->>service: Configuration | null
+    deactivate repo
+
+    alt Configuration not found
+        service-->>controller: HTTP 404 Not Found
+    else Valid
+        service->>repo: 7. Update configuration (set updatedBy = current user)
+        activate repo
+        repo-->>service: Updated
+        deactivate repo
+        service-->>controller: CustomApiResponse(200)
+    end
+
+    deactivate service
+    controller-->>client: 8. HTTP 200
+    deactivate controller
+    client-->>admin: 9. Configuration updated successfully

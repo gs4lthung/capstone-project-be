@@ -1,0 +1,61 @@
+sequenceDiagram
+    actor admin as Admin
+    participant controller as AchievementController
+    participant authGuard as AuthGuard
+    participant roleGuard as RoleGuard
+    participant service as AchievementService
+    participant db as DataSource
+
+    Note over admin, db: Delete Achievement
+    admin->>controller: DELETE /achievements/:id
+    activate controller
+    controller->>authGuard: canActivate
+    authGuard-->>controller: authenticated
+    controller->>roleGuard: canActivate
+    roleGuard-->>controller: ADMIN role
+    controller->>service: delete(id)
+    activate service
+    service->>db: soft delete achievement (set deletedAt)
+    activate db
+    db-->>service: deleted
+    deactivate db
+    service-->>controller: CustomApiResponse(success)
+    deactivate service
+    controller-->>admin: HTTP 200 {message}
+    deactivate controller
+
+    Note over admin, db: Activate Achievement
+    admin->>controller: PATCH /achievements/:id/activate
+    activate controller
+    controller->>authGuard: canActivate
+    authGuard-->>controller: authenticated
+    controller->>roleGuard: canActivate
+    roleGuard-->>controller: ADMIN role
+    controller->>service: activate(id)
+    activate service
+    service->>db: UPDATE achievement SET isActive = true
+    activate db
+    db-->>service: updated
+    deactivate db
+    service-->>controller: CustomApiResponse(success)
+    deactivate service
+    controller-->>admin: HTTP 200 {message}
+    deactivate controller
+
+    Note over admin, db: Deactivate Achievement
+    admin->>controller: PATCH /achievements/:id/deactivate
+    activate controller
+    controller->>authGuard: canActivate
+    authGuard-->>controller: authenticated
+    controller->>roleGuard: canActivate
+    roleGuard-->>controller: ADMIN role
+    controller->>service: deactivate(id)
+    activate service
+    service->>db: UPDATE achievement SET isActive = false
+    activate db
+    db-->>service: updated
+    deactivate db
+    service-->>controller: CustomApiResponse(success)
+    deactivate service
+    controller-->>admin: HTTP 200 {message}
+    deactivate controller

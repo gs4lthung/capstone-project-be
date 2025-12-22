@@ -1,4 +1,43 @@
-%% Mermaid version: 10.x
-%% ai-subject-generation sequence diagram (Mermaid)
 sequenceDiagram
-    %% Add sequence steps here based on sequence-update.puml
+    actor Coach
+    participant AuthGuard
+    participant controller as AiSubjectGenerationController
+    participant service as AiSubjectGenerationService
+    participant db as DataSource
+
+    Coach->>controller: PUT /ai-subject-generations/:id (data)
+    activate controller
+
+    controller->>AuthGuard: validate token
+    activate AuthGuard
+    AuthGuard-->>controller: valid
+    deactivate AuthGuard
+
+    controller->>service: update(id, data)
+    activate service
+
+    service->>db: SELECT ai_subject_generation with requestedBy and createdSubject
+    activate db
+    db-->>service: AI generation found
+    deactivate db
+
+    service->>service: verify ownership (requestedBy == currentUser)
+
+    alt Status is USED
+        service-->>controller: error "Already used, cannot edit"
+        controller-->>Coach: 400 Bad Request
+    else Status is PENDING
+        service->>service: validate quiz questions (exactly 1 correct answer each)
+        
+        service->>db: UPDATE ai_subject_generation SET generatedData
+        activate db
+        db-->>service: updated
+        deactivate db
+        
+        service-->>controller: success
+        deactivate service
+        
+        controller-->>Coach: 200 OK
+    end
+
+    deactivate controller

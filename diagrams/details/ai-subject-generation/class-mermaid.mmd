@@ -1,4 +1,39 @@
-%% Mermaid version: 10.x
-%% ai-subject-generation class diagram (Mermaid)
 classDiagram
-    %% Add class definitions and relationships here based on class.puml
+    class AiSubjectGenerationController {
+    }
+
+    class AuthGuard {
+    }
+
+    class UpdateAiGeneratedSubjectDto {
+    }
+
+    class AiSubjectGenerationService {
+    }
+
+    class AiGeminiService {
+    }
+
+    class AiSubjectGeneration {
+    }
+
+    class Subject {
+    }
+
+    class User {
+    }
+
+    class Lesson {
+    }
+
+    AiSubjectGenerationController --> AuthGuard : validates
+    AiSubjectGenerationController --> AiSubjectGenerationService : uses
+    AiSubjectGenerationController ..> UpdateAiGeneratedSubjectDto : receives
+
+    AiSubjectGenerationService --> AiGeminiService : uses
+    AiSubjectGenerationService --> AiSubjectGeneration : manages
+    AiSubjectGenerationService --> Subject : creates from AI
+
+    AiSubjectGeneration --> User : requestedBy
+    AiSubjectGeneration --> Subject : createdSubject
+    Subject --> Lesson : has many

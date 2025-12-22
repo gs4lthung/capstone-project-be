@@ -1,0 +1,67 @@
+classDiagram
+    class AchievementController {
+    }
+
+    class AuthGuard {
+        +canActivate(context) boolean
+    }
+
+    class RoleGuard {
+        +canActivate(context) boolean
+        -checkAdminRole(user) boolean
+    }
+
+    class CreateEventCountAchievementDto {
+    }
+    class CreateStreakAchievementDto {
+    }
+    class CreatePropertyCheckAchievementDto {
+    }
+    class UpdateEventCountAchievementDto {
+    }
+    class UpdateStreakAchievementDto {
+    }
+    class UpdatePropertyCheckAchievementDto {
+    }
+
+    class AchievementService {
+    }
+    class BunnyService {
+    }
+
+    class Achievement {
+    }
+    class EventCountAchievement {
+    }
+    class StreakAchievement {
+    }
+    class PropertyCheckAchievement {
+    }
+    class LearnerProgress {
+    }
+    class User {
+    }
+
+    AchievementController --> AuthGuard : validates
+    AchievementController --> RoleGuard : checks admin
+    AchievementController --> AchievementService : delegates
+    AchievementController ..> CreateEventCountAchievementDto
+    AchievementController ..> CreateStreakAchievementDto
+    AchievementController ..> CreatePropertyCheckAchievementDto
+    AchievementController ..> UpdateEventCountAchievementDto
+    AchievementController ..> UpdateStreakAchievementDto
+    AchievementController ..> UpdatePropertyCheckAchievementDto
+
+    AchievementService --> BunnyService
+    AchievementService --> Achievement
+    AchievementService --> EventCountAchievement : updates
+    AchievementService --> StreakAchievement : updates
+    AchievementService --> PropertyCheckAchievement
+    AchievementService --> LearnerProgress
+
+    EventCountAchievement --|> Achievement : extends
+    StreakAchievement --|> Achievement : extends
+    PropertyCheckAchievement --|> Achievement : extends
+
+    LearnerProgress --> Achievement : tracks
+    LearnerProgress --> User : belongs to

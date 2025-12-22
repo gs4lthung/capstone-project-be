@@ -1,0 +1,119 @@
+classDiagram
+    class Coach {
+        -id: number
+        -fullName: string
+        -email: string
+        -phoneNumber: string
+        -role: Role
+        +updateSession() void
+    }
+
+    class Session {
+        -id: number
+        -name: string
+        -description: string
+        -sessionNumber: number
+        -scheduleDate: Date
+        -startTime: string
+        -endTime: string
+        -durationInMinutes: number
+        -status: SessionStatus
+        -completedAt: Date
+        -createdAt: Date
+        -updatedAt: Date
+    }
+
+    class Course {
+        -id: number
+        -name: string
+        -status: CourseStatus
+        -startDate: Date
+        -endDate: Date
+        -createdBy: Coach
+        -sessions: Session[]
+        -enrollments: Enrollment[]
+    }
+
+    class Enrollment {
+        -id: number
+        -status: EnrollmentStatus
+        -user: Learner
+        -course: Course
+    }
+
+    class Learner {
+        -id: number
+        -fullName: string
+        -email: string
+        -phoneNumber: string
+        -role: Role
+    }
+
+    class Notification {
+        -id: number
+        -title: string
+        -body: string
+        -navigateTo: string
+        -type: NotificationType
+        -isRead: boolean
+        -user: Learner
+        -createdAt: Date
+    }
+
+    class SessionStatus {
+        <<enumeration>>
+        PENDING
+        SCHEDULED
+        IN_PROGRESS
+        COMPLETED
+        CANCELLED
+    }
+
+    class EnrollmentStatus {
+        <<enumeration>>
+        PENDING_GROUP
+        CONFIRMED
+        LEARNING
+        UNPAID
+        CANCELLED
+        DONE
+    }
+
+    class CourseStatus {
+        <<enumeration>>
+        PENDING_APPROVAL
+        APPROVED
+        REJECTED
+        CANCELLED
+        COMPLETED
+        FULL
+        READY_OPENED
+        ON_GOING
+    }
+
+    class NotificationType {
+        <<enumeration>>
+        INFO
+        SUCCESS
+        WARNING
+        ERROR
+    }
+
+    class UpdateSessionDto {
+        +scheduleDate: Date
+        +startTime: string
+        +endTime: string
+        +name: string
+        +description: string
+    }
+
+    Coach "1" -- "*" Session : updates
+    Session "*" -- "1" Course : belongs to
+    Course "1" -- "*" Enrollment : has
+    Learner "1" -- "*" Enrollment : has
+    Learner "1" -- "*" Notification : receives
+    Session --> SessionStatus : uses
+    Enrollment --> EnrollmentStatus : uses
+    Course --> CourseStatus : uses
+    Notification --> NotificationType : uses
+    UpdateSessionDto ..> Session : updates

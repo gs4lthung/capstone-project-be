@@ -1,0 +1,57 @@
+sequenceDiagram
+    actor learner as Learner
+    participant client as client
+    participant controller as LearnerVideoController
+    participant auth as auth
+    participant role as role
+    participant service as service
+    participant ffmpeg as ffmpeg
+    participant bunny as bunny
+    participant db as db
+
+    Note over learner, db: Learner Submit Practice Video
+
+    learner->>client: 1. select video and submit
+    client->>controller: 2. POST /learner-videos (multipart/form-data)
+    activate controller
+
+    controller->>auth: 3. validate JWT
+    activate auth
+    auth-->>controller: 4. valid
+    deactivate auth
+
+    controller->>role: 5. check LEARNER role
+    activate role
+    role-->>controller: 6. authorized
+    deactivate role
+
+    controller->>service: 7. upload(videoFile, data, user)
+    activate service
+
+    service->>ffmpeg: 8. createVideoThumbnailVer2(videoFile)
+    activate ffmpeg
+    ffmpeg-->>service: 9. thumbnail path
+    deactivate ffmpeg
+
+    service->>bunny: 10. uploadToStorage(thumbnail)
+    activate bunny
+    bunny-->>service: 11. thumbnail public url
+    deactivate bunny
+
+    service->>bunny: 12. uploadToStorage(videoFile)
+    activate bunny
+    bunny-->>service: 13. video public url
+    deactivate bunny
+
+    service->>db: 14. save LearnerVideo entity
+    activate db
+    db-->>service: 15. saved entity
+    deactivate db
+
+    service-->>controller: 16. upload result
+    deactivate service
+
+    controller-->>client: 17. http 201 created (upload success)
+    deactivate controller
+
+    client-->>learner: 18. show upload success

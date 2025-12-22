@@ -1,0 +1,219 @@
+classDiagram
+    class CoachListPanel {
+        -coaches: Coach[]
+        -filters: FilterCriteria
+        -pagination: Pagination
+        +loadCoaches() void
+        +applyFilters(criteria) void
+        +searchCoaches(query) void
+        +sortCoaches(field) void
+        +selectCoach(id) void
+        +displayList() void
+    }
+
+    class CoachProfileCard {
+        -coach: Coach
+        -isOwnProfile: boolean
+        -rating: Rating
+        -courses: Course[]
+        +loadProfileData() void
+        +displayBasicInfo() void
+        +displayRating() void
+        +displayCredentials() void
+        +displayCourses() void
+        +showEditButton() void
+        +contactCoach() void
+    }
+
+    class CoachProfileEditForm {
+        -coach: Coach
+        -formData: UpdateCoachProfileDto
+        +loadProfile() void
+        +populateForm() void
+        +updateFields(data) void
+        +submitUpdate() void
+        +displaySuccess() void
+    }
+
+    class CredentialUploadPanel {
+        -credentials: Credential[]
+        -selectedFile: File
+        +loadCredentials() void
+        +selectFile() void
+        +fillCredentialForm() void
+        +uploadCredential() void
+        +displayUploadStatus() void
+        +deleteCredential(id) void
+        +restoreCredential(id) void
+    }
+
+    class CoachController {
+        -coachService: CoachService
+        +findAll(pagination, sort, filter) Promise
+        +findOne(id) Promise
+        +update(data) Promise
+        +getOverallRating(id) Promise
+        +uploadCredential(data, file) Promise
+        +updateCredential(id, data, file) Promise
+    }
+
+    class CoachService {
+        -coachRepository: Repository
+        -credentialRepository: Repository
+        -feedbackRepository: Repository
+        -bunnyService: BunnyService
+        -datasource: DataSource
+        +findAll(findOptions) Promise
+        +findOne(id) Promise
+        +update(data) Promise
+        +getOverallRating(id) Promise
+        +uploadCredential(data, file) Promise
+        +updateCredential(id, data, file) Promise
+    }
+
+    class Coach {
+        -id: number
+        -bio: string
+        -specialties: string[]
+        -teachingMethods: string[]
+        -yearOfExperience: number
+        -verificationStatus: CoachVerificationStatus
+        -verificationReason: string
+        -createdAt: Date
+        -updatedAt: Date
+        -user: User
+        -credentials: Credential[]
+    }
+
+    class User {
+        -id: number
+        -fullName: string
+        -email: string
+        -phoneNumber: string
+        -profilePicture: string
+        -isEmailVerified: boolean
+        -isPhoneVerified: boolean
+        -isActive: boolean
+        -lastLoginAt: Date
+        -role: Role
+        -coach: Coach[]
+        -courses: Course[]
+        -enrollments: Enrollment[]
+    }
+
+    class Credential {
+        -id: number
+        -name: string
+        -description: string
+        -type: CourseCredentialType
+        -publicUrl: string
+        -issuedAt: Date
+        -expiresAt: Date
+        -coach: Coach
+        -createdAt: Date
+        -updatedAt: Date
+        -deletedAt: Date
+    }
+
+    class Role {
+        -id: number
+        -name: string
+    }
+
+    class Feedback {
+        -id: number
+        -rating: number
+        -comment: string
+        -createdAt: Date
+        -createdBy: User
+        -receivedBy: User
+    }
+
+    class UpdateCoachProfileDto {
+        +bio: string
+        +specialties: string[]
+        +teachingMethods: string[]
+        +yearOfExperience: number
+    }
+
+    class UpdateCredentialDto {
+        +name: string
+        +description: string
+        +type: CourseCredentialType
+        +publicUrl: string
+        +issuedAt: Date
+        +expiresAt: Date
+    }
+
+    class RegisterCoachCredentialDto {
+        +name: string
+        +description: string
+        +type: CourseCredentialType
+        +publicUrl: string
+        +issuedAt: Date
+        +expiresAt: Date
+    }
+
+    class CoachVerificationStatus {
+        <<enumeration>>
+        UNVERIFIED
+        VERIFIED
+        REJECTED
+    }
+
+    class CourseCredentialType {
+        <<enumeration>>
+        CERTIFICATION
+        LICENSE
+        BADGE
+        DIPLOMA
+    }
+
+    class RatingResponse {
+        +overall: number
+        +total: number
+    }
+
+    class BunnyService {
+        +uploadToStorage(data) Promise
+    }
+
+    class AuthGuard {
+        +canActivate(context) boolean
+    }
+
+    class RoleGuard {
+        +canActivate(context) boolean
+    }
+
+    CoachListPanel --> CoachController : calls findAll
+    CoachListPanel --> CoachProfileCard : displays selected
+
+    CoachProfileCard --> CoachController : calls findOne
+    CoachProfileCard --> CoachController : calls getOverallRating
+    CoachProfileCard --> CoachProfileEditForm : navigates if own
+
+    CoachProfileEditForm --> CoachController : calls update
+    CredentialUploadPanel --> CoachController : calls uploadCredential, updateCredential
+
+    CoachController --> CoachService : delegates
+    CoachController --> AuthGuard : validates
+    CoachController --> RoleGuard : checks
+
+    CoachService --> Coach : queries/updates
+    CoachService --> Credential : creates/updates
+    CoachService --> Feedback : aggregates for rating
+    CoachService --> BunnyService : uploads credentials
+
+    Coach --> User : has_one
+    Coach --> Credential : has_many
+    Coach --> CoachVerificationStatus : has status
+
+    User --> Role : has_one
+    User --> Feedback : receives
+
+    Feedback --> User : createdBy
+
+    UpdateCoachProfileDto --> Coach : maps to
+    UpdateCredentialDto --> Credential : maps to
+    RegisterCoachCredentialDto --> Credential : maps to

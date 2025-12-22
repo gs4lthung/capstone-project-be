@@ -1,0 +1,52 @@
+sequenceDiagram
+    actor Coach
+    participant controller as SubjectController
+    participant auth as AuthGuard
+    participant role as RoleGuard
+    participant service as SubjectService
+    participant db as DataSource
+
+    Note over Coach, db: Update Subject
+
+    Coach->>controller: PUT /subjects/:id (data)
+    activate controller
+
+    controller->>auth: validate token
+    activate auth
+    auth-->>controller: valid
+    deactivate auth
+
+    controller->>role: check COACH role
+    activate role
+    role-->>controller: authorized
+    deactivate role
+
+    controller->>service: update(id, data)
+    activate service
+
+    service->>db: SELECT subject with lessons
+    activate db
+    db-->>service: subject found
+    deactivate db
+
+    service->>service: verify ownership
+
+    alt Status change to PUBLISHED
+        service->>db: SELECT lessons for validation
+        activate db
+        db-->>service: lessons
+        deactivate db
+        
+        service->>service: validate all lessons have video & quiz
+    end
+
+    service->>db: UPDATE subject
+    activate db
+    db-->>service: updated
+    deactivate db
+
+    service-->>controller: success
+    deactivate service
+
+    controller-->>Coach: 200 OK
+    deactivate controller

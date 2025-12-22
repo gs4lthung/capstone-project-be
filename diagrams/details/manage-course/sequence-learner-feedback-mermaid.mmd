@@ -1,0 +1,40 @@
+sequenceDiagram
+    actor Learner
+    participant Client
+    participant controller as CourseFeedbackController
+    participant Auth
+    participant Role
+    participant service as CourseFeedbackService
+    participant db as DataSource
+
+    Note over Learner, db: Learner Submit Feedback After Completed Course
+
+    Learner->>Client: 1. Open completed course and enter feedback
+    Client->>controller: 2. POST /courses/:id/feedback (feedback, rating)
+    activate controller
+
+    controller->>Auth: 3. validate JWT
+    activate Auth
+    Auth-->>controller: 4. valid
+    deactivate Auth
+
+    controller->>Role: 5. check LEARNER role
+    activate Role
+    Role-->>controller: 6. authorized
+    deactivate Role
+
+    controller->>service: 7. submitFeedback(courseId, feedback, rating, user)
+    activate service
+
+    service->>db: 8. save feedback and rating
+    activate db
+    db-->>service: 9. saved feedback
+    deactivate db
+
+    service-->>controller: 10. feedback result
+    deactivate service
+
+    controller-->>Client: 11. HTTP 201 Created
+    deactivate controller
+
+    Client-->>Learner: 12. Show confirmation

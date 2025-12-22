@@ -23,6 +23,7 @@ import { AiGeminiService } from './ai-gemini.service';
 import { User } from '@app/database/entities/user.entity';
 import { SubjectStatus } from '@app/shared/enums/subject.enum';
 import { Subject } from '@app/database/entities/subject.entity';
+import { CoachVideoStatus } from '@app/shared/enums/coach.enum';
 
 @Injectable({ scope: Scope.REQUEST })
 export class AiSubjectGenerationService extends BaseTypeOrmService<AiSubjectGeneration> {

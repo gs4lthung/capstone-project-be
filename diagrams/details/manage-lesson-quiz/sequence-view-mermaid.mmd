@@ -1,0 +1,42 @@
+sequenceDiagram
+    actor coach as Coach
+    participant controller as QuizController
+    participant auth as AuthGuard
+    participant service as QuizService
+    participant db as DataSource
+
+    Note over coach, db: View Quiz by Lesson
+    coach->>controller: GET /quizzes/lessons/:id
+    activate controller
+    controller->>auth: validate JWT
+    activate auth
+    auth-->>controller: valid
+    deactivate auth
+    controller->>service: getQuizByLesson(lessonId)
+    activate service
+    service->>db: query quiz with questions/options
+    activate db
+    db-->>service: quiz data
+    deactivate db
+    service-->>controller: quiz with questions
+    deactivate service
+    controller-->>coach: HTTP 200 with quiz
+    deactivate controller
+
+    Note over coach, db: View Quiz by Session
+    coach->>controller: GET /quizzes/sessions/:id
+    activate controller
+    controller->>auth: validate JWT
+    activate auth
+    auth-->>controller: valid
+    deactivate auth
+    controller->>service: getQuizBySession(sessionId)
+    activate service
+    service->>db: query quiz with questions/options
+    activate db
+    db-->>service: quiz data
+    deactivate db
+    service-->>controller: quiz with questions
+    deactivate service
+    controller-->>coach: HTTP 200 with quiz
+    deactivate controller

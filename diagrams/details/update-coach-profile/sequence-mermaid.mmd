@@ -1,0 +1,104 @@
+sequenceDiagram
+    actor coach as Coach
+    participant client as Client
+    participant controller as Controller
+    participant service as Service
+    participant bunny as Bunny CDN
+    participant db as Database
+
+    coach->>client: 1. Browse coaches list
+    client->>controller: 2. GET /coaches
+    activate controller
+    controller->>service: 3. findAll(options)
+    activate service
+    service->>db: 4. Query coaches with pagination
+    activate db
+    db-->>service: Coaches list
+    deactivate db
+    service-->>controller: Response
+    deactivate service
+    controller-->>client: 5. HTTP 200
+    deactivate controller
+    client-->>coach: 6. Display coaches list
+
+    coach->>client: 7. Click on coach profile
+    client->>controller: 8. GET /coaches/:id
+    activate controller
+    controller->>service: 9. findOne(id)
+    activate service
+    service->>db: 10. Query coach with relations
+    activate db
+    db-->>service: Coach data with relations
+    deactivate db
+    service-->>controller: Response
+    deactivate service
+    controller-->>client: 11. HTTP 200
+    deactivate controller
+    client-->>coach: 12. Display coach profile
+
+    alt Own profile - Edit
+        coach->>client: 13. Click "Edit Profile"
+        client-->>coach: 14. Show editable form
+        
+        coach->>client: 15. Update profile fields
+        Note right of client: Can update: Bio, Specialties, Teaching methods, Experience
+
+        coach->>client: 16. Submit updated profile
+        client->>controller: 17. PUT /coaches/:id
+        activate controller
+        controller->>service: 18. update(data)
+        activate service
+        service->>db: 19. Find coach by user ID
+        activate db
+        db-->>service: Coach found
+        deactivate db
+        service->>db: 20. Update coach profile
+        activate db
+        db-->>service: Saved
+        deactivate db
+        service-->>controller: Success response
+        deactivate service
+        controller-->>client: 21. HTTP 200
+        deactivate controller
+        client-->>coach: 22. Profile updated successfully
+
+        coach->>client: 23. Add new credential/certification
+        client-->>coach: 24. Show credential upload form
+        coach->>client: 25. Fill credential details
+        Note right of client: Name, type, dates, image file
+
+        coach->>client: 26. Upload credential
+        client->>controller: 27. POST /coaches/credentials
+        activate controller
+        controller->>service: 28. uploadCredential(data, file)
+        activate service
+        service->>bunny: 29. Upload image to Bunny CDN
+        activate bunny
+        bunny-->>service: 30. Public URL
+        deactivate bunny
+        service->>db: 31. Create credential record
+        activate db
+        db-->>service: Saved
+        deactivate db
+        service-->>controller: Success response
+        deactivate service
+        controller-->>client: 32. HTTP 200
+        deactivate controller
+        client-->>coach: 33. Credential added successfully
+
+    else Other profile - View only
+        coach->>controller: 34. GET /coaches/:id/rating/overall
+        activate controller
+        controller->>service: 35. getOverallRating(id)
+        activate service
+        service->>db: 36. Query feedback for coach
+        activate db
+        db-->>service: Feedbacks list
+        deactivate db
+        service->>service: 37. Calculate avg rating
+        service-->>controller: { overall: 4.5, total: 42 }
+        deactivate service
+        controller-->>client: 38. HTTP 200
+        deactivate controller
+        client-->>coach: 39. Display rating (4.5/5 from 42 reviews)
+    end

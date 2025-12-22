@@ -1,0 +1,79 @@
+sequenceDiagram
+    actor learner as Learner
+    participant paymentController as PaymentController
+    participant authGuard as AuthGuard
+    participant roleGuard as RoleGuard
+    participant paymentService as PaymentService
+    participant payos as PayosService
+    participant notificationService as NotificationService
+    participant db as DataSource
+
+    Note over learner, db: Enroll in Course (Create Payment Link)
+
+    learner->>paymentController: POST /payments/courses/:id/link
+    activate paymentController
+
+    paymentController->>authGuard: canActivate
+    authGuard-->>paymentController: authenticated
+
+    paymentController->>roleGuard: canActivate
+    roleGuard-->>paymentController: LEARNER role
+
+    paymentController->>paymentService: createCoursePaymentLink(id)
+    activate paymentService
+
+    paymentService->>db: transaction
+    activate db
+
+    paymentService->>db: validate course (status = APPROVED/READY_OPENED)
+
+    alt already enrolled
+        paymentService->>db: update enrollment status = UNPAID
+    else new enrollment
+        paymentService->>db: create enrollment status = UNPAID
+    end
+
+    paymentService->>payos: createPaymentLink(amount, ...)
+    activate payos
+    payos-->>paymentService: checkoutUrl, qrCode, orderCode
+    deactivate payos
+
+    paymentService->>db: create payment status = PENDING
+    db-->>paymentService: commit
+    deactivate db
+
+    paymentService-->>paymentController: Payment with checkoutUrl
+    deactivate paymentService
+
+    paymentController-->>learner: HTTP 201 {checkoutUrl, qrCode}
+    deactivate paymentController
+
+    Note over learner, db: Payment Success Callback
+
+    payos->>paymentController: GET /payments/courses/success
+    activate paymentController
+
+    paymentController->>paymentService: handlePaymentSuccess(data)
+    activate paymentService
+
+    paymentService->>db: transaction
+    activate db
+
+    paymentService->>db: find payment by orderCode
+    paymentService->>db: update payment.status = PAID
+    paymentService->>db: update enrollment details
+    paymentService->>db: update course (participants, earnings)
+
+    paymentService->>notificationService: notify coach and learner
+    activate notificationService
+    notificationService-->>paymentService: sent
+    deactivate notificationService
+
+    db-->>paymentService: commit
+    deactivate db
+
+    paymentService-->>paymentController: void
+    deactivate paymentService
+
+    paymentController-->>payos: HTTP 200
+    deactivate paymentController

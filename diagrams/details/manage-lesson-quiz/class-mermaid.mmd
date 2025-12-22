@@ -1,0 +1,71 @@
+classDiagram
+    class QuizController {
+    }
+
+    class AuthGuard {
+    }
+
+    class RoleGuard {
+    }
+
+    class CreateQuizDto {
+    }
+
+    class CreateQuestionDto {
+    }
+
+    class UpdateQuizDto {
+    }
+
+    class LearnerAttemptQuizDto {
+    }
+
+    class QuizService {
+    }
+
+    class DataSource {
+    }
+
+    class Quiz {
+    }
+
+    class Question {
+    }
+
+    class QuestionOption {
+    }
+
+    class QuizAttempt {
+    }
+
+    class Lesson {
+    }
+
+    class Session {
+    }
+
+    class User {
+    }
+
+    QuizController --> AuthGuard
+    QuizController --> RoleGuard
+    QuizController --> QuizService
+    QuizController ..> CreateQuizDto
+    QuizController ..> CreateQuestionDto
+    QuizController ..> UpdateQuizDto
+    QuizController ..> LearnerAttemptQuizDto
+
+    QuizService --> DataSource
+    QuizService --> Quiz
+    QuizService --> Question
+    QuizService --> Lesson
+    QuizService --> Session
+
+    Quiz --> Question
+    Question --> QuestionOption
+    Quiz --> QuizAttempt
+    Quiz --> Lesson
+    Quiz --> Session
+    Quiz --> User
+
+    QuizAttempt --> User

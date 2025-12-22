@@ -1,0 +1,41 @@
+sequenceDiagram
+    actor coach as Coach
+    participant controller as VideoController
+    participant auth as AuthGuard
+    participant role as RoleGuard
+    participant service as VideoService
+    participant db as DataSource
+
+    coach->>controller: DELETE /videos/:id
+    activate controller
+
+    controller->>auth: validate JWT
+    activate auth
+    auth-->>controller: valid
+    deactivate auth
+
+    controller->>role: check COACH role
+    activate role
+    role-->>controller: authorized
+    deactivate role
+
+    controller->>service: deleteVideo(id)
+    activate service
+
+    service->>db: BEGIN TRANSACTION
+    activate db
+
+    db->>db: find video with lesson/subject relations
+    db->>db: verify is lesson video (not session video)
+    db->>db: verify ownership (subject.createdBy == currentUser)
+    db->>db: soft delete video (set deletedAt)
+    db->>db: COMMIT
+
+    db-->>service: success
+    deactivate db
+
+    service-->>controller: CustomApiResponse (OK)
+    deactivate service
+
+    controller-->>coach: HTTP 200 deleted
+    deactivate controller

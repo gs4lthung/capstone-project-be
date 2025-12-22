@@ -1,0 +1,59 @@
+sequenceDiagram
+    actor coach as Coach
+    participant client as Client
+    participant controller as LearnerVideoController
+    participant auth as Auth
+    participant role as Role
+    participant service as LearnerVideoService
+    participant aiService as AiVideoCompareService
+    participant notify as NotificationService
+    participant db as DataSource
+
+    Note over coach, db: Coach Triggers AI Video Comparison
+
+    coach->>client: 1. Select learner video and click "Compare with AI"
+    client->>controller: 2. POST /learner-videos/:id/compare
+    activate controller
+
+    controller->>auth: 3. validate JWT
+    activate auth
+    auth-->>controller: 4. valid
+    deactivate auth
+
+    controller->>role: 5. check COACH role
+    activate role
+    role-->>controller: 6. authorized
+    deactivate role
+
+    controller->>service: 7. triggerAiComparison(learnerVideoId)
+    activate service
+
+    service->>db: 8. fetch learner video and related coach video
+    activate db
+    db-->>service: 9. video entities
+    deactivate db
+
+    service->>aiService: 10. compare(learnerVideo, coachVideo)
+    activate aiService
+
+    aiService->>aiService: 11. build details array from comparison
+    aiService->>db: 12. save AI feedback, summary, notes, scores, key differences, recommendations
+    activate db
+    db-->>aiService: 13. saved AI comparison result
+    deactivate db
+
+    aiService->>notify: 14. send notification to learner
+    activate notify
+    notify-->>aiService: 15. notification sent
+    deactivate notify
+
+    aiService-->>service: 16. comparison result with feedback and notes
+    deactivate aiService
+
+    service-->>controller: 17. comparison result
+    deactivate service
+
+    controller-->>client: 18. HTTP 200 OK (comparison result)
+    deactivate controller
+
+    client-->>coach: 19. Show AI comparison result and notes

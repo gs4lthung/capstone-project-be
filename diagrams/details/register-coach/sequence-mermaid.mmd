@@ -1,0 +1,86 @@
+sequenceDiagram
+    actor coach as Coach
+    participant client as Client
+    participant controller as CoachController
+    participant service as CoachService
+    participant userRepo as UserRepository
+    participant credRepo as BaseCredentialRepository
+    participant bunny as BunnyService
+    participant jwt as JwtService
+    participant mail as MailService
+    participant twilio as TwilioService
+    participant notification as NotificationService
+
+    coach->>client: 1. Submit coach registration (fullName, email, phoneNumber, ...)
+    client->>controller: 2. POST /coaches/register (data, files)
+    activate controller
+
+    controller->>service: 3. registerCoach(data, files)
+    activate service
+
+    service->>userRepo: 4. Check email exists
+    activate userRepo
+    userRepo-->>service: User | null
+    deactivate userRepo
+
+    service->>userRepo: 5. Check phone exists
+    activate userRepo
+    userRepo-->>service: User | null
+    deactivate userRepo
+
+    alt Email or Phone exists
+        service-->>controller: BadRequestException
+        controller-->>client: HTTP 400
+    else Valid
+        service->>service: 6. Hash password (bcrypt)
+        
+        loop For each credential
+            service->>credRepo: 7. Find BaseCredential by ID
+            activate credRepo
+            credRepo-->>service: BaseCredential
+            deactivate credRepo
+            
+            service->>bunny: 8. uploadToStorage(file)
+            activate bunny
+            bunny-->>service: publicUrl
+            deactivate bunny
+        end
+        
+        service->>userRepo: 9. Create User + Coach + Credentials
+        activate userRepo
+        userRepo-->>service: User created
+        deactivate userRepo
+        
+        opt If email provided
+            service->>jwt: 10. signAsync(payload)
+            activate jwt
+            jwt-->>service: emailVerificationToken
+            deactivate jwt
+            
+            service->>mail: 11. sendMail(verificationLink)
+            activate mail
+            mail-->>service: Sent
+            deactivate mail
+        end
+        
+        opt If phone provided
+            service->>twilio: 12. sendSMS(phoneNumber)
+            activate twilio
+            twilio-->>service: SMS sent
+            deactivate twilio
+        end
+        
+        service->>notification: 13. sendNotificationToAdmins ("New coach registered")
+        activate notification
+        notification-->>service: Notification sent
+        deactivate notification
+        
+        service-->>controller: CustomApiResponse(201)
+    end
+
+    deactivate service
+
+    controller-->>client: 14. HTTP 201 Created
+    deactivate controller
+
+    client-->>coach: 15. Registration successful (Check email/phone for verification)

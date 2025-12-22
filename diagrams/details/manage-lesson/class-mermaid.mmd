@@ -1,0 +1,52 @@
+classDiagram
+    class LessonController {
+    }
+
+    class AuthGuard {
+    }
+
+    class RoleGuard {
+    }
+
+    class CreateLessonRequestDto {
+    }
+
+    class UpdateLessonDto {
+    }
+
+    class LessonService {
+    }
+
+    class DataSource {
+    }
+
+    class Lesson {
+    }
+
+    class Subject {
+    }
+
+    class User {
+    }
+
+    class Video {
+    }
+
+    class Quiz {
+    }
+
+    LessonController --> AuthGuard
+    LessonController --> RoleGuard
+    LessonController --> LessonService
+    LessonController ..> CreateLessonRequestDto
+    LessonController ..> UpdateLessonDto
+
+    LessonService --> DataSource
+    LessonService --> Lesson
+    LessonService --> Subject
+
+    Lesson --> Subject
+    Lesson --> Video
+    Lesson --> Quiz
+
+    Subject --> User

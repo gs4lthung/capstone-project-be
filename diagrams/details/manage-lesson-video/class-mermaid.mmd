@@ -1,0 +1,56 @@
+classDiagram
+    class VideoController {
+    }
+
+    class AuthGuard {
+    }
+
+    class RoleGuard {
+    }
+
+    class CreateVideoDto {
+    }
+
+    class UpdateVideoDto {
+    }
+
+    class VideoService {
+    }
+
+    class BunnyService {
+    }
+
+    class FFmpegService {
+    }
+
+    class DataSource {
+    }
+
+    class Video {
+    }
+
+    class Lesson {
+    }
+
+    class Session {
+    }
+
+    class User {
+    }
+
+    VideoController --> AuthGuard
+    VideoController --> RoleGuard
+    VideoController --> VideoService
+    VideoController ..> CreateVideoDto
+    VideoController ..> UpdateVideoDto
+
+    VideoService --> DataSource
+    VideoService --> BunnyService
+    VideoService --> FFmpegService
+    VideoService --> Video
+    VideoService --> Lesson
+    VideoService --> Session
+
+    Video --> Lesson
+    Video --> Session
+    Video --> User

@@ -1,0 +1,52 @@
+classDiagram
+    class CourtController {
+    }
+
+    class AuthGuard {
+    }
+
+    class RoleGuard {
+    }
+
+    class CreateCourtDto {
+    }
+
+    class UpdateCourtDto {
+    }
+
+    class CourtService {
+    }
+
+    class BunnyService {
+    }
+
+    class DataSource {
+    }
+
+    class Court {
+    }
+
+    class Province {
+    }
+
+    class District {
+    }
+
+    class Course {
+    }
+
+    CourtController --> AuthGuard
+    CourtController --> RoleGuard
+    CourtController --> CreateCourtDto
+    CourtController --> UpdateCourtDto
+    CourtController --> CourtService
+
+    CourtService --> DataSource
+    CourtService --> BunnyService
+    CourtService --> Court
+    CourtService --> Province
+    CourtService --> District
+
+    Court --> Province
+    Court --> District
+    Court --> Course

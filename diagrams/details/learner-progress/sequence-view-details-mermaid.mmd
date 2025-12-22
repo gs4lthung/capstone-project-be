@@ -1,0 +1,33 @@
+sequenceDiagram
+    actor Coach
+    participant controller as LearnerProgressController
+    participant guard as AuthGuard
+    participant service as LearnerProgressService
+    participant db as DataSource
+
+    Coach->>controller: GET /learner-progresses/coaches/details?userId&courseId
+    activate controller
+
+    controller->>guard: validate JWT
+    activate guard
+    guard-->>controller: valid
+    deactivate guard
+
+    controller->>service: getLearnerProgressDetails(userId, courseId)
+    activate service
+
+    service->>db: BEGIN TRANSACTION
+    activate db
+
+    db->>db: query learner progress with full details
+
+    Note right of db: Join: user, course, course.sessions,<br/>sessions.video, sessions.quiz,<br/>sessions.learnerVideos, quiz.questions,<br/>questions.options, course.createdBy<br/>Filter: userId, courseId
+
+    db-->>service: detailed progress
+    deactivate db
+
+    service-->>controller: LearnerProgress with relations
+    deactivate service
+
+    controller-->>Coach: HTTP 200 with detailed progress
+    deactivate controller

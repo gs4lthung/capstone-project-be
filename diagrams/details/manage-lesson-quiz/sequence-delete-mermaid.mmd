@@ -1,0 +1,50 @@
+sequenceDiagram
+    actor coach as Coach
+    participant client as Web Browser
+    participant controller as QuizController
+    participant service as QuizService
+    participant quizRepo as QuizRepository
+    participant db as PostgreSQL
+
+    Note over coach, db: Delete Quiz (Soft Delete)
+
+    coach->>client: 1. View quiz
+    client-->>coach: 2. Display quiz details
+
+    coach->>client: 3. Click "Delete Quiz"
+    client-->>coach: 4. Show confirmation dialog
+
+    coach->>client: 5. Confirm deletion
+    client->>controller: 6. DELETE /quizzes/:id
+    activate controller
+
+    controller->>service: 7. delete(id, userId)
+    activate service
+
+    service->>quizRepo: 8. findOne(id, relations: ['lesson.subject'])
+    activate quizRepo
+    quizRepo->>db: Query quiz
+    activate db
+    db-->>quizRepo: Quiz data
+    deactivate db
+    quizRepo-->>service: Quiz found
+    deactivate quizRepo
+
+    service->>service: 8. Verify ownership (quiz.lesson.subject.createdBy == currentUser)
+
+    service->>quizRepo: 9. Soft delete quiz (set deletedAt)
+    activate quizRepo
+    quizRepo->>db: UPDATE quizzes SET deleted_at = NOW() WHERE id = ?
+    activate db
+    db-->>quizRepo: Updated
+    deactivate db
+    quizRepo-->>service: Deletion success
+    deactivate quizRepo
+
+    service-->>controller: Success response
+    deactivate service
+
+    controller-->>client: 11. HTTP 200 OK
+    deactivate controller
+
+    client-->>coach: 12. "Quiz deleted successfully"

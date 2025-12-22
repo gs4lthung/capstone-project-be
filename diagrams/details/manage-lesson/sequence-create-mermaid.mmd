@@ -1,0 +1,43 @@
+sequenceDiagram
+    actor Coach
+    participant controller as LessonController
+    participant auth as AuthGuard
+    participant role as RoleGuard
+    participant service as LessonService
+    participant db as DataSource
+
+    Coach->>controller: POST /lessons/subjects/:id
+    activate controller
+
+    controller->>auth: validate JWT
+    activate auth
+    auth-->>controller: valid
+    deactivate auth
+
+    controller->>role: check COACH role
+    activate role
+    role-->>controller: authorized
+    deactivate role
+
+    controller->>service: create(subjectId, data)
+    activate service
+
+    service->>db: BEGIN TRANSACTION
+    activate db
+
+    db->>db: find subject with lessons
+    db->>db: verify ownership (subject.createdBy == currentUser)
+
+    Note right of db: lessonNumber = subject.lessons.length + 1
+
+    db->>db: create lesson with lessonNumber
+    db->>db: COMMIT
+
+    db-->>service: success
+    deactivate db
+
+    service-->>controller: CustomApiResponse (CREATED)
+    deactivate service
+
+    controller-->>Coach: HTTP 201 created
+    deactivate controller

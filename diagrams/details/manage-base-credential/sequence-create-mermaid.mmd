@@ -1,0 +1,42 @@
+sequenceDiagram
+    actor Admin
+    participant controller as BaseCredentialController
+    participant service as BaseCredentialService
+    participant bunny as BunnyService
+    participant db as DataSource
+
+    Admin->>controller: POST /base-credentials (multipart/form-data)
+    activate controller
+
+    Note right of controller: DTO: name, description, type<br/>File: base_credential_image
+
+    controller->>service: create(CreateBaseCredentialDto, file)
+    activate service
+
+    service->>db: BEGIN TRANSACTION
+    activate db
+
+    alt file provided
+        service->>bunny: uploadToStorage(file)
+        activate bunny
+        
+        Note right of bunny: Upload credential image<br/>Generate random ID<br/>Type: base_credential_image
+        
+        bunny-->>service: publicUrl
+        deactivate bunny
+        
+        db->>db: assign publicUrl to DTO
+    end
+
+    db->>db: create base credential entity
+    db->>db: save base credential
+    db->>db: COMMIT
+
+    db-->>service: success
+    deactivate db
+
+    service-->>controller: CustomApiResponse (201)
+    deactivate service
+
+    controller-->>Admin: HTTP 201 Created
+    deactivate controller

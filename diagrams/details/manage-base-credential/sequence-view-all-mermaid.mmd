@@ -1,0 +1,22 @@
+sequenceDiagram
+    actor User
+    participant controller as BaseCredentialController
+    participant service as BaseCredentialService
+    participant db as DataSource
+
+    User->>controller: GET /base-credentials
+    activate controller
+
+    controller->>service: findAll(pagination, sort, filter)
+    activate service
+
+    service->>db: query base credentials with pagination
+    activate db
+    db-->>service: paginated credentials
+    deactivate db
+
+    service-->>controller: PaginateObject~BaseCredential~
+    deactivate service
+
+    controller-->>User: HTTP 200 with credentials
+    deactivate controller

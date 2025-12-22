@@ -1,0 +1,28 @@
+sequenceDiagram
+    actor User
+    participant controller as LearnerProgressController
+    participant guard as AuthGuard
+    participant service as LearnerProgressService
+    participant db as DataSource
+
+    User->>controller: GET /learner-progresses
+    activate controller
+
+    controller->>guard: validate JWT
+    activate guard
+    guard-->>controller: valid
+    deactivate guard
+
+    controller->>service: findAll(pagination, sort, filter)
+    activate service
+
+    service->>db: query learner progresses with pagination
+    activate db
+    db-->>service: paginated progresses
+    deactivate db
+
+    service-->>controller: PaginateObject~LearnerProgress~
+    deactivate service
+
+    controller-->>User: HTTP 200 with progresses
+    deactivate controller

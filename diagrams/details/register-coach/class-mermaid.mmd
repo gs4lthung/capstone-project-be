@@ -1,0 +1,68 @@
+classDiagram
+    class CoachController {
+    }
+
+    class CoachService {
+    }
+
+    class User {
+    }
+
+    class Coach {
+    }
+
+    class Credential {
+    }
+
+    class Role {
+    }
+
+    class BaseCredential {
+    }
+
+    class JwtService {
+    }
+
+    class MailService {
+    }
+
+    class TwilioService {
+    }
+
+    class BunnyService {
+    }
+
+    class NotificationService {
+    }
+
+    class ConfigService {
+    }
+
+    class RegisterCoachDto {
+    }
+    
+    class CreateCoachDto {
+    }
+
+    CoachController -- RegisterCoachDto
+    CoachController -- CoachService
+    
+    CoachService -- User
+    CoachService -- Coach
+    CoachService -- Credential
+    CoachService -- JwtService
+    CoachService -- MailService
+    CoachService -- TwilioService
+    CoachService -- BunnyService
+    CoachService -- NotificationService
+    CoachService -- ConfigService
+    
+    User -- Role
+    User -- Coach
+    
+    Coach -- Credential
+    
+    Credential -- BaseCredential
+    
+    RegisterCoachDto -- CreateCoachDto
+    CreateCoachDto -- Credential

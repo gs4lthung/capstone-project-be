@@ -39,11 +39,11 @@ export class Session {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'varchar', length: 100, nullable: true })
+  @Column({ type: 'varchar', length: 200, nullable: true })
   @IsOptional()
   @IsString()
   @IsNotEmpty()
-  @MaxLength(100)
+  @MaxLength(200)
   name?: string;
 
   @Column({ type: 'text', nullable: true })

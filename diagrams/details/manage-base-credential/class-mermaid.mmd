@@ -1,0 +1,34 @@
+classDiagram
+    class BaseCredentialController {
+    }
+
+    class CreateBaseCredentialDto {
+    }
+
+    class UpdateBaseCredentialDto {
+    }
+
+    class BaseCredentialService {
+    }
+
+    class BunnyService {
+    }
+
+    class DataSource {
+    }
+
+    class BaseCredential {
+    }
+
+    class Credential {
+    }
+
+    BaseCredentialController --> CreateBaseCredentialDto
+    BaseCredentialController --> UpdateBaseCredentialDto
+    BaseCredentialController --> BaseCredentialService
+
+    BaseCredentialService --> DataSource
+    BaseCredentialService --> BunnyService
+    BaseCredentialService --> BaseCredential
+
+    BaseCredential --> Credential

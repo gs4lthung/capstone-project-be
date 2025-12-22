@@ -1,0 +1,28 @@
+sequenceDiagram
+    actor Coach
+    participant controller as LessonController
+    participant auth as AuthGuard
+    participant service as LessonService
+    participant db as DataSource
+
+    Coach->>controller: GET /lessons/subjects/:id
+    activate controller
+
+    controller->>auth: validate JWT
+    activate auth
+    auth-->>controller: valid
+    deactivate auth
+
+    controller->>service: findAllBySubjectId(options, id)
+    activate service
+
+    service->>db: query lessons by subject
+    activate db
+    db-->>service: lessons list
+    deactivate db
+
+    service-->>controller: PaginateObject~Lesson~
+    deactivate service
+
+    controller-->>Coach: HTTP 200 with lessons
+    deactivate controller

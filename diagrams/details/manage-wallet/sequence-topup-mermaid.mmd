@@ -1,0 +1,26 @@
+sequenceDiagram
+    participant sys as System
+    participant service as WalletService
+    participant db as DataSource
+
+    sys->>service: handleWalletTopUp(userId, amount)
+    activate service
+
+    service->>db: BEGIN TRANSACTION
+    activate db
+
+    db->>db: find wallet by userId
+    db->>db: verify wallet exists
+    db->>db: calculate new currentBalance (current + amount)
+    db->>db: calculate new totalIncome (total + amount)
+    db->>db: update wallet balances
+    db->>db: create WalletTransaction (CREDIT)
+    db->>db: COMMIT
+
+    Note right of db: Transaction flow:<br/>1. Find wallet by userId<br/>2. Add: currentBalance += amount<br/>3. Add: totalIncome += amount<br/>4. Create CREDIT transaction
+
+    db-->>service: success
+    deactivate db
+
+    service-->>sys: void (success)
+    deactivate service

@@ -1,0 +1,61 @@
+sequenceDiagram
+    actor Admin
+    participant controller as CourtController
+    participant auth as AuthGuard
+    participant role as RoleGuard
+    participant service as CourtService
+    participant bunny as BunnyService
+    participant db as DataSource
+
+    Admin->>controller: POST /courts (multipart/form-data)
+    activate controller
+
+    Note right of controller: DTO: name, phoneNumber, pricePerHour,<br/>address, latitude, longitude,<br/>provinceId, districtId<br/>File: court_image (optional)
+
+    controller->>auth: validate JWT
+    activate auth
+    auth-->>controller: valid
+    deactivate auth
+
+    controller->>role: verify ADMIN role
+    activate role
+    role-->>controller: authorized
+    deactivate role
+
+    controller->>service: create(CreateCourtDto, file)
+    activate service
+
+    service->>db: BEGIN TRANSACTION
+    activate db
+
+    db->>db: find province by provinceId
+    db->>db: verify province exists
+
+    db->>db: find district by districtId
+    db->>db: verify district exists
+
+    alt file provided
+        service->>bunny: uploadToStorage(file)
+        activate bunny
+        
+        Note right of bunny: Upload court image<br/>Generate random ID<br/>Type: court_image
+        
+        bunny-->>service: publicUrl
+        deactivate bunny
+        
+        db->>db: assign publicUrl to DTO
+    end
+
+    db->>db: create court entity
+    db->>db: assign province, district
+    db->>db: save court
+    db->>db: COMMIT
+
+    db-->>service: success
+    deactivate db
+
+    service-->>controller: CustomApiResponse (201)
+    deactivate service
+
+    controller-->>Admin: HTTP 201 Created
+    deactivate controller

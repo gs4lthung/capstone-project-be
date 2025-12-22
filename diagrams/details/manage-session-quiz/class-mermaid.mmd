@@ -1,0 +1,76 @@
+classDiagram
+    class QuizController {
+    }
+
+    class QuizService {
+    }
+
+    class Quiz {
+    }
+
+    class Question {
+    }
+
+    class QuestionOption {
+    }
+
+    class Session {
+    }
+
+    class Course {
+    }
+
+    class User {
+    }
+
+    class UpdateQuizDto {
+    }
+
+    class UpdateQuestionDto {
+    }
+
+    class UpdateQuestionOptionDto {
+    }
+
+    class Role {
+        <<enumeration>>
+        LEARNER
+        COACH
+        ADMIN
+        STAFF
+    }
+
+    class SessionStatus {
+        <<enumeration>>
+        SCHEDULED
+        ONGOING
+        COMPLETED
+        CANCELLED
+    }
+
+    class CourseStatus {
+        <<enumeration>>
+        PENDING_APPROVAL
+        APPROVED
+        REJECTED
+        CANCELLED
+        COMPLETED
+        FULL
+        READY_OPENED
+        ON_GOING
+    }
+
+    QuizController --> QuizService : uses
+    QuizService --> Quiz : manages
+    QuizService --> Session : validates
+
+    Quiz "1" --> "*" Question : contains
+    Question "1" --> "*" QuestionOption : has
+    Quiz "*" --> "1" User : createdBy
+    Session "1" --> "1" Quiz : has
+    Course "1" --> "*" Session : contains
+    Course "*" --> "1" User : coach
+
+    QuizController ..> UpdateQuizDto : uses
+    UpdateQuizDto "1" --> "*" UpdateQuestionDto : contains
+    UpdateQuestionDto "1" --> "*" UpdateQuestionOptionDto : has

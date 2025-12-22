@@ -1,0 +1,66 @@
+sequenceDiagram
+    actor coach as Coach
+    participant client as Client
+    participant controller as QuizController
+    participant service as QuizService
+    participant lessonRepo as LessonRepository
+    participant quizRepo as QuizRepository
+    participant db as PostgreSQL
+
+    Note over coach, db: Create Quiz for Lesson
+
+    coach->>client: 1. Navigate to lesson
+    client-->>coach: 2. Display lesson details
+
+    coach->>client: 3. Click "Add Quiz"
+    client-->>coach: 4. Show quiz creation form
+
+    coach->>client: 5. Fill in quiz details
+
+    coach->>client: 6. Add multiple questions
+    client-->>coach: 7. Display question forms
+
+    coach->>client: 8. For each question, add options
+    client-->>coach: 9. Display option inputs
+
+    coach->>client: 10. Mark correct answer
+
+    coach->>client: 11. Submit quiz
+    client->>controller: 12. POST /lessons/:lessonId/quiz
+    activate controller
+
+    controller->>controller: 13. Validate DTO
+
+    controller->>service: 14. create(lessonId, data, userId)
+    activate service
+
+    service->>lessonRepo: 15. findOne(lessonId, relations: ['subject', 'quiz'])
+    activate lessonRepo
+    lessonRepo->>db: Query lesson
+    activate db
+    db-->>lessonRepo: Lesson data
+    deactivate db
+    lessonRepo-->>service: Lesson entity
+    deactivate lessonRepo
+
+    service->>service: 10. Verify ownership (lesson.subject.createdBy == currentUser)
+
+    service->>db: 11. Start transaction
+    activate db
+
+    service->>quizRepo: 18. create(quiz entity)
+    activate quizRepo
+    quizRepo->>db: Insert quiz with questions & options (cascade)
+    db-->>quizRepo: Created
+    deactivate quizRepo
+
+    service->>db: 19. Commit transaction
+    deactivate db
+
+    service-->>controller: Success response with quiz
+    deactivate service
+
+    controller-->>client: 20. HTTP 201 Created
+    deactivate controller
+
+    client-->>coach: 21. "Quiz created successfully"
