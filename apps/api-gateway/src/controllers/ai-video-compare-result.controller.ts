@@ -6,6 +6,7 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
+  Put,
   Req,
   BadRequestException,
   Post,
@@ -65,7 +66,30 @@ export class AiVideoCompareResultController {
     return this.aiService.findBySessionIdAndUserId(sessionId, userId);
   }
 
-  @Post(':learnerVideoId/save')
+  @Put(':id')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiOperation({
+    tags: ['AI Video Compare Results'],
+    summary: 'Update AI video comparison result',
+    description:
+      'Update the AI analysis result for a learner video with optional coach note. videoId is optional - if not provided, will use video from learnerVideo session.',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'AI comparison result updated successfully',
+  })
+  @UseGuards(AuthGuard, RoleGuard)
+  @CheckRoles(UserRole.COACH)
+  async updateResult(
+    @Param('id') id: number,
+    @Body() aiFeedback: SaveAiFeedbackDto,
+  ) {
+    const res = await this.aiService.update(id, aiFeedback);
+    return res;
+  }
+
+  @Post(':id/save')
   @HttpCode(HttpStatus.CREATED)
   @ApiBearerAuth()
   @ApiOperation({
@@ -81,11 +105,10 @@ export class AiVideoCompareResultController {
   @UseGuards(AuthGuard, RoleGuard)
   @CheckRoles(UserRole.COACH)
   async saveResult(
-    @Param('learnerVideoId') learnerVideoId: number,
-    @Body('videoId') videoId: number | undefined,
+    @Param('id') id: number,
     @Body() aiFeedback: SaveAiFeedbackDto,
   ) {
-    const res = await this.aiService.save(learnerVideoId, videoId, aiFeedback);
+    const res = await this.aiService.save(id, aiFeedback);
     return res;
   }
 

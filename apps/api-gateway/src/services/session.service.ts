@@ -37,6 +37,7 @@ import { EnrollmentStatus } from '@app/shared/enums/enrollment.enum';
 import { Enrollment } from '@app/database/entities/enrollment.entity';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { AttendanceStatus } from '@app/shared/enums/attendance.enum';
+import { LearnerProgressStatus } from '@app/shared/enums/learner.enum';
 
 @Injectable({ scope: Scope.REQUEST })
 export class SessionService extends BaseTypeOrmService<Session> {
@@ -329,20 +330,10 @@ export class SessionService extends BaseTypeOrmService<Session> {
               relations: ['course', 'user'],
             });
 
-          console.log('[CompleteSession] LearnerProgress query:', {
-            courseId: course.id,
-            userId: attendanceDto.userId,
-            found: !!learnerProgress,
-            currentSessionsCompleted: learnerProgress?.sessionsCompleted,
-          });
-
           if (learnerProgress) {
             learnerProgress.sessionsCompleted += 1;
             learnerProgress.canGenerateAIAnalysis = true;
-            console.log(
-              '[CompleteSession] Updating sessionsCompleted to:',
-              learnerProgress.sessionsCompleted,
-            );
+            learnerProgress.status=learnerProgress.sessionsCompleted===course.totalSessions? LearnerProgressStatus.COMPLETED : LearnerProgressStatus.IN_PROGRESS;
             await manager.getRepository(LearnerProgress).save(learnerProgress);
           } else {
             console.warn(

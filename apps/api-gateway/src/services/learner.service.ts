@@ -71,7 +71,7 @@ export class LearnerService {
           learnerId: this.request.user.id,
         })
         .andWhere('course.status IN (:...statuses)', {
-          statuses: [CourseStatus.ON_GOING],
+          statuses: [CourseStatus.ON_GOING,CourseStatus.COMPLETED],
         })
         .getMany();
       return learnerProgresses;
