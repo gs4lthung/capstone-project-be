@@ -180,6 +180,7 @@ Hãy trả lời CHỈ bằng một đối tượng JSON bằng tiếng Việt t
                   aspect: kd.aspect,
                   impact: kd.impact,
                   learnerTechnique: kd.learnerTechnique,
+                  
                 }));
               }
               if (

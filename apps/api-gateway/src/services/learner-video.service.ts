@@ -66,6 +66,38 @@ export class LearnerVideoService {
       return await manager.getRepository(LearnerVideo).save(learnerVideo);
     });
   }
+  async update(id:number,file:Express.Multer.File){
+    if(!file)
+      throw new BadRequestException('Không tìm thấy video');
+    
+    const learnerVideo=await this.learnerVideoRepo.findOne({where:{id},relations:['aiVideoComparisonResults'] })
+    if(!learnerVideo)
+      throw new BadRequestException('Không tìm thấy video');
+    
+    if(learnerVideo.aiVideoComparisonResults.length>0)
+      throw new BadRequestException('Video đã được so sánh');
+
+    const thumbnailPath = await this.ffmpegService.createVideoThumbnailVer2(
+      file.path,
+      FileUtils.excludeFileFromPath(file.path),
+    );
+
+    const thumbnailPublicUrl = await this.bunnyService.uploadToStorage({
+      id: Date.now(),
+      type: 'video_thumbnail',
+      filePath: thumbnailPath,
+    });
+
+    const videoPublicUrl = await this.bunnyService.uploadToStorage({
+      id: Date.now(),
+      type: 'video',
+      filePath: file.path,
+    });
+
+    learnerVideo.publicUrl=videoPublicUrl;
+    learnerVideo.thumbnailUrl=thumbnailPublicUrl;
+    return await this.learnerVideoRepo.save(learnerVideo)  
+  }
 
   async findAll(filter: {
     lessonId?: number;
@@ -126,7 +158,6 @@ export class LearnerVideoService {
       if (!learnerVideo)
         throw new BadRequestException('LearnerVideo not found');
 
-      console.log('TEST', learnerVideo);
 
       if (!learnerVideo.session?.course) {
         throw new BadRequestException(
