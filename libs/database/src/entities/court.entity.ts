@@ -43,7 +43,6 @@ export class Court {
     unique: true,
   })
   @IsOptional()
-  @IsPhoneNumber('VN')
   phoneNumber?: string;
 
   @Column({
