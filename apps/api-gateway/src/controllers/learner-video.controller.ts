@@ -10,6 +10,7 @@ import {
   HttpCode,
   Get,
   Query,
+  Put,
   Param,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -55,6 +56,30 @@ export class LearnerVideoController {
       message: 'LEARNER_VIDEO.UPLOAD_SUCCESS',
       data: result,
     };
+  }
+
+  @Put(':id')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiOperation({
+    tags: ['Learner Videos'],
+    summary: 'Update a learner video',
+    description: 'Update a video for learner practice',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Learner video updated successfully',
+  })
+  @UseGuards(AuthGuard, RoleGuard)
+  @CheckRoles(UserRole.LEARNER)
+  @UseInterceptors(FileInterceptor('video'))
+  async updateLearnerVideo(
+    @Param('id') id: number,
+    @UploadedFile() videoFile: Express.Multer.File,
+    @Req() req: CustomApiRequest,
+  ) {
+    const result = await this.learnerVideoService.update(id, videoFile);
+    return result
   }
 
   @Get('user/:userId/coach-video/:coachVideoId')

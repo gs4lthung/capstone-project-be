@@ -51,6 +51,9 @@ export class LearnerService {
         .where('user.id = :learnerId', {
           learnerId: this.request.user.id,
         })
+        .andWhere('aiVideoComparisonResult.status = :status', {
+          status: 'USED',
+        })
         .getCount();
       return total;
     });
@@ -71,7 +74,7 @@ export class LearnerService {
           learnerId: this.request.user.id,
         })
         .andWhere('course.status IN (:...statuses)', {
-          statuses: [CourseStatus.ON_GOING],
+          statuses: [CourseStatus.ON_GOING,CourseStatus.COMPLETED],
         })
         .getMany();
       return learnerProgresses;
