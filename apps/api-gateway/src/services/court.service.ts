@@ -116,13 +116,6 @@ export class CourtService extends BaseTypeOrmService<Court> {
       }
 
       if (data.phoneNumber && data.phoneNumber !== existingCourt.phoneNumber) {
-        const existingByPhone = await courtRepository.findOne({
-          where: { phoneNumber: data.phoneNumber },
-          withDeleted: false,
-        });
-        if (existingByPhone && existingByPhone.id !== existingCourt.id) {
-          throw new BadRequestException('Số điện thoại đã được sử dụng');
-        }
         existingCourt.phoneNumber = data.phoneNumber;
       }
 
