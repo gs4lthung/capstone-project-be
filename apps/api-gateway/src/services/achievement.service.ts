@@ -138,14 +138,14 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
       '🔷 Icon file:',
       icon
         ? {
-            filename: icon.filename,
-            originalname: icon.originalname,
-            mimetype: icon.mimetype,
-            size: icon.size,
-            path: icon.path,
-            hasBuffer: !!icon.buffer, // Check có buffer không
-            bufferLength: icon.buffer?.length || 0, // Độ dài buffer
-          }
+          filename: icon.filename,
+          originalname: icon.originalname,
+          mimetype: icon.mimetype,
+          size: icon.size,
+          path: icon.path,
+          hasBuffer: !!icon.buffer, // Check có buffer không
+          bufferLength: icon.buffer?.length || 0, // Độ dài buffer
+        }
         : 'No icon',
     );
 
@@ -380,6 +380,11 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
    * - achievementProgresses: Tiến độ của users (nếu cần)
    */
   async findOne(id: number): Promise<Achievement> {
+    // Validate id is a valid number
+    if (!id || isNaN(Number(id)) || id <= 0) {
+      throw new BadRequestException('Invalid achievement ID');
+    }
+
     const achievement = await this.achievementRepository.findOne({
       where: { id },
       relations: ['createdBy'], // Load thông tin user tạo achievement
@@ -950,7 +955,7 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
 
       // Lấy tất cả progress đang trong quá trình hoàn thành
       const progressRecords = await this.achievementProgressRepository.find({
-        where: { 
+        where: {
           user: { id: userId },
           currentProgress: Between(1, 99) // Chỉ lấy những cái đang in-progress
         },
