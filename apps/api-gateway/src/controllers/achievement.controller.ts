@@ -6,6 +6,7 @@ import {
   HttpCode,
   HttpStatus,
   Param,
+  ParseIntPipe,
   Patch,
   Post,
   Put,
@@ -97,7 +98,7 @@ export class AchievementController {
    * → Inject AchievementService để gọi business logic
    * → NestJS tự động resolve dependency
    */
-  constructor(private readonly achievementService: AchievementService) {}
+  constructor(private readonly achievementService: AchievementService) { }
 
   // ============================================
   // CREATE ENDPOINTS (3 types)
@@ -855,7 +856,7 @@ export class AchievementController {
    * ⚠️ AUTHENTICATION REQUIRED
    * → User phải login (có JWT token)
    */
-  async findOne(@Param('id') id: number): Promise<Achievement> {
+  async findOne(@Param('id', ParseIntPipe) id: number): Promise<Achievement> {
     return this.achievementService.findOne(id);
   }
 
@@ -929,7 +930,7 @@ export class AchievementController {
   @UseGuards(AuthGuard, RoleGuard)
   @UseInterceptors(FileInterceptor('icon'))
   async updateEventCount(
-    @Param('id') id: number,
+    @Param('id', ParseIntPipe) id: number,
     @Body() data: UpdateEventCountAchievementDto,
     @UploadedFile() icon: Express.Multer.File,
   ): Promise<CustomApiResponse<void>> {
@@ -982,7 +983,7 @@ export class AchievementController {
   @UseGuards(AuthGuard, RoleGuard)
   @UseInterceptors(FileInterceptor('icon'))
   async updateStreak(
-    @Param('id') id: number,
+    @Param('id', ParseIntPipe) id: number,
     @Body() data: UpdateStreakAchievementDto,
     @UploadedFile() icon: Express.Multer.File,
   ): Promise<CustomApiResponse<void>> {
@@ -1034,7 +1035,7 @@ export class AchievementController {
   @UseGuards(AuthGuard, RoleGuard)
   @UseInterceptors(FileInterceptor('icon'))
   async updatePropertyCheck(
-    @Param('id') id: number,
+    @Param('id', ParseIntPipe) id: number,
     @Body() data: UpdatePropertyCheckAchievementDto,
     @UploadedFile() icon: Express.Multer.File,
   ): Promise<CustomApiResponse<void>> {
@@ -1084,7 +1085,7 @@ export class AchievementController {
   })
   @CheckRoles(UserRole.ADMIN)
   @UseGuards(AuthGuard, RoleGuard)
-  async delete(@Param('id') id: number): Promise<CustomApiResponse<void>> {
+  async delete(@Param('id', ParseIntPipe) id: number): Promise<CustomApiResponse<void>> {
     return this.achievementService.delete(id);
   }
 
@@ -1122,7 +1123,7 @@ export class AchievementController {
   })
   @CheckRoles(UserRole.ADMIN)
   @UseGuards(AuthGuard, RoleGuard)
-  async activate(@Param('id') id: number): Promise<CustomApiResponse<void>> {
+  async activate(@Param('id', ParseIntPipe) id: number): Promise<CustomApiResponse<void>> {
     return this.achievementService.activate(id);
   }
 
@@ -1161,7 +1162,7 @@ export class AchievementController {
   })
   @CheckRoles(UserRole.ADMIN)
   @UseGuards(AuthGuard, RoleGuard)
-  async deactivate(@Param('id') id: number): Promise<CustomApiResponse<void>> {
+  async deactivate(@Param('id', ParseIntPipe) id: number): Promise<CustomApiResponse<void>> {
     return this.achievementService.deactivate(id);
   }
 
@@ -1189,7 +1190,7 @@ export class AchievementController {
   })
   @UseGuards(AuthGuard)
   async getMyProgressByAchievementId(
-    @Param('id') id: number,
+    @Param('id', ParseIntPipe) id: number,
   ): Promise<UserAchievementProgressDto> {
     return this.achievementService.getMyProgressByAchievementId(id);
   }
