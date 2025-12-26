@@ -21,14 +21,14 @@ import {
 } from 'class-validator';
 import { User } from './user.entity';
 
-enum AchievementType {
+export enum AchievementType {
   EVENT_COUNT = 'EVENT_COUNT',
   PROPERTY_CHECK = 'PROPERTY_CHECK',
   STREAK = 'STREAK',
 }
 
 @Entity('achievements')
-@TableInheritance({ column: { type: 'enum', enum: AchievementType } })
+@TableInheritance({ column: { type: 'enum', enum: AchievementType, name: 'type' } })
 export class Achievement {
   @PrimaryGeneratedColumn()
   id: number;
@@ -52,6 +52,14 @@ export class Achievement {
 
   @Column({ name: 'is_active', type: 'boolean', default: true })
   isActive: boolean;
+
+  @Column({ 
+    type: 'enum', 
+    enum: AchievementType,
+    name: 'type',
+    nullable: false
+  })
+  type: AchievementType;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
