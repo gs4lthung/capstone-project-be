@@ -6,7 +6,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In, Not, IsNull, Between } from 'typeorm';
+import { Repository } from 'typeorm';
 import { REQUEST } from '@nestjs/core';
 import { CustomApiRequest } from '@app/shared/customs/custom-api-request';
 import { CustomApiResponse } from '@app/shared/customs/custom-api-response';
@@ -15,7 +15,7 @@ import { FindOptions } from '@app/shared/interfaces/find-options.interface';
 import { BunnyService } from '@app/bunny';
 
 // Import Entities
-import { Achievement, AchievementType } from '@app/database/entities/achievement.entity';
+import { Achievement } from '@app/database/entities/achievement.entity';
 import { EventCountAchievement } from '@app/database/entities/event-count-achievement.entity';
 import { StreakAchievement } from '@app/database/entities/streak-achievement.entity';
 import { PropertyCheckAchievement } from '@app/database/entities/property-check-achievement.entity';
@@ -138,14 +138,14 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
       '🔷 Icon file:',
       icon
         ? {
-          filename: icon.filename,
-          originalname: icon.originalname,
-          mimetype: icon.mimetype,
-          size: icon.size,
-          path: icon.path,
-          hasBuffer: !!icon.buffer, // Check có buffer không
-          bufferLength: icon.buffer?.length || 0, // Độ dài buffer
-        }
+            filename: icon.filename,
+            originalname: icon.originalname,
+            mimetype: icon.mimetype,
+            size: icon.size,
+            path: icon.path,
+            hasBuffer: !!icon.buffer, // Check có buffer không
+            bufferLength: icon.buffer?.length || 0, // Độ dài buffer
+          }
         : 'No icon',
     );
 
@@ -380,11 +380,6 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
    * - achievementProgresses: Tiến độ của users (nếu cần)
    */
   async findOne(id: number): Promise<Achievement> {
-    // Validate id is a valid number
-    if (!id || isNaN(Number(id)) || id <= 0) {
-      throw new BadRequestException('Invalid achievement ID');
-    }
-
     const achievement = await this.achievementRepository.findOne({
       where: { id },
       relations: ['createdBy'], // Load thông tin user tạo achievement
@@ -926,24 +921,6 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
    * Get current user's achievement statistics
    * @returns UserAchievementStatsDto
    */
-  /**
-   * Get the target value from an achievement based on its type
-   * @param achievement - The achievement entity
-   * @returns The target value as a number
-   */
-  private getTargetValue(achievement: Achievement): number {
-    switch (achievement.type) {
-      case AchievementType.EVENT_COUNT:
-        return (achievement as EventCountAchievement).targetCount ?? 0;
-      case AchievementType.STREAK:
-        return (achievement as StreakAchievement).targetStreakLength ?? 0;
-      case AchievementType.PROPERTY_CHECK:
-        return Number((achievement as PropertyCheckAchievement).targetValue) || 0;
-      default:
-        return 0;
-    }
-  }
-
   async getMyStats(): Promise<any> {
     try {
       const userId = Number(this.request.user.id);
@@ -953,27 +930,14 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
         where: { user: { id: userId } },
       });
 
-      // Lấy tất cả progress đang trong quá trình hoàn thành
+      // Đếm tổng achievements đang in progress (progress > 0 nhưng < 100)
       const progressRecords = await this.achievementProgressRepository.find({
-        where: {
-          user: { id: userId },
-          currentProgress: Between(1, 99) // Chỉ lấy những cái đang in-progress
-        },
-        relations: ['achievement'],
-        order: { updatedAt: 'DESC' },
+        where: { user: { id: userId } },
       });
 
-      // Lọc và map dữ liệu progress
-      const inProgressAchievements = progressRecords.map(record => ({
-        id: record.achievement.id,
-        name: record.achievement.name,
-        description: record.achievement.description,
-        iconUrl: record.achievement.iconUrl,
-        currentProgress: record.currentProgress,
-        type: record.achievement.type,
-        targetValue: this.getTargetValue(record.achievement), // Helper method để lấy target value
-        lastUpdated: record.updatedAt
-      }));
+      const totalInProgress = progressRecords.filter(
+        (p) => p.currentProgress > 0 && p.currentProgress < 100,
+      ).length;
 
       // Tính completion rate
       const totalActiveAchievements = await this.achievementRepository.count({
@@ -994,19 +958,18 @@ export class AchievementService extends BaseTypeOrmService<Achievement> {
 
       const result: any = {
         totalEarned,
-        totalInProgress: inProgressAchievements.length,
-        inProgressAchievements, // Thêm danh sách chi tiết
+        totalInProgress,
         completionRate,
       };
 
       if (lastEarnedRecord) {
         result.lastEarned = {
-          id: lastEarnedRecord.achievement.id,
           name: lastEarnedRecord.achievement.name,
-          iconUrl: lastEarnedRecord.achievement.iconUrl,
           earnedAt: lastEarnedRecord.earnedAt,
         };
       }
+
+      return result;
     } catch (error) {
       throw new BadRequestException(error);
     }
