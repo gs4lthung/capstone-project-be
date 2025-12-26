@@ -154,25 +154,79 @@ export class AiVideoCompareResultService {
     aiFeedback: SaveAiFeedbackDto,
   ) {
     return await this.datasource.transaction(async (manager) => {
-     const aiResultRecord = await manager.getRepository(AiVideoComparisonResult).findOne({ where: { id },relations: ['learnerVideo','learnerVideo.user'] });  
+     const aiResultRecord = await manager.getRepository(AiVideoComparisonResult).findOne({ 
+        where: { id },
+        relations: ['learnerVideo','learnerVideo.user', 'learnerVideo.session', 'learnerVideo.session.course'] 
+      });  
      if (!aiResultRecord) {
        throw new BadRequestException('AiVideoComparisonResult not found');
      }
       aiResultRecord.status = 'USED';
       aiResultRecord.coachNote=aiFeedback.coachNote;
 
-      const learnerProgress=await manager.getRepository(LearnerProgress).findOne({ where: { user: aiResultRecord.learnerVideo.user } });
+      const learnerProgress = await manager.getRepository(LearnerProgress).findOne({ 
+        where: { 
+          user: { id: aiResultRecord.learnerVideo.user.id },
+          course: { id: aiResultRecord.learnerVideo.session.course.id }
+        } 
+      });
+
       if(!learnerProgress){
         throw new BadRequestException('LearnerProgress not found');
       }
 
-      const previousAiResultsCount=await manager.getRepository(AiVideoComparisonResult).count({ where: { learnerVideo: aiResultRecord.learnerVideo,status:'USED' } });
-      const previousAvg=learnerProgress.avgAiAnalysisScore||0
-        const newAvg =
-          (previousAvg * previousAiResultsCount + aiFeedback.overallScoreForPlayer2) /
-          (previousAiResultsCount + 1);
+      const existingAiResults = await manager.getRepository(AiVideoComparisonResult).find({
+        where: {
+          learnerVideo: {
+            user: { id: aiResultRecord.learnerVideo.user.id },
+            session: { course: { id: aiResultRecord.learnerVideo.session.course.id } }
+          },
+          status: 'USED'
+        },
+        select: ['learnerScore']
+      });
 
-      learnerProgress.avgAiAnalysisScore=newAvg;
+      console.log('existingAiResults count:', existingAiResults.length);
+      
+      let incomingScore = 0;
+      if (aiFeedback.overallScoreForPlayer2 !== null && aiFeedback.overallScoreForPlayer2 !== undefined) {
+         incomingScore = Number(aiFeedback.overallScoreForPlayer2);
+      }
+      
+      if (isNaN(incomingScore)) {
+        console.warn('incomingScore is NaN. Defaulting to 0.');
+        incomingScore = 0;
+      }
+      
+      console.log('Final incomingScore:', incomingScore);
+      
+      // Update the record's score
+      aiResultRecord.learnerScore = incomingScore;
+
+      // Calculate total from existing used records
+      let totalScore = incomingScore;
+      let count = 1; // Start with 1 for the current video
+
+      for (const result of existingAiResults) {
+        const val = Number(result.learnerScore);
+        if (!isNaN(val)) {
+          totalScore += val;
+          count++;
+        }
+      }
+      
+      // Calculate average
+      const newAverage = totalScore / count;
+      
+      console.log(`Calculation: ${totalScore} / ${count} = ${newAverage}`);
+
+      if (!isNaN(newAverage)) {
+         learnerProgress.avgAiAnalysisScore = Math.round(newAverage);
+      } else {
+         console.warn('Calculated average is NaN, defaulting avgAiAnalysisScore to 0');
+         learnerProgress.avgAiAnalysisScore = 0;
+      }
+
       await manager.getRepository(LearnerProgress).save(learnerProgress);
 
       await this.notificationService.sendNotification({
