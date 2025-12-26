@@ -62,6 +62,7 @@ export class AiVideoCompareResultService {
           session: { id: sessionId },
           user: { id: userId },
         },
+        status:'USED' 
       },
       relations: [
         'video',
@@ -161,6 +162,7 @@ export class AiVideoCompareResultService {
      if (!aiResultRecord) {
        throw new BadRequestException('AiVideoComparisonResult not found');
      }
+     console.log('aiResultRecord',aiResultRecord);
       aiResultRecord.status = 'USED';
       aiResultRecord.coachNote=aiFeedback.coachNote;
 
@@ -174,58 +176,30 @@ export class AiVideoCompareResultService {
       if(!learnerProgress){
         throw new BadRequestException('LearnerProgress not found');
       }
+      console.log('learnerProgress',learnerProgress);
 
-      const existingAiResults = await manager.getRepository(AiVideoComparisonResult).find({
+      const previousAiResultsCount=await manager.getRepository(AiVideoComparisonResult).count({
         where: {
           learnerVideo: {
             user: { id: aiResultRecord.learnerVideo.user.id },
             session: { course: { id: aiResultRecord.learnerVideo.session.course.id } }
           },
           status: 'USED'
-        },
-        select: ['learnerScore']
+        }
       });
 
-      console.log('existingAiResults count:', existingAiResults.length);
-      
-      let incomingScore = 0;
-      if (aiFeedback.overallScoreForPlayer2 !== null && aiFeedback.overallScoreForPlayer2 !== undefined) {
-         incomingScore = Number(aiFeedback.overallScoreForPlayer2);
-      }
-      
-      if (isNaN(incomingScore)) {
-        console.warn('incomingScore is NaN. Defaulting to 0.');
-        incomingScore = 0;
-      }
-      
-      console.log('Final incomingScore:', incomingScore);
-      
-      // Update the record's score
-      aiResultRecord.learnerScore = incomingScore;
-
-      // Calculate total from existing used records
-      let totalScore = incomingScore;
-      let count = 1; // Start with 1 for the current video
-
-      for (const result of existingAiResults) {
-        const val = Number(result.learnerScore);
-        if (!isNaN(val)) {
-          totalScore += val;
-          count++;
+      const thisAiResult=await manager.getRepository(AiVideoComparisonResult).findOne({ 
+        where: { 
+         id:id
         }
-      }
-      
-      // Calculate average
-      const newAverage = totalScore / count;
-      
-      console.log(`Calculation: ${totalScore} / ${count} = ${newAverage}`);
+      });
 
-      if (!isNaN(newAverage)) {
-         learnerProgress.avgAiAnalysisScore = Math.round(newAverage);
-      } else {
-         console.warn('Calculated average is NaN, defaulting avgAiAnalysisScore to 0');
-         learnerProgress.avgAiAnalysisScore = 0;
-      }
+      const previousAvg = learnerProgress.avgAiAnalysisScore || 0;
+const newAvg =
+          (previousAvg * previousAiResultsCount + thisAiResult.learnerScore) /
+          (previousAiResultsCount + 1);
+
+      learnerProgress.avgAiAnalysisScore = Math.round(newAvg);
 
       await manager.getRepository(LearnerProgress).save(learnerProgress);
 
