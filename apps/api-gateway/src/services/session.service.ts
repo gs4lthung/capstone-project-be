@@ -373,6 +373,7 @@ export class SessionService extends BaseTypeOrmService<Session> {
       // Wallet top-up: only if coach completes within deadline
       // If current time <= deadline, then coach completed on time
       if (new Date() <= deadlineTime) {
+        console.log('Coach completed on time');
         await this.walletService.handleWalletTopUp(
           this.request.user.id as User['id'],
           sessionEarning,

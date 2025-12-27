@@ -28,10 +28,6 @@ export class CreateCourtDto {
     example: '+84901234567',
   })
   @IsOptional()
-  @Matches(/^\+84[0-9]{9,10}$/, {
-    message:
-      'Phone number must be a valid Vietnamese phone number (e.g., +84155018243)',
-  })
   phoneNumber?: string;
 
   @ApiProperty({
