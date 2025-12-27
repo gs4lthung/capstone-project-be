@@ -91,6 +91,7 @@ export class AiPoseService implements OnModuleInit {
       // To avoid double saving, let's refactor slightly or just accept the small overhead for now to keep it clean.
 
       const poses = await this.extractPosesFromVideo(videoBuffer, timestamps);
+      console.log('POSE = ', poses);
 
       return {
         poses,
@@ -176,6 +177,20 @@ export class AiPoseService implements OnModuleInit {
                 y: kp.y / imageTensor.shape[0],
               }),
             );
+            console.log(
+              'Tọa độ X, Y = ',
+              imageTensor.shape[1],
+              imageTensor.shape[0],
+            );
+            console.log(
+              'Tọa độ X, Y = ',
+              landmarks.map((kp) => ({
+                name: kp.name,
+                x: kp.x,
+                y: kp.y,
+              })),
+            );
+
             allPoses.push(landmarks);
             this.logger.log(
               `✅ Detected ${landmarks.length} landmarks at ${timestamp}s`,
